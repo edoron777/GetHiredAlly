@@ -9,9 +9,10 @@ requiredFiles = [".replit", "replit.nix", "package.json", "package-lock.json"]
 channel = "stable-24_11"
 
 [deployment]
-run = ["node", "index.js"]
+run = ["python", "-m", "uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "5000"]
 deploymentTarget = "autoscale"
 ignorePorts = false
+build = ["bash", "-c", "cd client && npm run build"]
 
 [agent]
 expertMode = true
