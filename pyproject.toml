@@ -4,7 +4,9 @@ version = "0.1.0"
 description = "Add your description here"
 requires-python = ">=3.11"
 dependencies = [
+    "bcrypt>=5.0.0",
     "fastapi>=0.127.0",
+    "pydantic[email]>=2.12.5",
     "supabase>=2.27.0",
     "uvicorn>=0.40.0",
 ]
