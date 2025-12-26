@@ -119,31 +119,38 @@ Provide 1500-2000 words of detailed, actionable guidance."""
 async def get_combined_prompt(interviewer_type: str, depth_level: str) -> str:
     supabase = get_supabase_client()
     
-    system_prompt = FALLBACK_SYSTEM_PROMPT
-    interviewer_prompt = FALLBACK_INTERVIEWER_PROMPTS.get(interviewer_type, FALLBACK_INTERVIEWER_PROMPTS["general"])
-    depth_prompt = FALLBACK_DEPTH_PROMPTS.get(depth_level, FALLBACK_DEPTH_PROMPTS["full"])
+    system_prompt = ""
+    interviewer_prompt = ""
+    depth_prompt = ""
     
     if supabase:
         try:
-            system_result = supabase.table('prompt_templates').select('content').eq('template_type', 'system_v2').maybeSingle().execute()
-            if system_result.data and system_result.data.get('content'):
-                system_prompt = system_result.data['content']
+            system_result = supabase.table('prompt_templates').select('content').eq('service_name', 'xray_analyzer').eq('template_type', 'system_v2').limit(1).execute()
+            if system_result.data and len(system_result.data) > 0 and system_result.data[0].get('content'):
+                system_prompt = system_result.data[0]['content']
         except Exception:
             pass
         
         try:
-            interviewer_result = supabase.table('prompt_templates').select('content').eq('template_type', f'interviewer_{interviewer_type}').maybeSingle().execute()
-            if interviewer_result.data and interviewer_result.data.get('content'):
-                interviewer_prompt = interviewer_result.data['content']
+            interviewer_result = supabase.table('prompt_templates').select('content').eq('service_name', 'xray_analyzer').eq('template_type', f'interviewer_{interviewer_type}').limit(1).execute()
+            if interviewer_result.data and len(interviewer_result.data) > 0 and interviewer_result.data[0].get('content'):
+                interviewer_prompt = interviewer_result.data[0]['content']
         except Exception:
             pass
         
         try:
-            depth_result = supabase.table('prompt_templates').select('content').eq('template_type', f'depth_{depth_level}').maybeSingle().execute()
-            if depth_result.data and depth_result.data.get('content'):
-                depth_prompt = depth_result.data['content']
+            depth_result = supabase.table('prompt_templates').select('content').eq('service_name', 'xray_analyzer').eq('template_type', f'depth_{depth_level}').limit(1).execute()
+            if depth_result.data and len(depth_result.data) > 0 and depth_result.data[0].get('content'):
+                depth_prompt = depth_result.data[0]['content']
         except Exception:
             pass
+    
+    if not system_prompt:
+        system_prompt = FALLBACK_SYSTEM_PROMPT
+    if not interviewer_prompt:
+        interviewer_prompt = FALLBACK_INTERVIEWER_PROMPTS.get(interviewer_type, FALLBACK_INTERVIEWER_PROMPTS["general"])
+    if not depth_prompt:
+        depth_prompt = FALLBACK_DEPTH_PROMPTS.get(depth_level, FALLBACK_DEPTH_PROMPTS["full"])
     
     return f"{system_prompt}\n\n{interviewer_prompt}\n\n{depth_prompt}"
 
@@ -166,7 +173,7 @@ async def analyze_job(request: AnalyzeJobRequest):
             system=system_prompt,
             messages=[{
                 "role": "user",
-                "content": f"Please analyze this job description and prepare me for the interview:\n\n{request.job_description}"
+                "content": f"Analyze this job description:\n\n{request.job_description}"
             }]
         )
         
