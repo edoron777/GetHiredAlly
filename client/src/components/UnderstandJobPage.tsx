@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { isAuthenticated } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
-import { Zap, Search, Target, ChevronRight, Loader2, ClipboardPaste } from 'lucide-react'
+import { Zap, Search, Target, ChevronRight, Loader2, ClipboardPaste, Sparkles } from 'lucide-react'
 
 type AnalysisMode = 'quick' | 'deep' | 'max'
 
@@ -118,8 +118,8 @@ export function UnderstandJobPage() {
             </div>
           </div>
 
-          <div className="mb-8 pt-6 border-t border-[#E5E7EB]">
-            <label className="block text-base font-semibold mb-4" style={{ color: '#333333' }}>
+          <div className="mt-6 p-6 rounded-lg border border-[#E5E7EB]" style={{ backgroundColor: '#F9FAFB' }}>
+            <label className="block text-lg font-bold mb-4" style={{ color: '#333333' }}>
               Analysis Mode
             </label>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -128,13 +128,13 @@ export function UnderstandJobPage() {
                   key={mode.id}
                   type="button"
                   onClick={() => setSelectedMode(mode.id)}
-                  className={`px-4 py-3 rounded-lg text-left transition-all cursor-pointer ${
+                  className={`px-4 py-3 rounded-lg text-left transition-all cursor-pointer flex flex-col items-start h-full ${
                     selectedMode === mode.id
                       ? 'border-2 border-[#1E3A5F] bg-[#E8F0F5] shadow-sm'
                       : 'border border-[#E5E7EB] bg-white hover:bg-[#F9FAFB] hover:border-[#D1D5DB]'
                   }`}
                 >
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between w-full">
                     <div className="flex items-center gap-2" style={{ color: '#1E3A5F' }}>
                       {mode.icon}
                       <span className="font-semibold text-sm">{mode.label}</span>
@@ -159,31 +159,34 @@ export function UnderstandJobPage() {
             <p className="text-sm mt-3" style={{ color: '#6B7280' }}>
               Choose based on how much time you have. You can always run a deeper analysis later.
             </p>
-          </div>
 
-          <div className="flex gap-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => navigate('/dashboard')}
-              className="border-[#1E3A5F] text-[#1E3A5F] hover:bg-[#F0F4F8]"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={!isValid || isLoading}
-              className="bg-[#1E3A5F] hover:bg-[#162d4a] disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Analyzing...
-                </>
-              ) : (
-                'Analyze This Job'
-              )}
-            </Button>
+            <div className="flex justify-center gap-4 mt-6">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => navigate('/dashboard')}
+                className="border-[#D1D5DB] text-[#6B7280] bg-white hover:bg-[#F9FAFB]"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={!isValid || isLoading}
+                className="bg-[#1E3A5F] hover:bg-[#162d4a] disabled:opacity-50 disabled:cursor-not-allowed px-8 py-3 text-base"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Analyzing...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Analyze This Job
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </form>
       </div>

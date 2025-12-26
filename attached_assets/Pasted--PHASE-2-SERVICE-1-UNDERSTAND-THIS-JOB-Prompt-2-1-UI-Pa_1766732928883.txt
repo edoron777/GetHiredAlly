@@ -1,0 +1,56 @@
+## PHASE 2: SERVICE 1 - UNDERSTAND THIS JOB
+### Prompt 2.1-UI (Part 2): Section Separation & Button Refinements
+
+Make these UI improvements to the "Analyze This Job" service page:
+
+### 1. Analysis Mode Section - Visual Separation
+
+Wrap the entire Analysis Mode section in a light card/box:
+- Include: "Analysis Mode" title, the 3 mode buttons, helper text, and action buttons (Cancel + Analyze)
+- Card styling:
+  - Background: very light gray (#F9FAFB) or light beige to match site theme
+  - Border: 1px solid light gray (#E5E7EB)
+  - Border-radius: 8px (rounded-lg)
+  - Padding: 24px (p-6)
+  - Margin-top: 24px from the Job Description section
+
+- "Analysis Mode" title styling:
+  - Keep LEFT-aligned (consistent with "Job Description" label)
+  - Make it bold (font-semibold or font-bold)
+  - Slightly larger font (text-lg, ~18px)
+  - Margin-bottom: 16px before the mode buttons
+
+### 2. Mode Button Text Alignment
+
+Fix the vertical alignment of text inside the three mode selection cards:
+- All text content (icon, title, description, read time) should align to the TOP
+- Use flexbox with `items-start` or `align-items: flex-start`
+- All three cards must have identical height and text positioning
+- The title row (icon + name) should be at the same vertical position across all cards
+- The description should start at the same line across all cards
+- The read time should be at the same position across all cards
+
+### 3. Action Buttons (Cancel + Analyze This Job)
+
+Make the primary action button more prominent:
+
+**Container:**
+- Center both buttons horizontally within the card
+- Add margin-top: 24px above the buttons (spacing from helper text)
+
+**"Cancel" button:**
+- Style: Outline/ghost (white background, gray border, gray text)
+- Size: Normal padding
+- This is the secondary action
+
+**"Analyze This Job" button:**
+- Style: Solid primary (navy background #1E3A5F, white text)
+- Size: Slightly larger - increase horizontal padding (px-8) and vertical padding (py-3)
+- Make it wider than Cancel button
+- Optional: Add a small icon before the text (sparkles ✨ or magnifying glass 🔍)
+- This should be the MOST prominent element in the entire card
+
+**Visual hierarchy should be:**
+1. "Analyze This Job" button (most prominent)
+2. Selected mode card (clear but secondary)
+3. C
