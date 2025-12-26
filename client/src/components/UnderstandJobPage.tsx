@@ -86,6 +86,9 @@ export function UnderstandJobPage() {
   const [showSuccess, setShowSuccess] = useState(false)
   const [showHighlight, setShowHighlight] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [downloadingPdf, setDownloadingPdf] = useState(false)
+  const [downloadingDocx, setDownloadingDocx] = useState(false)
+  const [downloadError, setDownloadError] = useState<string | null>(null)
   const resultsRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -493,23 +496,35 @@ export function UnderstandJobPage() {
                 </button>
                 <button
                   type="button"
+                  disabled={downloadingPdf}
                   onClick={async () => {
                     if (analysis) {
+                      setDownloadingPdf(true);
+                      setDownloadError(null);
                       try {
-                        const response = await fetch('/api/download/pdf', {
+                        const response = await fetch('/api/xray/download/pdf', {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ content: analysis, filename: 'xray-analysis' })
+                          body: JSON.stringify({ 
+                            report_content: analysis, 
+                            job_title: 'Job Analysis Report',
+                            company_name: ''
+                          })
                         });
+                        if (!response.ok) throw new Error('PDF generation failed');
                         const blob = await response.blob();
                         const url = window.URL.createObjectURL(blob);
                         const a = document.createElement('a');
                         a.href = url;
-                        a.download = 'xray-analysis.pdf';
+                        a.download = 'XRay_Analysis.pdf';
                         a.click();
                         window.URL.revokeObjectURL(url);
                       } catch (err) {
                         console.error('PDF download failed:', err);
+                        setDownloadError('PDF download failed. Please try again.');
+                        setTimeout(() => setDownloadError(null), 4000);
+                      } finally {
+                        setDownloadingPdf(false);
                       }
                     }
                   }}
@@ -519,37 +534,50 @@ export function UnderstandJobPage() {
                     borderRadius: '6px',
                     padding: '6px 12px',
                     fontSize: '13px',
-                    color: '#6B7280',
-                    cursor: 'pointer',
+                    color: downloadingPdf ? '#9CA3AF' : '#6B7280',
+                    cursor: downloadingPdf ? 'not-allowed' : 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '4px',
-                    transition: 'all 0.2s'
+                    transition: 'all 0.2s',
+                    opacity: downloadingPdf ? 0.7 : 1
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.color = '#DC2626'; e.currentTarget.style.borderColor = '#DC2626'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.color = '#6B7280'; e.currentTarget.style.borderColor = '#E5E7EB'; }}
+                  onMouseEnter={(e) => { if (!downloadingPdf) { e.currentTarget.style.color = '#DC2626'; e.currentTarget.style.borderColor = '#DC2626'; }}}
+                  onMouseLeave={(e) => { if (!downloadingPdf) { e.currentTarget.style.color = '#6B7280'; e.currentTarget.style.borderColor = '#E5E7EB'; }}}
                 >
-                  <Download className="h-4 w-4" /> PDF
+                  {downloadingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} PDF
                 </button>
                 <button
                   type="button"
+                  disabled={downloadingDocx}
                   onClick={async () => {
                     if (analysis) {
+                      setDownloadingDocx(true);
+                      setDownloadError(null);
                       try {
-                        const response = await fetch('/api/download/docx', {
+                        const response = await fetch('/api/xray/download/docx', {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ content: analysis, filename: 'xray-analysis' })
+                          body: JSON.stringify({ 
+                            report_content: analysis, 
+                            job_title: 'Job Analysis Report',
+                            company_name: ''
+                          })
                         });
+                        if (!response.ok) throw new Error('Word generation failed');
                         const blob = await response.blob();
                         const url = window.URL.createObjectURL(blob);
                         const a = document.createElement('a');
                         a.href = url;
-                        a.download = 'xray-analysis.docx';
+                        a.download = 'XRay_Analysis.docx';
                         a.click();
                         window.URL.revokeObjectURL(url);
                       } catch (err) {
                         console.error('Word download failed:', err);
+                        setDownloadError('Word download failed. Please try again.');
+                        setTimeout(() => setDownloadError(null), 4000);
+                      } finally {
+                        setDownloadingDocx(false);
                       }
                     }
                   }}
@@ -559,20 +587,36 @@ export function UnderstandJobPage() {
                     borderRadius: '6px',
                     padding: '6px 12px',
                     fontSize: '13px',
-                    color: '#6B7280',
-                    cursor: 'pointer',
+                    color: downloadingDocx ? '#9CA3AF' : '#6B7280',
+                    cursor: downloadingDocx ? 'not-allowed' : 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '4px',
-                    transition: 'all 0.2s'
+                    transition: 'all 0.2s',
+                    opacity: downloadingDocx ? 0.7 : 1
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.color = '#2563EB'; e.currentTarget.style.borderColor = '#2563EB'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.color = '#6B7280'; e.currentTarget.style.borderColor = '#E5E7EB'; }}
+                  onMouseEnter={(e) => { if (!downloadingDocx) { e.currentTarget.style.color = '#2563EB'; e.currentTarget.style.borderColor = '#2563EB'; }}}
+                  onMouseLeave={(e) => { if (!downloadingDocx) { e.currentTarget.style.color = '#6B7280'; e.currentTarget.style.borderColor = '#E5E7EB'; }}}
                 >
-                  <FileText className="h-4 w-4" /> Word
+                  {downloadingDocx ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />} Word
                 </button>
               </div>
             </div>
+            {downloadError && (
+              <div style={{
+                background: '#FEF2F2',
+                border: '1px solid #FECACA',
+                borderRadius: '8px',
+                padding: '12px 16px',
+                marginBottom: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <X className="h-4 w-4" style={{ color: '#EF4444' }} />
+                <span style={{ color: '#DC2626', fontSize: '14px' }}>{downloadError}</span>
+              </div>
+            )}
             <div style={{ color: '#333333' }}>
               <pre style={{ 
                 whiteSpace: 'pre-wrap', 

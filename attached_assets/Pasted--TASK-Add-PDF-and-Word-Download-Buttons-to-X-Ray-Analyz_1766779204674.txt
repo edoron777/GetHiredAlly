@@ -1,0 +1,85 @@
+## TASK: Add PDF and Word Download Buttons to X-Ray Analyzer
+
+### STEP 1: Install Python Dependencies
+
+Run this command:
+pip install reportlab python-docx
+
+### STEP 2: Create Download Endpoints
+
+Create a new file: backend/download_service.py
+
+This file should have two functions:
+1. generate_pdf(report_content, job_title, company_name) - returns PDF bytes
+2. generate_docx(report_content, job_title, company_name) - returns DOCX bytes
+
+PDF Styling:
+- Title: 24pt bold, color #1E3A5F (navy)
+- Headers (H2): 14pt bold, color #1E3A5F
+- Body text: 11pt regular, black
+- Margins: 1 inch all sides
+- Header text: "GetHiredAlly - Job Analysis Report"
+- Footer: Page number and generation date
+
+Word Styling:
+- Title: Heading 1 style
+- Sections: Heading 2 style
+- Body: Normal style, 11pt
+
+### STEP 3: Create API Routes
+
+Add two new POST endpoints:
+
+POST /api/xray/download/pdf
+POST /api/xray/download/docx
+
+Both endpoints receive JSON body:
+{
+  "report_content": "the markdown analysis text",
+  "job_title": "string",
+  "company_name": "string"
+}
+
+Both endpoints return the file as a downloadable response.
+
+### STEP 4: Update Frontend - Add Download Buttons
+
+In the Analysis Results section, next to the existing Copy button, add two new buttons:
+
+Button 1: "PDF" with a download icon
+Button 2: "Word" with a file icon
+
+Use the same button style as the existing Copy button (variant="outline").
+
+### STEP 5: Create Download Handler Functions
+
+When user clicks PDF button:
+1. Show loading state on button
+2. POST to /api/xray/download/pdf with report data
+3. Receive blob response
+4. Trigger browser download with filename: "XRay_Analysis_[CompanyName].pdf"
+5. Clear loading state
+
+When user clicks Word button:
+1. Show loading state on button
+2. POST to /api/xray/download/docx with report data
+3. Receive blob response
+4. Trigger browser download with filename: "XRay_Analysis_[CompanyName].docx"
+5. Clear loading state
+
+### STEP 6: Error Handling
+
+If download fails:
+- Show toast notification with error message
+- Clear loading state
+- Log error to console
+
+### SUCCESS CHECKLIST
+
+- [ ] PDF button appears next to Copy button
+- [ ] Word button appears next to Copy button
+- [ ] Clicking PDF downloads a formatted PDF file
+- [ ] Clicking Word downloads a formatted DOCX file
+- [ ] Buttons show loading spinner while generating
+- [ ] Files have company name in filename
+- [ ] Error shows toast message if download fails
