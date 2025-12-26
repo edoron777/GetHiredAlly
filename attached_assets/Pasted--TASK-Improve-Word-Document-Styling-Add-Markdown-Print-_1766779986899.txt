@@ -1,0 +1,131 @@
+## TASK: Improve Word Document Styling + Add Markdown & Print Buttons
+
+### PART 1: Fix Word Document Styling
+
+#### ISSUE 1: Remove the "---" horizontal lines
+
+The Word document currently shows "---" lines between sections.
+These are markdown horizontal rule markers that shouldn't appear in the final document.
+
+Fix: When converting markdown to Word, remove or replace "---" with proper section spacing instead of showing the raw characters.
+
+#### ISSUE 2: Change Font to Modern Style
+
+Update the Word document generation to use:
+
+Font: Calibri (modern, clean, professional)
+
+Title:
+- Font: Calibri
+- Size: 24pt
+- Bold: Yes
+- Color: #1E3A5F (navy)
+
+Section Headers (H2):
+- Font: Calibri
+- Size: 16pt
+- Bold: Yes
+- Color: #1E3A5F (navy)
+
+Sub-headers (H3):
+- Font: Calibri
+- Size: 13pt
+- Bold: Yes
+- Color: #374151 (dark gray)
+
+Body Text:
+- Font: Calibri
+- Size: 11pt
+- Bold: No
+- Color: Black
+- Line spacing: 1.15
+
+Bullet Points:
+- Font: Calibri
+- Size: 11pt
+- Proper indentation
+
+#### Section Spacing
+
+Instead of "---" lines, add proper spacing between major sections:
+- Add 18pt space before each H2 header
+- Add 12pt space after each H2 header
+- Add 6pt space between paragraphs
+
+### PART 2: Add Markdown Download Button
+
+Add a "Markdown" button next to the other download buttons.
+
+When clicked:
+1. Take the raw analysis text (it's already markdown)
+2. Create a blob with type "text/markdown"
+3. Trigger download with filename: "XRay_Analysis_[CompanyName].md"
+
+Code example:
+const handleDownloadMarkdown = () => {
+  const blob = new Blob([analysisResult], { type: 'text/markdown' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `XRay_Analysis_${companyName || 'Report'}.md`;
+  a.click();
+  window.URL.revokeObjectURL(url);
+};
+
+### PART 3: Add Print Button
+
+Add a "Print" button next to the other buttons.
+
+When clicked:
+1. Call window.print()
+2. This opens the browser's print dialog
+3. User can print or save as PDF from their browser
+
+Code example:
+const handlePrint = () => {
+  window.print();
+};
+
+### PART 4: Button Layout
+
+Arrange all 5 buttons in the Analysis Results header:
+
+<div className="flex flex-wrap gap-2">
+  <Button variant="outline" size="sm" onClick={handleCopy}>
+    <Copy className="h-4 w-4 mr-1" />
+    Copy
+  </Button>
+  <Button variant="outline" size="sm" onClick={handleDownloadPDF}>
+    <FileDown className="h-4 w-4 mr-1" />
+    PDF
+  </Button>
+  <Button variant="outline" size="sm" onClick={handleDownloadWord}>
+    <FileText className="h-4 w-4 mr-1" />
+    Word
+  </Button>
+  <Button variant="outline" size="sm" onClick={handleDownloadMarkdown}>
+    <FileCode className="h-4 w-4 mr-1" />
+    Markdown
+  </Button>
+  <Button variant="outline" size="sm" onClick={handlePrint}>
+    <Printer className="h-4 w-4 mr-1" />
+    Print
+  </Button>
+</div>
+
+Import the icons from lucide-react:
+import { Copy, FileDown, FileText, FileCode, Printer } from 'lucide-react';
+
+### SUCCESS CHECKLIST
+
+Word Document Fixes:
+- [ ] No "---" characters visible in Word document
+- [ ] All text uses Calibri font
+- [ ] Headers are navy blue and properly sized
+- [ ] Good spacing between sections
+
+New Buttons:
+- [ ] Markdown button downloads .md file
+- [ ] Print button opens browser print dialog
+- [ ] All 5 buttons visible and aligned nicely
+- [ ] All buttons have appropriate icons
