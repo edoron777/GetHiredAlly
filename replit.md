@@ -59,11 +59,14 @@ GetHiredAlly is an interview preparation application with job description analys
 - `POST /api/auth/login` - User login (email, password) - returns token and user data
 - `POST /api/auth/logout` - Logout (token) - invalidates session
 - `GET /api/auth/me?token=...` - Get current user from session token
+- `POST /api/auth/send-verification` - Send verification code email
+- `POST /api/auth/verify-email` - Verify email with 6-digit code
 
 ## Frontend Routes
 - `/` - Landing page
 - `/register` - User registration
 - `/login` - User login
+- `/verify-email` - Email verification page
 
 ## Database Tables
 - `user_profiles` - User tier definitions (standard, special, vip)
@@ -83,7 +86,14 @@ GetHiredAlly is an interview preparation application with job description analys
 - Tokens expire after 7 days
 - Client stores token in localStorage via `lib/auth.ts` utilities
 
+## Email Verification
+- Uses Resend API for sending verification emails
+- 6-digit verification codes with 15-minute expiry
+- Codes stored in `email_verification_codes` table
+- **Note**: Resend free tier only sends to owner email (edoron777@gmail.com). Verify a domain at resend.com/domains to send to other addresses.
+
 ## Recent Changes
+- December 26, 2025: Added email verification with Resend API, 6-digit codes, and verification page
 - December 26, 2025: Added user login/logout with session management, bcrypt password verification
 - December 26, 2025: Added user registration with bcrypt password hashing, email validation, React form
 - December 26, 2025: Created Supabase schema with 13 tables for user management and services
