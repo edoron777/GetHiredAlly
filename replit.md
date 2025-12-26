@@ -1,12 +1,17 @@
-# Full-Stack React + FastAPI Application
+# GetHiredAlly - Interview Preparation Application
 
 ## Overview
-A full-stack web application with React frontend and FastAPI backend, connected to Supabase.
+GetHiredAlly is an interview preparation application with job description analysis ("X-Ray"), interview question preparation, and answer crafting features. Built with React frontend and FastAPI backend, connected to Supabase for data persistence.
 
 ## Tech Stack
-- **Frontend**: React with Vite, Tailwind CSS, shadcn/ui
-- **Backend**: FastAPI (Python)
+- **Frontend**: React 19 with Vite, Tailwind CSS, shadcn/ui, React Router v7
+- **Backend**: FastAPI (Python) with bcrypt for password hashing
 - **Database**: Supabase (PostgreSQL)
+
+## Brand Colors
+- Background: #FAF9F7 (warm beige)
+- Primary: #1E3A5F (navy blue)
+- Text: #333333
 
 ## Project Structure
 ```
@@ -14,15 +19,19 @@ A full-stack web application with React frontend and FastAPI backend, connected 
 ├── client/               # React frontend
 │   ├── src/
 │   │   ├── components/   # React components
-│   │   │   └── ui/       # shadcn/ui components
+│   │   │   ├── ui/       # shadcn/ui components (Button, Input, Label)
+│   │   │   ├── LandingPage.tsx
+│   │   │   └── RegisterPage.tsx
 │   │   ├── lib/          # Utility functions
-│   │   ├── App.tsx       # Main app component
+│   │   ├── App.tsx       # Main app with routing
 │   │   └── main.tsx      # Entry point
 │   ├── dist/             # Built frontend (production)
 │   └── vite.config.ts    # Vite configuration
 ├── backend/              # FastAPI backend
 │   └── app/
-│       └── main.py       # API endpoints + static file serving
+│       ├── main.py       # API endpoints + static file serving
+│       └── auth.py       # Authentication endpoints
+├── supabase_schema.sql   # Database schema for Supabase
 └── replit.md             # This file
 ```
 
@@ -44,7 +53,29 @@ A full-stack web application with React frontend and FastAPI backend, connected 
 ## API Endpoints
 - `GET /api/health` - Health check endpoint
 - `GET /api/config` - Get configuration info
+- `GET /api/supabase-test` - Test Supabase connection
+- `POST /api/auth/register` - User registration (name, email, password)
+
+## Frontend Routes
+- `/` - Landing page
+- `/register` - User registration
+- `/login` - Login page (placeholder)
+
+## Database Tables
+- `user_profiles` - User tier definitions (standard, special, vip)
+- `profile_limits` - Usage limits per profile and service
+- `users` - User accounts with password hashes
+- `services` - Available services (xray, questions, playbook)
+- `usage_tracking` - Track user usage per service
+- See `supabase_schema.sql` for complete schema
+
+## User Profiles
+- **Standard**: 1 xray/week, 5 static questions total, 1 dynamic question/week
+- **Special**: 3 xray/week, 5 static questions total, 3 dynamic questions/week
+- **VIP**: 20 xray/week, unlimited static questions, 20 dynamic questions/week
 
 ## Recent Changes
+- December 26, 2025: Added user registration with bcrypt password hashing, email validation, React form
+- December 26, 2025: Created Supabase schema with 13 tables for user management and services
 - December 25, 2025: Fixed deployment config - FastAPI now serves built frontend in production
 - December 25, 2025: Transformed project to React+Vite+Tailwind+shadcn/ui frontend with FastAPI backend
