@@ -44,7 +44,7 @@ export function ServiceCard({
       <h3 className="text-lg font-semibold mb-1" style={{ color: '#1E3A5F' }}>
         {title}
       </h3>
-      <p className="text-xs italic mb-2" style={{ color: '#6B7280' }}>
+      <p className="text-sm mb-2" style={{ color: '#6B7280' }}>
         {subtitle}
       </p>
       {description && (

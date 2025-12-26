@@ -24,7 +24,7 @@ export function Dashboard() {
     {
       icon: '🔍',
       title: 'Decode Any Job Description',
-      subtitle: 'Turn any job description into interview-winning insights',
+      subtitle: 'Turn job description into interview-winning insights',
       description: '',
       buttonText: 'Get Started',
       isActive: true,
