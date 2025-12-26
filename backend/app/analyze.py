@@ -10,12 +10,14 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api", tags=["analyze"])
 
-AI_INTEGRATIONS_ANTHROPIC_API_KEY = os.environ.get("AI_INTEGRATIONS_ANTHROPIC_API_KEY")
-AI_INTEGRATIONS_ANTHROPIC_BASE_URL = os.environ.get("AI_INTEGRATIONS_ANTHROPIC_BASE_URL")
+ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
+
+logger.info(f"Anthropic API key found: {'Yes' if ANTHROPIC_API_KEY else 'No'}")
+if ANTHROPIC_API_KEY:
+    logger.info(f"API key starts with: {ANTHROPIC_API_KEY[:8]}...")
 
 anthropic_client = Anthropic(
-    api_key=AI_INTEGRATIONS_ANTHROPIC_API_KEY,
-    base_url=AI_INTEGRATIONS_ANTHROPIC_BASE_URL
+    api_key=ANTHROPIC_API_KEY
 )
 
 def get_supabase_client() -> Client | None:
