@@ -8,11 +8,11 @@ type InterviewerType = 'hr' | 'technical' | 'manager' | 'general'
 type DepthLevel = 'ready' | 'full'
 
 const statusMessages = [
-  "Generating your report...",
   "Reading the job description...",
   "Identifying key requirements...",
   "Analyzing what they really want...",
-  "Almost done..."
+  "Preparing your personalized report...",
+  "This may take 1-2 minutes for detailed reports..."
 ]
 
 interface InterviewerOption {
@@ -395,9 +395,6 @@ export function UnderstandJobPage() {
                 marginBottom: '8px'
               }}>
                 {statusMessages[statusIndex]}
-              </p>
-              <p style={{ fontSize: '13px', color: '#6B7280' }}>
-                This usually takes 15-30 seconds
               </p>
             </div>
           )}
