@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from supabase import create_client, Client
-from app.auth import router as auth_router
+from .auth import router as auth_router
 
 app = FastAPI(title="Backend API")
 app.include_router(auth_router)
