@@ -1,15 +1,23 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
+import { isAuthenticated } from '@/lib/auth'
 
 export function LandingPage() {
+  const navigate = useNavigate()
   const [healthStatus, setHealthStatus] = useState<string>('checking...')
 
   useEffect(() => {
+    if (isAuthenticated()) {
+      navigate('/dashboard')
+      return
+    }
+    
     fetch('/api/health')
       .then(res => res.json())
       .then(data => setHealthStatus(data.status))
       .catch(() => setHealthStatus('error'))
-  }, [])
+  }, [navigate])
 
   return (
     <div className="flex flex-col items-center justify-center p-8" style={{ minHeight: 'calc(100vh - 64px)' }}>

@@ -73,18 +73,18 @@ export function UnderstandJobPage() {
             Home
           </Link>
           <ChevronRight className="h-4 w-4" />
-          <span>Analyze This Job</span>
+          <span>Analyze Job Description</span>
         </nav>
 
         <h1 className="text-3xl font-bold mb-1" style={{ color: '#1E3A5F' }}>
-          Analyze This Job Description
+          Analyze Job Description
         </h1>
         <p className="text-lg mb-6" style={{ color: '#6B7280' }}>
           Deep analysis of what they're looking for
         </p>
 
         <div className="bg-[#E8F4FD] rounded-lg p-4 mb-8 border border-[#B8D4E8] flex items-start gap-3">
-          <ClipboardPaste className="h-5 w-5 flex-shrink-0 mt-0.5" style={{ color: '#1E3A5F' }} />
+          <ClipboardPaste className="h-5 w-5 flex-shrink-0 mt-0.5" style={{ color: '#0EA5E9' }} />
           <p style={{ color: '#1E3A5F' }}>
             Paste the job description and I'll help you understand what they're really looking for.
           </p>
@@ -119,7 +119,7 @@ export function UnderstandJobPage() {
           </div>
 
           <div className="mt-6 p-6 rounded-lg border border-[#E5E7EB]" style={{ backgroundColor: '#F9FAFB' }}>
-            <label className="block text-lg font-bold mb-4" style={{ color: '#333333' }}>
+            <label className="block text-lg font-bold mb-4 text-center" style={{ color: '#333333' }}>
               Analysis Mode
             </label>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -172,7 +172,7 @@ export function UnderstandJobPage() {
               <Button
                 type="submit"
                 disabled={!isValid || isLoading}
-                className="bg-[#1E3A5F] hover:bg-[#162d4a] disabled:opacity-50 disabled:cursor-not-allowed px-8 py-3 text-base"
+                className="bg-[#1E5A85] hover:bg-[#174a6e] disabled:opacity-50 disabled:cursor-not-allowed px-8 py-3 text-base shadow-md"
               >
                 {isLoading ? (
                   <>
@@ -182,7 +182,7 @@ export function UnderstandJobPage() {
                 ) : (
                   <>
                     <Sparkles className="mr-2 h-4 w-4" />
-                    Analyze This Job
+                    Analyze Job Description
                   </>
                 )}
               </Button>
