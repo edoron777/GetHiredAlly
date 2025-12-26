@@ -196,7 +196,10 @@ export function UnderstandJobPage() {
               <Button
                 type="submit"
                 disabled={!isValid || isLoading}
-                className="bg-[#1E5A85] hover:bg-[#174a6e] disabled:opacity-50 disabled:cursor-not-allowed px-8 py-3 text-base shadow-md"
+                className="disabled:opacity-50 disabled:cursor-not-allowed px-8 py-3 text-base shadow-md text-white"
+                style={{ backgroundColor: '#1E5A85' }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#164569'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#1E5A85'}
               >
                 {isLoading ? (
                   <>
