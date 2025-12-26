@@ -33,3 +33,12 @@ body {
   color: hsl(var(--foreground));
   font-family: system-ui, -apple-system, sans-serif;
 }
+
+.btn-analyze {
+  background-color: #1E5A85 !important;
+  color: white !important;
+}
+
+.btn-analyze:hover:not(:disabled) {
+  background-color: #164569 !important;
+}
