@@ -158,10 +158,10 @@ async def analyze_job(request: AnalyzeJobRequest):
     try:
         system_prompt = await get_combined_prompt(interviewer_type, depth_level)
         
-        max_tokens = 2048 if depth_level == "ready" else 4096
+        max_tokens = 2000 if depth_level == "ready" else 4000
         
         message = anthropic_client.messages.create(
-            model="claude-sonnet-4-5",
+            model="claude-sonnet-4-20250514",
             max_tokens=max_tokens,
             system=system_prompt,
             messages=[{
