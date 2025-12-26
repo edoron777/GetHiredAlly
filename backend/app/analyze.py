@@ -198,7 +198,7 @@ async def analyze_job(request: AnalyzeJobRequest):
         max_tokens = 2000 if depth_level == "ready" else 4000
         
         message = anthropic_client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-3-5-sonnet-20241022",
             max_tokens=max_tokens,
             system=system_prompt,
             messages=[{
