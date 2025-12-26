@@ -306,10 +306,7 @@ async def download_pdf(request: DownloadRequest):
                 if clean_line:
                     story.append(Paragraph(clean_line, body_style))
         
-        temp_buffer = io.BytesIO()
-        temp_doc = SimpleDocTemplate(temp_buffer, pagesize=A4, rightMargin=50, leftMargin=50, topMargin=50, bottomMargin=60)
-        temp_doc.build(story.copy())
-        pdf_meta['total_pages'] = temp_doc.page
+        pdf_meta['total_pages'] = 1
         
         doc.build(story, onFirstPage=add_first_page_footer, onLaterPages=add_later_page_header_footer)
         buffer.seek(0)
