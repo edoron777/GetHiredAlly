@@ -193,13 +193,13 @@ export function UnderstandJobPage() {
               >
                 Cancel
               </Button>
-              <Button
+              <button
                 type="submit"
                 disabled={!isValid || isLoading}
-                className="disabled:opacity-50 disabled:cursor-not-allowed px-8 py-3 text-base shadow-md text-white"
-                style={{ backgroundColor: '#1E5A85' }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#164569'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#1E5A85'}
+                className="inline-flex items-center justify-center rounded-md font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none px-8 py-3 text-base shadow-md text-white transition-colors"
+                style={{ backgroundColor: isLoading ? '#164569' : '#1E5A85' }}
+                onMouseEnter={(e) => { if (!isLoading) e.currentTarget.style.backgroundColor = '#164569' }}
+                onMouseLeave={(e) => { if (!isLoading) e.currentTarget.style.backgroundColor = '#1E5A85' }}
               >
                 {isLoading ? (
                   <>
@@ -212,7 +212,7 @@ export function UnderstandJobPage() {
                     Analyze Job Description
                   </>
                 )}
-              </Button>
+              </button>
             </div>
           </div>
         </form>
