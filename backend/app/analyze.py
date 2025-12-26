@@ -2,16 +2,24 @@ import os
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from anthropic import Anthropic
+from supabase import create_client, Client
 
 router = APIRouter(prefix="/api", tags=["analyze"])
 
 AI_INTEGRATIONS_ANTHROPIC_API_KEY = os.environ.get("AI_INTEGRATIONS_ANTHROPIC_API_KEY")
 AI_INTEGRATIONS_ANTHROPIC_BASE_URL = os.environ.get("AI_INTEGRATIONS_ANTHROPIC_BASE_URL")
 
-client = Anthropic(
+anthropic_client = Anthropic(
     api_key=AI_INTEGRATIONS_ANTHROPIC_API_KEY,
     base_url=AI_INTEGRATIONS_ANTHROPIC_BASE_URL
 )
+
+def get_supabase_client() -> Client | None:
+    url = os.environ.get("SUPABASE_URL")
+    key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+    if url and key:
+        return create_client(url, key)
+    return None
 
 class AnalyzeJobRequest(BaseModel):
     job_description: str
@@ -21,42 +29,27 @@ class AnalyzeJobResponse(BaseModel):
     analysis: str
     mode: str
 
-def get_system_prompt(mode: str) -> str:
-    base_prompt = """You are an expert career coach and job description analyst. Your task is to analyze job descriptions and help candidates understand what the employer is really looking for.
-
-When analyzing a job description, identify:
-1. **Core Requirements** - The must-have skills and qualifications
-2. **Nice-to-Haves** - Skills that would give candidates an edge
-3. **Red Flags** - Potential concerns or things to watch out for
-4. **Company Culture Signals** - What the language reveals about the work environment
-5. **Interview Prep Tips** - Key topics to prepare for based on this role
-6. **Keywords to Use** - Important terms to include in your resume/cover letter"""
-
+def get_mode_instructions(mode: str) -> str:
     if mode == "quick":
-        return base_prompt + """
-
-Provide a CONCISE analysis focusing on the top 3-5 most important points in each category. Keep your response under 800 words. Be direct and actionable."""
-
+        return "\n\nProvide a CONCISE analysis focusing on the top 3-5 most important points in each category. Keep your response under 800 words. Be direct and actionable."
     elif mode == "deep":
-        return base_prompt + """
-
-Provide a COMPREHENSIVE analysis with detailed explanations for each point. Include specific examples and actionable advice. Your response should be thorough but organized (1500-2000 words)."""
-
+        return "\n\nProvide a COMPREHENSIVE analysis with detailed explanations for each point. Include specific examples and actionable advice. Your response should be thorough but organized (1500-2000 words)."
     elif mode == "max":
-        return base_prompt + """
+        return "\n\nProvide an EXHAUSTIVE analysis leaving no stone unturned. Include:\n- Detailed breakdown of every requirement\n- Hidden meanings and implications in the language used\n- Salary negotiation insights based on the role level\n- Questions to ask in the interview\n- Potential career growth paths\n- Industry-specific insights\n- How to stand out from other candidates\n\nBe extremely thorough and comprehensive (2500+ words)."
+    return ""
 
-Provide an EXHAUSTIVE analysis leaving no stone unturned. Include:
-- Detailed breakdown of every requirement
-- Hidden meanings and implications in the language used
-- Salary negotiation insights based on the role level
-- Questions to ask in the interview
-- Potential career growth paths
-- Industry-specific insights
-- How to stand out from other candidates
-
-Be extremely thorough and comprehensive (2500+ words)."""
-
-    return base_prompt
+async def get_system_prompt_from_db(mode: str) -> str:
+    supabase = get_supabase_client()
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Database connection not available")
+    
+    result = supabase.table('prompt_templates').select('content').eq('service_name', 'xray_analyzer').eq('template_type', 'system').single().execute()
+    
+    if not result.data:
+        raise HTTPException(status_code=500, detail="System prompt not found in database")
+    
+    base_prompt = result.data['content']
+    return base_prompt + get_mode_instructions(mode)
 
 @router.post("/analyze-job", response_model=AnalyzeJobResponse)
 async def analyze_job(request: AnalyzeJobRequest):
@@ -67,7 +60,7 @@ async def analyze_job(request: AnalyzeJobRequest):
         raise HTTPException(status_code=400, detail="Invalid mode. Must be 'quick', 'deep', or 'max'")
     
     try:
-        system_prompt = get_system_prompt(request.mode)
+        system_prompt = await get_system_prompt_from_db(request.mode)
         
         max_tokens_map = {
             "quick": 2048,
@@ -75,7 +68,7 @@ async def analyze_job(request: AnalyzeJobRequest):
             "max": 8192
         }
         
-        message = client.messages.create(
+        message = anthropic_client.messages.create(
             model="claude-sonnet-4-5",
             max_tokens=max_tokens_map.get(request.mode, 4096),
             system=system_prompt,
@@ -92,5 +85,7 @@ async def analyze_job(request: AnalyzeJobRequest):
             mode=request.mode
         )
         
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
