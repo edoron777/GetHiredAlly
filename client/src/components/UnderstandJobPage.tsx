@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { isAuthenticated } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
-import { Zap, Search, Target, ChevronRight, Loader2 } from 'lucide-react'
+import { Zap, Search, Target, ChevronRight, Loader2, ClipboardPaste } from 'lucide-react'
 
 type AnalysisMode = 'quick' | 'deep' | 'max'
 
@@ -17,21 +17,21 @@ interface ModeOption {
 const modeOptions: ModeOption[] = [
   {
     id: 'quick',
-    icon: <Zap className="h-6 w-6" />,
+    icon: <Zap className="h-5 w-5" />,
     label: 'Quick Prep',
     description: 'Get the essentials fast',
     readTime: '10-15 min read'
   },
   {
     id: 'deep',
-    icon: <Search className="h-6 w-6" />,
+    icon: <Search className="h-5 w-5" />,
     label: 'Deep Dive',
     description: 'Comprehensive analysis (Recommended)',
     readTime: '30-45 min read'
   },
   {
     id: 'max',
-    icon: <Target className="h-6 w-6" />,
+    icon: <Target className="h-5 w-5" />,
     label: 'Max Insight',
     description: 'Leave no stone unturned',
     readTime: '60-90 min read'
@@ -73,22 +73,26 @@ export function UnderstandJobPage() {
             Home
           </Link>
           <ChevronRight className="h-4 w-4" />
-          <span>Understand This Job</span>
+          <span>Analyze This Job</span>
         </nav>
 
-        <h1 className="text-3xl font-bold mb-4" style={{ color: '#1E3A5F' }}>
-          Understand This Job
+        <h1 className="text-3xl font-bold mb-1" style={{ color: '#1E3A5F' }}>
+          Analyze This Job Description
         </h1>
+        <p className="text-lg mb-6" style={{ color: '#6B7280' }}>
+          Deep analysis of what they're looking for
+        </p>
 
-        <div className="bg-[#E8F4FD] rounded-lg p-4 mb-8 border border-[#B8D4E8]">
+        <div className="bg-[#E8F4FD] rounded-lg p-4 mb-8 border border-[#B8D4E8] flex items-start gap-3">
+          <ClipboardPaste className="h-5 w-5 flex-shrink-0 mt-0.5" style={{ color: '#1E3A5F' }} />
           <p style={{ color: '#1E3A5F' }}>
             Paste the job description and I'll help you understand what they're really looking for.
           </p>
         </div>
 
         <form onSubmit={handleSubmit}>
-          <div className="mb-6">
-            <label className="block text-sm font-medium mb-2" style={{ color: '#333333' }}>
+          <div className="mb-8">
+            <label className="block text-lg font-bold mb-3" style={{ color: '#333333' }}>
               Job Description <span className="text-red-500">*</span>
             </label>
             <textarea
@@ -114,41 +118,41 @@ export function UnderstandJobPage() {
             </div>
           </div>
 
-          <div className="mb-6">
-            <label className="block text-sm font-medium mb-3" style={{ color: '#333333' }}>
+          <div className="mb-8 pt-6 border-t border-[#E5E7EB]">
+            <label className="block text-base font-semibold mb-4" style={{ color: '#333333' }}>
               Analysis Mode
             </label>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {modeOptions.map((mode) => (
                 <button
                   key={mode.id}
                   type="button"
                   onClick={() => setSelectedMode(mode.id)}
-                  className={`p-4 rounded-lg border-2 text-left transition-all ${
+                  className={`px-4 py-3 rounded-lg text-left transition-all cursor-pointer ${
                     selectedMode === mode.id
-                      ? 'border-[#1E3A5F] bg-white shadow-md'
-                      : 'border-[#E5E7EB] bg-white hover:border-[#CBD5E1]'
+                      ? 'border-2 border-[#1E3A5F] bg-[#E8F0F5] shadow-sm'
+                      : 'border border-[#E5E7EB] bg-white hover:bg-[#F9FAFB] hover:border-[#D1D5DB]'
                   }`}
                 >
-                  <div className="flex items-center gap-2 mb-2" style={{ color: '#1E3A5F' }}>
-                    {mode.icon}
-                    <span className="font-semibold">{mode.label}</span>
-                  </div>
-                  <p className="text-sm mb-2" style={{ color: '#374151' }}>
-                    {mode.description}
-                  </p>
-                  <p className="text-xs" style={{ color: '#6B7280' }}>
-                    {mode.readTime}
-                  </p>
-                  {selectedMode === mode.id && (
-                    <div className="mt-2 flex justify-end">
-                      <div className="w-5 h-5 rounded-full bg-[#1E3A5F] flex items-center justify-center">
-                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2" style={{ color: '#1E3A5F' }}>
+                      {mode.icon}
+                      <span className="font-semibold text-sm">{mode.label}</span>
+                    </div>
+                    {selectedMode === mode.id && (
+                      <div className="w-4 h-4 rounded-full bg-[#1E3A5F] flex items-center justify-center flex-shrink-0">
+                        <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                         </svg>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
+                  <p className="text-xs mt-1" style={{ color: '#374151' }}>
+                    {mode.description}
+                  </p>
+                  <p className="text-xs mt-0.5" style={{ color: '#6B7280' }}>
+                    {mode.readTime}
+                  </p>
                 </button>
               ))}
             </div>

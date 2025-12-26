@@ -1,0 +1,63 @@
+## UI Updates for "Understand This Job" Page
+
+Make these visual improvements to the service input page:
+
+### 1. Page Title Change
+- Change main title from "Understand This Job" to "Analyze This Job Description"
+- Add a smaller subtitle below: "Deep analysis of what they're looking for"
+
+### 2. Add Paste Icon to Ally Message
+- Add a clipboard icon (📋 or use Lucide's ClipboardPaste icon) at the START of the message text
+- Message becomes: [clipboard icon] "Paste the job description and I'll help you understand what they're really looking for."
+
+### 3. Make Job Description Label More Prominent
+- Increase font size of "Job Description *" label (make it text-lg or text-xl, around 18-20px)
+- Make it bold (font-semibold or font-bold)
+- Add slightly more margin-bottom to separate it from the textarea
+
+### 4. Visual Separation Before Analysis Mode
+- Add a horizontal divider line OR increased spacing (margin-top: 32px or more) before "Analysis Mode" section
+- Optionally add a subtle section header: "Choose Analysis Depth" or just "Analysis Mode" in a slightly larger font
+
+### 5. Reduce Analysis Mode Card Height
+- Current cards are too tall - reduce the height significantly
+- Target height: approximately 80-100px max (or let content determine with minimal padding)
+- Reduce vertical padding inside cards (py-3 instead of py-6)
+- Cards should look like selection buttons, not large info cards
+- Keep the icon, title, description, and read time - just more compact
+
+### 6. Analysis Mode Button Styling
+Change the mode selection cards to have clearer button-like appearance:
+
+**Unselected state:**
+- Background: white (#FFFFFF)
+- Border: 1px solid light gray (#E5E7EB)
+- Text: dark gray/navy
+
+**Selected state:**
+- Background: very light navy/blue (#E8F0F5 or similar)
+- Border: 2px solid navy (#1E3A5F)
+- Optional: subtle shadow
+- Keep text dark (readable)
+
+**Hover state:**
+- Background: light gray (#F9FAFB)
+- Border: gray (#D1D5DB)
+- Cursor: pointer
+
+### Important Notes:
+- Do NOT use dark backgrounds for these selection cards
+- The submit button "Analyze This Job" should remain the darkest/most prominent element
+- Selected card should be clearly distinguishable but not overwhelming
+- All three cards should be the same width and height
+
+### Test Checklist:
+- [ ] New title "Analyze This Job" displays with subtitle
+- [ ] Clipboard icon appears in ally message
+- [ ] Job Description label is larger and bolder
+- [ ] Clear visual separation before Analysis Mode section
+- [ ] Mode cards are compact (roughly 80-100px height)
+- [ ] Unselected cards have white background with light border
+- [ ] Selected card (Deep Dive default) has light blue tint and navy border
+- [ ] Cards look clickable (hover effect works)
+- [ ] Submit button is still the most prominent element on page
