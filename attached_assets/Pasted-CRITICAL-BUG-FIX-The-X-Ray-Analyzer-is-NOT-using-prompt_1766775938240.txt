@@ -1,0 +1,55 @@
+CRITICAL BUG FIX: The X-Ray Analyzer is NOT using prompts from the database.
+
+CURRENT PROBLEM:
+The backend has a hardcoded prompt. It ignores the prompt_templates table in the database.
+The user's selection of interviewer type and depth level has no effect on the report.
+
+REQUIRED FIX:
+
+Step 1: Remove any hardcoded prompt text from the backend code.
+
+Step 2: When user clicks "Generate My Prep Report", the backend must:
+
+A) Get the user's selections:
+   - interviewerType: 'hr' or 'technical' or 'manager' or 'general'
+   - depthLevel: 'ready' or 'full'
+   - jobDescription: the text user pasted
+
+B) Fetch 3 prompts from Supabase table "prompt_templates":
+
+   Query 1 - Get system prompt:
+   SELECT content FROM prompt_templates 
+   WHERE service_name = 'xray_analyzer' AND template_type = 'system_v2'
+
+   Query 2 - Get interviewer prompt based on user selection:
+   SELECT content FROM prompt_templates 
+   WHERE service_name = 'xray_analyzer' AND template_type = 'interviewer_' + interviewerType
+   
+   Example: if user selected "manager", query for template_type = 'interviewer_manager'
+
+   Query 3 - Get depth prompt based on user selection:
+   SELECT content FROM prompt_templates 
+   WHERE service_name = 'xray_analyzer' AND template_type = 'depth_' + depthLevel
+   
+   Example: if user selected "full", query for template_type = 'depth_full'
+
+C) Combine the 3 prompts into one:
+   finalSystemPrompt = systemPrompt + "\n\n" + interviewerPrompt + "\n\n" + depthPrompt
+
+D) Call Claude API with:
+   - model: claude-sonnet or claude-3-sonnet
+   - system: finalSystemPrompt
+   - messages: [{ role: "user", content: "Analyze this job description:\n\n" + jobDescription }]
+   - max_tokens: 2000 if depthLevel is 'ready', 4000 if depthLevel is 'full'
+
+Step 3: Return the response to the frontend.
+
+IMPORTANT:
+- Delete any hardcoded prompt strings in the backend
+- The ONLY prompt text should come from the database
+- Log the template_type values being queried so we can debug
+
+EXPECTED RESULT:
+- Report should have exactly 6 sections (not 10)
+- Generation time should be under 90 seconds (not 4 minutes)
+- Different interviewer types should produce different reports

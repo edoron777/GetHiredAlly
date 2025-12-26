@@ -1,8 +1,12 @@
 import os
+import logging
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from anthropic import Anthropic
 from supabase import create_client, Client
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api", tags=["analyze"])
 
@@ -123,36 +127,62 @@ async def get_combined_prompt(interviewer_type: str, depth_level: str) -> str:
     interviewer_prompt = ""
     depth_prompt = ""
     
+    logger.info(f"Fetching prompts for interviewer_type={interviewer_type}, depth_level={depth_level}")
+    
     if supabase:
+        logger.info("Supabase client connected")
+        
         try:
+            logger.info("Querying: service_name='xray_analyzer', template_type='system_v2'")
             system_result = supabase.table('prompt_templates').select('content').eq('service_name', 'xray_analyzer').eq('template_type', 'system_v2').limit(1).execute()
             if system_result.data and len(system_result.data) > 0 and system_result.data[0].get('content'):
                 system_prompt = system_result.data[0]['content']
-        except Exception:
-            pass
+                logger.info(f"Found system_v2 prompt: {len(system_prompt)} chars")
+            else:
+                logger.warning("No system_v2 prompt found in database")
+        except Exception as e:
+            logger.error(f"Error fetching system_v2: {e}")
         
         try:
-            interviewer_result = supabase.table('prompt_templates').select('content').eq('service_name', 'xray_analyzer').eq('template_type', f'interviewer_{interviewer_type}').limit(1).execute()
+            interviewer_template = f'interviewer_{interviewer_type}'
+            logger.info(f"Querying: service_name='xray_analyzer', template_type='{interviewer_template}'")
+            interviewer_result = supabase.table('prompt_templates').select('content').eq('service_name', 'xray_analyzer').eq('template_type', interviewer_template).limit(1).execute()
             if interviewer_result.data and len(interviewer_result.data) > 0 and interviewer_result.data[0].get('content'):
                 interviewer_prompt = interviewer_result.data[0]['content']
-        except Exception:
-            pass
+                logger.info(f"Found {interviewer_template} prompt: {len(interviewer_prompt)} chars")
+            else:
+                logger.warning(f"No {interviewer_template} prompt found in database")
+        except Exception as e:
+            logger.error(f"Error fetching interviewer prompt: {e}")
         
         try:
-            depth_result = supabase.table('prompt_templates').select('content').eq('service_name', 'xray_analyzer').eq('template_type', f'depth_{depth_level}').limit(1).execute()
+            depth_template = f'depth_{depth_level}'
+            logger.info(f"Querying: service_name='xray_analyzer', template_type='{depth_template}'")
+            depth_result = supabase.table('prompt_templates').select('content').eq('service_name', 'xray_analyzer').eq('template_type', depth_template).limit(1).execute()
             if depth_result.data and len(depth_result.data) > 0 and depth_result.data[0].get('content'):
                 depth_prompt = depth_result.data[0]['content']
-        except Exception:
-            pass
+                logger.info(f"Found {depth_template} prompt: {len(depth_prompt)} chars")
+            else:
+                logger.warning(f"No {depth_template} prompt found in database")
+        except Exception as e:
+            logger.error(f"Error fetching depth prompt: {e}")
+    else:
+        logger.warning("Supabase client not available - using fallbacks")
     
     if not system_prompt:
+        logger.info("Using FALLBACK system prompt")
         system_prompt = FALLBACK_SYSTEM_PROMPT
     if not interviewer_prompt:
+        logger.info(f"Using FALLBACK interviewer prompt for {interviewer_type}")
         interviewer_prompt = FALLBACK_INTERVIEWER_PROMPTS.get(interviewer_type, FALLBACK_INTERVIEWER_PROMPTS["general"])
     if not depth_prompt:
+        logger.info(f"Using FALLBACK depth prompt for {depth_level}")
         depth_prompt = FALLBACK_DEPTH_PROMPTS.get(depth_level, FALLBACK_DEPTH_PROMPTS["full"])
     
-    return f"{system_prompt}\n\n{interviewer_prompt}\n\n{depth_prompt}"
+    combined = f"{system_prompt}\n\n{interviewer_prompt}\n\n{depth_prompt}"
+    logger.info(f"Combined prompt length: {len(combined)} chars")
+    
+    return combined
 
 @router.post("/analyze-job", response_model=AnalyzeJobResponse)
 async def analyze_job(request: AnalyzeJobRequest):
