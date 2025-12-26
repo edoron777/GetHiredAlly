@@ -91,14 +91,17 @@ export function UnderstandJobPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    console.log('Button clicked, isValid:', isValid)
     if (!isValid) return
     
+    console.log('Setting isLoading to true')
     setIsLoading(true)
     setError(null)
     setAnalysis(null)
     setStatusIndex(0)
     setShowSuccess(false)
     
+    console.log('Starting API call...')
     try {
       const response = await fetch('/api/analyze-job', {
         method: 'POST',
@@ -115,13 +118,18 @@ export function UnderstandJobPage() {
       }
       
       const data = await response.json()
+      console.log('API call completed successfully')
       setAnalysis(data.analysis)
     } catch (err) {
+      console.log('API call failed:', err)
       setError(err instanceof Error ? err.message : 'Something went wrong')
     } finally {
+      console.log('Setting isLoading to false')
       setIsLoading(false)
     }
   }
+
+  console.log('Render - isLoading:', isLoading)
 
   return (
     <div className="min-h-[calc(100vh-64px)] p-8" style={{ backgroundColor: '#FAF9F7' }}>
@@ -247,7 +255,11 @@ export function UnderstandJobPage() {
             </div>
 
             {isLoading && (
-              <div className="mt-6 text-center">
+              <div className="mt-6 text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="flex items-center justify-center gap-3 mb-2">
+                  <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                  <span className="font-medium text-blue-800">Analyzing your job description...</span>
+                </div>
                 <p className="text-sm animate-pulse" style={{ color: '#1E3A5F' }}>
                   {statusMessages[statusIndex]}
                 </p>
