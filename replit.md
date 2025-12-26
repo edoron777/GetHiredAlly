@@ -21,8 +21,9 @@ GetHiredAlly is an interview preparation application with job description analys
 │   │   ├── components/   # React components
 │   │   │   ├── ui/       # shadcn/ui components (Button, Input, Label)
 │   │   │   ├── LandingPage.tsx
-│   │   │   └── RegisterPage.tsx
-│   │   ├── lib/          # Utility functions
+│   │   │   ├── RegisterPage.tsx
+│   │   │   └── LoginPage.tsx
+│   │   ├── lib/          # Utility functions (utils.ts, auth.ts)
 │   │   ├── App.tsx       # Main app with routing
 │   │   └── main.tsx      # Entry point
 │   ├── dist/             # Built frontend (production)
@@ -55,11 +56,14 @@ GetHiredAlly is an interview preparation application with job description analys
 - `GET /api/config` - Get configuration info
 - `GET /api/supabase-test` - Test Supabase connection
 - `POST /api/auth/register` - User registration (name, email, password)
+- `POST /api/auth/login` - User login (email, password) - returns token and user data
+- `POST /api/auth/logout` - Logout (token) - invalidates session
+- `GET /api/auth/me?token=...` - Get current user from session token
 
 ## Frontend Routes
 - `/` - Landing page
 - `/register` - User registration
-- `/login` - Login page (placeholder)
+- `/login` - User login
 
 ## Database Tables
 - `user_profiles` - User tier definitions (standard, special, vip)
@@ -74,7 +78,13 @@ GetHiredAlly is an interview preparation application with job description analys
 - **Special**: 3 xray/week, 5 static questions total, 3 dynamic questions/week
 - **VIP**: 20 xray/week, unlimited static questions, 20 dynamic questions/week
 
+## Session Management
+- Sessions stored in `user_sessions` table with hashed tokens
+- Tokens expire after 7 days
+- Client stores token in localStorage via `lib/auth.ts` utilities
+
 ## Recent Changes
+- December 26, 2025: Added user login/logout with session management, bcrypt password verification
 - December 26, 2025: Added user registration with bcrypt password hashing, email validation, React form
 - December 26, 2025: Created Supabase schema with 13 tables for user management and services
 - December 25, 2025: Fixed deployment config - FastAPI now serves built frontend in production
