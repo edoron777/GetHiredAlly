@@ -1,14 +1,16 @@
 import io
+import re
 from datetime import datetime
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from reportlab.lib.pagesizes import letter
+from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
-from reportlab.lib.colors import HexColor
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak
+from reportlab.lib.colors import HexColor, white
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Flowable
 from reportlab.lib.enums import TA_LEFT, TA_CENTER
+from reportlab.lib import colors
 from docx import Document
 from docx.shared import Pt, Inches, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -22,18 +24,140 @@ class DownloadRequest(BaseModel):
     job_title: str = ""
     company_name: str = ""
 
-def add_header_footer(canvas, doc):
+pdf_meta = {}
+
+class HeaderBanner(Flowable):
+    def __init__(self, width, height=60):
+        Flowable.__init__(self)
+        self.width = width
+        self.height = height
+    
+    def draw(self):
+        self.canv.setFillColor(HexColor('#1E3A5F'))
+        self.canv.rect(0, 0, self.width, self.height, fill=1, stroke=0)
+        self.canv.setFillColor(white)
+        self.canv.setFont('Helvetica-Bold', 18)
+        self.canv.drawString(20, self.height - 25, "GetHiredAlly")
+        self.canv.setFillColor(HexColor('#93C5FD'))
+        self.canv.setFont('Helvetica', 12)
+        self.canv.drawString(20, self.height - 45, "Job Analysis Report")
+
+class InfoBox(Flowable):
+    def __init__(self, width, job_title, company_name, height=60):
+        Flowable.__init__(self)
+        self.width = width
+        self.height = height
+        self.job_title = job_title
+        self.company_name = company_name
+    
+    def draw(self):
+        self.canv.setFillColor(HexColor('#F3F4F6'))
+        self.canv.setStrokeColor(HexColor('#E5E7EB'))
+        self.canv.setLineWidth(1)
+        self.canv.roundRect(0, 0, self.width, self.height, 4, fill=1, stroke=1)
+        
+        y_pos = self.height - 18
+        self.canv.setFillColor(HexColor('#000000'))
+        self.canv.setFont('Helvetica-Bold', 10)
+        self.canv.drawString(12, y_pos, f"Job Title: {self.job_title}")
+        
+        if self.company_name:
+            y_pos -= 16
+            self.canv.setFont('Helvetica', 10)
+            self.canv.drawString(12, y_pos, f"Company: {self.company_name}")
+        
+        y_pos -= 16
+        self.canv.setFillColor(HexColor('#6B7280'))
+        self.canv.setFont('Helvetica', 10)
+        self.canv.drawString(12, y_pos, f"Generated: {datetime.now().strftime('%B %d, %Y at %I:%M %p')}")
+
+class SectionDivider(Flowable):
+    def __init__(self, width):
+        Flowable.__init__(self)
+        self.width = width
+        self.height = 1
+    
+    def draw(self):
+        self.canv.setStrokeColor(HexColor('#E5E7EB'))
+        self.canv.setLineWidth(0.5)
+        self.canv.line(0, 0, self.width, 0)
+
+class CalloutBox(Flowable):
+    def __init__(self, width, text, box_type='info'):
+        Flowable.__init__(self)
+        self.width = width
+        self.text = text
+        self.box_type = box_type
+        self.height = max(40, len(text) // 80 * 14 + 30)
+    
+    def draw(self):
+        colors_map = {
+            'red': {'bg': '#FEE2E2', 'border': '#EF4444'},
+            'blue': {'bg': '#DBEAFE', 'border': '#3B82F6'},
+            'green': {'bg': '#D1FAE5', 'border': '#10B981'}
+        }
+        c = colors_map.get(self.box_type, colors_map['blue'])
+        
+        self.canv.setFillColor(HexColor(c['bg']))
+        self.canv.rect(0, 0, self.width, self.height, fill=1, stroke=0)
+        self.canv.setFillColor(HexColor(c['border']))
+        self.canv.rect(0, 0, 4, self.height, fill=1, stroke=0)
+        
+        self.canv.setFillColor(HexColor('#000000'))
+        self.canv.setFont('Helvetica', 10)
+        
+        words = self.text.split()
+        lines = []
+        current_line = ""
+        for word in words:
+            test_line = current_line + " " + word if current_line else word
+            if self.canv.stringWidth(test_line, 'Helvetica', 10) < self.width - 24:
+                current_line = test_line
+            else:
+                lines.append(current_line)
+                current_line = word
+        if current_line:
+            lines.append(current_line)
+        
+        y_pos = self.height - 14
+        for line in lines[:3]:
+            self.canv.drawString(12, y_pos, line)
+            y_pos -= 14
+
+def add_first_page_footer(canvas, doc):
     canvas.saveState()
-    canvas.setFont('Helvetica-Bold', 9)
-    canvas.setFillColor(HexColor('#1E3A5F'))
-    canvas.drawString(inch, letter[1] - 0.5 * inch, "GetHiredAlly - Job Analysis Report")
+    canvas.setStrokeColor(HexColor('#E5E7EB'))
+    canvas.setLineWidth(0.5)
+    canvas.line(50, 45, A4[0] - 50, 45)
     canvas.setFont('Helvetica', 9)
-    canvas.setFillColor(HexColor('#666666'))
-    page_num = f"Page {doc.page}"
-    date_str = datetime.now().strftime("%B %d, %Y")
-    canvas.drawString(inch, 0.5 * inch, date_str)
-    canvas.drawRightString(letter[0] - inch, 0.5 * inch, page_num)
+    canvas.setFillColor(HexColor('#6B7280'))
+    canvas.drawString(50, 30, "Generated by GetHiredAlly")
+    total_pages = pdf_meta.get('total_pages', doc.page)
+    canvas.drawRightString(A4[0] - 50, 30, f"Page {doc.page} of {total_pages}")
     canvas.restoreState()
+
+def add_later_page_header_footer(canvas, doc):
+    canvas.saveState()
+    canvas.setFillColor(HexColor('#1E3A5F'))
+    canvas.rect(0, A4[1] - 35, A4[0], 35, fill=1, stroke=0)
+    canvas.setFillColor(white)
+    canvas.setFont('Helvetica', 10)
+    canvas.drawString(50, A4[1] - 23, "GetHiredAlly - Job Analysis Report")
+    canvas.setStrokeColor(HexColor('#E5E7EB'))
+    canvas.setLineWidth(0.5)
+    canvas.line(50, 45, A4[0] - 50, 45)
+    canvas.setFont('Helvetica', 9)
+    canvas.setFillColor(HexColor('#6B7280'))
+    canvas.drawString(50, 30, "Generated by GetHiredAlly")
+    total_pages = pdf_meta.get('total_pages', doc.page)
+    canvas.drawRightString(A4[0] - 50, 30, f"Page {doc.page} of {total_pages}")
+    canvas.restoreState()
+
+def parse_inline_markdown(text):
+    text = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', text)
+    text = re.sub(r'\*(.+?)\*', r'<i>\1</i>', text)
+    text = re.sub(r'`(.+?)`', r'<font face="Courier" size="9">\1</font>', text)
+    return text
 
 @router.post("/download/pdf")
 async def download_pdf(request: DownloadRequest):
@@ -41,33 +165,30 @@ async def download_pdf(request: DownloadRequest):
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(
             buffer,
-            pagesize=letter,
-            rightMargin=inch,
-            leftMargin=inch,
-            topMargin=inch,
-            bottomMargin=inch
+            pagesize=A4,
+            rightMargin=50,
+            leftMargin=50,
+            topMargin=50,
+            bottomMargin=60
         )
         
+        content_width = A4[0] - 100
+        
         styles = getSampleStyleSheet()
+        
         title_style = ParagraphStyle(
             'CustomTitle',
             parent=styles['Heading1'],
-            fontSize=24,
-            spaceAfter=8,
+            fontSize=26,
+            spaceAfter=12,
+            spaceBefore=16,
             textColor=HexColor('#1E3A5F'),
             fontName='Helvetica-Bold',
             alignment=TA_CENTER
         )
-        subtitle_style = ParagraphStyle(
-            'CustomSubtitle',
-            parent=styles['Normal'],
-            fontSize=14,
-            spaceAfter=24,
-            textColor=HexColor('#666666'),
-            alignment=TA_CENTER
-        )
-        heading_style = ParagraphStyle(
-            'CustomHeading',
+        
+        h2_style = ParagraphStyle(
+            'CustomH2',
             parent=styles['Heading2'],
             fontSize=14,
             spaceBefore=16,
@@ -75,55 +196,108 @@ async def download_pdf(request: DownloadRequest):
             textColor=HexColor('#1E3A5F'),
             fontName='Helvetica-Bold'
         )
+        
+        h3_style = ParagraphStyle(
+            'CustomH3',
+            parent=styles['Heading3'],
+            fontSize=12,
+            spaceBefore=12,
+            spaceAfter=6,
+            textColor=HexColor('#374151'),
+            fontName='Helvetica-Bold'
+        )
+        
         body_style = ParagraphStyle(
             'CustomBody',
             parent=styles['Normal'],
             fontSize=11,
-            leading=16,
-            alignment=TA_LEFT
+            leading=15.4,
+            alignment=TA_LEFT,
+            fontName='Helvetica'
         )
+        
         bullet_style = ParagraphStyle(
             'CustomBullet',
             parent=styles['Normal'],
             fontSize=11,
-            leading=16,
-            leftIndent=20,
-            bulletIndent=10
+            leading=15.4,
+            leftIndent=15,
+            bulletIndent=0,
+            fontName='Helvetica'
         )
         
         story = []
         
-        title_text = request.job_title if request.job_title else "Job Analysis Report"
-        story.append(Paragraph(title_text, title_style))
+        story.append(HeaderBanner(content_width))
+        story.append(Spacer(1, 16))
         
-        if request.company_name:
-            story.append(Paragraph(request.company_name, subtitle_style))
-        else:
-            story.append(Spacer(1, 24))
+        title_text = request.job_title if request.job_title else "Job Analysis Report"
+        info_height = 60 if request.company_name else 44
+        story.append(InfoBox(content_width, title_text, request.company_name, info_height))
+        story.append(Spacer(1, 20))
+        
+        story.append(Paragraph(title_text, title_style))
+        story.append(Spacer(1, 8))
         
         lines = request.report_content.split('\n')
+        skip_separators = True
+        
         for line in lines:
             line = line.strip()
+            
+            if line in ['---', '***', '___']:
+                continue
+            
             if not line:
-                story.append(Spacer(1, 8))
+                story.append(Spacer(1, 6))
+                continue
+            
+            if line.startswith('###'):
+                clean_line = line.lstrip('#').strip()
+                story.append(Paragraph(f"▪ {clean_line}", h3_style))
             elif line.startswith('##'):
                 clean_line = line.lstrip('#').strip()
-                story.append(Paragraph(clean_line, heading_style))
+                story.append(SectionDivider(content_width))
+                story.append(Spacer(1, 8))
+                story.append(Paragraph(f"▪ {clean_line}", h2_style))
             elif line.startswith('#'):
                 clean_line = line.lstrip('#').strip()
-                story.append(Paragraph(clean_line, heading_style))
-            elif line.startswith('- ') or line.startswith('• '):
-                clean_line = line[2:].replace('**', '').replace('*', '')
-                story.append(Paragraph(f"• {clean_line}", bullet_style))
+                story.append(SectionDivider(content_width))
+                story.append(Spacer(1, 8))
+                story.append(Paragraph(clean_line, h2_style))
+            elif line.startswith('- ') or line.startswith('• ') or line.startswith('* '):
+                clean_line = line[2:]
+                clean_line = parse_inline_markdown(clean_line)
+                story.append(Paragraph(f'<font color="#1E3A5F">•</font> {clean_line}', bullet_style))
+            elif '🚩' in line.lower() or 'red flag' in line.lower() or 'warning' in line.lower():
+                clean_line = parse_inline_markdown(line)
+                story.append(Spacer(1, 8))
+                story.append(CalloutBox(content_width, line.replace('**', '').replace('*', ''), 'red'))
+                story.append(Spacer(1, 8))
+            elif 'insight' in line.lower() or 'tip' in line.lower() or 'note:' in line.lower():
+                clean_line = parse_inline_markdown(line)
+                story.append(Spacer(1, 8))
+                story.append(CalloutBox(content_width, line.replace('**', '').replace('*', ''), 'blue'))
+                story.append(Spacer(1, 8))
+            elif 'success' in line.lower() or 'strength' in line.lower() or 'positive' in line.lower():
+                clean_line = parse_inline_markdown(line)
+                story.append(Spacer(1, 8))
+                story.append(CalloutBox(content_width, line.replace('**', '').replace('*', ''), 'green'))
+                story.append(Spacer(1, 8))
             elif line.startswith('**') and line.endswith('**'):
                 clean_line = line.strip('*').strip()
                 story.append(Paragraph(f"<b>{clean_line}</b>", body_style))
             else:
-                clean_line = line.replace('**', '').replace('*', '')
+                clean_line = parse_inline_markdown(line)
                 if clean_line:
                     story.append(Paragraph(clean_line, body_style))
         
-        doc.build(story, onFirstPage=add_header_footer, onLaterPages=add_header_footer)
+        temp_buffer = io.BytesIO()
+        temp_doc = SimpleDocTemplate(temp_buffer, pagesize=A4, rightMargin=50, leftMargin=50, topMargin=50, bottomMargin=60)
+        temp_doc.build(story.copy())
+        pdf_meta['total_pages'] = temp_doc.page
+        
+        doc.build(story, onFirstPage=add_first_page_footer, onLaterPages=add_later_page_header_footer)
         buffer.seek(0)
         
         safe_company = request.company_name.replace(' ', '_').replace('/', '_') if request.company_name else 'Analysis'
