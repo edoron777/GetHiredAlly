@@ -2,9 +2,10 @@ import { useEffect, useState, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { isAuthenticated } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
-import { Zap, Search, Target, ChevronRight, Loader2, ClipboardPaste, Sparkles, CheckCircle, X } from 'lucide-react'
+import { Zap, Search, Target, ChevronRight, Loader2, Sparkles, CheckCircle, X, Users, Code, Briefcase, HelpCircle } from 'lucide-react'
 
 type AnalysisMode = 'quick' | 'deep' | 'max'
+type InterviewerType = 'hr' | 'technical' | 'manager' | 'not_sure'
 
 const statusMessages = [
   "Reading the job description...",
@@ -21,6 +22,42 @@ interface ModeOption {
   description: string
   readTime: string
 }
+
+interface InterviewerOption {
+  id: InterviewerType
+  icon: React.ReactNode
+  label: string
+  sublabel: string
+  fullWidth?: boolean
+}
+
+const interviewerOptions: InterviewerOption[] = [
+  {
+    id: 'hr',
+    icon: <Users className="h-6 w-6" />,
+    label: 'HR / Recruiter',
+    sublabel: 'Culture & screening'
+  },
+  {
+    id: 'technical',
+    icon: <Code className="h-6 w-6" />,
+    label: 'Technical',
+    sublabel: 'Skills & technical'
+  },
+  {
+    id: 'manager',
+    icon: <Briefcase className="h-6 w-6" />,
+    label: 'Hiring Manager',
+    sublabel: 'Team fit & delivery'
+  },
+  {
+    id: 'not_sure',
+    icon: <HelpCircle className="h-6 w-6" />,
+    label: 'Not Sure',
+    sublabel: 'Comprehensive analysis',
+    fullWidth: true
+  }
+]
 
 const modeOptions: ModeOption[] = [
   {
@@ -49,6 +86,7 @@ const modeOptions: ModeOption[] = [
 export function UnderstandJobPage() {
   const navigate = useNavigate()
   const [jobDescription, setJobDescription] = useState('')
+  const [selectedInterviewer, setSelectedInterviewer] = useState<InterviewerType | null>(null)
   const [selectedMode, setSelectedMode] = useState<AnalysisMode>('deep')
   const [isLoading, setIsLoading] = useState(false)
   const [touched, setTouched] = useState(false)
@@ -86,29 +124,28 @@ export function UnderstandJobPage() {
   }, [analysis])
 
   const characterCount = jobDescription.length
-  const isValid = characterCount >= 100
-  const showError = touched && !isValid
+  const isDescriptionValid = characterCount >= 100
+  const isFormValid = isDescriptionValid && selectedInterviewer !== null
+  const showError = touched && !isDescriptionValid
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('Button clicked, isValid:', isValid)
-    if (!isValid) return
+    if (!isFormValid) return
     
-    console.log('Setting isLoading to true')
     setIsLoading(true)
     setError(null)
     setAnalysis(null)
     setStatusIndex(0)
     setShowSuccess(false)
     
-    console.log('Starting API call...')
     try {
       const response = await fetch('/api/analyze-job', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           job_description: jobDescription,
-          mode: selectedMode
+          mode: selectedMode,
+          interviewer_type: selectedInterviewer
         })
       })
       
@@ -118,18 +155,13 @@ export function UnderstandJobPage() {
       }
       
       const data = await response.json()
-      console.log('API call completed successfully')
       setAnalysis(data.analysis)
     } catch (err) {
-      console.log('API call failed:', err)
       setError(err instanceof Error ? err.message : 'Something went wrong')
     } finally {
-      console.log('Setting isLoading to false')
       setIsLoading(false)
     }
   }
-
-  console.log('Render - isLoading:', isLoading)
 
   return (
     <div className="min-h-[calc(100vh-64px)] p-8" style={{ backgroundColor: '#FAF9F7' }}>
@@ -139,33 +171,26 @@ export function UnderstandJobPage() {
             Home
           </Link>
           <ChevronRight className="h-4 w-4" />
-          <span>Analyze Job Description</span>
+          <span>Analyze This Job</span>
         </nav>
 
         <h1 className="text-3xl font-bold mb-1" style={{ color: '#1E3A5F' }}>
-          Analyze Job Description
+          Analyze This Job
         </h1>
-        <p className="text-lg mb-6" style={{ color: '#6B7280' }}>
-          Deep analysis of what they're looking for
+        <p className="text-lg mb-8" style={{ color: '#6B7280' }}>
+          Prepare for your upcoming interview
         </p>
-
-        <div className="bg-[#E8F4FD] rounded-lg p-4 mb-8 border border-[#B8D4E8] flex items-start gap-3">
-          <ClipboardPaste className="h-5 w-5 flex-shrink-0 mt-0.5" style={{ color: '#0EA5E9' }} />
-          <p style={{ color: '#1E3A5F' }}>
-            Paste the job description and I'll help you understand what they're really looking for.
-          </p>
-        </div>
 
         <form onSubmit={handleSubmit}>
           <div className="mb-8">
-            <label className="block text-lg font-bold mb-3" style={{ color: '#333333' }}>
-              Job Description <span className="text-red-500">*</span>
+            <label className="block text-xl font-bold mb-3" style={{ color: '#333333' }}>
+              Job Description
             </label>
             <textarea
               value={jobDescription}
               onChange={(e) => setJobDescription(e.target.value)}
               onBlur={() => setTouched(true)}
-              placeholder="Paste the complete job description here..."
+              placeholder="Paste the job description here..."
               rows={10}
               className={`w-full p-4 rounded-lg border resize-y focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] ${
                 showError ? 'border-red-400' : 'border-[#E5E7EB]'
@@ -184,7 +209,59 @@ export function UnderstandJobPage() {
             </div>
           </div>
 
-          <div className="mt-6 p-6 rounded-lg border border-[#E5E7EB]" style={{ backgroundColor: '#F9FAFB' }}>
+          <div className="mb-8">
+            <label className="block text-xl font-bold mb-4" style={{ color: '#333333' }}>
+              Who will interview you?
+            </label>
+            <div className="grid grid-cols-3 gap-3 mb-3">
+              {interviewerOptions.filter(opt => !opt.fullWidth).map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => setSelectedInterviewer(option.id)}
+                  className={`p-4 rounded-lg text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-2 ${
+                    selectedInterviewer === option.id
+                      ? 'border-2 border-[#1E3A5F] bg-[#E8F0F5] shadow-sm'
+                      : 'border border-[#E5E7EB] bg-white hover:bg-[#F9FAFB] hover:border-[#D1D5DB]'
+                  }`}
+                >
+                  <div style={{ color: selectedInterviewer === option.id ? '#1E3A5F' : '#6B7280' }}>
+                    {option.icon}
+                  </div>
+                  <span className="font-semibold text-sm" style={{ color: '#1E3A5F' }}>
+                    {option.label}
+                  </span>
+                  <span className="text-xs" style={{ color: '#6B7280' }}>
+                    {option.sublabel}
+                  </span>
+                </button>
+              ))}
+            </div>
+            {interviewerOptions.filter(opt => opt.fullWidth).map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => setSelectedInterviewer(option.id)}
+                className={`w-full p-4 rounded-lg text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-2 ${
+                  selectedInterviewer === option.id
+                    ? 'border-2 border-[#1E3A5F] bg-[#E8F0F5] shadow-sm'
+                    : 'border border-[#E5E7EB] bg-white hover:bg-[#F9FAFB] hover:border-[#D1D5DB]'
+                }`}
+              >
+                <div style={{ color: selectedInterviewer === option.id ? '#1E3A5F' : '#6B7280' }}>
+                  {option.icon}
+                </div>
+                <span className="font-semibold text-sm" style={{ color: '#1E3A5F' }}>
+                  {option.label}
+                </span>
+                <span className="text-xs" style={{ color: '#6B7280' }}>
+                  {option.sublabel}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          <div className="p-6 rounded-lg border border-[#E5E7EB]" style={{ backgroundColor: '#F9FAFB' }}>
             <label className="block text-lg font-bold mb-4 text-center" style={{ color: '#333333' }}>
               Analysis Mode
             </label>
@@ -237,7 +314,7 @@ export function UnderstandJobPage() {
               </Button>
               <button
                 type="submit"
-                disabled={!isValid || isLoading}
+                disabled={!isFormValid || isLoading}
                 className="btn-analyze inline-flex items-center justify-center rounded-md font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none px-8 py-3 text-base shadow-md transition-colors"
               >
                 {isLoading ? (
