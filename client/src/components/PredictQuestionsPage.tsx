@@ -460,7 +460,7 @@ export function PredictQuestionsPage() {
                       )}
                     </button>
                     
-                    {isExpanded && (
+                    {isExpanded && depthLevel !== 'questions_only' && (
                       <div style={{ padding: '0 16px 16px', backgroundColor: '#F9FAFB' }}>
                         <div style={{ 
                           backgroundColor: '#FEF3C7', 
@@ -477,7 +477,7 @@ export function PredictQuestionsPage() {
                           </p>
                         </div>
                         
-                        {question.framework && depthLevel !== 'questions_only' && (
+                        {question.framework && (
                           <div style={{ marginBottom: '12px' }}>
                             <p style={{ fontSize: '13px', color: '#6B7280', marginBottom: '4px' }}>Framework:</p>
                             <p style={{ 
