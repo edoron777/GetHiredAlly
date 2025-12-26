@@ -275,7 +275,7 @@ export function UnderstandJobPage() {
                   type="button"
                   onClick={() => setDepthLevel(option.id)}
                   style={{
-                    height: '100px',
+                    height: '120px',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
