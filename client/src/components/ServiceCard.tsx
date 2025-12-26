@@ -47,9 +47,11 @@ export function ServiceCard({
       <p className="text-xs italic mb-2" style={{ color: '#6B7280' }}>
         {subtitle}
       </p>
-      <p className="text-sm" style={{ color: '#374151' }}>
-        {description}
-      </p>
+      {description && (
+        <p className="text-sm" style={{ color: '#374151' }}>
+          {description}
+        </p>
+      )}
       <div className="flex-grow" />
       <button
         disabled={!isActive}

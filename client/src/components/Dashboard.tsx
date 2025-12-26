@@ -23,9 +23,9 @@ export function Dashboard() {
   const services = [
     {
       icon: '🔍',
-      title: 'Understand This Job',
-      subtitle: 'X-Ray Analyzer',
-      description: 'What do they really want?',
+      title: 'Decode Any Job Description',
+      subtitle: 'Turn any job description into interview-winning insights',
+      description: '',
       buttonText: 'Get Started',
       isActive: true,
       navigateTo: '/service/understand-job'
