@@ -6,18 +6,25 @@ import { isAuthenticated } from '@/lib/auth'
 export function LandingPage() {
   const navigate = useNavigate()
   const [healthStatus, setHealthStatus] = useState<string>('checking...')
+  const [isChecking, setIsChecking] = useState(true)
 
   useEffect(() => {
     if (isAuthenticated()) {
-      navigate('/dashboard')
+      navigate('/dashboard', { replace: true })
       return
     }
+    
+    setIsChecking(false)
     
     fetch('/api/health')
       .then(res => res.json())
       .then(data => setHealthStatus(data.status))
       .catch(() => setHealthStatus('error'))
   }, [navigate])
+
+  if (isChecking) {
+    return null
+  }
 
   return (
     <div className="flex flex-col items-center justify-center p-8" style={{ minHeight: 'calc(100vh - 64px)' }}>
