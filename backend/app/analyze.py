@@ -65,7 +65,7 @@ async def analyze_job(request: AnalyzeJobRequest):
         max_tokens_map = {
             "quick": 2048,
             "deep": 4096,
-            "max": 16000
+            "max": 10000
         }
         
         message = anthropic_client.messages.create(
