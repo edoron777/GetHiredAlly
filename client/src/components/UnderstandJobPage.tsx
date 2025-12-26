@@ -8,11 +8,12 @@ type InterviewerType = 'hr' | 'technical' | 'manager' | 'general'
 type DepthLevel = 'ready' | 'full'
 
 const statusMessages = [
-  "Reading the job description...",
-  "Identifying key requirements...",
-  "Analyzing what they really want...",
-  "Preparing your personalized report...",
-  "This may take 1-2 minutes for detailed reports..."
+  "📖 Reading the job description...",
+  "🔍 Analyzing requirements...",
+  "🎯 Identifying key skills...",
+  "⚠️ Checking for red flags...",
+  "💡 Generating insights...",
+  "✨ Preparing your report..."
 ]
 
 interface InterviewerOption {
@@ -670,6 +671,46 @@ export function UnderstandJobPage() {
                 <span style={{ color: '#DC2626', fontSize: '14px' }}>{downloadError}</span>
               </div>
             )}
+            
+            {/* Table of Contents */}
+            <div style={{
+              position: 'sticky',
+              top: 0,
+              background: 'rgba(255,255,255,0.95)',
+              backdropFilter: 'blur(8px)',
+              padding: '16px',
+              borderRadius: '8px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+              border: '1px solid #E5E7EB',
+              marginBottom: '24px',
+              zIndex: 10
+            }}>
+              <h4 style={{ fontWeight: 600, color: '#374151', marginBottom: '8px', fontSize: '14px' }}>
+                📋 Jump to Section
+              </h4>
+              <nav style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {['Summary', 'Requirements', 'Skills', 'Red Flags', 'Questions', 'Prep Tips'].map((section) => (
+                  <a
+                    key={section}
+                    href={`#section-${section.toLowerCase().replace(' ', '-')}`}
+                    style={{
+                      fontSize: '13px',
+                      color: '#2563EB',
+                      padding: '4px 10px',
+                      background: '#EFF6FF',
+                      borderRadius: '4px',
+                      textDecoration: 'none',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = '#DBEAFE'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = '#EFF6FF'; }}
+                  >
+                    {section}
+                  </a>
+                ))}
+              </nav>
+            </div>
+            
             <div 
               className="prose prose-slate max-w-none"
               style={{ 
@@ -690,8 +731,107 @@ export function UnderstandJobPage() {
                 .prose blockquote { border-left: 4px solid #1E3A5F; padding-left: 1em; margin-left: 0; color: #555; font-style: italic; }
                 .prose code { background: #F3F4F6; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
                 .prose hr { border-color: #E5E7EB; margin: 1.5em 0; }
+                
+                /* Callout boxes */
+                .callout-red { background: #FEF2F2; border-left: 4px solid #EF4444; padding: 16px; border-radius: 0 8px 8px 0; margin: 16px 0; }
+                .callout-red .callout-title { color: #DC2626; font-weight: 600; margin-bottom: 4px; }
+                .callout-red p { color: #7F1D1D; margin: 0; }
+                
+                .callout-blue { background: #EFF6FF; border-left: 4px solid #3B82F6; padding: 16px; border-radius: 0 8px 8px 0; margin: 16px 0; }
+                .callout-blue .callout-title { color: #2563EB; font-weight: 600; margin-bottom: 4px; }
+                .callout-blue p { color: #1E40AF; margin: 0; }
+                
+                .callout-green { background: #F0FDF4; border-left: 4px solid #22C55E; padding: 16px; border-radius: 0 8px 8px 0; margin: 16px 0; }
+                .callout-green .callout-title { color: #16A34A; font-weight: 600; margin-bottom: 4px; }
+                .callout-green p { color: #166534; margin: 0; }
+                
+                .callout-yellow { background: #FFFBEB; border-left: 4px solid #F59E0B; padding: 16px; border-radius: 0 8px 8px 0; margin: 16px 0; }
+                .callout-yellow .callout-title { color: #D97706; font-weight: 600; margin-bottom: 4px; }
+                .callout-yellow p { color: #92400E; margin: 0; }
               `}</style>
-              <ReactMarkdown>{analysis}</ReactMarkdown>
+              <ReactMarkdown
+                components={{
+                  h2: ({ children }) => {
+                    const text = String(children).toLowerCase();
+                    const id = `section-${text.replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')}`;
+                    return <h2 id={id}>{children}</h2>;
+                  },
+                  p: ({ children }) => {
+                    const text = String(children);
+                    if (text.toLowerCase().includes('red flag') || text.toLowerCase().includes('warning') || text.includes('⚠️')) {
+                      return (
+                        <div className="callout-red">
+                          <div className="callout-title">⚠️ Red Flag</div>
+                          <p>{children}</p>
+                        </div>
+                      );
+                    }
+                    if (text.toLowerCase().includes('key insight') || text.toLowerCase().includes('note:') || text.includes('💡')) {
+                      return (
+                        <div className="callout-blue">
+                          <div className="callout-title">💡 Key Insight</div>
+                          <p>{children}</p>
+                        </div>
+                      );
+                    }
+                    if (text.toLowerCase().includes('strength') || text.toLowerCase().includes('positive') || text.includes('✅')) {
+                      return (
+                        <div className="callout-green">
+                          <div className="callout-title">✅ Strength</div>
+                          <p>{children}</p>
+                        </div>
+                      );
+                    }
+                    if (text.toLowerCase().includes('tip:') || text.toLowerCase().includes('recommendation')) {
+                      return (
+                        <div className="callout-yellow">
+                          <div className="callout-title">💡 Tip</div>
+                          <p>{children}</p>
+                        </div>
+                      );
+                    }
+                    return <p>{children}</p>;
+                  }
+                }}
+              >
+                {analysis}
+              </ReactMarkdown>
+            </div>
+            
+            {/* Next Step CTA */}
+            <div style={{
+              marginTop: '32px',
+              padding: '24px',
+              background: 'linear-gradient(135deg, #EFF6FF 0%, #E0E7FF 100%)',
+              borderRadius: '16px',
+              border: '1px solid #BFDBFE'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+                <div style={{ fontSize: '32px' }}>🎯</div>
+                <div>
+                  <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#1E293B', marginBottom: '8px' }}>
+                    Ready for the Next Step?
+                  </h3>
+                  <p style={{ color: '#475569', marginBottom: '16px', fontSize: '15px' }}>
+                    Now that you understand what they're looking for, let's predict what questions they'll ask you in the interview.
+                  </p>
+                  <button
+                    disabled
+                    style={{
+                      background: '#D1D5DB',
+                      color: '#6B7280',
+                      padding: '10px 20px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      cursor: 'not-allowed',
+                      fontSize: '14px',
+                      fontWeight: 500
+                    }}
+                  >
+                    🔮 Predict Interview Questions (Coming Soon)
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}
