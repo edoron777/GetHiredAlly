@@ -8,11 +8,13 @@ from supabase import create_client, Client
 from .auth import router as auth_router
 from .analyze import router as analyze_router
 from .downloads import router as downloads_router
+from .questions import router as questions_router
 
 app = FastAPI(title="Backend API")
 app.include_router(auth_router)
 app.include_router(analyze_router)
 app.include_router(downloads_router)
+app.include_router(questions_router)
 
 app.add_middleware(
     CORSMiddleware,

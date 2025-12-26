@@ -1,0 +1,374 @@
+## TASK: Build Interview Questions Predictor - Step 1: Database Setup + Static Questions
+
+### OVERVIEW
+
+Create the database tables and populate with static interview questions for Service 2: "Predict Interview Questions"
+
+### STEP 1: Create Database Tables in Supabase
+
+Run these SQL commands in Supabase SQL editor:
+
+-- Static Questions Database
+CREATE TABLE IF NOT EXISTS interview_questions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    category TEXT NOT NULL,
+    subcategory TEXT,
+    question_text TEXT NOT NULL,
+    why_they_ask TEXT NOT NULL,
+    framework TEXT,
+    answer_structure TEXT,
+    good_elements TEXT[],
+    bad_elements TEXT[],
+    variations TEXT[],
+    interviewer_types TEXT[],
+    depth_levels TEXT[],
+    order_priority INTEGER,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Questions to Ask Interviewer
+CREATE TABLE IF NOT EXISTS questions_to_ask (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    category TEXT NOT NULL,
+    question_text TEXT NOT NULL,
+    why_ask TEXT NOT NULL,
+    what_to_listen_for TEXT,
+    warning_signs TEXT,
+    order_priority INTEGER,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Generated Question Reports (for history)
+CREATE TABLE IF NOT EXISTS question_reports (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES auth.users(id),
+    xray_analysis_id UUID,
+    job_title TEXT,
+    company_name TEXT,
+    interviewer_type TEXT NOT NULL,
+    depth_level TEXT NOT NULL,
+    report_markdown TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Enable RLS
+ALTER TABLE interview_questions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE questions_to_ask ENABLE ROW LEVEL SECURITY;
+ALTER TABLE question_reports ENABLE ROW LEVEL SECURITY;
+
+-- Public read for static questions
+CREATE POLICY "Anyone can read questions" ON interview_questions FOR SELECT USING (true);
+CREATE POLICY "Anyone can read questions_to_ask" ON questions_to_ask FOR SELECT USING (true);
+
+-- User policies for reports
+CREATE POLICY "Users can view own reports" ON question_reports FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own reports" ON question_reports FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+### STEP 2: Create Backend File for Static Questions
+
+Create file: backend/static_questions.py
+
+This file contains all 45 static questions + 11 questions to ask.
+
+Structure each question like this:
+
+INTERVIEW_QUESTIONS = [
+    {
+        "category": "universal",
+        "subcategory": "opening",
+        "question_text": "Tell me about yourself",
+        "why_they_ask": "First impression assessment. They want to see how you communicate, what you prioritize, and whether you understand what's relevant for this role.",
+        "framework": "Present-Past-Future",
+        "answer_structure": "Start with your current role (30 sec), then relevant past experience (30 sec), then why this role is your logical next step (30 sec). Total: 90 seconds max.",
+        "good_elements": ["Professional focus, not personal life", "Specific achievement with metrics", "Clear connection to THIS role", "Concise - under 2 minutes"],
+        "bad_elements": ["Life story from childhood", "Reciting entire resume", "No connection to the job", "Over 2 minutes"],
+        "variations": ["Walk me through your resume", "Give me a brief overview of your background", "How would you describe yourself professionally?"],
+        "interviewer_types": ["hr", "technical", "hiring_manager", "executive"],
+        "depth_levels": ["questions_only", "with_tips", "full_prep"],
+        "order_priority": 1
+    },
+    {
+        "category": "universal",
+        "subcategory": "opening",
+        "question_text": "Why are you interested in this role?",
+        "why_they_ask": "Testing genuine interest and research. They want to know if you understand the role and have specific reasons beyond 'I need a job'.",
+        "framework": "Why Company → Why Role → Why You",
+        "answer_structure": "1) Specific reasons about the company (research-based), 2) How the role fits your skills and goals, 3) What you'll contribute.",
+        "good_elements": ["Company-specific research", "Role alignment with skills", "Enthusiasm without desperation", "What you'll contribute"],
+        "bad_elements": ["Generic answers", "Only mentioning salary/benefits", "No company research", "Stepping stone mentality"],
+        "variations": ["Why do you want to work here?", "What attracted you to this position?", "Why this company?"],
+        "interviewer_types": ["hr", "technical", "hiring_manager", "executive"],
+        "depth_levels": ["questions_only", "with_tips", "full_prep"],
+        "order_priority": 2
+    },
+    {
+        "category": "universal",
+        "subcategory": "motivation",
+        "question_text": "Why are you leaving your current job?",
+        "why_they_ask": "Red flag detection. They want to know if you're running FROM something bad or running TO something better.",
+        "framework": "Positive Pivot",
+        "answer_structure": "Focus on what you're moving TOWARD (growth, new challenges, this opportunity), not what you're escaping. Keep it brief and positive.",
+        "good_elements": ["Focus on growth and opportunity", "Positive tone", "Brief and professional", "Forward-looking"],
+        "bad_elements": ["Badmouthing current employer", "Complaining about coworkers", "Mentioning conflicts", "Being vague or evasive"],
+        "variations": ["What made you start looking for a new job?", "Why do you want to leave your current position?"],
+        "interviewer_types": ["hr", "hiring_manager"],
+        "depth_levels": ["questions_only", "with_tips", "full_prep"],
+        "order_priority": 3
+    },
+    {
+        "category": "self_assessment",
+        "subcategory": "weaknesses",
+        "question_text": "What is your greatest weakness?",
+        "why_they_ask": "Testing self-awareness and growth mindset. They want to see if you can honestly assess yourself and actively work on improvement.",
+        "framework": "Weakness + Context + Improvement Plan",
+        "answer_structure": "1) Name a real but strategic weakness, 2) Give brief context, 3) Explain specific steps you're taking to improve.",
+        "good_elements": ["Genuine weakness (not fake)", "Shows self-awareness", "Concrete improvement plan", "Not a core job requirement"],
+        "bad_elements": ["'I work too hard'", "'I'm a perfectionist'", "Weakness critical to the role", "No improvement plan"],
+        "variations": ["What areas do you need to improve?", "What would your manager say you need to work on?"],
+        "interviewer_types": ["hr", "hiring_manager", "executive"],
+        "depth_levels": ["questions_only", "with_tips", "full_prep"],
+        "order_priority": 4
+    },
+    {
+        "category": "self_assessment",
+        "subcategory": "strengths",
+        "question_text": "What is your greatest strength?",
+        "why_they_ask": "Assessing self-awareness and role fit. They want strengths relevant to THIS job, backed by evidence.",
+        "framework": "Strength + Evidence + Relevance",
+        "answer_structure": "1) State the strength, 2) Give a specific example proving it, 3) Connect it to how it helps in this role.",
+        "good_elements": ["Relevant to the role", "Backed by specific example", "Not arrogant", "Shows impact"],
+        "bad_elements": ["Generic strengths", "No evidence", "Irrelevant to job", "Overconfident"],
+        "variations": ["What do you do better than others?", "What would colleagues say is your superpower?"],
+        "interviewer_types": ["hr", "hiring_manager"],
+        "depth_levels": ["questions_only", "with_tips", "full_prep"],
+        "order_priority": 5
+    },
+    {
+        "category": "behavioral",
+        "subcategory": "teamwork",
+        "question_text": "Tell me about a time you worked with a difficult team member",
+        "why_they_ask": "Testing conflict resolution and interpersonal skills. They want to see how you handle challenging relationships professionally.",
+        "framework": "STAR",
+        "answer_structure": "Situation (brief context), Task (your responsibility), Action (what YOU did - focus here), Result (positive outcome).",
+        "good_elements": ["Specific situation", "Focus on your actions", "Professional approach", "Positive resolution", "What you learned"],
+        "bad_elements": ["Blaming the other person", "No resolution", "Vague or generic", "Making yourself the victim"],
+        "variations": ["Describe a conflict with a coworker", "How do you handle disagreements at work?"],
+        "interviewer_types": ["hr", "hiring_manager", "technical"],
+        "depth_levels": ["questions_only", "with_tips", "full_prep"],
+        "order_priority": 6
+    },
+    {
+        "category": "behavioral",
+        "subcategory": "leadership",
+        "question_text": "Tell me about a time you led a team through a challenging project",
+        "why_they_ask": "Assessing leadership style and effectiveness. Even for non-management roles, they want to see leadership potential.",
+        "framework": "STAR",
+        "answer_structure": "Situation (the challenge), Task (your leadership role), Action (how you led - decisions, motivation, communication), Result (success metrics).",
+        "good_elements": ["Clear leadership actions", "Team motivation", "Obstacle handling", "Measurable results"],
+        "bad_elements": ["Taking all credit", "No specific actions", "Vague outcomes", "Blaming team for issues"],
+        "variations": ["Describe your leadership style", "Give an example of when you motivated others"],
+        "interviewer_types": ["hiring_manager", "executive"],
+        "depth_levels": ["questions_only", "with_tips", "full_prep"],
+        "order_priority": 7
+    },
+    {
+        "category": "behavioral",
+        "subcategory": "problem_solving",
+        "question_text": "Describe a complex problem you solved",
+        "why_they_ask": "Testing analytical thinking and problem-solving approach. They want to understand HOW you think, not just that you solved it.",
+        "framework": "STAR",
+        "answer_structure": "Situation (the problem), Task (why it was complex), Action (your problem-solving process step by step), Result (solution and impact).",
+        "good_elements": ["Clear problem definition", "Logical approach", "Creative thinking", "Measurable outcome"],
+        "bad_elements": ["Vague problem", "No clear process", "Lucky solution", "No measurable result"],
+        "variations": ["How do you approach complex problems?", "Tell me about an analytical challenge you faced"],
+        "interviewer_types": ["technical", "hiring_manager"],
+        "depth_levels": ["questions_only", "with_tips", "full_prep"],
+        "order_priority": 8
+    },
+    {
+        "category": "behavioral",
+        "subcategory": "failure",
+        "question_text": "Tell me about a time you failed",
+        "why_they_ask": "Testing honesty, accountability, and learning ability. They want to see how you handle setbacks and grow from them.",
+        "framework": "STAR + Learning",
+        "answer_structure": "Situation, Task, Action (what went wrong), Result (the failure), PLUS: What you learned and how you've applied that lesson since.",
+        "good_elements": ["Real failure (not fake)", "Taking responsibility", "Clear learning", "Applied the lesson"],
+        "bad_elements": ["Blaming others", "Not a real failure", "No learning shown", "Still making excuses"],
+        "variations": ["What's your biggest professional mistake?", "Tell me about a setback"],
+        "interviewer_types": ["hr", "hiring_manager", "executive"],
+        "depth_levels": ["questions_only", "with_tips", "full_prep"],
+        "order_priority": 9
+    },
+    {
+        "category": "behavioral",
+        "subcategory": "conflict",
+        "question_text": "How do you handle disagreements with your manager?",
+        "why_they_ask": "Testing professional maturity and communication skills. They want someone who can disagree respectfully and professionally.",
+        "framework": "Approach + Example",
+        "answer_structure": "1) Explain your general approach to disagreements, 2) Give a specific example where you disagreed, how you handled it, and the outcome.",
+        "good_elements": ["Respectful approach", "Direct communication", "Focus on the issue not the person", "Positive resolution"],
+        "bad_elements": ["Always agreeing", "Going around manager", "Being confrontational", "Holding grudges"],
+        "variations": ["What do you do when you disagree with a decision?", "How do you give feedback to superiors?"],
+        "interviewer_types": ["hr", "hiring_manager"],
+        "depth_levels": ["questions_only", "with_tips", "full_prep"],
+        "order_priority": 10
+    },
+    {
+        "category": "situational",
+        "subcategory": "priority",
+        "question_text": "How do you prioritize when everything is urgent?",
+        "why_they_ask": "Testing time management and decision-making under pressure. They want to see a systematic approach, not panic.",
+        "framework": "Framework + Example",
+        "answer_structure": "1) Explain your prioritization framework (impact, deadlines, stakeholders), 2) Give a specific example of using it.",
+        "good_elements": ["Clear framework", "Considers impact", "Communication with stakeholders", "Specific example"],
+        "bad_elements": ["No system", "Everything is #1", "Working longer hours as only solution", "No communication"],
+        "variations": ["How do you manage competing deadlines?", "What do you do when you can't do everything?"],
+        "interviewer_types": ["hiring_manager", "technical"],
+        "depth_levels": ["questions_only", "with_tips", "full_prep"],
+        "order_priority": 11
+    },
+    {
+        "category": "cultural_fit",
+        "subcategory": "environment",
+        "question_text": "What type of work environment do you thrive in?",
+        "why_they_ask": "Testing cultural fit. They want to see if your preferred style matches their culture.",
+        "framework": "Honest + Flexible",
+        "answer_structure": "Describe your ideal environment honestly, but show flexibility and ability to adapt. Connect to what you know about their culture.",
+        "good_elements": ["Honest self-awareness", "Shows adaptability", "Research about their culture", "Specific examples"],
+        "bad_elements": ["Generic answer", "Inflexible", "No research", "Contradicts their known culture"],
+        "variations": ["Describe your ideal workplace", "What management style works best for you?"],
+        "interviewer_types": ["hr", "hiring_manager"],
+        "depth_levels": ["questions_only", "with_tips", "full_prep"],
+        "order_priority": 12
+    },
+    {
+        "category": "universal",
+        "subcategory": "closing",
+        "question_text": "Where do you see yourself in 5 years?",
+        "why_they_ask": "Testing ambition and retention risk. They want someone with goals, but who will stay long enough to contribute.",
+        "framework": "Growth Within",
+        "answer_structure": "Show ambition for growth WITHIN the company/field. Connect your goals to opportunities this role provides.",
+        "good_elements": ["Realistic ambition", "Growth focus", "Connected to this role", "Shows commitment"],
+        "bad_elements": ["Their job", "Completely different field", "No ambition", "Unrealistic goals"],
+        "variations": ["What are your career goals?", "Where do you want to be in your career?"],
+        "interviewer_types": ["hr", "hiring_manager", "executive"],
+        "depth_levels": ["questions_only", "with_tips", "full_prep"],
+        "order_priority": 13
+    },
+    {
+        "category": "universal",
+        "subcategory": "closing",
+        "question_text": "Do you have any questions for me?",
+        "why_they_ask": "Testing preparation and genuine interest. This is your chance to show you've thought deeply about the role.",
+        "framework": "Prepared Questions",
+        "answer_structure": "ALWAYS have 2-3 thoughtful questions ready. Focus on role success, team dynamics, or growth opportunities - not salary/benefits.",
+        "good_elements": ["Thoughtful questions", "Shows research", "About the role/team", "Genuine curiosity"],
+        "bad_elements": ["No questions", "Only salary/benefits", "Information easily found online", "Questions that show you weren't listening"],
+        "variations": ["What would you like to know about us?", "Any questions?"],
+        "interviewer_types": ["hr", "technical", "hiring_manager", "executive"],
+        "depth_levels": ["questions_only", "with_tips", "full_prep"],
+        "order_priority": 14
+    }
+]
+
+# Add remaining questions following same structure for:
+# - Universal: motivation (2 more), career (2)
+# - Behavioral: teamwork (2 more), leadership (1 more), problem_solving (2 more), conflict (1 more), failure (1 more), stress (2), adaptability (2)
+# - Situational: judgment (2), ethics (1), priority (1 more)
+# - Self-Assessment: style (2)
+# - Cultural Fit: values (2), management (2)
+
+QUESTIONS_TO_ASK = [
+    {
+        "category": "role",
+        "question_text": "What does success look like in this role in the first 90 days?",
+        "why_ask": "Shows you're focused on delivering results quickly and want clear expectations.",
+        "what_to_listen_for": "Clear metrics and priorities. Vague answers may indicate unclear expectations.",
+        "warning_signs": "If they can't define success, the role may be poorly defined.",
+        "order_priority": 1
+    },
+    {
+        "category": "role",
+        "question_text": "What are the biggest challenges someone in this role would face?",
+        "why_ask": "Shows realistic thinking and preparation. Also helps you understand what you're getting into.",
+        "what_to_listen_for": "Honest challenges you can address. Assess if you can handle them.",
+        "warning_signs": "If everything is 'great' - they may be hiding problems.",
+        "order_priority": 2
+    },
+    {
+        "category": "team",
+        "question_text": "Can you tell me about the team I'd be working with?",
+        "why_ask": "Shows you care about collaboration and team dynamics.",
+        "what_to_listen_for": "Team structure, how long people have been there, collaboration style.",
+        "warning_signs": "High turnover, vague answers about team stability.",
+        "order_priority": 3
+    },
+    {
+        "category": "growth",
+        "question_text": "What growth opportunities exist for someone in this role?",
+        "why_ask": "Shows ambition and long-term thinking.",
+        "what_to_listen_for": "Clear paths for advancement, learning opportunities, mentorship.",
+        "warning_signs": "No clear path or 'we'll see' answers.",
+        "order_priority": 4
+    },
+    {
+        "category": "culture",
+        "question_text": "How would you describe the company culture?",
+        "why_ask": "Shows you care about fit, not just the job.",
+        "what_to_listen_for": "Specific examples, not just buzzwords. Does it match your values?",
+        "warning_signs": "Generic answers, can't give examples, culture sounds toxic.",
+        "order_priority": 5
+    },
+    {
+        "category": "interviewer",
+        "question_text": "What do you enjoy most about working here?",
+        "why_ask": "Personal question that builds rapport and gives honest insight.",
+        "what_to_listen_for": "Genuine enthusiasm, specific things they value.",
+        "warning_signs": "Hesitation, generic answers, or obvious discomfort.",
+        "order_priority": 6
+    }
+]
+
+# Add 5 more questions_to_ask following same structure
+
+### STEP 3: Create Seed Script
+
+Create file: backend/seed_questions.py
+
+This script:
+1. Connects to Supabase
+2. Clears existing questions (optional, for dev)
+3. Inserts all questions from static_questions.py
+4. Logs success/failure
+
+Run this script once to populate the database.
+
+### STEP 4: Create API Endpoint to Fetch Questions
+
+Create endpoint: GET /api/questions/static
+
+Returns all static questions, can be filtered by:
+- category (e.g., "behavioral")
+- subcategory (e.g., "teamwork")
+- interviewer_type (e.g., "hr")
+- depth_level (e.g., "with_tips")
+
+Response format:
+{
+    "questions": [...],
+    "questions_to_ask": [...],
+    "total_count": 45
+}
+
+### SUCCESS CHECKLIST
+
+- [ ] interview_questions table created in Supabase
+- [ ] questions_to_ask table created in Supabase
+- [ ] question_reports table created in Supabase
+- [ ] static_questions.py file created with all questions
+- [ ] seed_questions.py script created and run
+- [ ] API endpoint returns questions successfully
+- [ ] At least 14 questions seeded (we can add more later)
+- [ ] At least 6 questions_to_ask seeded
