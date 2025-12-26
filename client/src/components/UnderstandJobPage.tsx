@@ -41,8 +41,8 @@ const interviewerOptions: InterviewerOption[] = [
   {
     id: 'technical',
     icon: <Code className="h-5 w-5" />,
-    label: 'Technical',
-    sublabel: 'Skills & technical'
+    label: 'Technical Interviewer',
+    sublabel: 'Skills & coding'
   },
   {
     id: 'manager',
@@ -53,8 +53,8 @@ const interviewerOptions: InterviewerOption[] = [
   {
     id: 'general',
     icon: <HelpCircle className="h-5 w-5" />,
-    label: 'Not Sure',
-    sublabel: 'General prep'
+    label: 'Not Sure Yet',
+    sublabel: 'Prepare for all types'
   }
 ]
 
