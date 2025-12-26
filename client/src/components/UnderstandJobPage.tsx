@@ -1,7 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { isAuthenticated } from '@/lib/auth'
-import { Button } from '@/components/ui/button'
 import { ChevronRight, Loader2, Sparkles, CheckCircle, X, Users, Code, Briefcase, HelpCircle, Zap, ClipboardList } from 'lucide-react'
 
 type InterviewerType = 'hr' | 'technical' | 'manager' | 'general'
@@ -319,17 +318,8 @@ export function UnderstandJobPage() {
             ...containerStyle,
             display: 'flex',
             justifyContent: 'center',
-            gap: '16px',
             padding: '16px 24px'
           }}>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => navigate('/dashboard')}
-              className="border-[#E5E7EB] text-[#374151] bg-white hover:bg-[#F9FAFB] px-6 py-3 h-auto"
-            >
-              Cancel
-            </Button>
             <button
               type="submit"
               disabled={isDisabled}
