@@ -26,7 +26,8 @@ def seed_interview_questions():
             return True
         
         for question in INTERVIEW_QUESTIONS:
-            supabase.table('interview_questions').insert(question).execute()
+            question_with_defaults = {**question, "is_active": True}
+            supabase.table('interview_questions').insert(question_with_defaults).execute()
         
         logger.info(f"Successfully seeded {len(INTERVIEW_QUESTIONS)} interview questions")
         return True
@@ -47,7 +48,8 @@ def seed_questions_to_ask():
             return True
         
         for question in QUESTIONS_TO_ASK:
-            supabase.table('questions_to_ask').insert(question).execute()
+            question_with_defaults = {**question, "is_active": True}
+            supabase.table('questions_to_ask').insert(question_with_defaults).execute()
         
         logger.info(f"Successfully seeded {len(QUESTIONS_TO_ASK)} questions to ask")
         return True

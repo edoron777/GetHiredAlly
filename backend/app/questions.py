@@ -35,6 +35,8 @@ async def get_static_questions(
     questions = []
     questions_to_ask = []
     
+    use_static = False
+    
     if supabase:
         try:
             query = supabase.table('interview_questions').select('*').eq('is_active', True)
@@ -46,24 +48,31 @@ async def get_static_questions(
             
             result = query.order('order_priority').execute()
             
-            if result.data:
+            if result.data and len(result.data) > 0:
                 questions = result.data
                 
                 if interviewer_type:
                     questions = [q for q in questions if interviewer_type in q.get('interviewer_types', [])]
                 if depth_level:
                     questions = [q for q in questions if depth_level in q.get('depth_levels', [])]
-            
-            ask_result = supabase.table('questions_to_ask').select('*').eq('is_active', True).order('order_priority').execute()
-            if ask_result.data:
-                questions_to_ask = ask_result.data
+                
+                ask_result = supabase.table('questions_to_ask').select('*').eq('is_active', True).order('order_priority').execute()
+                if ask_result.data and len(ask_result.data) > 0:
+                    questions_to_ask = ask_result.data
+                else:
+                    questions_to_ask = QUESTIONS_TO_ASK
+            else:
+                logger.info("Database tables empty. Using static data.")
+                use_static = True
                 
         except Exception as e:
             logger.warning(f"Error fetching from database: {e}. Using static data.")
-            questions = get_filtered_static_questions(category, subcategory, interviewer_type, depth_level)
-            questions_to_ask = QUESTIONS_TO_ASK
+            use_static = True
     else:
         logger.info("Supabase not available. Using static data.")
+        use_static = True
+    
+    if use_static:
         questions = get_filtered_static_questions(category, subcategory, interviewer_type, depth_level)
         questions_to_ask = QUESTIONS_TO_ASK
     
