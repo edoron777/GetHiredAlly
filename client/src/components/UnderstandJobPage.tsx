@@ -334,27 +334,18 @@ export function UnderstandJobPage() {
               type="submit"
               disabled={isDisabled}
               style={{
-                backgroundColor: isDisabled ? '#1E3A5F' : '#1E3A5F',
-                color: 'white',
-                padding: '12px 32px',
+                backgroundColor: '#1E3A5F',
+                color: '#FFFFFF',
+                padding: '12px 24px',
                 borderRadius: '8px',
-                border: 'none',
-                fontWeight: 600,
-                fontSize: '16px',
+                fontWeight: '600',
                 cursor: isDisabled ? 'not-allowed' : 'pointer',
                 opacity: isDisabled ? 0.5 : 1,
+                border: 'none',
+                fontSize: '16px',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '8px',
-                transition: 'background-color 0.2s'
-              }}
-              onMouseEnter={(e) => {
-                if (!isDisabled) {
-                  e.currentTarget.style.backgroundColor = '#2C4A6F'
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#1E3A5F'
+                gap: '8px'
               }}
             >
               {isLoading ? (
