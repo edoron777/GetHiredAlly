@@ -121,7 +121,7 @@ def send_verification_email(email: str, code: str, name: str | None = None, base
         verify_url = f"{base_url}/verify-email?email={encoded_email}&code={code}" if base_url else f"/verify-email?email={encoded_email}&code={code}"
         
         resend.Emails.send({
-            "from": "GetHiredAlly <onboarding@resend.dev>",
+            "from": "GetHiredAlly <noreply@gethiredally.com>",
             "to": email,
             "subject": "Verify your GetHiredAlly account",
             "html": f"""
