@@ -96,6 +96,8 @@ GetHiredAlly is an interview preparation application with job description analys
 - **Note**: Resend free tier only sends to owner email (edoron777@gmail.com). Verify a domain at resend.com/domains to send to other addresses.
 
 ## Recent Changes
+- December 26, 2025: Enhanced X-Ray analysis with structured JSON output, table of contents, callout boxes (red flags, insights, strengths, tips), and Next Step CTA
+- December 26, 2025: Added job_descriptions and xray_analyses tables for storing analysis results
 - December 26, 2025: Added Claude API integration for job description analysis with 3 modes (quick, deep, max)
 - December 26, 2025: Built X-Ray Analyzer input page with job description textarea, character count, 3 analysis mode cards, and form validation
 - December 26, 2025: Added dashboard with 3 service cards, protected routes

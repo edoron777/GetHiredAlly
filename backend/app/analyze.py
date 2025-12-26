@@ -279,6 +279,10 @@ async def get_combined_prompt(interviewer_type: str, depth_level: str) -> str:
         logger.info(f"Using FALLBACK depth prompt for {depth_level}")
         depth_prompt = FALLBACK_DEPTH_PROMPTS.get(depth_level, FALLBACK_DEPTH_PROMPTS["full"])
     
+    if JSON_STRUCTURE_SUFFIX not in depth_prompt:
+        depth_prompt = depth_prompt + JSON_STRUCTURE_SUFFIX
+        logger.info("Appended JSON_STRUCTURE_SUFFIX to depth prompt")
+    
     combined = f"{system_prompt}\n\n{interviewer_prompt}\n\n{depth_prompt}"
     logger.info(f"Combined prompt length: {len(combined)} chars")
     
