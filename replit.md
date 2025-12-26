@@ -67,6 +67,8 @@ GetHiredAlly is an interview preparation application with job description analys
 - `/register` - User registration
 - `/login` - User login
 - `/verify-email` - Email verification page
+- `/dashboard` - Main dashboard with service cards (protected)
+- `/service/xray` - X-Ray analyzer placeholder (protected)
 
 ## Database Tables
 - `user_profiles` - User tier definitions (standard, special, vip)
