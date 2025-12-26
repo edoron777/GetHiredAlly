@@ -1,0 +1,229 @@
+## TASK: Add JSON Storage + UX Polish to Complete X-Ray Service
+
+### PART A: DATABASE SETUP
+
+#### STEP 1: Create Database Tables in Supabase
+
+Run these SQL commands in your Supabase SQL editor:
+
+-- Store job descriptions
+CREATE TABLE IF NOT EXISTS job_descriptions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES auth.users(id),
+    raw_text TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Store X-Ray analyses with structured output
+CREATE TABLE IF NOT EXISTS xray_analyses (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    job_description_id UUID REFERENCES job_descriptions(id),
+    user_id UUID REFERENCES auth.users(id),
+    depth_level TEXT NOT NULL,
+    interview_focus TEXT,
+    report_markdown TEXT NOT NULL,
+    structured_output JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Enable Row Level Security
+ALTER TABLE job_descriptions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE xray_analyses ENABLE ROW LEVEL SECURITY;
+
+-- Policies for job_descriptions
+CREATE POLICY "Users can view own job descriptions" ON job_descriptions
+    FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own job descriptions" ON job_descriptions
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- Policies for xray_analyses
+CREATE POLICY "Users can view own analyses" ON xray_analyses
+    FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own analyses" ON xray_analyses
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+### PART B: MODIFY CLAUDE API PROMPT
+
+#### STEP 2: Update System Prompt
+
+Add this instruction to the END of the existing Claude system prompt for X-Ray analysis:
+
+---
+
+IMPORTANT: After your markdown report, you MUST include a structured JSON block.
+
+Use this EXACT format:
+
+---JSON_DATA_START---
+{
+  "company_name": "extracted company name or null",
+  "job_title": "extracted job title",
+  "seniority_level": "junior/mid/senior/lead/executive",
+  "key_requirements": ["requirement 1", "requirement 2", "requirement 3"],
+  "technical_skills": [
+    {"skill": "skill name", "importance": "required"},
+    {"skill": "skill name", "importance": "preferred"},
+    {"skill": "skill name", "importance": "nice-to-have"}
+  ],
+  "soft_skills": [
+    {"skill": "skill name", "evidence": "quote or signal from JD"}
+  ],
+  "red_flags": [
+    {"flag": "description of concern", "severity": "low/medium/high"}
+  ],
+  "culture_signals": ["signal 1", "signal 2"],
+  "interview_topics": ["topic 1", "topic 2", "topic 3"],
+  "questions_to_ask": ["question 1", "question 2"]
+}
+---JSON_DATA_END---
+
+---
+
+### PART C: BACKEND PARSING
+
+#### STEP 3: Parse Claude Response
+
+Create a function to separate markdown from JSON:
+
+def parse_analysis_response(response_text):
+    """
+    Splits Claude's response into markdown report and structured JSON.
+    Returns: (markdown_text, structured_data_dict)
+    """
+    if "---JSON_DATA_START---" in response_text:
+        parts = response_text.split("---JSON_DATA_START---")
+        markdown = parts[0].strip()
+        json_str = parts[1].split("---JSON_DATA_END---")[0].strip()
+        try:
+            structured_data = json.loads(json_str)
+        except json.JSONDecodeError:
+            structured_data = None
+    else:
+        markdown = response_text
+        structured_data = None
+    
+    return markdown, structured_data
+
+#### STEP 4: Save to Database
+
+After parsing, save both parts:
+
+1. Save job description to job_descriptions table
+2. Save analysis to xray_analyses table with:
+   - report_markdown = the markdown text
+   - structured_output = the JSON data
+3. Return ONLY the markdown to the frontend (hide JSON from user)
+
+### PART D: UX POLISH
+
+#### STEP 5: Add Notion-Style Callout Boxes
+
+Style special sections with colored callout boxes.
+
+For Red Flags sections:
+<div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-r-lg my-4">
+  <div className="flex items-center">
+    <span className="text-red-600 font-semibold">⚠️ Red Flag</span>
+  </div>
+  <p className="text-red-700 mt-1">{content}</p>
+</div>
+
+For Key Insights:
+<div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg my-4">
+  <div className="flex items-center">
+    <span className="text-blue-600 font-semibold">💡 Key Insight</span>
+  </div>
+  <p className="text-blue-700 mt-1">{content}</p>
+</div>
+
+For Positive/Strengths:
+<div className="bg-green-50 border-l-4 border-green-400 p-4 rounded-r-lg my-4">
+  <div className="flex items-center">
+    <span className="text-green-600 font-semibold">✅ Strength</span>
+  </div>
+  <p className="text-green-700 mt-1">{content}</p>
+</div>
+
+For Tips/Recommendations:
+<div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg my-4">
+  <div className="flex items-center">
+    <span className="text-yellow-600 font-semibold">💡 Tip</span>
+  </div>
+  <p className="text-yellow-700 mt-1">{content}</p>
+</div>
+
+#### STEP 6: Add Table of Contents
+
+At the top of the analysis results, add a sticky navigation:
+
+<div className="sticky top-0 bg-white/95 backdrop-blur p-4 rounded-lg shadow-sm border mb-6 z-10">
+  <h4 className="font-semibold text-gray-700 mb-2">📋 Jump to Section</h4>
+  <nav className="flex flex-wrap gap-2">
+    <a href="#executive-summary" className="text-sm text-blue-600 hover:underline px-2 py-1 bg-blue-50 rounded">Summary</a>
+    <a href="#requirements" className="text-sm text-blue-600 hover:underline px-2 py-1 bg-blue-50 rounded">Requirements</a>
+    <a href="#skills" className="text-sm text-blue-600 hover:underline px-2 py-1 bg-blue-50 rounded">Skills</a>
+    <a href="#red-flags" className="text-sm text-blue-600 hover:underline px-2 py-1 bg-blue-50 rounded">Red Flags</a>
+    <a href="#preparation" className="text-sm text-blue-600 hover:underline px-2 py-1 bg-blue-50 rounded">Prep Tips</a>
+  </nav>
+</div>
+
+Add corresponding id attributes to each section header in the rendered markdown.
+
+#### STEP 7: Add "Next Step" CTA
+
+After the analysis results, add a call-to-action box:
+
+<div className="mt-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
+  <div className="flex items-start gap-4">
+    <div className="text-3xl">🎯</div>
+    <div>
+      <h3 className="text-lg font-semibold text-gray-800 mb-2">
+        Ready for the Next Step?
+      </h3>
+      <p className="text-gray-600 mb-4">
+        Now that you understand what they're looking for, let's predict what questions they'll ask you in the interview.
+      </p>
+      <button 
+        className="bg-gray-300 text-gray-500 px-4 py-2 rounded-lg cursor-not-allowed"
+        disabled
+      >
+        🔮 Predict Interview Questions (Coming Soon)
+      </button>
+    </div>
+  </div>
+</div>
+
+#### STEP 8: Improve Loading State
+
+Replace simple spinner with engaging messages that rotate every 3 seconds:
+
+const loadingMessages = [
+  "📖 Reading the job description...",
+  "🔍 Analyzing requirements...",
+  "🎯 Identifying key skills...",
+  "⚠️ Checking for red flags...",
+  "💡 Generating insights...",
+  "✨ Preparing your report..."
+];
+
+Display these messages with a progress indicator during analysis.
+
+### SUCCESS CHECKLIST
+
+Database:
+- [ ] job_descriptions table created in Supabase
+- [ ] xray_analyses table created in Supabase
+- [ ] RLS policies enabled
+
+Backend:
+- [ ] Claude prompt includes JSON structure request
+- [ ] Response parser separates markdown and JSON
+- [ ] Both saved to database
+- [ ] Only markdown returned to frontend
+
+UX Polish:
+- [ ] Callout boxes for red flags (red), insights (blue), strengths (green)
+- [ ] Table of contents with jump links
+- [ ] "Next Step" CTA at bottom of report
+- [ ] Rotating loading messages during analysis
+- [ ] Clean, professional appearance
