@@ -201,3 +201,39 @@ UNION ALL
 SELECT id, 'questions_static', -1, 'unlimited' FROM user_profiles WHERE profile_name = 'vip'
 UNION ALL
 SELECT id, 'questions_dynamic', 20, 'week' FROM user_profiles WHERE profile_name = 'vip';
+
+-- 9. X-RAY SPECIFIC TABLES (for enhanced storage)
+
+CREATE TABLE IF NOT EXISTS job_descriptions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id),
+    raw_text TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS xray_analyses (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    job_description_id UUID REFERENCES job_descriptions(id),
+    user_id UUID REFERENCES users(id),
+    depth_level TEXT NOT NULL,
+    interviewer_type TEXT,
+    report_markdown TEXT NOT NULL,
+    structured_output JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Enable Row Level Security
+ALTER TABLE job_descriptions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE xray_analyses ENABLE ROW LEVEL SECURITY;
+
+-- Policies for job_descriptions
+CREATE POLICY "Users can view own job descriptions" ON job_descriptions
+    FOR SELECT USING (user_id = (SELECT id FROM users WHERE id = user_id));
+CREATE POLICY "Users can insert own job descriptions" ON job_descriptions
+    FOR INSERT WITH CHECK (user_id IS NOT NULL);
+
+-- Policies for xray_analyses
+CREATE POLICY "Users can view own analyses" ON xray_analyses
+    FOR SELECT USING (user_id = (SELECT id FROM users WHERE id = user_id));
+CREATE POLICY "Users can insert own analyses" ON xray_analyses
+    FOR INSERT WITH CHECK (user_id IS NOT NULL);
