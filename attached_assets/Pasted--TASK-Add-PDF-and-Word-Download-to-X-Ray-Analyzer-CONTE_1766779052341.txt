@@ -1,0 +1,99 @@
+## TASK: Add PDF and Word Download to X-Ray Analyzer
+
+### CONTEXT
+The X-Ray Analyzer service currently displays analysis results on screen with a Copy button. 
+We need to add PDF and Word download functionality.
+
+### REQUIREMENTS
+
+#### 1. Install Dependencies
+```bash
+pip install reportlab python-docx
+```
+
+#### 2. Create Backend Endpoints
+
+**File: Add to your existing API routes**
+
+Create two new endpoints:
+- `POST /api/xray/download/pdf` - Generate and return PDF
+- `POST /api/xray/download/docx` - Generate and return Word document
+
+Both endpoints receive:
+```json
+{
+  "report_content": "markdown string of the analysis",
+  "job_title": "extracted job title",
+  "company_name": "extracted company name"
+}
+```
+
+#### 3. PDF Styling (ReportLab)
+- **Font:** Use Helvetica (built-in)
+- **Title:** 24pt bold, Navy color (#1E3A5F)
+- **H2 Headers:** 16pt bold, Navy color
+- **Body text:** 11pt regular, black
+- **Margins:** 1 inch all sides
+- **Header:** "GetHiredAlly - Job Analysis Report"
+- **Footer:** Page numbers, generation date
+
+#### 4. Word Document Styling (python-docx)
+- **Title:** Heading 1 style
+- **Sections:** Heading 2 style
+- **Body:** Normal style, 11pt
+- **Include:** Company name and job title at top
+
+#### 5. Frontend: Add Download Buttons
+
+In the Analysis Results section, add two buttons next to the existing Copy button:
+```jsx
+<div className="flex gap-2">
+  <Button variant="outline" onClick={handleCopy}>
+    <Copy className="h-4 w-4 mr-2" />
+    Copy
+  </Button>
+  <Button variant="outline" onClick={handleDownloadPDF}>
+    <FileDown className="h-4 w-4 mr-2" />
+    PDF
+  </Button>
+  <Button variant="outline" onClick={handleDownloadWord}>
+    <FileText className="h-4 w-4 mr-2" />
+    Word
+  </Button>
+</div>
+```
+
+#### 6. Download Handler Functions
+```javascript
+const handleDownloadPDF = async () => {
+  setDownloading('pdf');
+  try {
+    const response = await fetch('/api/xray/download/pdf', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        report_content: analysisResult,
+        job_title: extractedJobTitle,
+        company_name: extractedCompanyName
+      })
+    });
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `XRay_Analysis_${extractedCompanyName || 'Report'}.pdf`;
+    a.click();
+  } finally {
+    setDownloading(null);
+  }
+};
+```
+
+Similar function for Word download with .docx extension.
+
+### SUCCESS CRITERIA
+- [ ] PDF downloads with proper formatting
+- [ ] Word document downloads and is editable
+- [ ] Buttons show loading state during generation
+- [ ] Files include company name in filename
+- [ ] Error handling for failed downloads

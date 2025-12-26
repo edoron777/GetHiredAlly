@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { isAuthenticated } from '@/lib/auth'
-import { Loader2, Sparkles, CheckCircle, X, Users, Code, Briefcase, HelpCircle, Zap, ClipboardList } from 'lucide-react'
+import { Loader2, Sparkles, CheckCircle, X, Users, Code, Briefcase, HelpCircle, Zap, ClipboardList, Download, FileText } from 'lucide-react'
 
 type InterviewerType = 'hr' | 'technical' | 'manager' | 'general'
 type DepthLevel = 'ready' | 'full'
@@ -463,33 +463,115 @@ export function UnderstandJobPage() {
               <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#1E3A5F' }}>
                 Analysis Results
               </h2>
-              <button
-                type="button"
-                onClick={async () => {
-                  if (analysis) {
-                    await navigator.clipboard.writeText(analysis);
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 2000);
-                  }
-                }}
-                style={{
-                  background: 'none',
-                  border: '1px solid #E5E7EB',
-                  borderRadius: '6px',
-                  padding: '6px 12px',
-                  fontSize: '13px',
-                  color: copied ? '#10B981' : '#6B7280',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  transition: 'all 0.2s'
-                }}
-                onMouseEnter={(e) => { if (!copied) e.currentTarget.style.color = '#1E3A5F'; e.currentTarget.style.borderColor = '#1E3A5F'; }}
-                onMouseLeave={(e) => { if (!copied) e.currentTarget.style.color = '#6B7280'; e.currentTarget.style.borderColor = '#E5E7EB'; }}
-              >
-                {copied ? '✓ Copied!' : '📋 Copy'}
-              </button>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (analysis) {
+                      await navigator.clipboard.writeText(analysis);
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 2000);
+                    }
+                  }}
+                  style={{
+                    background: 'none',
+                    border: '1px solid #E5E7EB',
+                    borderRadius: '6px',
+                    padding: '6px 12px',
+                    fontSize: '13px',
+                    color: copied ? '#10B981' : '#6B7280',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => { if (!copied) e.currentTarget.style.color = '#1E3A5F'; e.currentTarget.style.borderColor = '#1E3A5F'; }}
+                  onMouseLeave={(e) => { if (!copied) e.currentTarget.style.color = '#6B7280'; e.currentTarget.style.borderColor = '#E5E7EB'; }}
+                >
+                  {copied ? '✓ Copied!' : '📋 Copy'}
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (analysis) {
+                      try {
+                        const response = await fetch('/api/download/pdf', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ content: analysis, filename: 'xray-analysis' })
+                        });
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'xray-analysis.pdf';
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                      } catch (err) {
+                        console.error('PDF download failed:', err);
+                      }
+                    }
+                  }}
+                  style={{
+                    background: 'none',
+                    border: '1px solid #E5E7EB',
+                    borderRadius: '6px',
+                    padding: '6px 12px',
+                    fontSize: '13px',
+                    color: '#6B7280',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = '#DC2626'; e.currentTarget.style.borderColor = '#DC2626'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = '#6B7280'; e.currentTarget.style.borderColor = '#E5E7EB'; }}
+                >
+                  <Download className="h-4 w-4" /> PDF
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (analysis) {
+                      try {
+                        const response = await fetch('/api/download/docx', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ content: analysis, filename: 'xray-analysis' })
+                        });
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'xray-analysis.docx';
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                      } catch (err) {
+                        console.error('Word download failed:', err);
+                      }
+                    }
+                  }}
+                  style={{
+                    background: 'none',
+                    border: '1px solid #E5E7EB',
+                    borderRadius: '6px',
+                    padding: '6px 12px',
+                    fontSize: '13px',
+                    color: '#6B7280',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = '#2563EB'; e.currentTarget.style.borderColor = '#2563EB'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = '#6B7280'; e.currentTarget.style.borderColor = '#E5E7EB'; }}
+                >
+                  <FileText className="h-4 w-4" /> Word
+                </button>
+              </div>
             </div>
             <div style={{ color: '#333333' }}>
               <pre style={{ 
