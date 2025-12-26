@@ -330,28 +330,45 @@ export function UnderstandJobPage() {
             >
               Cancel
             </Button>
-            <Button
+            <button
               type="submit"
               disabled={isDisabled}
-              className="px-8 py-3 h-auto text-base font-semibold"
               style={{
-                backgroundColor: '#1E3A5F',
+                backgroundColor: isDisabled ? '#1E3A5F' : '#1E3A5F',
                 color: 'white',
-                opacity: isDisabled ? 0.5 : 1
+                padding: '12px 32px',
+                borderRadius: '8px',
+                border: 'none',
+                fontWeight: 600,
+                fontSize: '16px',
+                cursor: isDisabled ? 'not-allowed' : 'pointer',
+                opacity: isDisabled ? 0.5 : 1,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'background-color 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                if (!isDisabled) {
+                  e.currentTarget.style.backgroundColor = '#2C4A6F'
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#1E3A5F'
               }}
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                   Analyzing...
                 </>
               ) : (
                 <>
-                  <Sparkles className="mr-2 h-4 w-4" />
+                  <Sparkles className="h-4 w-4" />
                   Generate My Prep Report
                 </>
               )}
-            </Button>
+            </button>
           </div>
 
           {isLoading && (
