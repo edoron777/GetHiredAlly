@@ -13,6 +13,19 @@ def get_supabase_client() -> Client | None:
         return create_client(url, key)
     return None
 
+INTERVIEW_QUESTIONS_COLUMNS = [
+    "category", "subcategory", "question_text", "why_they_ask", 
+    "framework", "answer_structure", "good_elements", "bad_elements",
+    "variations", "depth_levels", "order_priority", "is_active"
+]
+
+QUESTIONS_TO_ASK_COLUMNS = [
+    "category", "question_text", "order_priority", "is_active", "purpose", "why_to_ask"
+]
+
+def filter_columns(data, allowed_columns):
+    return {k: v for k, v in data.items() if k in allowed_columns}
+
 def seed_interview_questions():
     supabase = get_supabase_client()
     if not supabase:
@@ -26,8 +39,9 @@ def seed_interview_questions():
             return True
         
         for question in INTERVIEW_QUESTIONS:
-            question_with_defaults = {**question, "is_active": True}
-            supabase.table('interview_questions').insert(question_with_defaults).execute()
+            question_data = filter_columns(question, INTERVIEW_QUESTIONS_COLUMNS)
+            question_data["is_active"] = True
+            supabase.table('interview_questions').insert(question_data).execute()
         
         logger.info(f"Successfully seeded {len(INTERVIEW_QUESTIONS)} interview questions")
         return True
@@ -48,8 +62,12 @@ def seed_questions_to_ask():
             return True
         
         for question in QUESTIONS_TO_ASK:
-            question_with_defaults = {**question, "is_active": True}
-            supabase.table('questions_to_ask').insert(question_with_defaults).execute()
+            question_data = filter_columns(question, QUESTIONS_TO_ASK_COLUMNS)
+            question_data["is_active"] = True
+            if "why_ask" in question:
+                question_data["why_to_ask"] = question["why_ask"]
+            question_data["purpose"] = question.get("category", "general")
+            supabase.table('questions_to_ask').insert(question_data).execute()
         
         logger.info(f"Successfully seeded {len(QUESTIONS_TO_ASK)} questions to ask")
         return True
