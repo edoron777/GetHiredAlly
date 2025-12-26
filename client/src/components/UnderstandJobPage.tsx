@@ -351,7 +351,7 @@ export function UnderstandJobPage() {
               {isLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Analyzing...
+                  Generating...
                 </>
               ) : (
                 <>
@@ -366,33 +366,81 @@ export function UnderstandJobPage() {
             <div style={{
               ...containerStyle,
               textAlign: 'center',
-              backgroundColor: '#EFF6FF',
-              border: '1px solid #BFDBFE'
+              backgroundColor: '#F0F9FF',
+              border: '2px solid #0EA5E9',
+              padding: '48px 24px'
             }}>
-              <div className="flex items-center justify-center gap-3 mb-2">
-                <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-                <span style={{ fontWeight: 500, color: '#1E40AF' }}>Analyzing your job description...</span>
+              <div style={{ marginBottom: '24px' }}>
+                <Loader2 
+                  className="animate-spin" 
+                  style={{ 
+                    width: '48px', 
+                    height: '48px', 
+                    color: '#0EA5E9',
+                    margin: '0 auto'
+                  }} 
+                />
               </div>
-              <p className="animate-pulse" style={{ fontSize: '14px', color: '#1E3A5F' }}>
+              <h3 style={{ 
+                fontSize: '20px', 
+                fontWeight: 600, 
+                color: '#1E3A5F', 
+                marginBottom: '12px' 
+              }}>
+                Generating Your Prep Report
+              </h3>
+              <p style={{ 
+                fontSize: '16px', 
+                color: '#0369A1',
+                marginBottom: '8px'
+              }}>
                 {statusMessages[statusIndex]}
+              </p>
+              <p style={{ fontSize: '13px', color: '#6B7280' }}>
+                This usually takes 15-30 seconds
               </p>
             </div>
           )}
         </form>
 
         {showSuccess && (
-          <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-green-50 border border-green-200 rounded-lg px-6 py-3 shadow-lg flex items-center gap-3 animate-slide-down">
-            <CheckCircle className="h-5 w-5 text-green-600" />
-            <span className="text-green-800 font-medium">Your analysis is ready!</span>
-            <button onClick={() => setShowSuccess(false)} className="ml-2 text-green-600 hover:text-green-800">
-              <X className="h-4 w-4" />
+          <div 
+            className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 shadow-lg flex items-center gap-3"
+            style={{
+              backgroundColor: '#10B981',
+              color: 'white',
+              padding: '16px 24px',
+              borderRadius: '8px',
+              fontSize: '16px',
+              fontWeight: 500
+            }}
+          >
+            <CheckCircle className="h-6 w-6" />
+            <span>Your prep report is ready!</span>
+            <button onClick={() => setShowSuccess(false)} className="ml-2 hover:opacity-80">
+              <X className="h-5 w-5" />
             </button>
           </div>
         )}
 
         {error && (
-          <div style={{ ...containerStyle, backgroundColor: '#FEF2F2', border: '1px solid #FECACA' }}>
-            <p style={{ color: '#DC2626' }}>{error}</p>
+          <div 
+            style={{ 
+              ...containerStyle, 
+              backgroundColor: '#FEF2F2', 
+              border: '2px solid #EF4444',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px'
+            }}
+          >
+            <X className="h-6 w-6" style={{ color: '#EF4444', flexShrink: 0 }} />
+            <div>
+              <p style={{ color: '#DC2626', fontWeight: 600, marginBottom: '4px' }}>
+                Something went wrong. Please try again.
+              </p>
+              <p style={{ color: '#9CA3AF', fontSize: '13px' }}>{error}</p>
+            </div>
           </div>
         )}
 
