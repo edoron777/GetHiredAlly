@@ -12,21 +12,21 @@ export function LandingPage() {
   }, [])
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-8">
+    <div className="flex flex-col items-center justify-center p-8" style={{ minHeight: 'calc(100vh - 64px)' }}>
       <div className="max-w-2xl text-center space-y-8">
-        <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">
-          Welcome to Your App
+        <h1 className="text-4xl font-bold tracking-tight sm:text-6xl" style={{ color: '#1E3A5F' }}>
+          Your Interview Success Starts Here
         </h1>
-        <p className="text-lg text-[hsl(var(--muted-foreground))]">
-          Built with React, Vite, Tailwind CSS, shadcn/ui, and FastAPI
+        <p className="text-lg" style={{ color: '#333333' }}>
+          Decode job descriptions, prepare for tough questions, and craft winning answers with GetHiredAlly
         </p>
         <div className="flex gap-4 justify-center">
-          <Button size="lg">Get Started</Button>
+          <Button size="lg" style={{ backgroundColor: '#1E3A5F' }}>Get Started</Button>
           <Button variant="outline" size="lg">Learn More</Button>
         </div>
-        <div className="mt-8 p-4 rounded-lg bg-[hsl(var(--secondary))]">
-          <p className="text-sm text-[hsl(var(--muted-foreground))]">
-            API Health Status: <span className="font-semibold text-[hsl(var(--foreground))]">{healthStatus}</span>
+        <div className="mt-8 p-4 rounded-lg bg-white shadow-sm">
+          <p className="text-sm" style={{ color: '#333333' }}>
+            API Health Status: <span className="font-semibold" style={{ color: '#1E3A5F' }}>{healthStatus}</span>
           </p>
         </div>
       </div>

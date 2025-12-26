@@ -1,16 +1,28 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { Navbar } from '@/components/Navbar'
 import { LandingPage } from '@/components/LandingPage'
 import { RegisterPage } from '@/components/RegisterPage'
 import { LoginPage } from '@/components/LoginPage'
 
+function Layout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="min-h-screen" style={{ backgroundColor: '#FAF9F7' }}>
+      <Navbar />
+      {children}
+    </div>
+  )
+}
+
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/login" element={<LoginPage />} />
-      </Routes>
+      <Layout>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/login" element={<LoginPage />} />
+        </Routes>
+      </Layout>
     </BrowserRouter>
   )
 }

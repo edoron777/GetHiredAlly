@@ -105,7 +105,7 @@ export function RegisterPage() {
     formData.confirmPassword === formData.password
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: '#FAF9F7' }}>
+    <div className="flex items-center justify-center p-4" style={{ minHeight: 'calc(100vh - 64px)' }}>
       <div className="w-full max-w-md">
         <div className="bg-white rounded-xl shadow-lg p-8">
           <div className="text-center mb-8">
