@@ -95,6 +95,7 @@ GetHiredAlly is an interview preparation application with job description analys
 - **Note**: Resend free tier only sends to owner email (edoron777@gmail.com). Verify a domain at resend.com/domains to send to other addresses.
 
 ## Recent Changes
+- December 26, 2025: Added dashboard with 3 service cards, protected routes, and XRay placeholder page
 - December 26, 2025: Added email verification with Resend API, 6-digit codes, and verification page
 - December 26, 2025: Added user login/logout with session management, bcrypt password verification
 - December 26, 2025: Added user registration with bcrypt password hashing, email validation, React form
