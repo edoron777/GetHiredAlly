@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { isAuthenticated } from '@/lib/auth'
 import { Loader2, Sparkles, CheckCircle, X, Users, Code, Briefcase, HelpCircle, Zap, ClipboardList, Download, FileText } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
 
 type InterviewerType = 'hr' | 'technical' | 'manager' | 'general'
 type DepthLevel = 'ready' | 'full'
@@ -617,15 +618,28 @@ export function UnderstandJobPage() {
                 <span style={{ color: '#DC2626', fontSize: '14px' }}>{downloadError}</span>
               </div>
             )}
-            <div style={{ color: '#333333' }}>
-              <pre style={{ 
-                whiteSpace: 'pre-wrap', 
-                fontFamily: 'inherit', 
-                fontSize: '14px', 
-                lineHeight: '1.6' 
-              }}>
-                {analysis}
-              </pre>
+            <div 
+              className="prose prose-slate max-w-none"
+              style={{ 
+                color: '#333333',
+                fontSize: '15px',
+                lineHeight: '1.7'
+              }}
+            >
+              <style>{`
+                .prose h1, .prose h2, .prose h3 { color: #1E3A5F; font-weight: 700; margin-top: 1.5em; margin-bottom: 0.5em; }
+                .prose h1 { font-size: 1.5em; }
+                .prose h2 { font-size: 1.25em; }
+                .prose h3 { font-size: 1.1em; }
+                .prose p { margin-bottom: 0.75em; }
+                .prose ul, .prose ol { padding-left: 1.5em; margin-bottom: 1em; }
+                .prose li { margin-bottom: 0.25em; }
+                .prose strong { color: #1E3A5F; font-weight: 600; }
+                .prose blockquote { border-left: 4px solid #1E3A5F; padding-left: 1em; margin-left: 0; color: #555; font-style: italic; }
+                .prose code { background: #F3F4F6; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+                .prose hr { border-color: #E5E7EB; margin: 1.5em 0; }
+              `}</style>
+              <ReactMarkdown>{analysis}</ReactMarkdown>
             </div>
           </div>
         )}
