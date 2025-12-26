@@ -108,7 +108,7 @@ export function PredictQuestionsPage() {
 
   useEffect(() => {
     fetchQuestions()
-  }, [selectedInterviewer, depthLevel])
+  }, [selectedInterviewer])
 
   const fetchQuestions = async () => {
     setIsLoading(true)
@@ -119,7 +119,6 @@ export function PredictQuestionsPage() {
       if (selectedInterviewer !== 'general') {
         params.append('interviewer_type', selectedInterviewer)
       }
-      params.append('depth_level', depthLevel)
       
       const response = await fetch(`/api/questions/static?${params.toString()}`)
       if (!response.ok) throw new Error('Failed to fetch questions')

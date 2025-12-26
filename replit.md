@@ -73,6 +73,7 @@ GetHiredAlly is an interview preparation application with job description analys
 - `/verify-email` - Email verification page
 - `/dashboard` - Main dashboard with service cards (protected)
 - `/service/understand-job` - X-Ray analyzer input form (protected)
+- `/service/predict-questions` - Interview questions predictor with filters (protected)
 
 ## Database Tables
 - `user_profiles` - User tier definitions (standard, special, vip)
@@ -99,6 +100,7 @@ GetHiredAlly is an interview preparation application with job description analys
 - **Note**: Resend free tier only sends to owner email (edoron777@gmail.com). Verify a domain at resend.com/domains to send to other addresses.
 
 ## Recent Changes
+- December 26, 2025: Built Interview Questions Predictor UI page with interviewer type filters (HR, Technical, Hiring Manager, Not Sure), depth level selectors (Questions Only, With Tips, Full Prep), expandable question cards, and PDF/Word download
 - December 26, 2025: Added Interview Questions Predictor backend - 20 static questions, 10 questions to ask, API endpoints with filtering
 - December 26, 2025: Enhanced X-Ray analysis with structured JSON output, table of contents, callout boxes (red flags, insights, strengths, tips), and Next Step CTA
 - December 26, 2025: Added job_descriptions and xray_analyses tables for storing analysis results
