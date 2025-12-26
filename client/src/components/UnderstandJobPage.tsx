@@ -1,10 +1,18 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { isAuthenticated } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
-import { Zap, Search, Target, ChevronRight, Loader2, ClipboardPaste, Sparkles } from 'lucide-react'
+import { Zap, Search, Target, ChevronRight, Loader2, ClipboardPaste, Sparkles, CheckCircle, X } from 'lucide-react'
 
 type AnalysisMode = 'quick' | 'deep' | 'max'
+
+const statusMessages = [
+  "Reading the job description...",
+  "Identifying key requirements...",
+  "Analyzing company culture signals...",
+  "Detecting hidden expectations...",
+  "Preparing your personalized report..."
+]
 
 interface ModeOption {
   id: AnalysisMode
@@ -46,12 +54,36 @@ export function UnderstandJobPage() {
   const [touched, setTouched] = useState(false)
   const [analysis, setAnalysis] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [statusIndex, setStatusIndex] = useState(0)
+  const [showSuccess, setShowSuccess] = useState(false)
+  const [showHighlight, setShowHighlight] = useState(false)
+  const resultsRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!isAuthenticated()) {
       navigate('/login')
     }
   }, [navigate])
+
+  useEffect(() => {
+    if (!isLoading) return
+    const interval = setInterval(() => {
+      setStatusIndex((prev) => (prev + 1) % statusMessages.length)
+    }, 3500)
+    return () => clearInterval(interval)
+  }, [isLoading])
+
+  useEffect(() => {
+    if (analysis && resultsRef.current) {
+      setShowSuccess(true)
+      setShowHighlight(true)
+      setTimeout(() => {
+        resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 100)
+      setTimeout(() => setShowHighlight(false), 2000)
+      setTimeout(() => setShowSuccess(false), 5000)
+    }
+  }, [analysis])
 
   const characterCount = jobDescription.length
   const isValid = characterCount >= 100
@@ -64,6 +96,8 @@ export function UnderstandJobPage() {
     setIsLoading(true)
     setError(null)
     setAnalysis(null)
+    setStatusIndex(0)
+    setShowSuccess(false)
     
     try {
       const response = await fetch('/api/analyze-job', {
@@ -211,8 +245,26 @@ export function UnderstandJobPage() {
                 )}
               </button>
             </div>
+
+            {isLoading && (
+              <div className="mt-6 text-center">
+                <p className="text-sm animate-pulse" style={{ color: '#1E3A5F' }}>
+                  {statusMessages[statusIndex]}
+                </p>
+              </div>
+            )}
           </div>
         </form>
+
+        {showSuccess && (
+          <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-green-50 border border-green-200 rounded-lg px-6 py-3 shadow-lg flex items-center gap-3 animate-slide-down">
+            <CheckCircle className="h-5 w-5 text-green-600" />
+            <span className="text-green-800 font-medium">Your analysis is ready!</span>
+            <button onClick={() => setShowSuccess(false)} className="ml-2 text-green-600 hover:text-green-800">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        )}
 
         {error && (
           <div className="mt-8 p-4 rounded-lg bg-red-50 border border-red-200">
@@ -221,7 +273,14 @@ export function UnderstandJobPage() {
         )}
 
         {analysis && (
-          <div className="mt-8 p-6 rounded-lg bg-white border border-[#E5E7EB] shadow-sm">
+          <div 
+            ref={resultsRef}
+            className={`mt-8 p-6 rounded-lg bg-white border shadow-sm transition-all duration-500 ${
+              showHighlight 
+                ? 'border-[#1E5A85] ring-2 ring-[#1E5A85]/20 shadow-lg' 
+                : 'border-[#E5E7EB]'
+            }`}
+          >
             <h2 className="text-xl font-bold mb-4" style={{ color: '#1E3A5F' }}>
               Analysis Results
             </h2>
