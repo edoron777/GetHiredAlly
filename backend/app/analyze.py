@@ -38,17 +38,30 @@ def get_mode_instructions(mode: str) -> str:
         return "\n\nProvide an EXHAUSTIVE analysis leaving no stone unturned. Include:\n- Detailed breakdown of every requirement\n- Hidden meanings and implications in the language used\n- Salary negotiation insights based on the role level\n- Questions to ask in the interview\n- Potential career growth paths\n- Industry-specific insights\n- How to stand out from other candidates\n\nBe extremely thorough and comprehensive (2500+ words)."
     return ""
 
+FALLBACK_SYSTEM_PROMPT = """You are an expert career coach and interview preparation specialist. Your job is to analyze job descriptions and help candidates prepare for interviews.
+
+When analyzing a job description, focus on:
+1. **Key Requirements**: Technical skills, experience levels, and qualifications
+2. **Hidden Expectations**: Reading between the lines of what they really want
+3. **Company Culture**: What the language tells us about the work environment
+4. **Red Flags**: Any concerning patterns or unrealistic expectations
+5. **Interview Prep**: Likely questions and talking points based on the role
+6. **Keywords to Use**: Important terms to include in your responses
+
+Be specific, actionable, and helpful. Your analysis should give the candidate a real advantage in their interview preparation."""
+
 async def get_system_prompt_from_db(mode: str) -> str:
     supabase = get_supabase_client()
-    if not supabase:
-        raise HTTPException(status_code=500, detail="Database connection not available")
+    base_prompt = FALLBACK_SYSTEM_PROMPT
     
-    result = supabase.table('prompt_templates').select('content').eq('service_name', 'xray_analyzer').eq('template_type', 'system').single().execute()
+    if supabase:
+        try:
+            result = supabase.table('prompt_templates').select('content').eq('service_name', 'xray_analyzer').eq('template_type', 'system').single().execute()
+            if result.data and result.data.get('content'):
+                base_prompt = result.data['content']
+        except Exception:
+            pass
     
-    if not result.data:
-        raise HTTPException(status_code=500, detail="System prompt not found in database")
-    
-    base_prompt = result.data['content']
     return base_prompt + get_mode_instructions(mode)
 
 @router.post("/analyze-job", response_model=AnalyzeJobResponse)
