@@ -85,6 +85,7 @@ export function UnderstandJobPage() {
   const [statusIndex, setStatusIndex] = useState(0)
   const [showSuccess, setShowSuccess] = useState(false)
   const [showHighlight, setShowHighlight] = useState(false)
+  const [copied, setCopied] = useState(false)
   const resultsRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -458,9 +459,38 @@ export function UnderstandJobPage() {
               boxShadow: showHighlight ? '0 0 0 4px rgba(30, 90, 133, 0.1)' : 'none'
             }}
           >
-            <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#1E3A5F', marginBottom: '16px' }}>
-              Analysis Results
-            </h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#1E3A5F' }}>
+                Analysis Results
+              </h2>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (analysis) {
+                    await navigator.clipboard.writeText(analysis);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  }
+                }}
+                style={{
+                  background: 'none',
+                  border: '1px solid #E5E7EB',
+                  borderRadius: '6px',
+                  padding: '6px 12px',
+                  fontSize: '13px',
+                  color: copied ? '#10B981' : '#6B7280',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => { if (!copied) e.currentTarget.style.color = '#1E3A5F'; e.currentTarget.style.borderColor = '#1E3A5F'; }}
+                onMouseLeave={(e) => { if (!copied) e.currentTarget.style.color = '#6B7280'; e.currentTarget.style.borderColor = '#E5E7EB'; }}
+              >
+                {copied ? '✓ Copied!' : '📋 Copy'}
+              </button>
+            </div>
             <div style={{ color: '#333333' }}>
               <pre style={{ 
                 whiteSpace: 'pre-wrap', 
