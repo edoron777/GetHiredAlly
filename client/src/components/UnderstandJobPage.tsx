@@ -8,11 +8,11 @@ type InterviewerType = 'hr' | 'technical' | 'manager' | 'general'
 type DepthLevel = 'ready' | 'full'
 
 const statusMessages = [
+  "Generating your report...",
   "Reading the job description...",
   "Identifying key requirements...",
-  "Analyzing company culture signals...",
-  "Detecting hidden expectations...",
-  "Preparing your personalized report..."
+  "Analyzing what they really want...",
+  "Almost done..."
 ]
 
 interface InterviewerOption {
@@ -98,7 +98,7 @@ export function UnderstandJobPage() {
     if (!isLoading) return
     const interval = setInterval(() => {
       setStatusIndex((prev) => (prev + 1) % statusMessages.length)
-    }, 3500)
+    }, 3000)
     return () => clearInterval(interval)
   }, [isLoading])
 

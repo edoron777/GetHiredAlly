@@ -23,71 +23,150 @@ def get_supabase_client() -> Client | None:
 
 class AnalyzeJobRequest(BaseModel):
     job_description: str
-    mode: str  # "quick", "deep", or "max"
+    mode: str
+    interviewer_type: str
 
 class AnalyzeJobResponse(BaseModel):
     analysis: str
     mode: str
 
-def get_mode_instructions(mode: str) -> str:
-    if mode == "quick":
-        return "\n\nProvide a CONCISE analysis focusing on the top 3-5 most important points in each category. Keep your response under 800 words. Be direct and actionable."
-    elif mode == "deep":
-        return "\n\nProvide a COMPREHENSIVE analysis with detailed explanations for each point. Include specific examples and actionable advice. Your response should be thorough but organized (1500-2000 words)."
-    elif mode == "max":
-        return "\n\nProvide an EXHAUSTIVE analysis leaving no stone unturned. Include:\n- Detailed breakdown of every requirement\n- Hidden meanings and implications in the language used\n- Salary negotiation insights based on the role level\n- Questions to ask in the interview\n- Potential career growth paths\n- Industry-specific insights\n- How to stand out from other candidates\n\nBe extremely thorough and comprehensive (2500+ words)."
-    return ""
+FALLBACK_SYSTEM_PROMPT = """You are an expert career coach and interview preparation specialist with 20+ years of experience helping candidates land their dream jobs. Your role is to provide detailed, actionable analysis that gives candidates a real competitive advantage.
 
-FALLBACK_SYSTEM_PROMPT = """You are an expert career coach and interview preparation specialist. Your job is to analyze job descriptions and help candidates prepare for interviews.
+Your analysis style is:
+- Direct and practical, not generic
+- Specific to the role and company
+- Focused on what will actually help in the interview
+- Honest about red flags or concerns
 
-When analyzing a job description, focus on:
-1. **Key Requirements**: Technical skills, experience levels, and qualifications
-2. **Hidden Expectations**: Reading between the lines of what they really want
-3. **Company Culture**: What the language tells us about the work environment
-4. **Red Flags**: Any concerning patterns or unrealistic expectations
-5. **Interview Prep**: Likely questions and talking points based on the role
-6. **Keywords to Use**: Important terms to include in your responses
+Always structure your response clearly with headers and bullet points for easy reading."""
 
-Be specific, actionable, and helpful. Your analysis should give the candidate a real advantage in their interview preparation."""
+FALLBACK_INTERVIEWER_PROMPTS = {
+    "hr": """
+INTERVIEWER FOCUS: HR / Recruiter Screen
 
-async def get_system_prompt_from_db(mode: str) -> str:
+Since this is an HR/Recruiter interview, emphasize:
+- Cultural fit and soft skills they're looking for
+- Salary expectations and benefits signals in the posting
+- Work-life balance and company culture indicators
+- Screening questions they're likely to ask
+- How to present your career story compellingly
+- Red flags in your background to address proactively""",
+    
+    "technical": """
+INTERVIEWER FOCUS: Technical Interview
+
+Since this is a Technical interview, emphasize:
+- Specific technical skills and tools mentioned
+- Experience levels required for each technology
+- Types of technical problems they likely solve
+- System design or architecture expectations
+- Coding challenge topics to prepare
+- Technical questions to ask about their stack""",
+    
+    "manager": """
+INTERVIEWER FOCUS: Hiring Manager Interview
+
+Since this is a Hiring Manager interview, emphasize:
+- Team dynamics and collaboration style
+- Deliverables and success metrics for the role
+- Management style and autonomy level
+- Growth opportunities and career path
+- Challenges the team is facing
+- How to demonstrate you'll make their life easier""",
+    
+    "general": """
+INTERVIEWER FOCUS: General Preparation
+
+Since you're not sure who will interview you, prepare for all angles:
+- Technical skills and how you'll demonstrate them
+- Behavioral questions and STAR format stories
+- Cultural fit and soft skills
+- Questions about your background and motivations
+- Salary and benefits conversation preparation"""
+}
+
+FALLBACK_DEPTH_PROMPTS = {
+    "ready": """
+OUTPUT FORMAT: Interview Ready (Concise)
+
+Provide a FOCUSED analysis covering the essentials:
+- 5-7 key requirements to highlight
+- 3-4 likely interview questions with answer frameworks
+- Top 3 things that will make you stand out
+- 2-3 smart questions to ask them
+
+Keep your response between 600-900 words. Be direct and actionable.""",
+
+    "full": """
+OUTPUT FORMAT: Fully Prepared (Comprehensive)
+
+Provide a THOROUGH analysis covering everything:
+
+1. **Role Overview** - What this role really involves
+2. **Must-Have Skills** - Non-negotiable requirements
+3. **Nice-to-Have Skills** - Differentiators to highlight
+4. **Hidden Expectations** - Reading between the lines
+5. **Company Culture Signals** - What the language tells us
+6. **Red Flags & Concerns** - Things to clarify
+7. **Interview Questions** - 8-10 likely questions with answer guidance
+8. **Your Talking Points** - Key themes to weave into answers
+9. **Questions to Ask Them** - Smart questions that impress
+10. **Preparation Checklist** - Specific things to do before the interview
+
+Provide 1500-2000 words of detailed, actionable guidance."""
+}
+
+async def get_combined_prompt(interviewer_type: str, depth_level: str) -> str:
     supabase = get_supabase_client()
-    base_prompt = FALLBACK_SYSTEM_PROMPT
+    
+    system_prompt = FALLBACK_SYSTEM_PROMPT
+    interviewer_prompt = FALLBACK_INTERVIEWER_PROMPTS.get(interviewer_type, FALLBACK_INTERVIEWER_PROMPTS["general"])
+    depth_prompt = FALLBACK_DEPTH_PROMPTS.get(depth_level, FALLBACK_DEPTH_PROMPTS["full"])
     
     if supabase:
         try:
-            result = supabase.table('prompt_templates').select('content').eq('service_name', 'xray_analyzer').eq('template_type', 'system').single().execute()
-            if result.data and result.data.get('content'):
-                base_prompt = result.data['content']
+            system_result = supabase.table('prompt_templates').select('content').eq('template_type', 'system_v2').maybeSingle().execute()
+            if system_result.data and system_result.data.get('content'):
+                system_prompt = system_result.data['content']
+        except Exception:
+            pass
+        
+        try:
+            interviewer_result = supabase.table('prompt_templates').select('content').eq('template_type', f'interviewer_{interviewer_type}').maybeSingle().execute()
+            if interviewer_result.data and interviewer_result.data.get('content'):
+                interviewer_prompt = interviewer_result.data['content']
+        except Exception:
+            pass
+        
+        try:
+            depth_result = supabase.table('prompt_templates').select('content').eq('template_type', f'depth_{depth_level}').maybeSingle().execute()
+            if depth_result.data and depth_result.data.get('content'):
+                depth_prompt = depth_result.data['content']
         except Exception:
             pass
     
-    return base_prompt + get_mode_instructions(mode)
+    return f"{system_prompt}\n\n{interviewer_prompt}\n\n{depth_prompt}"
 
 @router.post("/analyze-job", response_model=AnalyzeJobResponse)
 async def analyze_job(request: AnalyzeJobRequest):
     if len(request.job_description) < 100:
         raise HTTPException(status_code=400, detail="Job description must be at least 100 characters")
     
-    if request.mode not in ["quick", "deep", "max"]:
-        raise HTTPException(status_code=400, detail="Invalid mode. Must be 'quick', 'deep', or 'max'")
+    depth_level = "ready" if request.mode == "quick" else "full"
+    interviewer_type = request.interviewer_type if request.interviewer_type in ["hr", "technical", "manager", "general"] else "general"
     
     try:
-        system_prompt = await get_system_prompt_from_db(request.mode)
+        system_prompt = await get_combined_prompt(interviewer_type, depth_level)
         
-        max_tokens_map = {
-            "quick": 2048,
-            "deep": 4096,
-            "max": 10000
-        }
+        max_tokens = 2048 if depth_level == "ready" else 4096
         
         message = anthropic_client.messages.create(
             model="claude-sonnet-4-5",
-            max_tokens=max_tokens_map.get(request.mode, 4096),
+            max_tokens=max_tokens,
             system=system_prompt,
             messages=[{
                 "role": "user",
-                "content": f"Please analyze this job description:\n\n{request.job_description}"
+                "content": f"Please analyze this job description and prepare me for the interview:\n\n{request.job_description}"
             }]
         )
         
