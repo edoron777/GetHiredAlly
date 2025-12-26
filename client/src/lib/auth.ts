@@ -3,6 +3,7 @@ export interface User {
   email: string
   name: string | null
   profile_name: string | null
+  is_verified?: boolean
 }
 
 export function getAuthToken(): string | null {

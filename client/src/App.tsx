@@ -3,6 +3,7 @@ import { Navbar } from '@/components/Navbar'
 import { LandingPage } from '@/components/LandingPage'
 import { RegisterPage } from '@/components/RegisterPage'
 import { LoginPage } from '@/components/LoginPage'
+import { VerifyEmailPage } from '@/components/VerifyEmailPage'
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -21,6 +22,7 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
         </Routes>
       </Layout>
     </BrowserRouter>

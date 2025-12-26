@@ -87,9 +87,9 @@ export function RegisterPage() {
         return
       }
 
-      setSuccessMessage(data.message || 'Registration successful!')
+      setSuccessMessage(data.message || 'Registration successful! Redirecting to verify your email...')
       setTimeout(() => {
-        navigate('/login')
+        navigate(`/verify-email?email=${encodeURIComponent(data.email || formData.email)}`)
       }, 2000)
 
     } catch {
