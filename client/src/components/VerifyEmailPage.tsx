@@ -8,13 +8,15 @@ export function VerifyEmailPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const emailFromParams = searchParams.get('email') || ''
+  const codeFromParams = searchParams.get('code') || ''
   
   const [email, setEmail] = useState(emailFromParams)
-  const [code, setCode] = useState('')
+  const [code, setCode] = useState(codeFromParams)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [resendCooldown, setResendCooldown] = useState(0)
+  const [autoVerified, setAutoVerified] = useState(false)
 
   useEffect(() => {
     if (resendCooldown > 0) {
@@ -22,6 +24,35 @@ export function VerifyEmailPage() {
       return () => clearTimeout(timer)
     }
   }, [resendCooldown])
+
+  useEffect(() => {
+    if (emailFromParams && codeFromParams && codeFromParams.length === 6 && !autoVerified) {
+      setAutoVerified(true)
+      handleAutoVerify(emailFromParams, codeFromParams)
+    }
+  }, [emailFromParams, codeFromParams])
+
+  const handleAutoVerify = async (emailVal: string, codeVal: string) => {
+    setIsSubmitting(true)
+    try {
+      const response = await fetch('/api/auth/verify-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailVal.toLowerCase(), code: codeVal })
+      })
+      const data = await response.json()
+      if (!response.ok) {
+        setError(data.detail || 'Verification failed')
+        return
+      }
+      setSuccess(data.message || 'Email verified successfully!')
+      setTimeout(() => navigate('/login'), 2000)
+    } catch {
+      setError('Network error. Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault()

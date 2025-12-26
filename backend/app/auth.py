@@ -16,6 +16,15 @@ VERIFICATION_CODE_EXPIRY_MINUTES = 15
 
 resend.api_key = os.environ.get("RESEND_API_KEY")
 
+def get_base_url() -> str:
+    base_url = os.environ.get("APP_BASE_URL")
+    if base_url:
+        return base_url
+    replit_domain = os.environ.get("REPLIT_DOMAINS", "").split(",")[0]
+    if replit_domain:
+        return f"https://{replit_domain}"
+    return ""
+
 def get_supabase_client() -> Client | None:
     url = os.environ.get("SUPABASE_URL")
     key = os.environ.get("SUPABASE_ANON_KEY")
@@ -104,9 +113,13 @@ def hash_token(token: str) -> str:
 def generate_verification_code() -> str:
     return str(random.randint(100000, 999999))
 
-def send_verification_email(email: str, code: str, name: str | None = None) -> bool:
+def send_verification_email(email: str, code: str, name: str | None = None, base_url: str | None = None) -> bool:
     try:
         user_name = name or "there"
+        import urllib.parse
+        encoded_email = urllib.parse.quote(email)
+        verify_url = f"{base_url}/verify-email?email={encoded_email}&code={code}" if base_url else f"/verify-email?email={encoded_email}&code={code}"
+        
         resend.Emails.send({
             "from": "GetHiredAlly <onboarding@resend.dev>",
             "to": email,
@@ -125,7 +138,10 @@ def send_verification_email(email: str, code: str, name: str | None = None) -> b
                             {code}
                         </div>
                     </div>
-                    <p style="color: #666666; font-size: 14px;">This code will expire in 15 minutes.</p>
+                    <div style="text-align: center; margin: 20px 0;">
+                        <a href="{verify_url}" style="background-color: #1E3A5F; color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: bold; display: inline-block;">Verify Now</a>
+                    </div>
+                    <p style="color: #666666; font-size: 14px; text-align: center;">This code will expire in 15 minutes.</p>
                     <p style="color: #333333;">If you didn't create an account with GetHiredAlly, you can safely ignore this email.</p>
                 </div>
                 <div style="text-align: center; margin-top: 20px; color: #999999; font-size: 12px;">
@@ -182,7 +198,7 @@ async def register_user(request: RegisterRequest):
                 "used": False
             }).execute()
             
-            send_verification_email(request.email.lower(), code, request.name)
+            send_verification_email(request.email.lower(), code, request.name, get_base_url())
             
             return RegisterResponse(
                 success=True,
@@ -228,7 +244,7 @@ async def send_verification_code(request: SendVerificationRequest):
             "used": False
         }).execute()
         
-        email_sent = send_verification_email(request.email.lower(), code, user.get("name"))
+        email_sent = send_verification_email(request.email.lower(), code, user.get("name"), get_base_url())
         
         if email_sent:
             return SendVerificationResponse(
