@@ -318,7 +318,7 @@ export function UnderstandJobPage() {
           <div style={{
             ...containerStyle,
             display: 'flex',
-            justifyContent: 'flex-end',
+            justifyContent: 'center',
             gap: '16px',
             padding: '16px 24px'
           }}>
