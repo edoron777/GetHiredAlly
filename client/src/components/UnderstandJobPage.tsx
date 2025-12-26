@@ -1,7 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { isAuthenticated } from '@/lib/auth'
-import { Button } from '@/components/ui/button'
 import { ChevronRight, Loader2, Sparkles, CheckCircle, X, Users, Code, Briefcase, HelpCircle, Zap, ClipboardList } from 'lucide-react'
 
 type InterviewerType = 'hr' | 'technical' | 'manager' | 'general'
@@ -20,7 +19,6 @@ interface InterviewerOption {
   icon: React.ReactNode
   label: string
   sublabel: string
-  fullWidth?: boolean
 }
 
 interface DepthOption {
@@ -34,28 +32,27 @@ interface DepthOption {
 const interviewerOptions: InterviewerOption[] = [
   {
     id: 'hr',
-    icon: <Users className="h-6 w-6" />,
+    icon: <Users className="h-5 w-5" />,
     label: 'HR / Recruiter',
     sublabel: 'Culture & screening'
   },
   {
     id: 'technical',
-    icon: <Code className="h-6 w-6" />,
+    icon: <Code className="h-5 w-5" />,
     label: 'Technical',
     sublabel: 'Skills & technical'
   },
   {
     id: 'manager',
-    icon: <Briefcase className="h-6 w-6" />,
+    icon: <Briefcase className="h-5 w-5" />,
     label: 'Hiring Manager',
     sublabel: 'Team fit & delivery'
   },
   {
     id: 'general',
-    icon: <HelpCircle className="h-6 w-6" />,
+    icon: <HelpCircle className="h-5 w-5" />,
     label: 'Not Sure',
-    sublabel: 'Comprehensive analysis',
-    fullWidth: true
+    sublabel: 'General prep'
   }
 ]
 
@@ -120,18 +117,12 @@ export function UnderstandJobPage() {
   const isDescriptionValid = characterCount >= 100
   const isFormValid = isDescriptionValid && selectedInterviewer !== null && depthLevel !== null
   const showError = touched && !isDescriptionValid
+  const isDisabled = !isFormValid || isLoading
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!isFormValid) return
 
-    const submitData = {
-      jobDescription,
-      interviewerType: selectedInterviewer,
-      depthLevel: depthLevel
-    }
-    console.log('Submitting:', submitData)
-    
     setIsLoading(true)
     setError(null)
     setAnalysis(null)
@@ -163,8 +154,23 @@ export function UnderstandJobPage() {
     }
   }
 
+  const containerStyle = {
+    border: '1px solid #E5E7EB',
+    borderRadius: '12px',
+    padding: '24px',
+    marginBottom: '20px',
+    backgroundColor: 'white'
+  }
+
+  const stepHeaderStyle = {
+    fontSize: '16px',
+    fontWeight: 600,
+    color: '#1E3A5F',
+    marginBottom: '16px'
+  }
+
   return (
-    <div className="min-h-[calc(100vh-64px)] p-8" style={{ backgroundColor: '#FAF9F7' }}>
+    <div className="min-h-[calc(100vh-64px)] p-4 md:p-8" style={{ backgroundColor: '#FAF9F7' }}>
       <div className="max-w-3xl mx-auto">
         <nav className="flex items-center gap-2 text-sm mb-6" style={{ color: '#6B7280' }}>
           <Link to="/dashboard" className="hover:underline" style={{ color: '#1E3A5F' }}>
@@ -177,116 +183,130 @@ export function UnderstandJobPage() {
         <h1 className="text-3xl font-bold mb-1" style={{ color: '#1E3A5F' }}>
           Analyze This Job
         </h1>
-        <p className="text-lg mb-8" style={{ color: '#6B7280' }}>
+        <p className="text-lg mb-6" style={{ color: '#6B7280' }}>
           Prepare for your upcoming interview
         </p>
 
         <form onSubmit={handleSubmit}>
-          <div className="mb-8">
-            <label className="block text-xl font-bold mb-3" style={{ color: '#333333' }}>
-              Job Description
-            </label>
+          <div style={containerStyle}>
+            <h2 style={stepHeaderStyle}>Step 1: Paste the Job Description</h2>
             <textarea
               value={jobDescription}
               onChange={(e) => setJobDescription(e.target.value)}
               onBlur={() => setTouched(true)}
               placeholder="Paste the job description here..."
-              rows={10}
-              className={`w-full p-4 rounded-lg border resize-y focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] ${
-                showError ? 'border-red-400' : 'border-[#E5E7EB]'
-              }`}
-              style={{ backgroundColor: 'white' }}
+              style={{
+                width: '100%',
+                minHeight: '150px',
+                padding: '12px',
+                border: showError ? '1px solid #EF4444' : '1px solid #E5E7EB',
+                borderRadius: '8px',
+                resize: 'vertical',
+                fontSize: '14px',
+                outline: 'none'
+              }}
             />
             <div className="flex justify-between items-center mt-2">
-              <span className={`text-sm ${showError ? 'text-red-500' : ''}`} style={{ color: showError ? undefined : '#6B7280' }}>
+              <span style={{ fontSize: '13px', color: showError ? '#EF4444' : '#6B7280' }}>
                 {characterCount} characters {characterCount < 100 && characterCount > 0 && '(minimum 100)'}
               </span>
               {showError && (
-                <span className="text-sm text-red-500">
+                <span style={{ fontSize: '13px', color: '#EF4444' }}>
                   Please enter at least 100 characters
                 </span>
               )}
             </div>
           </div>
 
-          <div className="mb-8">
-            <label className="block text-xl font-bold mb-4" style={{ color: '#333333' }}>
-              Who will interview you?
-            </label>
-            <div className="grid grid-cols-3 gap-3 mb-3">
-              {interviewerOptions.filter(opt => !opt.fullWidth).map((option) => (
+          <div style={containerStyle}>
+            <h2 style={stepHeaderStyle}>Step 2: Who will interview you?</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {interviewerOptions.map((option) => (
                 <button
                   key={option.id}
                   type="button"
                   onClick={() => setSelectedInterviewer(option.id)}
-                  className={`p-4 rounded-lg text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-2 ${
-                    selectedInterviewer === option.id
-                      ? 'border-2 border-[#1E3A5F] bg-[#E8F0F5] shadow-sm'
-                      : 'border border-[#E5E7EB] bg-white hover:border-[#1E3A5F]'
-                  }`}
+                  style={{
+                    height: '80px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '4px',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    backgroundColor: selectedInterviewer === option.id ? '#E8F0F5' : 'white',
+                    border: selectedInterviewer === option.id ? '2px solid #1E3A5F' : '1px solid #E5E7EB'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (selectedInterviewer !== option.id) {
+                      e.currentTarget.style.border = '1px solid #1E3A5F'
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (selectedInterviewer !== option.id) {
+                      e.currentTarget.style.border = '1px solid #E5E7EB'
+                    }
+                  }}
                 >
                   <div style={{ color: selectedInterviewer === option.id ? '#1E3A5F' : '#6B7280' }}>
                     {option.icon}
                   </div>
-                  <span className="font-semibold text-sm" style={{ color: '#1E3A5F' }}>
+                  <span style={{ fontWeight: 500, fontSize: '13px', color: '#1E3A5F', textAlign: 'center' }}>
                     {option.label}
                   </span>
-                  <span className="text-xs" style={{ color: '#6B7280' }}>
+                  <span style={{ fontSize: '11px', color: '#6B7280', textAlign: 'center' }}>
                     {option.sublabel}
                   </span>
                 </button>
               ))}
             </div>
-            {interviewerOptions.filter(opt => opt.fullWidth).map((option) => (
-              <button
-                key={option.id}
-                type="button"
-                onClick={() => setSelectedInterviewer(option.id)}
-                className={`w-full p-4 rounded-lg text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-2 ${
-                  selectedInterviewer === option.id
-                    ? 'border-2 border-[#1E3A5F] bg-[#E8F0F5] shadow-sm'
-                    : 'border border-[#E5E7EB] bg-white hover:border-[#1E3A5F]'
-                }`}
-              >
-                <div style={{ color: selectedInterviewer === option.id ? '#1E3A5F' : '#6B7280' }}>
-                  {option.icon}
-                </div>
-                <span className="font-semibold text-sm" style={{ color: '#1E3A5F' }}>
-                  {option.label}
-                </span>
-                <span className="text-xs" style={{ color: '#6B7280' }}>
-                  {option.sublabel}
-                </span>
-              </button>
-            ))}
           </div>
 
-          <div className="mb-8">
-            <label className="block text-xl font-bold mb-4" style={{ color: '#333333' }}>
-              How much time do you have?
-            </label>
-            <div className="grid grid-cols-2 gap-3">
+          <div style={containerStyle}>
+            <h2 style={stepHeaderStyle}>Step 3: How much time do you have?</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {depthOptions.map((option) => (
                 <button
                   key={option.id}
                   type="button"
                   onClick={() => setDepthLevel(option.id)}
-                  className={`p-4 rounded-lg text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-2 h-[100px] ${
-                    depthLevel === option.id
-                      ? 'border-2 border-[#1E3A5F] bg-[#E8F0F5] shadow-sm'
-                      : 'border border-[#E5E7EB] bg-white hover:border-[#1E3A5F]'
-                  }`}
+                  style={{
+                    height: '100px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '20px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    backgroundColor: depthLevel === option.id ? '#E8F0F5' : 'white',
+                    border: depthLevel === option.id ? '2px solid #1E3A5F' : '1px solid #E5E7EB'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (depthLevel !== option.id) {
+                      e.currentTarget.style.border = '1px solid #1E3A5F'
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (depthLevel !== option.id) {
+                      e.currentTarget.style.border = '1px solid #E5E7EB'
+                    }
+                  }}
                 >
-                  <div style={{ color: depthLevel === option.id ? '#1E3A5F' : '#6B7280' }}>
+                  <div style={{ color: '#1E3A5F' }}>
                     {option.icon}
                   </div>
-                  <span className="font-semibold text-sm" style={{ color: '#1E3A5F' }}>
+                  <span style={{ fontWeight: 600, fontSize: '14px', color: '#1E3A5F', marginTop: '8px' }}>
                     {option.label}
                   </span>
-                  <span className="text-xs" style={{ color: '#6B7280' }}>
+                  <span style={{ fontSize: '13px', color: '#6B7280', marginTop: '2px' }}>
                     {option.sublabel1}
                   </span>
-                  <span className="text-xs" style={{ color: '#6B7280' }}>
+                  <span style={{ fontSize: '12px', color: '#6B7280' }}>
                     {option.sublabel2}
                   </span>
                 </button>
@@ -294,33 +314,55 @@ export function UnderstandJobPage() {
             </div>
           </div>
 
-          <div className="flex justify-center gap-4 mt-8">
-            <Button
+          <div style={{
+            ...containerStyle,
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: '16px',
+            padding: '16px 24px'
+          }}>
+            <button
               type="button"
-              variant="outline"
               onClick={() => navigate('/dashboard')}
-              className="border-[#D1D5DB] text-[#6B7280] bg-white hover:bg-[#F9FAFB]"
+              style={{
+                backgroundColor: 'white',
+                border: '1px solid #E5E7EB',
+                color: '#374151',
+                padding: '12px 24px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: 500,
+                fontSize: '14px'
+              }}
             >
               Cancel
-            </Button>
+            </button>
             <button
               type="submit"
-              disabled={!isFormValid || isLoading}
-              className="inline-flex items-center justify-center rounded-md font-medium px-8 py-3 text-base shadow-md transition-colors text-white"
+              disabled={isDisabled}
               style={{
-                backgroundColor: isFormValid && !isLoading ? '#1E3A5F' : '#9CA3AF',
-                cursor: isFormValid && !isLoading ? 'pointer' : 'not-allowed',
-                opacity: isFormValid && !isLoading ? 1 : 0.7
+                backgroundColor: '#1E3A5F',
+                color: 'white',
+                padding: '12px 32px',
+                borderRadius: '8px',
+                border: 'none',
+                fontWeight: 600,
+                fontSize: '16px',
+                cursor: isDisabled ? 'not-allowed' : 'pointer',
+                opacity: isDisabled ? 0.5 : 1,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
               }}
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                   Analyzing...
                 </>
               ) : (
                 <>
-                  <Sparkles className="mr-2 h-4 w-4" />
+                  <Sparkles className="h-4 w-4" />
                   Generate My Prep Report
                 </>
               )}
@@ -328,12 +370,17 @@ export function UnderstandJobPage() {
           </div>
 
           {isLoading && (
-            <div className="mt-6 text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div style={{
+              ...containerStyle,
+              textAlign: 'center',
+              backgroundColor: '#EFF6FF',
+              border: '1px solid #BFDBFE'
+            }}>
               <div className="flex items-center justify-center gap-3 mb-2">
                 <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-                <span className="font-medium text-blue-800">Analyzing your job description...</span>
+                <span style={{ fontWeight: 500, color: '#1E40AF' }}>Analyzing your job description...</span>
               </div>
-              <p className="text-sm animate-pulse" style={{ color: '#1E3A5F' }}>
+              <p className="animate-pulse" style={{ fontSize: '14px', color: '#1E3A5F' }}>
                 {statusMessages[statusIndex]}
               </p>
             </div>
@@ -351,25 +398,31 @@ export function UnderstandJobPage() {
         )}
 
         {error && (
-          <div className="mt-8 p-4 rounded-lg bg-red-50 border border-red-200">
-            <p className="text-red-700">{error}</p>
+          <div style={{ ...containerStyle, backgroundColor: '#FEF2F2', border: '1px solid #FECACA' }}>
+            <p style={{ color: '#DC2626' }}>{error}</p>
           </div>
         )}
 
         {analysis && (
           <div 
             ref={resultsRef}
-            className={`mt-8 p-6 rounded-lg bg-white border shadow-sm transition-all duration-500 ${
-              showHighlight 
-                ? 'border-[#1E5A85] ring-2 ring-[#1E5A85]/20 shadow-lg' 
-                : 'border-[#E5E7EB]'
-            }`}
+            style={{
+              ...containerStyle,
+              transition: 'all 0.5s',
+              border: showHighlight ? '2px solid #1E5A85' : '1px solid #E5E7EB',
+              boxShadow: showHighlight ? '0 0 0 4px rgba(30, 90, 133, 0.1)' : 'none'
+            }}
           >
-            <h2 className="text-xl font-bold mb-4" style={{ color: '#1E3A5F' }}>
+            <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#1E3A5F', marginBottom: '16px' }}>
               Analysis Results
             </h2>
-            <div className="prose max-w-none" style={{ color: '#333333' }}>
-              <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
+            <div style={{ color: '#333333' }}>
+              <pre style={{ 
+                whiteSpace: 'pre-wrap', 
+                fontFamily: 'inherit', 
+                fontSize: '14px', 
+                lineHeight: '1.6' 
+              }}>
                 {analysis}
               </pre>
             </div>

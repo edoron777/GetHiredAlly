@@ -1,0 +1,192 @@
+## TASK: Redesign X-Ray Analyzer Page - Complete UI Overhaul
+
+The current page needs a complete visual redesign with clear step-by-step sections.
+
+### DESIGN REQUIREMENTS
+
+#### Overall Structure
+Each section should be in a BORDERED CONTAINER with:
+- Border: 1px solid #E5E7EB
+- Border radius: 12px
+- Padding: 24px
+- Margin bottom: 20px
+- Background: white
+
+#### Page Header (Outside containers)
+- Title: "Analyze This Job" (large, bold, #1E3A5F)
+- Subtitle: "Prepare for your upcoming interview" (gray, smaller)
+- Margin bottom: 24px
+
+---
+
+### STEP 1 CONTAINER: Job Description
+
+**Header inside container:**
+- Text: "Step 1: Paste the Job Description"
+- Style: Font size 16px, font-weight 600, color #1E3A5F
+- Margin bottom: 16px
+
+**Content:**
+- Large textarea
+- Placeholder: "Paste the job description here..."
+- Min height: 150px
+- Border: 1px solid #E5E7EB
+- Border radius: 8px
+- Below textarea: "X characters" counter (gray, small)
+
+---
+
+### STEP 2 CONTAINER: Interviewer Type
+
+**Header inside container:**
+- Text: "Step 2: Who will interview you?"
+- Style: Font size 16px, font-weight 600, color #1E3A5F
+- Margin bottom: 16px
+
+**Content: 4 cards in ONE ROW (equal width)**
+
+All 4 cards should be:
+- Same height: 80px
+- Same width: 25% each (minus gap)
+- Gap between cards: 12px
+- Display: flex, align-items: center, justify-content: center
+- Flex direction: column
+
+**Card 1: HR / Recruiter**
+- Icon: Users (lucide-react), size 20px
+- Label: "HR / Recruiter" (font-weight 500)
+- Sublabel: "Culture & screening" (font-size 12px, gray)
+
+**Card 2: Technical**
+- Icon: Code (lucide-react), size 20px
+- Label: "Technical" (font-weight 500)
+- Sublabel: "Skills & technical" (font-size 12px, gray)
+
+**Card 3: Hiring Manager**
+- Icon: Briefcase (lucide-react), size 20px
+- Label: "Hiring Manager" (font-weight 500)
+- Sublabel: "Team fit & delivery" (font-size 12px, gray)
+
+**Card 4: Not Sure**
+- Icon: HelpCircle (lucide-react), size 20px
+- Label: "Not Sure" (font-weight 500)
+- Sublabel: "General prep" (font-size 12px, gray)
+
+**Card Styling:**
+- Unselected: background white, border 1px solid #E5E7EB
+- Selected: background #E8F0F5, border 2px solid #1E3A5F
+- Hover: border 1px solid #1E3A5F
+- Border radius: 8px
+- Cursor: pointer
+
+---
+
+### STEP 3 CONTAINER: Depth Level
+
+**Header inside container:**
+- Text: "Step 3: How much time do you have?"
+- Style: Font size 16px, font-weight 600, color #1E3A5F
+- Margin bottom: 16px
+
+**Content: 2 cards side by side (equal width)**
+
+Both cards should be:
+- Same height: 100px
+- Same width: 50% each (minus gap)
+- Gap between cards: 16px
+- Padding: 20px
+- Display: flex, flex-direction: column, align-items: center, justify-content: center
+
+**Card 1: Interview Ready**
+- Icon: Zap (lucide-react), size 24px, color #1E3A5F
+- Label: "Interview Ready" (font-weight 600, margin-top 8px)
+- Sublabel line 1: "Essential points" (font-size 13px, gray)
+- Sublabel line 2: "5-10 min read" (font-size 12px, gray)
+
+**Card 2: Fully Prepared**
+- Icon: ClipboardList (lucide-react), size 24px, color #1E3A5F
+- Label: "Fully Prepared" (font-weight 600, margin-top 8px)
+- Sublabel line 1: "Complete analysis" (font-size 13px, gray)
+- Sublabel line 2: "20-30 min read" (font-size 12px, gray)
+
+**Card Styling:** Same as Step 2 cards
+
+---
+
+### STEP 4 CONTAINER: Action Buttons
+
+**This container has NO header, just the buttons**
+
+- Padding: 16px 24px
+- Display: flex
+- Justify-content: flex-end
+- Gap: 16px
+
+**Cancel Button:**
+- Background: white
+- Border: 1px solid #E5E7EB
+- Color: #374151
+- Padding: 12px 24px
+- Border radius: 8px
+
+**Primary Button - CRITICAL STYLING:**
+
+THIS IS VERY IMPORTANT. Use INLINE STYLES to force the color:
+```jsx
+<button
+  style={{
+    backgroundColor: '#1E3A5F',
+    color: 'white',
+    padding: '12px 32px',
+    borderRadius: '8px',
+    border: 'none',
+    fontWeight: '600',
+    fontSize: '16px',
+    cursor: 'pointer',
+    opacity: isDisabled ? 0.5 : 1
+  }}
+  disabled={isDisabled}
+>
+  Generate My Prep Report
+</button>
+```
+
+- Text: "Generate My Prep Report"
+- Background: #1E3A5F (MUST use inline style, not CSS class)
+- Color: white
+- Font weight: 600
+- Padding: 12px 32px
+- Border radius: 8px
+- Border: none
+
+**Disabled state:**
+- Same background color (#1E3A5F) but opacity: 0.5
+- Cursor: not-allowed
+
+---
+
+### VALIDATION
+
+Button enabled when ALL are true:
+1. jobDescription.length >= 100
+2. interviewerType is selected
+3. depthLevel is selected
+
+---
+
+### MOBILE RESPONSIVE (screens < 768px)
+
+- Step 2 cards: 2x2 grid instead of 4 in row
+- Step 3 cards: stack vertically
+- Reduce padding to 16px
+
+---
+
+### SUMMARY
+
+1. Page has 4 bordered containers (Steps 1-4)
+2. Each step has a clear header "Step X: ..."
+3. All 4 interviewer cards are SAME SIZE in ONE ROW
+4. Depth cards are wider with proper text spacing
+5. Primary button is NAVY BLUE (#1E3A5F) using INLINE STYLES
+6. Clean, professional, step-by-step flow
