@@ -4,6 +4,8 @@ import { LandingPage } from '@/components/LandingPage'
 import { RegisterPage } from '@/components/RegisterPage'
 import { LoginPage } from '@/components/LoginPage'
 import { VerifyEmailPage } from '@/components/VerifyEmailPage'
+import { Dashboard } from '@/components/Dashboard'
+import { XRayPlaceholder } from '@/components/XRayPlaceholder'
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -23,6 +25,8 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/service/xray" element={<XRayPlaceholder />} />
         </Routes>
       </Layout>
     </BrowserRouter>

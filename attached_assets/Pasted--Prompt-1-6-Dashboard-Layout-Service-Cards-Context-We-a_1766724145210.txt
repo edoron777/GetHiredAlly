@@ -1,0 +1,190 @@
+# Prompt 1.6: Dashboard Layout + Service Cards
+
+## Context
+We are building GetHiredAlly - a job search intelligence platform.
+- Steps 1.1-1.5 are COMPLETE (React + Flask + Supabase + User auth + Email verification)
+- This step creates the main dashboard that logged-in users see
+
+## What to Build
+
+### 1. Header Component (Persistent across all pages)
+Create a header that appears on every page:
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│  GetHiredAlly                                    [User Name ▼] [⚙️]    │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+**Header Specifications:**
+- Height: 64px
+- Background: #FFFFFF (white)
+- Border-bottom: 1px solid #E5E7EB
+- Logo: "GetHiredAlly" text in #1E3A5F (navy), font-weight: 700
+- Right side (when logged in): User dropdown with name + Settings icon
+- Right side (when NOT logged in): "Login" and "Sign Up" buttons
+
+### 2. Dashboard Home Page (Route: `/dashboard`)
+This is the main page users see after logging in.
+
+**Page Layout:**
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│  HEADER (from above)                                                    │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│    Welcome back, [First Name]!                                          │
+│    What would you like to work on today?                                │
+│                                                                         │
+│    ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐       │
+│    │      🔍         │  │      ❓         │  │      💬         │       │
+│    │                 │  │                 │  │                 │       │
+│    │  UNDERSTAND     │  │  PREPARE FOR    │  │  CRAFT YOUR     │       │
+│    │  THIS JOB       │  │  QUESTIONS      │  │  ANSWERS        │       │
+│    │                 │  │                 │  │                 │       │
+│    │  What do they   │  │  What will they │  │  What should    │       │
+│    │  really want?   │  │  ask me?        │  │  I say?         │       │
+│    │                 │  │                 │  │                 │       │
+│    │  [Get Started]  │  │  [Coming Soon]  │  │  [Coming Soon]  │       │
+│    └─────────────────┘  └─────────────────┘  └─────────────────┘       │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### 3. Service Cards Component
+
+**Card Content (3 cards):**
+
+| Card | Icon | Title | Subtitle | Description | Button |
+|------|------|-------|----------|-------------|--------|
+| 1 | 🔍 | Understand This Job | "X-Ray Analyzer" | "What do they really want?" | "Get Started" (active) |
+| 2 | ❓ | Prepare for Questions | "Questions Predictor" | "What will they ask me?" | "Coming Soon" (disabled) |
+| 3 | 💬 | Craft Your Answers | "My Interview Playbook" | "What should I say?" | "Coming Soon" (disabled) |
+
+**Card Specifications:**
+```css
+/* Service Card */
+width: 280px;
+height: 220px;
+background: #FFFFFF;
+border: 1px solid #E5E7EB;
+border-radius: 8px;
+padding: 24px;
+text-align: center;
+cursor: pointer;
+
+/* Hover State (active cards only) */
+box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+transform: translateY(-2px);
+transition: all 0.2s ease;
+
+/* "Coming Soon" cards */
+opacity: 0.6;
+cursor: not-allowed;
+/* No hover effect */
+```
+
+**Typography within cards:**
+- Icon: 32px emoji
+- Title: Inter, 18px, font-weight: 600, color: #1E3A5F
+- Subtitle: Inter, 12px, color: #6B7280, italic
+- Description: Inter, 14px, color: #374151
+- Button Primary: background #1E3A5F, color white, padding 10px 20px, border-radius 6px
+- Button Disabled: background #E5E7EB, color #9CA3AF
+
+### 4. Design System (Use these values throughout)
+
+**Colors:**
+```css
+:root {
+  --bg-main: #FAF9F7;        /* Warm beige background */
+  --bg-card: #FFFFFF;         /* White cards */
+  --color-primary: #1E3A5F;   /* Navy blue */
+  --text-primary: #374151;    /* Dark gray */
+  --text-secondary: #6B7280;  /* Medium gray */
+  --text-muted: #9CA3AF;      /* Light gray */
+  --border: #E5E7EB;          /* Light border */
+}
+```
+
+**Typography:**
+```css
+font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+```
+
+### 5. Page Background
+- All pages should use `#FAF9F7` (warm beige) as background
+- Cards are white `#FFFFFF`
+
+### 6. Navigation Flow
+
+**Routing:**
+- `/` → Landing page (if not logged in) OR redirect to `/dashboard` (if logged in)
+- `/dashboard` → Dashboard with service cards (requires login)
+- `/login` → Login page
+- `/register` → Registration page
+
+**Card Click Behavior:**
+- Card 1 ("Understand This Job"): Navigate to `/service/xray` (placeholder page for now)
+- Card 2 & 3: Do nothing (disabled, show "Coming Soon")
+
+### 7. Placeholder Service Page
+
+Create a simple placeholder at `/service/xray`:
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│  HEADER                                                                 │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│    🔍 Understand This Job                                               │
+│                                                                         │
+│    ┌─────────────────────────────────────────────────────────────────┐ │
+│    │                                                                 │ │
+│    │   This service is under construction.                          │ │
+│    │   Check back soon!                                              │ │
+│    │                                                                 │ │
+│    │   [← Back to Dashboard]                                         │ │
+│    │                                                                 │ │
+│    └─────────────────────────────────────────────────────────────────┘ │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+## Technical Requirements
+
+1. **Protected Routes**: Dashboard and service pages require user to be logged in
+2. **User State**: Display user's first name in welcome message (from user_profiles table)
+3. **Responsive**: Cards should wrap on smaller screens (CSS flexbox or grid)
+4. **Reusable Components**: Create ServiceCard as a reusable React component
+
+## Files to Create/Modify
+
+### New Components:
+- `src/components/Header.jsx` - Persistent header
+- `src/components/ServiceCard.jsx` - Reusable card component
+- `src/pages/Dashboard.jsx` - Dashboard page
+- `src/pages/XRayPlaceholder.jsx` - Placeholder for X-Ray service
+
+### Modify:
+- `src/App.jsx` - Add new routes
+- `src/index.css` or create `src/styles/globals.css` - Add CSS variables
+
+## Acceptance Criteria
+
+✅ Header appears on all pages with logo and user menu
+✅ Dashboard shows 3 service cards in a row (or wrapped on mobile)
+✅ First card is clickable and navigates to placeholder page
+✅ Cards 2 and 3 show "Coming Soon" and are not clickable
+✅ Welcome message shows user's first name
+✅ Background color is warm beige (#FAF9F7)
+✅ All styling matches the design system specifications
+✅ Dashboard is only accessible when logged in
+✅ Placeholder page has "Back to Dashboard" link
+
+## Do NOT Build
+- Left sidebar navigation (comes in a later step)
+- Actual X-Ray Analyzer functionality
+- Settings page
+- User profile page
+
+Just focus on the header, dashboard, and service cards for now.

@@ -1,0 +1,80 @@
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { ServiceCard } from './ServiceCard'
+import { getUser, isAuthenticated } from '@/lib/auth'
+
+export function Dashboard() {
+  const navigate = useNavigate()
+  const [firstName, setFirstName] = useState('')
+
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      navigate('/login')
+      return
+    }
+
+    const user = getUser()
+    if (user?.name) {
+      const first = user.name.split(' ')[0]
+      setFirstName(first)
+    }
+  }, [navigate])
+
+  const services = [
+    {
+      icon: '🔍',
+      title: 'Understand This Job',
+      subtitle: 'X-Ray Analyzer',
+      description: 'What do they really want?',
+      buttonText: 'Get Started',
+      isActive: true,
+      navigateTo: '/service/xray'
+    },
+    {
+      icon: '❓',
+      title: 'Prepare for Questions',
+      subtitle: 'Questions Predictor',
+      description: 'What will they ask me?',
+      buttonText: 'Coming Soon',
+      isActive: false
+    },
+    {
+      icon: '💬',
+      title: 'Craft Your Answers',
+      subtitle: 'My Interview Playbook',
+      description: 'What should I say?',
+      buttonText: 'Coming Soon',
+      isActive: false
+    }
+  ]
+
+  return (
+    <div className="min-h-[calc(100vh-64px)] p-8" style={{ backgroundColor: '#FAF9F7' }}>
+      <div className="max-w-5xl mx-auto">
+        <div className="text-center mb-12">
+          <h1 className="text-3xl font-bold mb-2" style={{ color: '#1E3A5F' }}>
+            Welcome back{firstName ? `, ${firstName}` : ''}!
+          </h1>
+          <p className="text-lg" style={{ color: '#374151' }}>
+            What would you like to work on today?
+          </p>
+        </div>
+
+        <div className="flex flex-wrap justify-center gap-6">
+          {services.map((service, index) => (
+            <ServiceCard
+              key={index}
+              icon={service.icon}
+              title={service.title}
+              subtitle={service.subtitle}
+              description={service.description}
+              buttonText={service.buttonText}
+              isActive={service.isActive}
+              navigateTo={service.navigateTo}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
