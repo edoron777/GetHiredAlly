@@ -1,9 +1,11 @@
 import os
+import json
 import logging
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from anthropic import Anthropic
 from supabase import create_client, Client
+from typing import Optional, Tuple, Dict, Any
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -91,6 +93,36 @@ Since you're not sure who will interview you, prepare for all angles:
 - Salary and benefits conversation preparation"""
 }
 
+JSON_STRUCTURE_SUFFIX = """
+
+---
+
+IMPORTANT: After your markdown report, you MUST include a structured JSON block.
+
+Use this EXACT format:
+
+---JSON_DATA_START---
+{
+  "company_name": "extracted company name or null",
+  "job_title": "extracted job title",
+  "seniority_level": "junior/mid/senior/lead/executive",
+  "key_requirements": ["requirement 1", "requirement 2", "requirement 3"],
+  "technical_skills": [
+    {"skill": "skill name", "importance": "required/preferred/nice-to-have"}
+  ],
+  "soft_skills": [
+    {"skill": "skill name", "evidence": "quote or signal from JD"}
+  ],
+  "red_flags": [
+    {"flag": "description of concern", "severity": "low/medium/high"}
+  ],
+  "culture_signals": ["signal 1", "signal 2"],
+  "interview_topics": ["topic 1", "topic 2", "topic 3"],
+  "questions_to_ask": ["question 1", "question 2"]
+}
+---JSON_DATA_END---
+"""
+
 FALLBACK_DEPTH_PROMPTS = {
     "ready": """
 OUTPUT FORMAT: Interview Ready (Concise)
@@ -101,7 +133,7 @@ Provide a FOCUSED analysis covering the essentials:
 - Top 3 things that will make you stand out
 - 2-3 smart questions to ask them
 
-Keep your response between 600-900 words. Be direct and actionable.""",
+Keep your response between 600-900 words. Be direct and actionable.""" + JSON_STRUCTURE_SUFFIX,
 
     "full": """
 OUTPUT FORMAT: Fully Prepared (Comprehensive)
@@ -119,8 +151,74 @@ Provide a THOROUGH analysis covering everything:
 9. **Questions to Ask Them** - Smart questions that impress
 10. **Preparation Checklist** - Specific things to do before the interview
 
-Provide 1500-2000 words of detailed, actionable guidance."""
+Provide 1500-2000 words of detailed, actionable guidance.""" + JSON_STRUCTURE_SUFFIX
 }
+
+def parse_analysis_response(response_text: str) -> Tuple[str, Optional[Dict[str, Any]]]:
+    """
+    Splits Claude's response into markdown report and structured JSON.
+    Returns: (markdown_text, structured_data_dict)
+    """
+    if "---JSON_DATA_START---" in response_text:
+        parts = response_text.split("---JSON_DATA_START---")
+        markdown = parts[0].strip()
+        try:
+            json_str = parts[1].split("---JSON_DATA_END---")[0].strip()
+            structured_data = json.loads(json_str)
+            logger.info("Successfully parsed structured JSON from response")
+        except (json.JSONDecodeError, IndexError) as e:
+            logger.warning(f"Failed to parse JSON from response: {e}")
+            structured_data = None
+    else:
+        markdown = response_text
+        structured_data = None
+        logger.info("No JSON structure found in response")
+    
+    return markdown, structured_data
+
+async def save_analysis_to_db(
+    user_id: Optional[str],
+    job_description: str,
+    depth_level: str,
+    interviewer_type: str,
+    markdown: str,
+    structured_data: Optional[Dict[str, Any]]
+) -> Optional[str]:
+    """Save the analysis to the database. Returns the analysis ID if successful."""
+    supabase = get_supabase_client()
+    if not supabase:
+        logger.warning("Supabase not available, skipping database save")
+        return None
+    
+    try:
+        jd_result = supabase.table('job_descriptions').insert({
+            'user_id': user_id,
+            'raw_text': job_description
+        }).execute()
+        
+        if not jd_result.data:
+            logger.error("Failed to insert job description")
+            return None
+        
+        jd_id = jd_result.data[0]['id']
+        
+        analysis_result = supabase.table('xray_analyses').insert({
+            'job_description_id': jd_id,
+            'user_id': user_id,
+            'depth_level': depth_level,
+            'interviewer_type': interviewer_type,
+            'report_markdown': markdown,
+            'structured_output': structured_data
+        }).execute()
+        
+        if analysis_result.data:
+            logger.info(f"Saved analysis to database with ID: {analysis_result.data[0]['id']}")
+            return analysis_result.data[0]['id']
+        
+    except Exception as e:
+        logger.error(f"Failed to save analysis to database: {e}")
+    
+    return None
 
 async def get_combined_prompt(interviewer_type: str, depth_level: str) -> str:
     supabase = get_supabase_client()
@@ -197,7 +295,7 @@ async def analyze_job(request: AnalyzeJobRequest):
     try:
         system_prompt = await get_combined_prompt(interviewer_type, depth_level)
         
-        max_tokens = 2000 if depth_level == "ready" else 4000
+        max_tokens = 2500 if depth_level == "ready" else 5000
         
         message = anthropic_client.messages.create(
             model="claude-sonnet-4-5",
@@ -211,8 +309,19 @@ async def analyze_job(request: AnalyzeJobRequest):
         
         analysis_text = message.content[0].text if message.content else "Unable to generate analysis"
         
+        markdown, structured_data = parse_analysis_response(analysis_text)
+        
+        await save_analysis_to_db(
+            user_id=None,
+            job_description=request.job_description,
+            depth_level=depth_level,
+            interviewer_type=interviewer_type,
+            markdown=markdown,
+            structured_data=structured_data
+        )
+        
         return AnalyzeJobResponse(
-            analysis=analysis_text,
+            analysis=markdown,
             mode=request.mode
         )
         
