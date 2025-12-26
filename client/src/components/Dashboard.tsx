@@ -28,7 +28,7 @@ export function Dashboard() {
       description: 'What do they really want?',
       buttonText: 'Get Started',
       isActive: true,
-      navigateTo: '/service/xray'
+      navigateTo: '/service/understand-job'
     },
     {
       icon: '❓',

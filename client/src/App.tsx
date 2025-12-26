@@ -5,7 +5,7 @@ import { RegisterPage } from '@/components/RegisterPage'
 import { LoginPage } from '@/components/LoginPage'
 import { VerifyEmailPage } from '@/components/VerifyEmailPage'
 import { Dashboard } from '@/components/Dashboard'
-import { XRayPlaceholder } from '@/components/XRayPlaceholder'
+import { UnderstandJobPage } from '@/components/UnderstandJobPage'
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -26,7 +26,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/service/xray" element={<XRayPlaceholder />} />
+          <Route path="/service/understand-job" element={<UnderstandJobPage />} />
         </Routes>
       </Layout>
     </BrowserRouter>

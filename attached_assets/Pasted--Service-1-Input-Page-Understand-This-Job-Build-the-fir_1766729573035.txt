@@ -1,0 +1,71 @@
+## Service 1 Input Page: "Understand This Job"
+
+Build the first service page for the X-Ray Analyzer.
+
+### Route
+- URL: /service/understand-job (or /understand-job)
+- Access: Authenticated users only (redirect to login if not logged in)
+
+### Page Layout
+
+**Top Section:**
+- Breadcrumb: "Home > Understand This Job"
+- Page title: "Understand This Job"
+- Subtitle (Ally message in a soft card): "Paste the job description and I'll help you understand what they're really looking for."
+
+**Main Form Section:**
+
+1. **Job Description Input**
+   - Large textarea (minimum 10 rows, expandable)
+   - Placeholder: "Paste the complete job description here..."
+   - Required field
+   - Character count shown below (e.g., "0 characters")
+
+2. **Analysis Mode Selector** (Radio buttons or card-style selection)
+   
+   Three options displayed as cards:
+   
+   | Mode | Label | Description | Read Time |
+   |------|-------|-------------|-----------|
+   | quick | ⚡ Quick Prep | Get the essentials fast | 10-15 min read |
+   | deep | 🔍 Deep Dive | Comprehensive analysis (Recommended) | 30-45 min read |
+   | max | 🎯 Max Insight | Leave no stone unturned | 60-90 min read |
+   
+   - Default selected: "Deep Dive" (deep)
+   - Each card should show the label, description, and read time
+   - Visual indicator for selected mode (border color or checkmark)
+
+3. **Submit Button**
+   - Text: "Analyze This Job"
+   - Disabled until job description has at least 100 characters
+   - Shows loading state when clicked (will connect to API later)
+
+**Additional Elements:**
+- Small info text under mode selector: "Choose based on how much time you have. You can always run a deeper analysis later."
+
+### Styling
+- Use the existing design system (beige background, navy blue accents)
+- Cards for mode selection should match the service cards style from dashboard
+- Form should be centered with max-width around 800px
+- Add subtle validation styling (red border if empty on blur after interaction)
+
+### Database Interaction (for this prompt)
+- No database save yet (that comes in next prompt)
+- Just build the UI and form validation
+- Store form state in React state
+
+### What NOT to build yet
+- Do not connect to Claude API yet
+- Do not save to database yet
+- Do not show results/report yet
+
+### Test Checklist
+- [ ] Page loads at correct route
+- [ ] Redirects to login if not authenticated
+- [ ] Can paste text into textarea
+- [ ] Character count updates as user types
+- [ ] Can select different analysis modes
+- [ ] Deep Dive is selected by default
+- [ ] Submit button is disabled when textarea has < 100 characters
+- [ ] Submit button enables when textarea has 100+ characters
+- [ ] Clicking submit shows loading state (but doesn't do anything yet)
