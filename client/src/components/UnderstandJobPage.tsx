@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { isAuthenticated } from '@/lib/auth'
+import { Button } from '@/components/ui/button'
 import { ChevronRight, Loader2, Sparkles, CheckCircle, X, Users, Code, Briefcase, HelpCircle, Zap, ClipboardList } from 'lucide-react'
 
 type InterviewerType = 'hr' | 'technical' | 'manager' | 'general'
@@ -321,52 +322,36 @@ export function UnderstandJobPage() {
             gap: '16px',
             padding: '16px 24px'
           }}>
-            <button
+            <Button
               type="button"
+              variant="outline"
               onClick={() => navigate('/dashboard')}
-              style={{
-                backgroundColor: 'white',
-                border: '1px solid #E5E7EB',
-                color: '#374151',
-                padding: '12px 24px',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontWeight: 500,
-                fontSize: '14px'
-              }}
+              className="border-[#E5E7EB] text-[#374151] bg-white hover:bg-[#F9FAFB] px-6 py-3 h-auto"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
               disabled={isDisabled}
+              className="px-8 py-3 h-auto text-base font-semibold"
               style={{
                 backgroundColor: '#1E3A5F',
                 color: 'white',
-                padding: '12px 32px',
-                borderRadius: '8px',
-                border: 'none',
-                fontWeight: 600,
-                fontSize: '16px',
-                cursor: isDisabled ? 'not-allowed' : 'pointer',
-                opacity: isDisabled ? 0.5 : 1,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
+                opacity: isDisabled ? 0.5 : 1
               }}
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Analyzing...
                 </>
               ) : (
                 <>
-                  <Sparkles className="h-4 w-4" />
+                  <Sparkles className="mr-2 h-4 w-4" />
                   Generate My Prep Report
                 </>
               )}
-            </button>
+            </Button>
           </div>
 
           {isLoading && (
