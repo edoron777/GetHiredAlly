@@ -1,0 +1,78 @@
+## TASK: Fix X-Ray Analyzer Page - 3 Issues
+
+### ISSUE 1: Remove "Analysis Mode" Section
+
+The current "Analysis Mode" section has 3 options (Quick Prep, Deep Dive, Max Insight).
+
+DELETE this entire section.
+
+### ISSUE 2: Replace with "How much time do you have?" Section
+
+Add a NEW section after "Who will interview you?" with these specs:
+
+Section header: "How much time do you have?"
+
+2 selection cards side by side (equal width):
+
+**Card 1: Interview Ready**
+- Icon: Zap icon (from lucide-react)
+- Label: "Interview Ready"
+- Sublabel line 1: "Essential points"
+- Sublabel line 2: "5-10 min read"
+
+**Card 2: Fully Prepared**
+- Icon: ClipboardList icon (from lucide-react)
+- Label: "Fully Prepared"
+- Sublabel line 1: "Complete analysis"
+- Sublabel line 2: "20-30 min read"
+
+**Card Styling (same as interviewer cards):**
+- Unselected: white background, 1px solid #E5E7EB border
+- Selected: #E8F0F5 background, 2px solid #1E3A5F border
+- Hover (not selected): 1px solid #1E3A5F border
+- Height: ~100px
+- Border radius: 8px
+
+**State variable:** 
+- depthLevel: 'ready' | 'full' | null
+
+### ISSUE 3: Fix Primary Button Color
+
+The "Analyze Job Description" button (or "Generate My Prep Report") should be navy blue BEFORE clicking, not after.
+
+**Button styling when ENABLED:**
+- Background color: #1E3A5F (navy blue)
+- Text color: white
+- This should be the DEFAULT state when button is enabled
+
+**Button styling when DISABLED:**
+- Background color: #1E3A5F with opacity 0.5
+- OR Background color: #9CA3AF (gray)
+- Cursor: not-allowed
+
+**Button text:** Change to "Generate My Prep Report"
+
+### VALIDATION LOGIC
+
+Button should be ENABLED only when ALL three are true:
+1. Job description has text (minimum 100 characters)
+2. Interviewer type is selected (hr, technical, manager, or general)
+3. Depth level is selected (ready or full)
+
+### DATA TO SEND ON SUBMIT
+
+When button is clicked, send to backend:
+{
+  jobDescription: string,
+  interviewerType: 'hr' | 'technical' | 'manager' | 'general',
+  depthLevel: 'ready' | 'full'
+}
+
+For now, console.log this data - we'll connect backend next.
+
+### SUMMARY OF CHANGES
+
+1. DELETE: "Analysis Mode" section with Quick Prep / Deep Dive / Max Insight
+2. ADD: "How much time do you have?" section with Interview Ready / Fully Prepared
+3. FIX: Button color should be navy (#1E3A5F) when enabled, BEFORE user clicks
+4. CHANGE: Button text to "Generate My Prep Report"

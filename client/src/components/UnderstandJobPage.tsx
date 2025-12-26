@@ -2,10 +2,10 @@ import { useEffect, useState, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { isAuthenticated } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
-import { Zap, Search, Target, ChevronRight, Loader2, Sparkles, CheckCircle, X, Users, Code, Briefcase, HelpCircle } from 'lucide-react'
+import { ChevronRight, Loader2, Sparkles, CheckCircle, X, Users, Code, Briefcase, HelpCircle, Zap, ClipboardList } from 'lucide-react'
 
-type AnalysisMode = 'quick' | 'deep' | 'max'
-type InterviewerType = 'hr' | 'technical' | 'manager' | 'not_sure'
+type InterviewerType = 'hr' | 'technical' | 'manager' | 'general'
+type DepthLevel = 'ready' | 'full'
 
 const statusMessages = [
   "Reading the job description...",
@@ -15,20 +15,20 @@ const statusMessages = [
   "Preparing your personalized report..."
 ]
 
-interface ModeOption {
-  id: AnalysisMode
-  icon: React.ReactNode
-  label: string
-  description: string
-  readTime: string
-}
-
 interface InterviewerOption {
   id: InterviewerType
   icon: React.ReactNode
   label: string
   sublabel: string
   fullWidth?: boolean
+}
+
+interface DepthOption {
+  id: DepthLevel
+  icon: React.ReactNode
+  label: string
+  sublabel1: string
+  sublabel2: string
 }
 
 const interviewerOptions: InterviewerOption[] = [
@@ -51,7 +51,7 @@ const interviewerOptions: InterviewerOption[] = [
     sublabel: 'Team fit & delivery'
   },
   {
-    id: 'not_sure',
+    id: 'general',
     icon: <HelpCircle className="h-6 w-6" />,
     label: 'Not Sure',
     sublabel: 'Comprehensive analysis',
@@ -59,27 +59,20 @@ const interviewerOptions: InterviewerOption[] = [
   }
 ]
 
-const modeOptions: ModeOption[] = [
+const depthOptions: DepthOption[] = [
   {
-    id: 'quick',
-    icon: <Zap className="h-5 w-5" />,
-    label: 'Quick Prep',
-    description: 'Get the essentials fast',
-    readTime: '10-15 min read'
+    id: 'ready',
+    icon: <Zap className="h-6 w-6" />,
+    label: 'Interview Ready',
+    sublabel1: 'Essential points',
+    sublabel2: '5-10 min read'
   },
   {
-    id: 'deep',
-    icon: <Search className="h-5 w-5" />,
-    label: 'Deep Dive',
-    description: 'Comprehensive analysis (Recommended)',
-    readTime: '30-45 min read'
-  },
-  {
-    id: 'max',
-    icon: <Target className="h-5 w-5" />,
-    label: 'Max Insight',
-    description: 'Leave no stone unturned',
-    readTime: '60-90 min read'
+    id: 'full',
+    icon: <ClipboardList className="h-6 w-6" />,
+    label: 'Fully Prepared',
+    sublabel1: 'Complete analysis',
+    sublabel2: '20-30 min read'
   }
 ]
 
@@ -87,7 +80,7 @@ export function UnderstandJobPage() {
   const navigate = useNavigate()
   const [jobDescription, setJobDescription] = useState('')
   const [selectedInterviewer, setSelectedInterviewer] = useState<InterviewerType | null>(null)
-  const [selectedMode, setSelectedMode] = useState<AnalysisMode>('deep')
+  const [depthLevel, setDepthLevel] = useState<DepthLevel | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [touched, setTouched] = useState(false)
   const [analysis, setAnalysis] = useState<string | null>(null)
@@ -125,12 +118,19 @@ export function UnderstandJobPage() {
 
   const characterCount = jobDescription.length
   const isDescriptionValid = characterCount >= 100
-  const isFormValid = isDescriptionValid && selectedInterviewer !== null
+  const isFormValid = isDescriptionValid && selectedInterviewer !== null && depthLevel !== null
   const showError = touched && !isDescriptionValid
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!isFormValid) return
+
+    const submitData = {
+      jobDescription,
+      interviewerType: selectedInterviewer,
+      depthLevel: depthLevel
+    }
+    console.log('Submitting:', submitData)
     
     setIsLoading(true)
     setError(null)
@@ -144,7 +144,7 @@ export function UnderstandJobPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           job_description: jobDescription,
-          mode: selectedMode,
+          mode: depthLevel === 'ready' ? 'quick' : 'deep',
           interviewer_type: selectedInterviewer
         })
       })
@@ -222,7 +222,7 @@ export function UnderstandJobPage() {
                   className={`p-4 rounded-lg text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-2 ${
                     selectedInterviewer === option.id
                       ? 'border-2 border-[#1E3A5F] bg-[#E8F0F5] shadow-sm'
-                      : 'border border-[#E5E7EB] bg-white hover:bg-[#F9FAFB] hover:border-[#D1D5DB]'
+                      : 'border border-[#E5E7EB] bg-white hover:border-[#1E3A5F]'
                   }`}
                 >
                   <div style={{ color: selectedInterviewer === option.id ? '#1E3A5F' : '#6B7280' }}>
@@ -245,7 +245,7 @@ export function UnderstandJobPage() {
                 className={`w-full p-4 rounded-lg text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-2 ${
                   selectedInterviewer === option.id
                     ? 'border-2 border-[#1E3A5F] bg-[#E8F0F5] shadow-sm'
-                    : 'border border-[#E5E7EB] bg-white hover:bg-[#F9FAFB] hover:border-[#D1D5DB]'
+                    : 'border border-[#E5E7EB] bg-white hover:border-[#1E3A5F]'
                 }`}
               >
                 <div style={{ color: selectedInterviewer === option.id ? '#1E3A5F' : '#6B7280' }}>
@@ -261,88 +261,83 @@ export function UnderstandJobPage() {
             ))}
           </div>
 
-          <div className="p-6 rounded-lg border border-[#E5E7EB]" style={{ backgroundColor: '#F9FAFB' }}>
-            <label className="block text-lg font-bold mb-4 text-center" style={{ color: '#333333' }}>
-              Analysis Mode
+          <div className="mb-8">
+            <label className="block text-xl font-bold mb-4" style={{ color: '#333333' }}>
+              How much time do you have?
             </label>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {modeOptions.map((mode) => (
+            <div className="grid grid-cols-2 gap-3">
+              {depthOptions.map((option) => (
                 <button
-                  key={mode.id}
+                  key={option.id}
                   type="button"
-                  onClick={() => setSelectedMode(mode.id)}
-                  className={`px-4 py-3 rounded-lg text-left transition-all cursor-pointer flex flex-col items-start h-full ${
-                    selectedMode === mode.id
+                  onClick={() => setDepthLevel(option.id)}
+                  className={`p-4 rounded-lg text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-2 h-[100px] ${
+                    depthLevel === option.id
                       ? 'border-2 border-[#1E3A5F] bg-[#E8F0F5] shadow-sm'
-                      : 'border border-[#E5E7EB] bg-white hover:bg-[#F9FAFB] hover:border-[#D1D5DB]'
+                      : 'border border-[#E5E7EB] bg-white hover:border-[#1E3A5F]'
                   }`}
                 >
-                  <div className="flex items-center justify-between w-full">
-                    <div className="flex items-center gap-2" style={{ color: '#1E3A5F' }}>
-                      {mode.icon}
-                      <span className="font-semibold text-sm">{mode.label}</span>
-                    </div>
-                    {selectedMode === mode.id && (
-                      <div className="w-4 h-4 rounded-full bg-[#1E3A5F] flex items-center justify-center flex-shrink-0">
-                        <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                    )}
+                  <div style={{ color: depthLevel === option.id ? '#1E3A5F' : '#6B7280' }}>
+                    {option.icon}
                   </div>
-                  <p className="text-xs mt-1" style={{ color: '#374151' }}>
-                    {mode.description}
-                  </p>
-                  <p className="text-xs mt-0.5" style={{ color: '#6B7280' }}>
-                    {mode.readTime}
-                  </p>
+                  <span className="font-semibold text-sm" style={{ color: '#1E3A5F' }}>
+                    {option.label}
+                  </span>
+                  <span className="text-xs" style={{ color: '#6B7280' }}>
+                    {option.sublabel1}
+                  </span>
+                  <span className="text-xs" style={{ color: '#6B7280' }}>
+                    {option.sublabel2}
+                  </span>
                 </button>
               ))}
             </div>
-            <p className="text-sm mt-3" style={{ color: '#6B7280' }}>
-              Choose based on how much time you have. You can always run a deeper analysis later.
-            </p>
-
-            <div className="flex justify-center gap-4 mt-6">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => navigate('/dashboard')}
-                className="border-[#D1D5DB] text-[#6B7280] bg-white hover:bg-[#F9FAFB]"
-              >
-                Cancel
-              </Button>
-              <button
-                type="submit"
-                disabled={!isFormValid || isLoading}
-                className="btn-analyze inline-flex items-center justify-center rounded-md font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none px-8 py-3 text-base shadow-md transition-colors"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Analyzing...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    Analyze Job Description
-                  </>
-                )}
-              </button>
-            </div>
-
-            {isLoading && (
-              <div className="mt-6 text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <div className="flex items-center justify-center gap-3 mb-2">
-                  <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-                  <span className="font-medium text-blue-800">Analyzing your job description...</span>
-                </div>
-                <p className="text-sm animate-pulse" style={{ color: '#1E3A5F' }}>
-                  {statusMessages[statusIndex]}
-                </p>
-              </div>
-            )}
           </div>
+
+          <div className="flex justify-center gap-4 mt-8">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => navigate('/dashboard')}
+              className="border-[#D1D5DB] text-[#6B7280] bg-white hover:bg-[#F9FAFB]"
+            >
+              Cancel
+            </Button>
+            <button
+              type="submit"
+              disabled={!isFormValid || isLoading}
+              className="inline-flex items-center justify-center rounded-md font-medium px-8 py-3 text-base shadow-md transition-colors text-white"
+              style={{
+                backgroundColor: isFormValid && !isLoading ? '#1E3A5F' : '#9CA3AF',
+                cursor: isFormValid && !isLoading ? 'pointer' : 'not-allowed',
+                opacity: isFormValid && !isLoading ? 1 : 0.7
+              }}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Analyzing...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Generate My Prep Report
+                </>
+              )}
+            </button>
+          </div>
+
+          {isLoading && (
+            <div className="mt-6 text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="flex items-center justify-center gap-3 mb-2">
+                <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                <span className="font-medium text-blue-800">Analyzing your job description...</span>
+              </div>
+              <p className="text-sm animate-pulse" style={{ color: '#1E3A5F' }}>
+                {statusMessages[statusIndex]}
+              </p>
+            </div>
+          )}
         </form>
 
         {showSuccess && (
