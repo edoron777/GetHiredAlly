@@ -137,7 +137,7 @@ async def download_pdf(request: DownloadRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"PDF generation failed: {str(e)}")
 
-def set_run_font(run, font_name='Calibri', size=11, bold=False, color=None):
+def set_run_font(run, font_name='Arial', size=11, bold=False, color=None):
     run.font.name = font_name
     run.font.size = Pt(size)
     run.font.bold = bold
@@ -155,6 +155,21 @@ def set_paragraph_spacing(paragraph, space_before=0, space_after=0, line_spacing
     spacing.set(qn('w:lineRule'), 'auto')
     pPr.append(spacing)
 
+def set_cell_shading(cell, color_hex):
+    shading = OxmlElement('w:shd')
+    shading.set(qn('w:fill'), color_hex)
+    cell._tc.get_or_add_tcPr().append(shading)
+
+def add_bottom_border(paragraph, color_hex='1E3A5F', size=6):
+    pPr = paragraph._p.get_or_add_pPr()
+    pBdr = OxmlElement('w:pBdr')
+    bottom = OxmlElement('w:bottom')
+    bottom.set(qn('w:val'), 'single')
+    bottom.set(qn('w:sz'), str(size))
+    bottom.set(qn('w:color'), color_hex)
+    pBdr.append(bottom)
+    pPr.append(pBdr)
+
 @router.post("/download/docx")
 async def download_docx(request: DownloadRequest):
     try:
@@ -162,23 +177,86 @@ async def download_docx(request: DownloadRequest):
         
         navy_color = RGBColor(0x1E, 0x3A, 0x5F)
         dark_gray = RGBColor(0x37, 0x41, 0x51)
+        white_color = RGBColor(0xFF, 0xFF, 0xFF)
         
+        sections = document.sections
+        for section in sections:
+            section.top_margin = Inches(0.5)
+            section.bottom_margin = Inches(0.75)
+            section.left_margin = Inches(0.75)
+            section.right_margin = Inches(0.75)
+        
+        header_table = document.add_table(rows=1, cols=1)
+        header_table.autofit = False
+        header_table.allow_autofit = False
+        header_cell = header_table.cell(0, 0)
+        header_cell.width = Inches(7)
+        set_cell_shading(header_cell, '1E3A5F')
+        
+        header_para = header_cell.paragraphs[0]
+        header_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        header_run = header_para.add_run("GetHiredAlly - Job Analysis Report")
+        set_run_font(header_run, size=14, bold=True, color=white_color)
+        
+        from docx.shared import Twips
+        tc = header_cell._tc
+        tcPr = tc.get_or_add_tcPr()
+        tcMar = OxmlElement('w:tcMar')
+        for margin_name in ['top', 'bottom', 'left', 'right']:
+            margin = OxmlElement(f'w:{margin_name}')
+            margin.set(qn('w:w'), '200')
+            margin.set(qn('w:type'), 'dxa')
+            tcMar.append(margin)
+        tcPr.append(tcMar)
+        
+        document.add_paragraph()
+        
+        info_table = document.add_table(rows=1, cols=1)
+        info_table.autofit = False
+        info_cell = info_table.cell(0, 0)
+        info_cell.width = Inches(7)
+        set_cell_shading(info_cell, 'F3F4F6')
+        
+        tc_info = info_cell._tc
+        tcPr_info = tc_info.get_or_add_tcPr()
+        tcBorders = OxmlElement('w:tcBorders')
+        for border_name in ['top', 'bottom', 'left', 'right']:
+            border = OxmlElement(f'w:{border_name}')
+            border.set(qn('w:val'), 'single')
+            border.set(qn('w:sz'), '4')
+            border.set(qn('w:color'), 'E5E7EB')
+            tcBorders.append(border)
+        tcPr_info.append(tcBorders)
+        
+        tcMar_info = OxmlElement('w:tcMar')
+        for margin_name in ['top', 'bottom', 'left', 'right']:
+            margin = OxmlElement(f'w:{margin_name}')
+            margin.set(qn('w:w'), '150')
+            margin.set(qn('w:type'), 'dxa')
+            tcMar_info.append(margin)
+        tcPr_info.append(tcMar_info)
+        
+        info_para = info_cell.paragraphs[0]
         title_text = request.job_title if request.job_title else "Job Analysis Report"
+        job_run = info_para.add_run(f"Job Title: {title_text}")
+        set_run_font(job_run, size=10, bold=True)
+        
+        if request.company_name:
+            info_para.add_run("\n")
+            company_run = info_para.add_run(f"Company: {request.company_name}")
+            set_run_font(company_run, size=10)
+        
+        info_para.add_run("\n")
+        date_run = info_para.add_run(f"Generated: {datetime.now().strftime('%B %d, %Y')}")
+        set_run_font(date_run, size=10, color=dark_gray)
+        
+        document.add_paragraph()
+        
         title_para = document.add_paragraph()
         title_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
         title_run = title_para.add_run(title_text)
-        set_run_font(title_run, size=24, bold=True, color=navy_color)
-        set_paragraph_spacing(title_para, space_after=6)
-        
-        if request.company_name:
-            subtitle_para = document.add_paragraph()
-            subtitle_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            subtitle_run = subtitle_para.add_run(request.company_name)
-            set_run_font(subtitle_run, size=14, color=dark_gray)
-            set_paragraph_spacing(subtitle_para, space_after=12)
-        else:
-            spacer = document.add_paragraph()
-            set_paragraph_spacing(spacer, space_after=12)
+        set_run_font(title_run, size=26, bold=True, color=navy_color)
+        set_paragraph_spacing(title_para, space_after=12)
         
         lines = request.report_content.split('\n')
         skip_next_empty = False
@@ -193,7 +271,7 @@ async def download_docx(request: DownloadRequest):
             if not line:
                 if not skip_next_empty:
                     spacer = document.add_paragraph()
-                    set_paragraph_spacing(spacer, space_before=3, space_after=3)
+                    set_paragraph_spacing(spacer, space_before=2, space_after=2)
                 skip_next_empty = False
                 continue
             
@@ -203,39 +281,41 @@ async def download_docx(request: DownloadRequest):
                 clean_line = line.lstrip('#').strip()
                 p = document.add_paragraph()
                 run = p.add_run(clean_line)
-                set_run_font(run, size=13, bold=True, color=dark_gray)
-                set_paragraph_spacing(p, space_before=12, space_after=6)
+                set_run_font(run, size=12, bold=True, color=dark_gray)
+                set_paragraph_spacing(p, space_before=10, space_after=6)
             elif line.startswith('##'):
                 clean_line = line.lstrip('#').strip()
                 p = document.add_paragraph()
+                add_bottom_border(p, '1E3A5F', 4)
                 run = p.add_run(clean_line)
-                set_run_font(run, size=16, bold=True, color=navy_color)
-                set_paragraph_spacing(p, space_before=18, space_after=12)
+                set_run_font(run, size=14, bold=True, color=navy_color)
+                set_paragraph_spacing(p, space_before=16, space_after=8)
             elif line.startswith('#'):
                 clean_line = line.lstrip('#').strip()
                 p = document.add_paragraph()
+                add_bottom_border(p, '1E3A5F', 6)
                 run = p.add_run(clean_line)
-                set_run_font(run, size=18, bold=True, color=navy_color)
-                set_paragraph_spacing(p, space_before=18, space_after=12)
+                set_run_font(run, size=16, bold=True, color=navy_color)
+                set_paragraph_spacing(p, space_before=16, space_after=10)
             elif line.startswith('- ') or line.startswith('• ') or line.startswith('* '):
                 clean_line = line[2:].replace('**', '').replace('*', '')
                 p = document.add_paragraph(style='List Bullet')
                 run = p.add_run(clean_line)
                 set_run_font(run, size=11)
-                set_paragraph_spacing(p, space_before=2, space_after=2)
+                set_paragraph_spacing(p, space_before=1, space_after=1)
             elif line.startswith('**') and line.endswith('**'):
                 clean_line = line.strip('*').strip()
                 p = document.add_paragraph()
                 run = p.add_run(clean_line)
                 set_run_font(run, size=11, bold=True)
-                set_paragraph_spacing(p, space_before=6, space_after=6)
+                set_paragraph_spacing(p, space_before=4, space_after=4)
             else:
                 clean_line = line.replace('**', '').replace('*', '')
                 if clean_line:
                     p = document.add_paragraph()
                     run = p.add_run(clean_line)
                     set_run_font(run, size=11)
-                    set_paragraph_spacing(p, space_before=3, space_after=6)
+                    set_paragraph_spacing(p, space_before=2, space_after=4)
         
         buffer = io.BytesIO()
         document.save(buffer)
