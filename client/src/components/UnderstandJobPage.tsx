@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { isAuthenticated } from '@/lib/auth'
-import { ChevronRight, Loader2, Sparkles, CheckCircle, X, Users, Code, Briefcase, HelpCircle, Zap, ClipboardList } from 'lucide-react'
+import { Loader2, Sparkles, CheckCircle, X, Users, Code, Briefcase, HelpCircle, Zap, ClipboardList } from 'lucide-react'
 
 type InterviewerType = 'hr' | 'technical' | 'manager' | 'general'
 type DepthLevel = 'ready' | 'full'
@@ -172,13 +172,16 @@ export function UnderstandJobPage() {
   return (
     <div className="min-h-[calc(100vh-64px)] p-4 md:p-8" style={{ backgroundColor: '#FAF9F7' }}>
       <div className="max-w-3xl mx-auto">
-        <nav className="flex items-center gap-2 text-sm mb-6" style={{ color: '#6B7280' }}>
-          <Link to="/dashboard" className="hover:underline" style={{ color: '#1E3A5F' }}>
-            Home
-          </Link>
-          <ChevronRight className="h-4 w-4" />
-          <span>Analyze This Job</span>
-        </nav>
+        <button
+          type="button"
+          onClick={() => navigate('/dashboard')}
+          className="mb-6 text-sm transition-colors"
+          style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+          onMouseEnter={(e) => e.currentTarget.style.color = '#1E3A5F'}
+          onMouseLeave={(e) => e.currentTarget.style.color = '#6B7280'}
+        >
+          ← Back to Dashboard
+        </button>
 
         <h1 className="text-3xl font-bold mb-1" style={{ color: '#1E3A5F' }}>
           Analyze This Job
@@ -210,11 +213,25 @@ export function UnderstandJobPage() {
               <span style={{ fontSize: '13px', color: showError ? '#EF4444' : '#6B7280' }}>
                 {characterCount} characters {characterCount < 100 && characterCount > 0 && '(minimum 100)'}
               </span>
-              {showError && (
-                <span style={{ fontSize: '13px', color: '#EF4444' }}>
-                  Please enter at least 100 characters
-                </span>
-              )}
+              <div className="flex items-center gap-4">
+                {showError && (
+                  <span style={{ fontSize: '13px', color: '#EF4444' }}>
+                    Please enter at least 100 characters
+                  </span>
+                )}
+                {jobDescription.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => { setJobDescription(''); setTouched(false); }}
+                    className="transition-colors"
+                    style={{ fontSize: '13px', color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = '#DC2626'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = '#6B7280'}
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
