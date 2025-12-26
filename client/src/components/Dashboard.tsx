@@ -35,8 +35,9 @@ export function Dashboard() {
       title: 'Prepare for Questions',
       subtitle: 'Questions Predictor',
       description: 'What will they ask me?',
-      buttonText: 'Coming Soon',
-      isActive: false
+      buttonText: 'Get Started',
+      isActive: true,
+      navigateTo: '/service/predict-questions'
     },
     {
       icon: '💬',
