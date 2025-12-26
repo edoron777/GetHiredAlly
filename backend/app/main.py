@@ -6,9 +6,11 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from supabase import create_client, Client
 from .auth import router as auth_router
+from .analyze import router as analyze_router
 
 app = FastAPI(title="Backend API")
 app.include_router(auth_router)
+app.include_router(analyze_router)
 
 app.add_middleware(
     CORSMiddleware,

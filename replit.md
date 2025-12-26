@@ -61,6 +61,7 @@ GetHiredAlly is an interview preparation application with job description analys
 - `GET /api/auth/me?token=...` - Get current user from session token
 - `POST /api/auth/send-verification` - Send verification code email
 - `POST /api/auth/verify-email` - Verify email with 6-digit code
+- `POST /api/analyze-job` - Analyze job description with Claude AI (job_description, mode)
 
 ## Frontend Routes
 - `/` - Landing page
@@ -95,6 +96,7 @@ GetHiredAlly is an interview preparation application with job description analys
 - **Note**: Resend free tier only sends to owner email (edoron777@gmail.com). Verify a domain at resend.com/domains to send to other addresses.
 
 ## Recent Changes
+- December 26, 2025: Added Claude API integration for job description analysis with 3 modes (quick, deep, max)
 - December 26, 2025: Built X-Ray Analyzer input page with job description textarea, character count, 3 analysis mode cards, and form validation
 - December 26, 2025: Added dashboard with 3 service cards, protected routes
 - December 26, 2025: Added email verification with Resend API, 6-digit codes, and verification page

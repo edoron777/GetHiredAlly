@@ -44,6 +44,8 @@ export function UnderstandJobPage() {
   const [selectedMode, setSelectedMode] = useState<AnalysisMode>('deep')
   const [isLoading, setIsLoading] = useState(false)
   const [touched, setTouched] = useState(false)
+  const [analysis, setAnalysis] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -55,14 +57,36 @@ export function UnderstandJobPage() {
   const isValid = characterCount >= 100
   const showError = touched && !isValid
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!isValid) return
     
     setIsLoading(true)
-    setTimeout(() => {
+    setError(null)
+    setAnalysis(null)
+    
+    try {
+      const response = await fetch('/api/analyze-job', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          job_description: jobDescription,
+          mode: selectedMode
+        })
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.detail || 'Analysis failed')
+      }
+      
+      const data = await response.json()
+      setAnalysis(data.analysis)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong')
+    } finally {
       setIsLoading(false)
-    }, 2000)
+    }
   }
 
   return (
@@ -189,6 +213,25 @@ export function UnderstandJobPage() {
             </div>
           </div>
         </form>
+
+        {error && (
+          <div className="mt-8 p-4 rounded-lg bg-red-50 border border-red-200">
+            <p className="text-red-700">{error}</p>
+          </div>
+        )}
+
+        {analysis && (
+          <div className="mt-8 p-6 rounded-lg bg-white border border-[#E5E7EB] shadow-sm">
+            <h2 className="text-xl font-bold mb-4" style={{ color: '#1E3A5F' }}>
+              Analysis Results
+            </h2>
+            <div className="prose max-w-none" style={{ color: '#333333' }}>
+              <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
+                {analysis}
+              </pre>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

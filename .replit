@@ -17,6 +17,7 @@ build = ["bash", "scripts/build-client.sh"]
 
 [agent]
 expertMode = true
+integrations = ["python_anthropic_ai_integrations:1.0.0"]
 
 [workflows]
 runButton = "Project"
