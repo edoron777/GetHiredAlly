@@ -64,6 +64,7 @@ export function CVReportPage() {
   const [severityFilter, setSeverityFilter] = useState('all')
   const [expandedIssues, setExpandedIssues] = useState<Set<number>>(new Set())
   const [textSize, setTextSize] = useState(16)
+  const [isGeneratingFix, setIsGeneratingFix] = useState(false)
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -392,12 +393,35 @@ export function CVReportPage() {
             Would you like me to fix your CV automatically?
           </p>
           <button
-            className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            onClick={async () => {
+              setIsGeneratingFix(true)
+              try {
+                const token = getAuthToken()
+                const response = await fetch(`/api/cv-optimizer/fix/${scanId}?token=${token}`, {
+                  method: 'POST'
+                })
+                if (!response.ok) throw new Error('Failed to generate fix')
+                navigate(`/service/cv-optimizer/fixed/${scanId}`)
+              } catch (err) {
+                alert('Failed to generate fixed CV. Please try again.')
+              } finally {
+                setIsGeneratingFix(false)
+              }
+            }}
+            disabled={isGeneratingFix}
+            className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50"
           >
-            Yes, Fix My CV
+            {isGeneratingFix ? (
+              <span className="flex items-center gap-2">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                Generating Fixed CV...
+              </span>
+            ) : (
+              'Yes, Fix My CV'
+            )}
           </button>
           <p className="text-gray-500 text-sm mt-3">
-            Coming soon - AI will generate a corrected version of your CV
+            AI will generate a corrected version of your CV
           </p>
         </div>
       </div>

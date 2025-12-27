@@ -1,0 +1,812 @@
+# Replit Prompt: CV Optimizer - Phase 5 Auto-Fix Feature
+
+**Task:** Build the AI-powered CV auto-fix feature with side-by-side comparison
+**Priority:** 🟢 Optional (Nice to have)
+**Estimated Effort:** 5-6 hours
+**Depends On:** Phase 4 (Results Pages) completed
+
+---
+
+## ⚠️ CRITICAL INSTRUCTIONS
+
+- Follow these instructions EXACTLY
+- This is an OPTIONAL feature - core service works without it
+- Focus on clear before/after comparison
+
+---
+
+## OVERVIEW
+
+This feature allows users to:
+1. Click "Fix My CV" button
+2. AI generates a corrected version of their CV
+3. View side-by-side comparison (Original vs Fixed)
+4. Download the fixed CV in multiple formats
+
+---
+
+## USER FLOW
+
+```
+[Detailed Report Page]
+         │
+         ▼
+  [Click "Fix My CV"]
+         │
+         ▼
+  [Loading: "Generating fixed CV..."]
+         │
+         ▼
+  [Side-by-Side Comparison Page]
+         │
+         ▼
+  [Download Fixed CV] → PDF / DOCX / TXT
+```
+
+---
+
+## PAGE STRUCTURE
+
+### Route: `/service/cv-optimizer/fixed/{scan_id}`
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ ← Back to Report                                            │
+│                                                             │
+│ Your Fixed CV                                               │
+│ 12 issues have been corrected                               │
+│                                                             │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ [Original] [Fixed] [Side by Side]                       │ │
+│ └─────────────────────────────────────────────────────────┘ │
+│                                                             │
+│ ┌──────────────────────┐ ┌──────────────────────┐          │
+│ │    ORIGINAL CV       │ │    FIXED CV          │          │
+│ │                      │ │                      │          │
+│ │ John Doe             │ │ John Doe             │          │
+│ │ Phone: 555-1234      │ │ john.doe@email.com   │          │
+│ │                      │ │ Phone: 555-1234      │          │
+│ │ Professional Summary │ │ Professional Summary │          │
+│ │ I was responsible    │ │ Led development of   │          │
+│ │ for developping...   │ │ 5 enterprise apps... │          │
+│ │                      │ │                      │          │
+│ │ [red highlights]     │ │ [green highlights]   │          │
+│ │                      │ │                      │          │
+│ └──────────────────────┘ └──────────────────────┘          │
+│                                                             │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │              Download Fixed CV                          │ │
+│ │                                                         │ │
+│ │     [📄 PDF]     [📝 DOCX]     [📋 TXT]                │ │
+│ │                                                         │ │
+│ └─────────────────────────────────────────────────────────┘ │
+│                                                             │
+│              [← Back to Report]  [🏠 Go to Dashboard]      │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## PART A: TRIGGER FIX FROM REPORT PAGE
+
+Add handler to the "Fix My CV" button in the report page:
+
+```jsx
+// In DetailedReportPage component
+
+const [isGeneratingFix, setIsGeneratingFix] = useState(false);
+
+const handleFixCV = async () => {
+  setIsGeneratingFix(true);
+  
+  try {
+    const response = await fetch(`/api/cv-optimizer/fix/${scanId}`, {
+      method: 'POST'
+    });
+    
+    if (!response.ok) throw new Error('Failed to generate fix');
+    
+    const data = await response.json();
+    
+    // Navigate to fixed CV page
+    navigate(`/service/cv-optimizer/fixed/${scanId}`);
+    
+  } catch (err) {
+    alert('Failed to generate fixed CV. Please try again.');
+  } finally {
+    setIsGeneratingFix(false);
+  }
+};
+
+// Update the button:
+<button
+  onClick={handleFixCV}
+  disabled={isGeneratingFix}
+  className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50"
+>
+  {isGeneratingFix ? (
+    <span className="flex items-center gap-2">
+      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+      Generating Fixed CV...
+    </span>
+  ) : (
+    'Yes, Fix My CV'
+  )}
+</button>
+```
+
+---
+
+## PART B: FIXED CV PAGE COMPONENT
+
+```jsx
+// pages/service/cv-optimizer/fixed/[scanId].jsx
+
+import { useState, useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { 
+  ArrowLeft, CheckCircle, FileText, File, 
+  FileType, Home, Eye, Columns, Download
+} from 'lucide-react';
+
+// View modes
+const VIEW_MODES = [
+  { id: 'original', label: 'Original', icon: FileText },
+  { id: 'fixed', label: 'Fixed', icon: CheckCircle },
+  { id: 'sidebyside', label: 'Side by Side', icon: Columns }
+];
+
+export default function FixedCVPage() {
+  const { scanId } = useParams();
+  
+  // State
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [viewMode, setViewMode] = useState('sidebyside');
+  const [isDownloading, setIsDownloading] = useState(false);
+  
+  // Fetch fixed CV data
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch(`/api/cv-optimizer/fixed/${scanId}`);
+        if (!response.ok) throw new Error('Failed to load fixed CV');
+        const result = await response.json();
+        setData(result);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, [scanId]);
+  
+  // Download handler
+  const handleDownload = async (format) => {
+    setIsDownloading(true);
+    
+    try {
+      const response = await fetch(`/api/cv-optimizer/download/${scanId}?format=${format}`);
+      
+      if (!response.ok) throw new Error('Download failed');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `fixed_cv.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      
+    } catch (err) {
+      alert('Download failed. Please try again.');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+  
+  if (loading) {
+    return (
+      <div className="max-w-6xl mx-auto p-6 text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+        <p className="mt-4 text-gray-600">Loading fixed CV...</p>
+      </div>
+    );
+  }
+  
+  if (error) {
+    return (
+      <div className="max-w-6xl mx-auto p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+          <p className="text-red-700 mb-4">{error}</p>
+          <Link to={`/service/cv-optimizer/report/${scanId}`} className="text-blue-600 hover:underline">
+            ← Back to Report
+          </Link>
+        </div>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="max-w-6xl mx-auto p-6">
+      {/* Back Link */}
+      <Link 
+        to={`/service/cv-optimizer/report/${scanId}`}
+        className="flex items-center text-gray-600 hover:text-gray-800 mb-6"
+      >
+        <ArrowLeft size={20} className="mr-2" />
+        Back to Report
+      </Link>
+      
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+              <CheckCircle size={24} className="text-green-600" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Your Fixed CV
+            </h1>
+          </div>
+          <p className="text-gray-600">
+            {data.total_issues} issues have been corrected
+          </p>
+        </div>
+      </div>
+      
+      {/* View Mode Selector */}
+      <div className="bg-gray-100 rounded-lg p-1 inline-flex mb-6">
+        {VIEW_MODES.map(mode => {
+          const Icon = mode.icon;
+          return (
+            <button
+              key={mode.id}
+              onClick={() => setViewMode(mode.id)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-md transition-colors ${
+                viewMode === mode.id
+                  ? 'bg-white shadow text-blue-600'
+                  : 'text-gray-600 hover:text-gray-800'
+              }`}
+            >
+              <Icon size={18} />
+              {mode.label}
+            </button>
+          );
+        })}
+      </div>
+      
+      {/* CV Comparison View */}
+      <div className="mb-8">
+        {viewMode === 'sidebyside' && (
+          <div className="grid grid-cols-2 gap-6">
+            <CVPanel 
+              title="Original CV" 
+              content={data.original_cv_content}
+              type="original"
+              issues={data.issues}
+            />
+            <CVPanel 
+              title="Fixed CV" 
+              content={data.fixed_cv_content}
+              type="fixed"
+            />
+          </div>
+        )}
+        
+        {viewMode === 'original' && (
+          <CVPanel 
+            title="Original CV" 
+            content={data.original_cv_content}
+            type="original"
+            issues={data.issues}
+            fullWidth
+          />
+        )}
+        
+        {viewMode === 'fixed' && (
+          <CVPanel 
+            title="Fixed CV" 
+            content={data.fixed_cv_content}
+            type="fixed"
+            fullWidth
+          />
+        )}
+      </div>
+      
+      {/* Download Section */}
+      <div className="bg-gray-50 border border-gray-200 rounded-xl p-8 text-center">
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">
+          Download Fixed CV
+        </h2>
+        <p className="text-gray-600 mb-6">
+          Choose your preferred format
+        </p>
+        
+        <div className="flex justify-center gap-4">
+          <DownloadButton
+            format="pdf"
+            label="PDF"
+            icon={FileText}
+            onClick={() => handleDownload('pdf')}
+            disabled={isDownloading}
+          />
+          <DownloadButton
+            format="docx"
+            label="DOCX"
+            icon={File}
+            onClick={() => handleDownload('docx')}
+            disabled={isDownloading}
+          />
+          <DownloadButton
+            format="txt"
+            label="TXT"
+            icon={FileType}
+            onClick={() => handleDownload('txt')}
+            disabled={isDownloading}
+          />
+        </div>
+      </div>
+      
+      {/* Navigation Footer */}
+      <div className="flex justify-center gap-4 mt-8">
+        <Link
+          to={`/service/cv-optimizer/report/${scanId}`}
+          className="flex items-center gap-2 px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+        >
+          <ArrowLeft size={20} />
+          Back to Report
+        </Link>
+        <Link
+          to="/"
+          className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+        >
+          <Home size={20} />
+          Go to Dashboard
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+// CV Panel Component
+function CVPanel({ title, content, type, issues = [], fullWidth = false }) {
+  // Highlight issues in original content
+  const highlightContent = (text, issues) => {
+    if (type !== 'original' || issues.length === 0) {
+      return text;
+    }
+    
+    // For simplicity, we'll just display the text
+    // In a more advanced version, you could highlight specific issues
+    return text;
+  };
+  
+  return (
+    <div className={`${fullWidth ? 'max-w-3xl mx-auto' : ''}`}>
+      {/* Panel Header */}
+      <div className={`flex items-center gap-2 px-4 py-3 rounded-t-lg ${
+        type === 'original' 
+          ? 'bg-red-100 border border-red-200' 
+          : 'bg-green-100 border border-green-200'
+      }`}>
+        <div className={`w-3 h-3 rounded-full ${
+          type === 'original' ? 'bg-red-500' : 'bg-green-500'
+        }`}></div>
+        <span className={`font-medium ${
+          type === 'original' ? 'text-red-700' : 'text-green-700'
+        }`}>
+          {title}
+        </span>
+      </div>
+      
+      {/* Panel Content */}
+      <div className={`p-6 rounded-b-lg border-x border-b min-h-[500px] ${
+        type === 'original' 
+          ? 'bg-red-50/30 border-red-200' 
+          : 'bg-green-50/30 border-green-200'
+      }`}>
+        <pre className="whitespace-pre-wrap font-sans text-gray-800 text-sm leading-relaxed">
+          {content}
+        </pre>
+      </div>
+    </div>
+  );
+}
+
+// Download Button Component
+function DownloadButton({ format, label, icon: Icon, onClick, disabled }) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className="flex flex-col items-center gap-2 px-8 py-4 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-colors disabled:opacity-50"
+    >
+      <Icon size={32} className="text-gray-600" />
+      <span className="font-medium text-gray-700">{label}</span>
+    </button>
+  );
+}
+```
+
+---
+
+## PART C: BACKEND API ENDPOINTS
+
+### POST /api/cv-optimizer/fix/{scan_id}
+
+Generates the fixed CV using AI.
+
+```python
+# routes/cv_optimizer.py
+
+@router.post("/api/cv-optimizer/fix/{scan_id}")
+async def generate_fixed_cv(scan_id: int, current_user = Depends(get_current_user)):
+    """Generate a fixed version of the CV"""
+    
+    try:
+        # 1. Get scan data
+        scan_result = supabase.table('cv_scan_results') \
+            .select('*') \
+            .eq('id', scan_id) \
+            .eq('user_id', current_user.id) \
+            .execute()
+        
+        if not scan_result.data:
+            raise HTTPException(status_code=404, detail="Scan not found")
+        
+        scan = scan_result.data[0]
+        
+        # Check if already fixed
+        if scan.get('fixed_cv_content'):
+            return {
+                'success': True,
+                'message': 'Fixed CV already generated',
+                'scan_id': scan_id
+            }
+        
+        # 2. Get original CV content and issues
+        original_content = scan['original_cv_content']
+        issues = json.loads(scan['issues_json']) if scan['issues_json'] else []
+        
+        # 3. Generate fixed CV using AI
+        fixed_content = await generate_cv_fix(original_content, issues)
+        
+        # 4. Save to database
+        supabase.table('cv_scan_results') \
+            .update({
+                'fixed_cv_content': fixed_content,
+                'status': 'fixed',
+                'updated_at': datetime.utcnow().isoformat()
+            }) \
+            .eq('id', scan_id) \
+            .execute()
+        
+        return {
+            'success': True,
+            'message': 'Fixed CV generated successfully',
+            'scan_id': scan_id
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+```
+
+### GET /api/cv-optimizer/fixed/{scan_id}
+
+Returns the original and fixed CV content.
+
+```python
+@router.get("/api/cv-optimizer/fixed/{scan_id}")
+async def get_fixed_cv(scan_id: int, current_user = Depends(get_current_user)):
+    """Get the fixed CV comparison data"""
+    
+    result = supabase.table('cv_scan_results') \
+        .select('*') \
+        .eq('id', scan_id) \
+        .eq('user_id', current_user.id) \
+        .execute()
+    
+    if not result.data:
+        raise HTTPException(status_code=404, detail="Scan not found")
+    
+    scan = result.data[0]
+    
+    if not scan.get('fixed_cv_content'):
+        raise HTTPException(status_code=400, detail="Fixed CV not generated yet")
+    
+    issues = json.loads(scan['issues_json']) if scan['issues_json'] else []
+    
+    return {
+        'scan_id': scan['id'],
+        'original_cv_content': scan['original_cv_content'],
+        'fixed_cv_content': scan['fixed_cv_content'],
+        'total_issues': scan['total_issues'],
+        'issues': issues,
+        'status': scan['status']
+    }
+```
+
+### GET /api/cv-optimizer/download/{scan_id}
+
+Downloads the fixed CV in the requested format.
+
+```python
+from fastapi.responses import StreamingResponse
+from io import BytesIO
+
+@router.get("/api/cv-optimizer/download/{scan_id}")
+async def download_fixed_cv(
+    scan_id: int, 
+    format: str = 'txt',
+    current_user = Depends(get_current_user)
+):
+    """Download the fixed CV in specified format"""
+    
+    # 1. Get fixed CV content
+    result = supabase.table('cv_scan_results') \
+        .select('fixed_cv_content') \
+        .eq('id', scan_id) \
+        .eq('user_id', current_user.id) \
+        .execute()
+    
+    if not result.data or not result.data[0].get('fixed_cv_content'):
+        raise HTTPException(status_code=404, detail="Fixed CV not found")
+    
+    content = result.data[0]['fixed_cv_content']
+    
+    # 2. Generate file based on format
+    if format == 'txt':
+        return StreamingResponse(
+            BytesIO(content.encode('utf-8')),
+            media_type='text/plain',
+            headers={'Content-Disposition': 'attachment; filename=fixed_cv.txt'}
+        )
+    
+    elif format == 'pdf':
+        # Use a PDF library like reportlab or fpdf
+        pdf_bytes = generate_pdf(content)
+        return StreamingResponse(
+            BytesIO(pdf_bytes),
+            media_type='application/pdf',
+            headers={'Content-Disposition': 'attachment; filename=fixed_cv.pdf'}
+        )
+    
+    elif format == 'docx':
+        # Use python-docx library
+        docx_bytes = generate_docx(content)
+        return StreamingResponse(
+            BytesIO(docx_bytes),
+            media_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            headers={'Content-Disposition': 'attachment; filename=fixed_cv.docx'}
+        )
+    
+    else:
+        raise HTTPException(status_code=400, detail="Invalid format. Use: txt, pdf, docx")
+```
+
+---
+
+## PART D: AI FIX GENERATION SERVICE
+
+```python
+# services/ai_service.py
+
+CV_FIX_PROMPT = """You are a CV/Resume expert. Your task is to fix this CV based on the issues identified.
+
+ORIGINAL CV:
+---
+{original_cv}
+---
+
+ISSUES TO FIX:
+{issues_list}
+
+INSTRUCTIONS:
+1. Fix ALL the issues listed above
+2. Maintain the original structure and format of the CV
+3. Keep the same sections and order
+4. Only change what needs to be fixed
+5. Improve weak language to strong action verbs
+6. Add quantification where possible (use realistic estimates if needed)
+7. Fix all spelling and grammar errors
+8. Ensure professional tone throughout
+
+OUTPUT:
+Return the complete fixed CV. Do NOT include any explanations or comments.
+Just output the corrected CV text, ready to be used.
+
+FIXED CV:
+"""
+
+async def generate_cv_fix(original_content: str, issues: list) -> str:
+    """Generate a fixed version of the CV"""
+    
+    # Format issues list
+    issues_text = "\n".join([
+        f"- {issue['issue']} (Location: {issue['location']}): {issue['suggested_fix']}"
+        for issue in issues
+    ])
+    
+    prompt = CV_FIX_PROMPT.format(
+        original_cv=original_content,
+        issues_list=issues_text
+    )
+    
+    message = client.messages.create(
+        model="claude-sonnet-4-20250514",
+        max_tokens=4000,
+        messages=[
+            {"role": "user", "content": prompt}
+        ]
+    )
+    
+    fixed_content = message.content[0].text.strip()
+    
+    return fixed_content
+```
+
+---
+
+## PART E: FILE GENERATION HELPERS
+
+### PDF Generation
+
+```python
+# utils/file_generators.py
+
+from fpdf import FPDF
+
+def generate_pdf(content: str) -> bytes:
+    """Generate PDF from text content"""
+    
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font('Arial', size=11)
+    pdf.set_auto_page_break(auto=True, margin=15)
+    
+    # Split content into lines
+    lines = content.split('\n')
+    
+    for line in lines:
+        # Handle headers (lines in all caps or starting with specific keywords)
+        if line.isupper() and len(line) < 50:
+            pdf.set_font('Arial', 'B', 12)
+            pdf.cell(0, 8, line, ln=True)
+            pdf.set_font('Arial', size=11)
+        else:
+            # Regular text - handle encoding
+            try:
+                pdf.multi_cell(0, 6, line)
+            except:
+                # Skip problematic characters
+                safe_line = line.encode('latin-1', 'ignore').decode('latin-1')
+                pdf.multi_cell(0, 6, safe_line)
+    
+    return pdf.output(dest='S').encode('latin-1')
+```
+
+### DOCX Generation
+
+```python
+from docx import Document
+from docx.shared import Pt, Inches
+from io import BytesIO
+
+def generate_docx(content: str) -> bytes:
+    """Generate DOCX from text content"""
+    
+    doc = Document()
+    
+    # Set margins
+    sections = doc.sections
+    for section in sections:
+        section.top_margin = Inches(1)
+        section.bottom_margin = Inches(1)
+        section.left_margin = Inches(1)
+        section.right_margin = Inches(1)
+    
+    # Split content into lines
+    lines = content.split('\n')
+    
+    for line in lines:
+        if not line.strip():
+            doc.add_paragraph()  # Empty line
+        elif line.isupper() and len(line) < 50:
+            # Header
+            p = doc.add_paragraph(line)
+            p.runs[0].bold = True
+            p.runs[0].font.size = Pt(14)
+        else:
+            # Regular paragraph
+            p = doc.add_paragraph(line)
+            p.runs[0].font.size = Pt(11)
+    
+    # Save to bytes
+    buffer = BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
+    
+    return buffer.getvalue()
+```
+
+---
+
+## DEPENDENCIES TO INSTALL
+
+```bash
+pip install fpdf python-docx
+```
+
+Add to requirements.txt:
+```
+fpdf>=1.7.2
+python-docx>=0.8.11
+```
+
+---
+
+## VERIFICATION CHECKLIST
+
+### Fix Generation
+- [ ] "Fix My CV" button triggers API call
+- [ ] Loading spinner shows while generating
+- [ ] Success redirects to fixed CV page
+- [ ] Fixed content saved to database
+- [ ] Error handling works correctly
+
+### Fixed CV Page
+- [ ] Page loads at `/service/cv-optimizer/fixed/{scanId}`
+- [ ] Shows "12 issues have been corrected" message
+- [ ] View mode toggle works (Original / Fixed / Side by Side)
+- [ ] Original panel shows red styling
+- [ ] Fixed panel shows green styling
+- [ ] Content displays correctly in both panels
+
+### Download
+- [ ] PDF download button works
+- [ ] DOCX download button works
+- [ ] TXT download button works
+- [ ] Files download with correct filename
+- [ ] Files contain fixed CV content
+
+### Navigation
+- [ ] Back to Report link works
+- [ ] Go to Dashboard link works
+
+---
+
+## ERROR HANDLING
+
+Add error states for:
+- Fixed CV not yet generated
+- Download failed
+- Invalid format requested
+- Network errors
+
+---
+
+## OPTIONAL ENHANCEMENTS
+
+If time permits:
+1. **Diff highlighting** - Show changes highlighted in the side-by-side view
+2. **Section-by-section comparison** - Toggle between sections
+3. **Copy to clipboard** - Button to copy fixed CV text
+4. **Email fixed CV** - Send fixed CV via email
+
+---
+
+## NEXT STEP
+
+After this prompt is implemented:
+- **Prompt 6:** Testing & Polish (Final)
+
+---
+
+**END OF PROMPT**

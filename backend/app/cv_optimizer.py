@@ -3,13 +3,17 @@ import os
 import sys
 import json
 import hashlib
+from datetime import datetime
+from io import BytesIO
 from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from supabase import create_client, Client
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from services.ai_service import generate_completion
 from utils.encryption import decrypt_text
+from utils.file_generators import generate_pdf, generate_docx
 from config.rate_limiter import limiter
 
 router = APIRouter(prefix="/api/cv-optimizer", tags=["cv-optimizer"])
@@ -288,6 +292,197 @@ async def get_detailed_report(scan_id: str, token: str):
             'issues': issues,
             'status': scan['status']
         }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+CV_FIX_PROMPT = """You are a CV/Resume expert. Your task is to fix this CV based on the issues identified.
+
+ORIGINAL CV:
+---
+{original_cv}
+---
+
+ISSUES TO FIX:
+{issues_list}
+
+INSTRUCTIONS:
+1. Fix ALL the issues listed above
+2. Maintain the original structure and format of the CV
+3. Keep the same sections and order
+4. Only change what needs to be fixed
+5. Improve weak language to strong action verbs
+6. Add quantification where possible (use realistic estimates if needed)
+7. Fix all spelling and grammar errors
+8. Ensure professional tone throughout
+
+OUTPUT:
+Return the complete fixed CV. Do NOT include any explanations or comments.
+Just output the corrected CV text, ready to be used.
+
+FIXED CV:
+"""
+
+
+@router.post("/fix/{scan_id}")
+@limiter.limit("5/hour")
+async def generate_fixed_cv(request: Request, scan_id: str, token: str):
+    """Generate a fixed version of the CV."""
+    user = get_user_from_token(token)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    client = get_supabase_client()
+    if not client:
+        raise HTTPException(status_code=500, detail="Database not available")
+
+    try:
+        result = client.table("cv_scan_results").select("*").eq("id", scan_id).eq("user_id", user["id"]).execute()
+
+        if not result.data:
+            raise HTTPException(status_code=404, detail="Scan not found")
+
+        scan = result.data[0]
+
+        if scan.get('fixed_cv_content'):
+            return {
+                'success': True,
+                'message': 'Fixed CV already generated',
+                'scan_id': scan_id
+            }
+
+        original_content = scan.get('original_cv_content', '')
+        issues = scan.get('issues_json', [])
+        if isinstance(issues, str):
+            issues = json.loads(issues)
+
+        if not original_content:
+            raise HTTPException(status_code=400, detail="Original CV content not found")
+
+        issues_text = "\n".join([
+            f"- {issue.get('issue', '')} (Location: {issue.get('location', 'Unknown')}): {issue.get('suggested_fix', '')}"
+            for issue in issues
+        ])
+
+        prompt = CV_FIX_PROMPT.format(
+            original_cv=original_content,
+            issues_list=issues_text
+        )
+
+        fixed_content = await generate_completion(
+            prompt=prompt,
+            user_id=str(user["id"]),
+            service_name="cv_fix",
+            provider="gemini",
+            max_tokens=4000
+        )
+
+        client.table("cv_scan_results").update({
+            'fixed_cv_content': fixed_content,
+            'status': 'fixed',
+            'updated_at': datetime.utcnow().isoformat()
+        }).eq("id", scan_id).execute()
+
+        return {
+            'success': True,
+            'message': 'Fixed CV generated successfully',
+            'scan_id': scan_id
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/fixed/{scan_id}")
+async def get_fixed_cv(scan_id: str, token: str):
+    """Get the fixed CV comparison data."""
+    user = get_user_from_token(token)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    client = get_supabase_client()
+    if not client:
+        raise HTTPException(status_code=500, detail="Database not available")
+
+    try:
+        result = client.table("cv_scan_results").select("*").eq("id", scan_id).eq("user_id", user["id"]).execute()
+
+        if not result.data:
+            raise HTTPException(status_code=404, detail="Scan not found")
+
+        scan = result.data[0]
+
+        if not scan.get('fixed_cv_content'):
+            raise HTTPException(status_code=400, detail="Fixed CV not generated yet")
+
+        issues = scan.get('issues_json', [])
+        if isinstance(issues, str):
+            issues = json.loads(issues)
+
+        return {
+            'scan_id': scan['id'],
+            'original_cv_content': scan.get('original_cv_content', ''),
+            'fixed_cv_content': scan['fixed_cv_content'],
+            'total_issues': scan['total_issues'],
+            'issues': issues,
+            'status': scan['status']
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/download/{scan_id}")
+async def download_fixed_cv(scan_id: str, format: str = 'txt', token: str = ''):
+    """Download the fixed CV in specified format."""
+    user = get_user_from_token(token)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    client = get_supabase_client()
+    if not client:
+        raise HTTPException(status_code=500, detail="Database not available")
+
+    try:
+        result = client.table("cv_scan_results").select("fixed_cv_content").eq("id", scan_id).eq("user_id", user["id"]).execute()
+
+        if not result.data or not result.data[0].get('fixed_cv_content'):
+            raise HTTPException(status_code=404, detail="Fixed CV not found")
+
+        content = result.data[0]['fixed_cv_content']
+
+        if format == 'txt':
+            return StreamingResponse(
+                BytesIO(content.encode('utf-8')),
+                media_type='text/plain',
+                headers={'Content-Disposition': 'attachment; filename=fixed_cv.txt'}
+            )
+
+        elif format == 'pdf':
+            pdf_bytes = generate_pdf(content)
+            return StreamingResponse(
+                BytesIO(pdf_bytes),
+                media_type='application/pdf',
+                headers={'Content-Disposition': 'attachment; filename=fixed_cv.pdf'}
+            )
+
+        elif format == 'docx':
+            docx_bytes = generate_docx(content)
+            return StreamingResponse(
+                BytesIO(docx_bytes),
+                media_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                headers={'Content-Disposition': 'attachment; filename=fixed_cv.docx'}
+            )
+
+        else:
+            raise HTTPException(status_code=400, detail="Invalid format. Use: txt, pdf, docx")
 
     except HTTPException:
         raise

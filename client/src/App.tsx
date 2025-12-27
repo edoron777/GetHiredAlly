@@ -15,6 +15,7 @@ import { CVOptimizerPage } from '@/components/CVOptimizerPage'
 import { CVScanningPage } from '@/components/CVScanningPage'
 import { CVResultsPage } from '@/components/CVResultsPage'
 import { CVReportPage } from '@/components/CVReportPage'
+import { CVFixedPage } from '@/components/CVFixedPage'
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -45,6 +46,7 @@ function App() {
           <Route path="/service/cv-optimizer/scanning" element={<CVScanningPage />} />
           <Route path="/service/cv-optimizer/results/:scanId" element={<CVResultsPage />} />
           <Route path="/service/cv-optimizer/report/:scanId" element={<CVReportPage />} />
+          <Route path="/service/cv-optimizer/fixed/:scanId" element={<CVFixedPage />} />
         </Routes>
       </Layout>
     </BrowserRouter>

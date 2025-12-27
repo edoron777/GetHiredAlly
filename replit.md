@@ -75,6 +75,9 @@ GetHiredAlly is an interview preparation application with job description analys
 - `POST /api/cv-optimizer/scan` - Scan CV with AI (returns scan_id)
 - `GET /api/cv-optimizer/results/{scan_id}?token=...` - Get scan results summary
 - `GET /api/cv-optimizer/report/{scan_id}?token=...` - Get detailed report with all issues
+- `POST /api/cv-optimizer/fix/{scan_id}?token=...` - Generate fixed CV with AI
+- `GET /api/cv-optimizer/fixed/{scan_id}?token=...` - Get fixed CV comparison data
+- `GET /api/cv-optimizer/download/{scan_id}?format=...&token=...` - Download fixed CV (pdf, docx, txt)
 
 ## Frontend Routes
 - `/` - Landing page
@@ -91,6 +94,7 @@ GetHiredAlly is an interview preparation application with job description analys
 - `/service/cv-optimizer/scanning` - CV scanning animation page (protected)
 - `/service/cv-optimizer/results/:scanId` - CV scan results summary (protected)
 - `/service/cv-optimizer/report/:scanId` - CV detailed report with filters (protected)
+- `/service/cv-optimizer/fixed/:scanId` - Fixed CV comparison and download page (protected)
 
 ## Database Tables
 - `user_profiles` - User tier definitions (standard, special, vip)
@@ -153,6 +157,8 @@ GetHiredAlly is an interview preparation application with job description analys
 - **Password Security**: bcrypt hashing, passwords never logged
 
 ## Recent Changes
+- December 27, 2025: Added CV Auto-Fix feature with AI-powered correction and side-by-side comparison
+- December 27, 2025: Added fixed CV download in PDF, DOCX, TXT formats
 - December 27, 2025: Built CV scanning animation page with grid visualization, progress bar, and issue counters
 - December 27, 2025: Added AI-powered CV analysis using Gemini with detailed issue detection (severity, category, suggestions)
 - December 27, 2025: Created CV results page showing all issues with severity badges and fix suggestions
