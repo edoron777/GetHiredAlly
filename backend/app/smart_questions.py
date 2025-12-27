@@ -32,81 +32,39 @@ class EligibilityResponse(BaseModel):
     free_trial_used: bool
 
 def build_smart_questions_prompt(job_data: str, cv_text: Optional[str] = None) -> str:
-    prompt = """You are an expert interview coach helping a job seeker prepare for their interview.
+    prompt = """CRITICAL: You must respond with ONLY valid JSON. No text before or after. No markdown. No code blocks.
 
-## YOUR TASK
-Analyze the job requirements and candidate's background to:
-1. Identify 3-5 potential weak areas where the candidate might struggle
-2. Generate 25-30 personalized interview questions most likely to be asked
+You are an expert interview coach. Analyze the job and generate personalized interview questions.
 
-## JOB INFORMATION
+JOB INFORMATION:
 """
-    prompt += job_data
+    prompt += job_data[:4000]
     
     if cv_text:
         prompt += """
 
-## CANDIDATE'S CV/RESUME
+CANDIDATE CV:
 """
-        prompt += cv_text
+        prompt += cv_text[:2000]
     
     prompt += """
 
-## OUTPUT FORMAT
-Respond ONLY with valid JSON in this exact format (no markdown, no backticks, no explanation):
+Generate a JSON response with this EXACT structure:
 
-{
-    "weak_areas": [
-        {
-            "area": "Name of weak area",
-            "risk_level": "high|medium|low",
-            "detection_reason": "Why this is a potential gap",
-            "preparation_tip": "How to prepare for questions about this",
-            "sample_answer_approach": "Brief guidance on how to answer"
-        }
-    ],
-    "questions": [
-        {
-            "category": "universal|behavioral|situational|self_assessment|cultural_fit",
-            "question_text": "The interview question",
-            "personalized_context": "Why this question is relevant for THIS candidate/job",
-            "why_they_ask": "What the interviewer wants to learn",
-            "good_answer_example": "Template for a strong answer",
-            "what_to_avoid": "Common mistakes to avoid",
-            "source": "jd_requirement|cv_gap|cv_strength|common_question"
-        }
-    ]
-}
+{"weak_areas":[{"area":"string","risk_level":"high|medium|low","detection_reason":"string","preparation_tip":"string"}],"questions":[{"category":"universal|behavioral|situational|self_assessment|cultural_fit","question_text":"string","why_they_ask":"string","good_answer_example":"string","what_to_avoid":"string"}]}
 
-## RULES FOR WEAK AREAS
-1. Identify 3-5 areas where the candidate might face tough questions
-2. Look for: skill gaps, experience mismatches, career transitions, employment gaps, overqualification, underqualification
-3. For each area, provide actionable preparation tips
-4. Risk levels: high = likely to be asked and could hurt, medium = might come up, low = possible but manageable
+RULES:
+1. Generate 3-4 weak_areas (potential interview challenges)
+2. Generate exactly 15-18 questions with this mix:
+   - 3-4 Universal questions
+   - 5-6 Behavioral questions  
+   - 3-4 Situational questions
+   - 2-3 Self-Assessment questions
+   - 2-3 Cultural Fit questions
+3. Keep answer examples brief (2-3 sentences max)
+4. Keep what_to_avoid brief (1-2 sentences max)
 
-## RULES FOR QUESTIONS
-1. Generate exactly 25-30 questions
-2. Prioritize questions that are MOST LIKELY for THIS specific job
-3. Include a mix of categories:
-   - 5-7 Universal questions (customized for this role)
-   - 8-10 Behavioral questions (based on job requirements)
-   - 4-6 Situational questions (based on job challenges)
-   - 4-5 Self-Assessment questions
-   - 3-4 Cultural Fit questions
-4. Each question must have personalized context explaining why it's relevant
-5. Mark the source of each question:
-   - jd_requirement: Based on specific job requirement
-   - cv_gap: Addresses a gap in candidate's background
-   - cv_strength: Allows candidate to highlight a strength
-   - common_question: Standard question for this role type
-
-## PERSONALIZATION REQUIREMENTS
-- Reference specific skills/tools mentioned in the job description
-- If CV provided, reference specific experiences from the CV
-- Include company-specific questions if company name is known
-- Adjust difficulty based on seniority level of the role
-
-Now generate the JSON output:"""
+Your ENTIRE response must be valid JSON starting with { and ending with }. Nothing else."""
     
     return prompt
 
