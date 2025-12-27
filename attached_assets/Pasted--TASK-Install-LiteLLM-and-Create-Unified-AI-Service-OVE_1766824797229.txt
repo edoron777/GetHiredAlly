@@ -1,0 +1,251 @@
+## TASK: Install LiteLLM and Create Unified AI Service
+
+### OVERVIEW
+Replace direct Claude/Gemini API calls with LiteLLM for unified AI routing with automatic cost tracking.
+
+### STEP 1: Install LiteLLM
+
+pip install litellm
+
+### STEP 2: Create AI Service Module
+
+Create file: backend/services/ai_service.py
+
+from litellm import completion
+from datetime import datetime
+from typing import Optional
+import os
+
+class AIService:
+    """Unified AI service with automatic logging and cost tracking"""
+    
+    MODELS = {
+        'claude': 'claude-3-5-sonnet-20241022',
+        'gemini': 'gemini/gemini-2.5-pro-preview-05-06'
+    }
+    
+    PROVIDER_DISPLAY_NAMES = {
+        'claude': 'Claude (Anthropic)',
+        'gemini': 'Gemini (Google)'
+    }
+    
+    def __init__(self, supabase_client):
+        self.db = supabase_client
+    
+    async def generate(
+        self,
+        prompt: str,
+        user_id: str,
+        service_type: str,  # 'xray', 'smart_questions', 'answer_builder'
+        provider: str = 'gemini',
+        system_prompt: str = None,
+        metadata: dict = None
+    ) -> dict:
+        """
+        Generate AI response with automatic logging
+        
+        Args:
+            prompt: User prompt
+            user_id: User's UUID
+            service_type: Which service is calling
+            provider: 'claude' or 'gemini'
+            system_prompt: Optional system prompt
+            metadata: Additional data to log
+        
+        Returns:
+            dict with 'content', 'tokens', 'cost', 'provider'
+        """
+        model = self.MODELS.get(provider, self.MODELS['gemini'])
+        start_time = datetime.now()
+        
+        messages = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.append({"role": "user", "content": prompt})
+        
+        try:
+            # Call AI via LiteLLM
+            response = completion(
+                model=model,
+                messages=messages,
+                # Fallback to other provider if primary fails
+                fallbacks=[self.MODELS['claude'] if provider == 'gemini' else self.MODELS['gemini']]
+            )
+            
+            # Extract metrics
+            response_time_ms = int((datetime.now() - start_time).total_seconds() * 1000)
+            input_tokens = response.usage.prompt_tokens
+            output_tokens = response.usage.completion_tokens
+            
+            # Get cost from LiteLLM (or calculate manually)
+            cost = self._calculate_cost(provider, model, input_tokens, output_tokens)
+            
+            # Log usage to database
+            await self._log_usage(
+                user_id=user_id,
+                service_type=service_type,
+                ai_provider=provider,
+                model_name=model,
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
+                cost_usd=cost,
+                response_time_ms=response_time_ms,
+                success=True,
+                metadata=metadata
+            )
+            
+            return {
+                'content': response.choices[0].message.content,
+                'input_tokens': input_tokens,
+                'output_tokens': output_tokens,
+                'total_tokens': input_tokens + output_tokens,
+                'cost': cost,
+                'provider': provider,
+                'model': model,
+                'response_time_ms': response_time_ms
+            }
+            
+        except Exception as e:
+            response_time_ms = int((datetime.now() - start_time).total_seconds() * 1000)
+            
+            # Log failure
+            await self._log_usage(
+                user_id=user_id,
+                service_type=service_type,
+                ai_provider=provider,
+                model_name=model,
+                input_tokens=0,
+                output_tokens=0,
+                cost_usd=0,
+                response_time_ms=response_time_ms,
+                success=False,
+                error_message=str(e),
+                metadata=metadata
+            )
+            raise
+    
+    def _calculate_cost(self, provider: str, model: str, input_tokens: int, output_tokens: int) -> float:
+        """Calculate cost in USD"""
+        pricing = {
+            'claude': {'input': 3.00 / 1_000_000, 'output': 15.00 / 1_000_000},
+            'gemini': {'input': 1.25 / 1_000_000, 'output': 10.00 / 1_000_000}
+        }
+        rates = pricing.get(provider, pricing['gemini'])
+        return round((input_tokens * rates['input']) + (output_tokens * rates['output']), 6)
+    
+    async def _log_usage(self, **kwargs):
+        """Save usage log to database"""
+        try:
+            self.db.table('ai_usage_logs').insert({
+                **kwargs,
+                'created_at': datetime.now().isoformat()
+            }).execute()
+        except Exception as e:
+            print(f"Failed to log AI usage: {e}")
+    
+    async def get_user_preference(self, user_id: str, service_type: str = None) -> str:
+        """Get user's preferred AI provider"""
+        try:
+            # First check service-specific preference
+            if service_type:
+                result = self.db.table('user_ai_preferences').select('ai_provider').eq('user_id', user_id).eq('service_type', service_type).single().execute()
+                if result.data:
+                    return result.data['ai_provider']
+            
+            # Fall back to user's default preference
+            result = self.db.table('users').select('preferred_ai_provider').eq('id', user_id).single().execute()
+            if result.data and result.data.get('preferred_ai_provider'):
+                return result.data['preferred_ai_provider']
+            
+            return 'gemini'  # Default
+        except:
+            return 'gemini'
+    
+    async def set_user_preference(self, user_id: str, provider: str, service_type: str = None):
+        """Set user's AI provider preference"""
+        if service_type:
+            self.db.table('user_ai_preferences').upsert({
+                'user_id': user_id,
+                'service_type': service_type,
+                'ai_provider': provider,
+                'updated_at': datetime.now().isoformat()
+            }).execute()
+        else:
+            self.db.table('users').update({
+                'preferred_ai_provider': provider
+            }).eq('id', user_id).execute()
+
+
+# Create singleton instance
+def get_ai_service(supabase_client):
+    return AIService(supabase_client)
+
+### STEP 3: Create AI Service Router
+
+Create file: backend/routers/ai_settings.py
+
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+from typing import Optional
+
+router = APIRouter(prefix="/api/ai", tags=["ai-settings"])
+
+class ProviderPreference(BaseModel):
+    provider: str  # 'claude' or 'gemini'
+    service_type: Optional[str] = None  # 'xray', 'smart_questions', etc.
+
+class ProviderInfo(BaseModel):
+    id: str
+    name: str
+    description: str
+    cost_estimate: str
+
+@router.get("/providers")
+async def get_available_providers():
+    """Get list of available AI providers"""
+    return {
+        "providers": [
+            {
+                "id": "gemini",
+                "name": "Gemini (Google)",
+                "description": "Cost-effective, great for most tasks",
+                "cost_estimate": "~$0.04-0.08 per analysis",
+                "badge": "Best Value"
+            },
+            {
+                "id": "claude",
+                "name": "Claude (Anthropic)",
+                "description": "Premium quality, nuanced analysis",
+                "cost_estimate": "~$0.07-0.15 per analysis",
+                "badge": "Premium"
+            }
+        ],
+        "default": "gemini"
+    }
+
+@router.get("/preference")
+async def get_user_preference(user_id: str, service_type: str = None):
+    """Get user's AI provider preference"""
+    # Implementation will use ai_service.get_user_preference()
+    pass
+
+@router.post("/preference")
+async def set_user_preference(user_id: str, preference: ProviderPreference):
+    """Set user's AI provider preference"""
+    if preference.provider not in ['claude', 'gemini']:
+        raise HTTPException(status_code=400, detail="Invalid provider")
+    # Implementation will use ai_service.set_user_preference()
+    pass
+
+### STEP 4: Add Router to Main App
+
+In main.py, add:
+from routers.ai_settings import router as ai_settings_router
+app.include_router(ai_settings_router)
+
+### SUCCESS CHECKLIST
+- [ ] LiteLLM installed
+- [ ] ai_service.py created with AIService class
+- [ ] ai_settings router created
+- [ ] Router added to main.py
+- [ ] Can call AIService.generate() with provider parameter

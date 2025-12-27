@@ -4,18 +4,17 @@ import time
 from typing import Optional, Literal
 from dataclasses import dataclass
 import litellm
-from supabase import create_client
+import psycopg2
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 litellm.drop_params = True
 
-def get_supabase():
-    url = os.environ.get("SUPABASE_URL")
-    key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
-    if url and key:
-        return create_client(url, key)
+def get_db_connection():
+    database_url = os.environ.get("DATABASE_URL")
+    if database_url:
+        return psycopg2.connect(database_url)
     return None
 
 async def log_ai_usage(
@@ -33,26 +32,25 @@ async def log_ai_usage(
 ):
     """Log AI usage to the database for tracking and billing."""
     try:
-        supabase = get_supabase()
-        if not supabase:
-            logger.warning("Supabase not configured, skipping AI usage logging")
+        conn = get_db_connection()
+        if not conn:
+            logger.warning("Database not configured, skipping AI usage logging")
             return
         
-        log_entry = {
-            "user_id": user_id,
-            "service_name": service_name,
-            "provider": provider,
-            "model": model,
-            "input_tokens": input_tokens,
-            "output_tokens": output_tokens,
-            "total_tokens": total_tokens,
-            "cost_usd": float(cost_usd) if cost_usd else None,
-            "duration_ms": duration_ms,
-            "success": success,
-            "error_message": error_message
-        }
+        cursor = conn.cursor()
+        cursor.execute(
+            """INSERT INTO ai_usage_logs 
+               (user_id, service_name, provider, model, input_tokens, output_tokens, 
+                total_tokens, cost_usd, duration_ms, success, error_message)
+               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+            (user_id, service_name, provider, model, input_tokens, output_tokens,
+             total_tokens, float(cost_usd) if cost_usd else None, duration_ms, 
+             success, error_message)
+        )
+        conn.commit()
+        cursor.close()
+        conn.close()
         
-        supabase.table("ai_usage_logs").insert(log_entry).execute()
         logger.info(f"Logged AI usage: {service_name}/{provider}, tokens: {total_tokens}, cost: ${cost_usd:.6f}" if cost_usd else f"Logged AI usage: {service_name}/{provider}, tokens: {total_tokens}")
     except Exception as e:
         logger.error(f"Failed to log AI usage: {str(e)}")
