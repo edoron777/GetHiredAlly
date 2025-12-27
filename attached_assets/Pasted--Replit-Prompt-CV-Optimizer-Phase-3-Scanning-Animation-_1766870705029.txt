@@ -1,0 +1,729 @@
+# Replit Prompt: CV Optimizer - Phase 3 Scanning Animation
+
+**Task:** Build the scanning animation page with visual effects and AI analysis backend
+**Priority:** 🔴 Critical
+**Estimated Effort:** 8-11 hours
+**Depends On:** Phase 2 (Upload Page) completed
+
+---
+
+## ⚠️ CRITICAL INSTRUCTIONS
+
+- Follow these instructions EXACTLY
+- The animation is KEY to user experience - make it smooth and impressive
+- Do NOT skip the animation - it's the core "wow" factor of this service
+
+---
+
+## OVERVIEW
+
+This page shows a visual scanning animation while the AI analyzes the CV in the background. When analysis is complete, user is redirected to results.
+
+---
+
+## PAGE STRUCTURE
+
+**Route:** `/service/cv-optimizer/scanning`
+
+**Query Params:** `cv_id` (required)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                                                             │
+│              🔍 Scanning Your CV...                         │
+│                                                             │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │                                                         │ │
+│ │   ▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   │ │
+│ │   ▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   │ │
+│ │   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   │ │
+│ │   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   │ │
+│ │   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░░░░░░░░░   │ │
+│ │   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   │ │
+│ │   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   │ │
+│ │   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   │ │
+│ │                                                         │ │
+│ └─────────────────────────────────────────────────────────┘ │
+│                                                             │
+│            Checking spelling and grammar...                 │
+│                                                             │
+│            ━━━━━━━━━━━━━━━━━━━━░░░░░░░░░░  65%             │
+│                                                             │
+│            Issues found: 7                                  │
+│            🔴 2  🟠 3  🟡 2  🟢 0                           │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## PART A: SCANNING ANIMATION COMPONENT
+
+### Grid Scanner Animation
+
+Create a grid of blocks that get "scanned" and colored based on issues found.
+
+```jsx
+// components/ScannerGrid.jsx
+
+import { useState, useEffect } from 'react';
+
+const GRID_ROWS = 12;
+const GRID_COLS = 40;
+
+export default function ScannerGrid({ scanProgress, issues }) {
+  const [grid, setGrid] = useState([]);
+  const [scanLine, setScanLine] = useState(0);
+  
+  // Initialize grid
+  useEffect(() => {
+    const initialGrid = [];
+    for (let row = 0; row < GRID_ROWS; row++) {
+      const rowData = [];
+      for (let col = 0; col < GRID_COLS; col++) {
+        rowData.push({
+          scanned: false,
+          color: 'gray' // gray, green, yellow, orange, red
+        });
+      }
+      initialGrid.push(rowData);
+    }
+    setGrid(initialGrid);
+  }, []);
+  
+  // Animate scan line based on progress
+  useEffect(() => {
+    const totalCells = GRID_ROWS * GRID_COLS;
+    const scannedCells = Math.floor((scanProgress / 100) * totalCells);
+    
+    setGrid(prevGrid => {
+      const newGrid = prevGrid.map(row => row.map(cell => ({ ...cell })));
+      
+      let cellCount = 0;
+      for (let row = 0; row < GRID_ROWS; row++) {
+        for (let col = 0; col < GRID_COLS; col++) {
+          if (cellCount < scannedCells) {
+            newGrid[row][col].scanned = true;
+            // Randomly assign some cells as "issues" based on actual issues found
+            newGrid[row][col].color = getRandomColor(issues, cellCount, scannedCells);
+          }
+          cellCount++;
+        }
+      }
+      
+      return newGrid;
+    });
+    
+    // Update scan line position
+    setScanLine(Math.floor((scanProgress / 100) * GRID_ROWS));
+    
+  }, [scanProgress, issues]);
+  
+  const getRandomColor = (issues, cellIndex, totalScanned) => {
+    // Most cells are green (no issue)
+    // Sprinkle in colored cells based on issue counts
+    const random = Math.random();
+    const issueRatio = (issues.critical + issues.high + issues.medium + issues.low) / 50;
+    
+    if (random > 0.95 && issues.critical > 0) return 'red';
+    if (random > 0.90 && issues.high > 0) return 'orange';
+    if (random > 0.85 && issues.medium > 0) return 'yellow';
+    if (random > 0.80 && issues.low > 0) return 'lime';
+    return 'green';
+  };
+  
+  const getCellColorClass = (cell) => {
+    if (!cell.scanned) return 'bg-gray-200';
+    
+    switch (cell.color) {
+      case 'red': return 'bg-red-500';
+      case 'orange': return 'bg-orange-500';
+      case 'yellow': return 'bg-yellow-400';
+      case 'lime': return 'bg-lime-400';
+      case 'green': return 'bg-green-500';
+      default: return 'bg-gray-200';
+    }
+  };
+  
+  return (
+    <div className="bg-gray-900 p-4 rounded-lg">
+      <div className="grid gap-[2px]" style={{ gridTemplateColumns: `repeat(${GRID_COLS}, 1fr)` }}>
+        {grid.flat().map((cell, index) => (
+          <div
+            key={index}
+            className={`
+              h-3 rounded-sm transition-colors duration-150
+              ${getCellColorClass(cell)}
+            `}
+          />
+        ))}
+      </div>
+      
+      {/* Scan line effect */}
+      <div 
+        className="h-1 bg-blue-400 rounded mt-2 transition-all duration-300"
+        style={{ 
+          width: `${scanProgress}%`,
+          boxShadow: '0 0 10px #60a5fa, 0 0 20px #60a5fa'
+        }}
+      />
+    </div>
+  );
+}
+```
+
+---
+
+### Alternative: Simpler Progress Animation
+
+If the grid is too complex, use this simpler version:
+
+```jsx
+// components/SimpleScannerAnimation.jsx
+
+export default function SimpleScannerAnimation({ progress }) {
+  return (
+    <div className="bg-gray-900 rounded-lg p-6">
+      {/* Scanning lines animation */}
+      <div className="space-y-2 mb-6">
+        {[...Array(8)].map((_, index) => {
+          const lineProgress = Math.max(0, Math.min(100, (progress - index * 10) * 1.5));
+          return (
+            <div key={index} className="flex items-center gap-2">
+              <div className="h-4 flex-1 bg-gray-700 rounded overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-green-500 via-blue-500 to-green-500 transition-all duration-500"
+                  style={{ width: `${lineProgress}%` }}
+                />
+              </div>
+              {lineProgress >= 100 && (
+                <span className="text-green-400 text-sm">✓</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      
+      {/* Glowing scan line */}
+      <div className="relative h-2 bg-gray-700 rounded overflow-hidden">
+        <div 
+          className="absolute h-full bg-blue-500 rounded transition-all duration-300"
+          style={{ 
+            width: `${progress}%`,
+            boxShadow: '0 0 15px #3b82f6'
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+```
+
+---
+
+## PART B: STATUS MESSAGES
+
+### Rotating Status Messages
+
+```jsx
+const STATUS_MESSAGES = [
+  "Checking spelling and grammar...",
+  "Analyzing document formatting...",
+  "Detecting employment gaps...",
+  "Evaluating quantified achievements...",
+  "Reviewing technical skills presentation...",
+  "Checking career narrative flow...",
+  "Analyzing contact information...",
+  "Reviewing professional summary...",
+  "Checking for passive language...",
+  "Evaluating CV length and structure...",
+  "Finalizing analysis..."
+];
+
+// In component:
+const [currentMessage, setCurrentMessage] = useState(0);
+
+useEffect(() => {
+  const interval = setInterval(() => {
+    setCurrentMessage(prev => (prev + 1) % STATUS_MESSAGES.length);
+  }, 2500); // Change message every 2.5 seconds
+  
+  return () => clearInterval(interval);
+}, []);
+```
+
+---
+
+## PART C: ISSUE COUNTER
+
+```jsx
+// Real-time issue counter display
+<div className="flex justify-center gap-6 mt-6">
+  <div className="flex items-center gap-2">
+    <span className="w-4 h-4 rounded-full bg-red-500"></span>
+    <span className="text-gray-700 font-medium">{issues.critical}</span>
+  </div>
+  <div className="flex items-center gap-2">
+    <span className="w-4 h-4 rounded-full bg-orange-500"></span>
+    <span className="text-gray-700 font-medium">{issues.high}</span>
+  </div>
+  <div className="flex items-center gap-2">
+    <span className="w-4 h-4 rounded-full bg-yellow-400"></span>
+    <span className="text-gray-700 font-medium">{issues.medium}</span>
+  </div>
+  <div className="flex items-center gap-2">
+    <span className="w-4 h-4 rounded-full bg-green-400"></span>
+    <span className="text-gray-700 font-medium">{issues.low}</span>
+  </div>
+</div>
+```
+
+---
+
+## PART D: COMPLETE SCANNING PAGE
+
+```jsx
+// pages/service/cv-optimizer/scanning.jsx
+
+import { useState, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { Search } from 'lucide-react';
+import ScannerGrid from '../../../components/ScannerGrid';
+
+const STATUS_MESSAGES = [
+  "Checking spelling and grammar...",
+  "Analyzing document formatting...",
+  "Detecting employment gaps...",
+  "Evaluating quantified achievements...",
+  "Reviewing technical skills presentation...",
+  "Checking career narrative flow...",
+  "Analyzing contact information...",
+  "Reviewing professional summary...",
+  "Checking for passive language...",
+  "Evaluating CV length and structure...",
+  "Finalizing analysis..."
+];
+
+export default function ScanningPage() {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const cvId = searchParams.get('cv_id');
+  
+  const [progress, setProgress] = useState(0);
+  const [currentMessage, setCurrentMessage] = useState(0);
+  const [issues, setIssues] = useState({
+    critical: 0,
+    high: 0,
+    medium: 0,
+    low: 0,
+    total: 0
+  });
+  const [scanComplete, setScanComplete] = useState(false);
+  const [error, setError] = useState(null);
+  
+  // Rotate status messages
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentMessage(prev => (prev + 1) % STATUS_MESSAGES.length);
+    }, 2500);
+    return () => clearInterval(interval);
+  }, []);
+  
+  // Simulate progress while waiting for API
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setProgress(prev => {
+        if (prev >= 90 && !scanComplete) return 90; // Hold at 90% until API returns
+        if (scanComplete) return 100;
+        return prev + Math.random() * 3;
+      });
+    }, 200);
+    return () => clearInterval(interval);
+  }, [scanComplete]);
+  
+  // Start the actual scan
+  useEffect(() => {
+    if (!cvId) {
+      setError('No CV selected');
+      return;
+    }
+    
+    const runScan = async () => {
+      try {
+        const response = await fetch('/api/cv-optimizer/scan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cv_id: parseInt(cvId) })
+        });
+        
+        if (!response.ok) {
+          throw new Error('Scan failed');
+        }
+        
+        const data = await response.json();
+        
+        // Update issues count (animate it)
+        animateIssueCount(data.summary);
+        
+        // Mark scan as complete
+        setScanComplete(true);
+        
+        // Wait for animation to finish, then redirect
+        setTimeout(() => {
+          navigate(`/service/cv-optimizer/results/${data.scan_id}`);
+        }, 2000);
+        
+      } catch (err) {
+        setError(err.message || 'Scan failed. Please try again.');
+      }
+    };
+    
+    // Start scan after a brief delay (for UX)
+    setTimeout(runScan, 1000);
+  }, [cvId, navigate]);
+  
+  // Animate issue counter
+  const animateIssueCount = (summary) => {
+    const steps = 20;
+    let step = 0;
+    
+    const interval = setInterval(() => {
+      step++;
+      setIssues({
+        critical: Math.floor((summary.critical / steps) * step),
+        high: Math.floor((summary.high / steps) * step),
+        medium: Math.floor((summary.medium / steps) * step),
+        low: Math.floor((summary.low / steps) * step),
+        total: Math.floor((summary.total / steps) * step)
+      });
+      
+      if (step >= steps) {
+        clearInterval(interval);
+        setIssues({
+          critical: summary.critical,
+          high: summary.high,
+          medium: summary.medium,
+          low: summary.low,
+          total: summary.total
+        });
+      }
+    }, 50);
+  };
+  
+  if (error) {
+    return (
+      <div className="max-w-2xl mx-auto p-6 text-center">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+          <p className="text-red-700 mb-4">{error}</p>
+          <a 
+            href="/service/cv-optimizer"
+            className="text-blue-600 hover:underline"
+          >
+            ← Go back and try again
+          </a>
+        </div>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="max-w-2xl mx-auto p-6">
+      {/* Header */}
+      <div className="text-center mb-8">
+        <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
+          <Search size={32} className="text-blue-600 animate-pulse" />
+        </div>
+        <h1 className="text-2xl font-bold text-gray-900">
+          {scanComplete ? 'Scan Complete!' : 'Scanning Your CV...'}
+        </h1>
+      </div>
+      
+      {/* Scanner Animation */}
+      <div className="mb-8">
+        <ScannerGrid scanProgress={progress} issues={issues} />
+      </div>
+      
+      {/* Status Message */}
+      <div className="text-center mb-6">
+        <p className="text-gray-600 text-lg transition-opacity duration-300">
+          {scanComplete ? 'Analysis complete! Preparing results...' : STATUS_MESSAGES[currentMessage]}
+        </p>
+      </div>
+      
+      {/* Progress Bar */}
+      <div className="mb-6">
+        <div className="flex justify-between text-sm text-gray-500 mb-2">
+          <span>Progress</span>
+          <span>{Math.round(progress)}%</span>
+        </div>
+        <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+          <div 
+            className="h-full bg-blue-600 rounded-full transition-all duration-300"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      </div>
+      
+      {/* Issues Found Counter */}
+      <div className="bg-gray-50 rounded-lg p-6">
+        <p className="text-center text-gray-700 mb-4">
+          Issues found: <span className="font-bold text-xl">{issues.total}</span>
+        </p>
+        
+        <div className="flex justify-center gap-6">
+          <div className="flex items-center gap-2">
+            <span className="w-4 h-4 rounded-full bg-red-500"></span>
+            <span className="text-gray-700">{issues.critical}</span>
+            <span className="text-gray-400 text-sm">Critical</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-4 h-4 rounded-full bg-orange-500"></span>
+            <span className="text-gray-700">{issues.high}</span>
+            <span className="text-gray-400 text-sm">High</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-4 h-4 rounded-full bg-yellow-400"></span>
+            <span className="text-gray-700">{issues.medium}</span>
+            <span className="text-gray-400 text-sm">Medium</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-4 h-4 rounded-full bg-green-400"></span>
+            <span className="text-gray-700">{issues.low}</span>
+            <span className="text-gray-400 text-sm">Low</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+```
+
+---
+
+## PART E: BACKEND API - SCAN ENDPOINT
+
+### Endpoint: POST /api/cv-optimizer/scan
+
+```python
+# routes/cv_optimizer.py
+
+from fastapi import APIRouter, HTTPException, Depends
+from pydantic import BaseModel
+import json
+from services.ai_service import analyze_cv
+from database import supabase
+from auth import get_current_user
+
+router = APIRouter()
+
+class ScanRequest(BaseModel):
+    cv_id: int
+
+@router.post("/api/cv-optimizer/scan")
+async def scan_cv(request: ScanRequest, current_user = Depends(get_current_user)):
+    try:
+        # 1. Get CV content from database
+        cv_result = supabase.table('user_cvs') \
+            .select('*') \
+            .eq('id', request.cv_id) \
+            .eq('user_id', current_user.id) \
+            .execute()
+        
+        if not cv_result.data:
+            raise HTTPException(status_code=404, detail="CV not found")
+        
+        cv = cv_result.data[0]
+        cv_content = cv['content']
+        
+        # 2. Decrypt CV content if encrypted
+        # (use your encryption utility if CVs are encrypted)
+        # cv_content = decrypt_text(cv_content)
+        
+        # 3. Analyze CV with AI
+        analysis_result = await analyze_cv(cv_content)
+        
+        # 4. Calculate summary counts
+        issues = analysis_result['issues']
+        summary = {
+            'critical': len([i for i in issues if i['severity'] == 'critical']),
+            'high': len([i for i in issues if i['severity'] == 'high']),
+            'medium': len([i for i in issues if i['severity'] == 'medium']),
+            'low': len([i for i in issues if i['severity'] == 'low']),
+            'total': len(issues)
+        }
+        
+        # 5. Save to database
+        scan_result = supabase.table('cv_scan_results').insert({
+            'user_id': current_user.id,
+            'cv_id': request.cv_id,
+            'total_issues': summary['total'],
+            'critical_count': summary['critical'],
+            'high_count': summary['high'],
+            'medium_count': summary['medium'],
+            'low_count': summary['low'],
+            'original_cv_content': cv_content,
+            'issues_json': json.dumps(issues),
+            'status': 'completed'
+        }).execute()
+        
+        scan_id = scan_result.data[0]['id']
+        
+        # 6. Return results
+        return {
+            'scan_id': scan_id,
+            'summary': summary,
+            'issues': issues
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+```
+
+---
+
+## PART F: AI ANALYSIS SERVICE
+
+```python
+# services/ai_service.py
+
+import anthropic
+import json
+import os
+
+client = anthropic.Anthropic(api_key=os.environ.get('ANTHROPIC_API_KEY'))
+
+CV_ANALYSIS_PROMPT = """You are a CV/Resume expert with 20 years of experience in HR and recruitment.
+Analyze this CV thoroughly and identify ALL issues that could hurt the candidate's chances.
+
+For each issue found, return a JSON object with:
+- id: sequential number
+- issue: brief description of the problem
+- severity: "critical" | "high" | "medium" | "low"
+- category: one of the categories below
+- location: where in the CV (section name)
+- current_text: the exact problematic text (quote it)
+- suggested_fix: how to fix it with example
+- fix_difficulty: "quick" | "medium" | "complex"
+
+SEVERITY GUIDE:
+- critical: Will cause immediate rejection (spelling errors, missing contact info, unprofessional email)
+- high: Major competitive disadvantage (passive language, no metrics, unexplained gaps)
+- medium: Optimization opportunity (formatting issues, weak summary, outdated skills)
+- low: Minor polish (small improvements, nice-to-haves)
+
+CATEGORIES:
+1. Spelling & Grammar
+2. Formatting & Structure
+3. Missing Information
+4. Weak Presentation
+5. Lack of Quantification
+6. Employment Gaps
+7. CV Length
+8. Tech-Specific
+9. Tailoring
+10. Career Narrative
+11. Personal Information
+
+Be thorough! Find every issue, even small ones. Better to over-report than miss something.
+
+CV CONTENT:
+---
+{cv_content}
+---
+
+Return ONLY a valid JSON array of issues. No other text. Example:
+[
+  {{"id": 1, "issue": "Spelling error", "severity": "critical", "category": "Spelling & Grammar", "location": "Professional Summary", "current_text": "Developped", "suggested_fix": "Developed", "fix_difficulty": "quick"}},
+  {{"id": 2, "issue": "Missing email", "severity": "critical", "category": "Missing Information", "location": "Contact Section", "current_text": "Phone only listed", "suggested_fix": "Add professional email like firstname.lastname@email.com", "fix_difficulty": "quick"}}
+]
+"""
+
+async def analyze_cv(cv_content: str) -> dict:
+    """Analyze CV content using Claude AI"""
+    
+    prompt = CV_ANALYSIS_PROMPT.format(cv_content=cv_content)
+    
+    message = client.messages.create(
+        model="claude-sonnet-4-20250514",
+        max_tokens=4000,
+        messages=[
+            {"role": "user", "content": prompt}
+        ]
+    )
+    
+    response_text = message.content[0].text
+    
+    # Parse JSON response
+    try:
+        # Clean up response if needed
+        response_text = response_text.strip()
+        if response_text.startswith('```json'):
+            response_text = response_text[7:]
+        if response_text.startswith('```'):
+            response_text = response_text[3:]
+        if response_text.endswith('```'):
+            response_text = response_text[:-3]
+        
+        issues = json.loads(response_text)
+        
+        return {
+            'issues': issues,
+            'raw_response': message.content[0].text
+        }
+        
+    except json.JSONDecodeError as e:
+        # If JSON parsing fails, return error
+        return {
+            'issues': [{
+                'id': 1,
+                'issue': 'Analysis parsing error',
+                'severity': 'high',
+                'category': 'System',
+                'location': 'N/A',
+                'current_text': 'Could not parse CV properly',
+                'suggested_fix': 'Please try again or contact support',
+                'fix_difficulty': 'complex'
+            }],
+            'error': str(e)
+        }
+```
+
+---
+
+## VERIFICATION CHECKLIST
+
+After implementation, verify:
+
+### Frontend
+- [ ] Page loads at `/service/cv-optimizer/scanning?cv_id=X`
+- [ ] Scanner animation is visible and smooth
+- [ ] Progress bar increases over time
+- [ ] Status messages rotate every 2-3 seconds
+- [ ] Issue counter shows 🔴🟠🟡🟢 counts
+- [ ] Issue counts animate (increase gradually)
+- [ ] "Scan Complete!" message appears when done
+- [ ] Automatically redirects to results page
+
+### Backend
+- [ ] POST /api/cv-optimizer/scan endpoint works
+- [ ] Endpoint retrieves CV content from database
+- [ ] Endpoint calls AI analysis service
+- [ ] Endpoint saves results to cv_scan_results table
+- [ ] Endpoint returns scan_id and summary
+
+### AI Analysis
+- [ ] AI prompt is sent correctly
+- [ ] AI returns valid JSON array of issues
+- [ ] Issues are categorized by severity
+- [ ] Each issue has all required fields
+
+---
+
+## NEXT STEP
+
+After this prompt is implemented, the next step is:
+- **Prompt 4:** Results Summary + Detailed Report Pages
+
+---
+
+**END OF PROMPT**
