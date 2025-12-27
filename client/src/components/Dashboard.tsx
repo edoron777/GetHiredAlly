@@ -46,6 +46,15 @@ export function Dashboard() {
       description: 'What should I say?',
       buttonText: 'Coming Soon',
       isActive: false
+    },
+    {
+      icon: '📄',
+      title: 'Optimize Your CV',
+      subtitle: 'CV Scanner',
+      description: "What's wrong with my CV?",
+      buttonText: 'Get Started',
+      isActive: true,
+      navigateTo: '/service/cv-optimizer'
     }
   ]
 

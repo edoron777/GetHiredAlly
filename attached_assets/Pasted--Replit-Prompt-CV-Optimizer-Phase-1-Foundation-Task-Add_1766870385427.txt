@@ -1,0 +1,252 @@
+# Replit Prompt: CV Optimizer - Phase 1 Foundation
+
+**Task:** Add CV Optimizer service card to Home page and create database table
+**Priority:** 🔴 Critical - First step
+**Estimated Effort:** 2-3 hours
+
+---
+
+## ⚠️ CRITICAL INSTRUCTIONS
+
+- Follow these instructions EXACTLY
+- Do NOT add features not requested
+- Match the existing card design style on the Home page
+
+---
+
+## TASK 1: Add Service Card to Home Page
+
+### Location
+
+Add a new service card to the Home page (Dashboard) alongside the existing cards:
+- "Decode Any Job Description" (X-Ray)
+- "Prepare for Questions" (Questions Predictor)
+- "Craft Your Answers" (Answer Builder)
+
+### Card Design
+
+The new card should match the existing card style exactly.
+
+**Card Content:**
+
+| Element | Value |
+|---------|-------|
+| Icon | 🔍 (magnifying glass) or use `Search` icon from lucide-react |
+| Title | "Optimize Your CV" |
+| Subtitle | "CV Scanner" |
+| Description | "What's wrong with my CV?" |
+| Button Text | "Get Started" |
+| Button Link | `/service/cv-optimizer` |
+| Status | Active (not "Coming Soon") |
+
+### Card Code Example
+
+```jsx
+<div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+  <div className="flex flex-col items-center text-center">
+    {/* Icon */}
+    <div className="text-4xl mb-4">🔍</div>
+    
+    {/* Or use lucide-react icon */}
+    {/* <Search size={48} className="text-blue-500 mb-4" /> */}
+    
+    {/* Title */}
+    <h3 className="text-xl font-bold text-gray-900 mb-1">
+      Optimize Your CV
+    </h3>
+    
+    {/* Subtitle */}
+    <p className="text-sm text-gray-500 mb-2">
+      CV Scanner
+    </p>
+    
+    {/* Description */}
+    <p className="text-gray-600 mb-4">
+      What's wrong with my CV?
+    </p>
+    
+    {/* Button */}
+    <a 
+      href="/service/cv-optimizer"
+      className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors text-center"
+    >
+      Get Started
+    </a>
+  </div>
+</div>
+```
+
+### Card Position
+
+Place the card in the 4th position (after the existing 3 services), OR arrange in a 2x2 grid if there are now 4 cards.
+
+---
+
+## TASK 2: Create Database Table
+
+### Table: cv_scan_results
+
+Create a new table in Supabase to store CV scan results.
+
+**SQL:**
+
+```sql
+CREATE TABLE cv_scan_results (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  cv_id INTEGER REFERENCES user_cvs(id) ON DELETE SET NULL,
+  scan_date TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  
+  -- Summary counts
+  total_issues INTEGER DEFAULT 0,
+  critical_count INTEGER DEFAULT 0,
+  high_count INTEGER DEFAULT 0,
+  medium_count INTEGER DEFAULT 0,
+  low_count INTEGER DEFAULT 0,
+  
+  -- Full data
+  original_cv_content TEXT,
+  issues_json JSONB,
+  fixed_cv_content TEXT,
+  
+  -- Status
+  status VARCHAR(20) DEFAULT 'pending',
+  
+  -- Timestamps
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create index for faster user lookups
+CREATE INDEX idx_cv_scan_results_user_id ON cv_scan_results(user_id);
+
+-- Create index for status filtering
+CREATE INDEX idx_cv_scan_results_status ON cv_scan_results(status);
+```
+
+### Status Values
+
+| Status | Description |
+|--------|-------------|
+| `pending` | Scan in progress |
+| `completed` | Scan finished successfully |
+| `failed` | Scan failed (error) |
+| `fixed` | User generated fixed CV |
+
+### Issues JSON Structure
+
+The `issues_json` column will store an array of issues:
+
+```json
+[
+  {
+    "id": 1,
+    "issue": "Spelling error",
+    "severity": "critical",
+    "category": "Spelling & Grammar",
+    "location": "Professional Summary",
+    "current_text": "Developped",
+    "suggested_fix": "Developed",
+    "fix_difficulty": "quick"
+  },
+  {
+    "id": 2,
+    "issue": "Missing email",
+    "severity": "critical",
+    "category": "Missing Information",
+    "location": "Contact Section",
+    "current_text": "Phone only",
+    "suggested_fix": "Add email address",
+    "fix_difficulty": "quick"
+  }
+]
+```
+
+---
+
+## TASK 3: Create Placeholder Page
+
+### Route: `/service/cv-optimizer`
+
+Create a basic placeholder page so the card link works.
+
+**Placeholder Page:**
+
+```jsx
+// pages/service/cv-optimizer/index.jsx (or similar based on your routing)
+
+import { ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom'; // or your routing library
+
+export default function CVOptimizerPage() {
+  return (
+    <div className="max-w-4xl mx-auto p-6">
+      {/* Back link */}
+      <Link 
+        to="/" 
+        className="flex items-center text-gray-600 hover:text-gray-800 mb-6"
+      >
+        <ArrowLeft size={20} className="mr-2" />
+        Back to Dashboard
+      </Link>
+      
+      {/* Page header */}
+      <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        CV Optimizer
+      </h1>
+      <p className="text-gray-600 mb-8">
+        Find hidden issues that hurt your chances
+      </p>
+      
+      {/* Placeholder content */}
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+        <p className="text-yellow-800">
+          🚧 CV Upload interface coming soon...
+        </p>
+      </div>
+    </div>
+  );
+}
+```
+
+---
+
+## VERIFICATION CHECKLIST
+
+After implementation, verify:
+
+- [ ] New card appears on Home page
+- [ ] Card matches existing card style
+- [ ] Card icon is visible (🔍 or Search icon)
+- [ ] Card title: "Optimize Your CV"
+- [ ] Card subtitle: "CV Scanner"
+- [ ] Card description: "What's wrong with my CV?"
+- [ ] Button says "Get Started"
+- [ ] Clicking button navigates to `/service/cv-optimizer`
+- [ ] Placeholder page loads without errors
+- [ ] Database table `cv_scan_results` exists
+- [ ] Table has all columns as specified
+- [ ] Indexes are created
+
+---
+
+## FILE STRUCTURE
+
+After this phase, you should have:
+
+```
+/pages (or /src/pages)
+  /service
+    /cv-optimizer
+      index.jsx (or index.tsx)
+```
+
+And in database:
+```
+Tables:
+  - cv_scan_results (new)
+```
+
+---
+
+**END OF PROMPT**

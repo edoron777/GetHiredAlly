@@ -11,6 +11,7 @@ import { PredictQuestionsPage } from '@/components/PredictQuestionsPage'
 import { SmartQuestionsPage } from '@/components/SmartQuestionsPage'
 import { SmartQuestionsResultsPage } from '@/components/SmartQuestionsResultsPage'
 import { AdminAIUsagePage } from '@/components/AdminAIUsagePage'
+import { CVOptimizerPage } from '@/components/CVOptimizerPage'
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -37,6 +38,7 @@ function App() {
           <Route path="/service/predict-questions/smart" element={<SmartQuestionsPage />} />
           <Route path="/service/predict-questions/smart/results/:id" element={<SmartQuestionsResultsPage />} />
           <Route path="/admin/ai-usage" element={<AdminAIUsagePage />} />
+          <Route path="/service/cv-optimizer" element={<CVOptimizerPage />} />
         </Routes>
       </Layout>
     </BrowserRouter>

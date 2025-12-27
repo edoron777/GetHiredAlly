@@ -73,6 +73,7 @@ GetHiredAlly is an interview preparation application with job description analys
 
 ## Frontend Routes
 - `/` - Landing page
+- `/service/cv-optimizer` - CV Optimizer placeholder page (protected)
 - `/register` - User registration
 - `/login` - User login
 - `/verify-email` - Email verification page
@@ -144,6 +145,7 @@ GetHiredAlly is an interview preparation application with job description analys
 - **Password Security**: bcrypt hashing, passwords never logged
 
 ## Recent Changes
+- December 27, 2025: Added CV Optimizer service card to dashboard and cv_scan_results database table
 - December 27, 2025: Added security headers middleware and audit logging for login/security events
 - December 27, 2025: Implemented CV encryption at rest with Fernet cryptography
 - December 27, 2025: Added rate limiting to sensitive API endpoints
