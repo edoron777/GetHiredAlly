@@ -2,6 +2,9 @@ import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { isAuthenticated, getAuthToken } from '@/lib/auth'
 import { Loader2, Upload, FileText, Sparkles, Lock, ChevronRight } from 'lucide-react'
+import { AIProviderSelector } from './AIProviderSelector'
+
+type Provider = 'claude' | 'gemini'
 
 interface XRayAnalysis {
   id: string
@@ -38,6 +41,7 @@ export function SmartQuestionsPage() {
   const [cvText, setCvText] = useState('')
   const [cvFile, setCvFile] = useState<File | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [selectedProvider, setSelectedProvider] = useState<Provider>('gemini')
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -134,7 +138,8 @@ export function SmartQuestionsPage() {
           token,
           xray_analysis_id: jobSource === 'xray' ? selectedXrayId : null,
           job_description: jobSource === 'paste' ? jobDescription : null,
-          cv_text: finalCvText || null
+          cv_text: finalCvText || null,
+          provider: selectedProvider
         })
       })
 
@@ -388,6 +393,18 @@ export function SmartQuestionsPage() {
                   It will be deleted immediately after generating your questions.
                 </p>
               </div>
+            </div>
+
+            <div className="bg-white rounded-xl p-6 shadow-md mb-6" style={{ boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold" style={{ backgroundColor: '#1E3A5F' }}>3</div>
+                <h2 className="text-lg font-semibold" style={{ color: '#1E3A5F' }}>Choose AI Provider (Optional)</h2>
+              </div>
+              <AIProviderSelector 
+                selectedProvider={selectedProvider}
+                onProviderChange={setSelectedProvider}
+                service="smart_questions"
+              />
             </div>
 
             {error && (

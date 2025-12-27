@@ -25,6 +25,7 @@ class AnalyzeJobRequest(BaseModel):
     job_description: str
     mode: str
     interviewer_type: str
+    provider: str = 'claude'
 
 class AnalyzeJobResponse(BaseModel):
     analysis: str
@@ -320,10 +321,12 @@ async def analyze_job(request: AnalyzeJobRequest):
         
         max_tokens = 2500 if depth_level == "ready" else 5000
         
+        provider = request.provider if request.provider in ['claude', 'gemini'] else 'claude'
+        
         ai_response = await generate_completion(
             prompt=f"Analyze this job description:\n\n{request.job_description}",
             system_prompt=system_prompt,
-            provider='claude',
+            provider=provider,
             max_tokens=max_tokens,
             temperature=0.7
         )

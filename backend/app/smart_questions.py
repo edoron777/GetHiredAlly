@@ -24,6 +24,7 @@ class GenerateRequest(BaseModel):
     job_description: Optional[str] = None
     cv_text: Optional[str] = None
     token: str
+    provider: Optional[str] = 'gemini'
 
 class EligibilityResponse(BaseModel):
     eligible: bool
@@ -202,10 +203,12 @@ async def generate_smart_questions(request: GenerateRequest):
     
     prompt = build_smart_questions_prompt(xray_data, request.cv_text)
     
+    provider = request.provider if request.provider in ['claude', 'gemini'] else 'gemini'
+    
     try:
         ai_response = await generate_completion(
             prompt=prompt,
-            provider='gemini',
+            provider=provider,
             max_tokens=8192,
             temperature=0.7
         )

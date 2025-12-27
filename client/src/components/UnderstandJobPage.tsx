@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { isAuthenticated } from '@/lib/auth'
 import { Loader2, Sparkles, CheckCircle, X, Users, Code, Briefcase, HelpCircle, Zap, ClipboardList, Download, FileText, FileCode, Printer } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
+import { AIProviderSelector } from './AIProviderSelector'
+
+type Provider = 'claude' | 'gemini'
 
 type InterviewerType = 'hr' | 'technical' | 'manager' | 'general'
 type DepthLevel = 'ready' | 'full'
@@ -92,6 +95,7 @@ export function UnderstandJobPage() {
   const [downloadingDocx, setDownloadingDocx] = useState(false)
   const [downloadError, setDownloadError] = useState<string | null>(null)
   const resultsRef = useRef<HTMLDivElement>(null)
+  const [selectedProvider, setSelectedProvider] = useState<Provider>('claude')
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -142,7 +146,8 @@ export function UnderstandJobPage() {
         body: JSON.stringify({
           job_description: jobDescription,
           mode: depthLevel === 'ready' ? 'quick' : 'deep',
-          interviewer_type: selectedInterviewer
+          interviewer_type: selectedInterviewer,
+          provider: selectedProvider
         })
       })
       
@@ -335,6 +340,15 @@ export function UnderstandJobPage() {
                 </button>
               ))}
             </div>
+          </div>
+
+          <div style={containerStyle}>
+            <h2 style={stepHeaderStyle}>Step 4: Choose AI Provider (Optional)</h2>
+            <AIProviderSelector 
+              selectedProvider={selectedProvider}
+              onProviderChange={setSelectedProvider}
+              service="xray"
+            />
           </div>
 
           <div style={{
