@@ -82,6 +82,8 @@ export function PredictQuestionsPage() {
   const [expandedQuestions, setExpandedQuestions] = useState<Set<string>>(new Set())
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
   const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(new Set())
+  const [expandedQuestionsToAsk, setExpandedQuestionsToAsk] = useState<Set<string>>(new Set())
+  const [questionsToAskSectionExpanded, setQuestionsToAskSectionExpanded] = useState(false)
   const [downloadingPdf, setDownloadingPdf] = useState(false)
   const [downloadingDocx, setDownloadingDocx] = useState(false)
 
@@ -151,13 +153,28 @@ export function PredictQuestionsPage() {
     })
   }
 
+  const toggleQuestionToAsk = (questionId: string) => {
+    setExpandedQuestionsToAsk(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(questionId)) {
+        newSet.delete(questionId)
+      } else {
+        newSet.add(questionId)
+      }
+      return newSet
+    })
+  }
+
   const expandAllCategories = () => {
     const allCategories = new Set(Object.keys(groupedQuestions))
     setExpandedCategories(allCategories)
+    setQuestionsToAskSectionExpanded(true)
   }
 
   const collapseAllCategories = () => {
     setExpandedCategories(new Set())
+    setQuestionsToAskSectionExpanded(false)
+    setExpandedQuestionsToAsk(new Set())
   }
 
   const groupedQuestions = questions.reduce((acc, q) => {
@@ -698,95 +715,140 @@ export function PredictQuestionsPage() {
         })}
 
         {!isLoading && !error && questionsToAsk.length > 0 && (
-          <>
-            <div 
+          <div style={containerStyle}>
+            <button
+              type="button"
               id="questions-to-ask"
+              onClick={() => setQuestionsToAskSectionExpanded(!questionsToAskSectionExpanded)}
               style={{
-                backgroundColor: '#EFF6FF',
-                borderRadius: '12px',
-                padding: '16px',
-                marginBottom: '20px',
+                width: '100%',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '12px'
+                gap: '12px',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0,
+                marginBottom: questionsToAskSectionExpanded ? '16px' : '0'
               }}
             >
+              {questionsToAskSectionExpanded ? (
+                <ChevronDown className="h-5 w-5" style={{ color: '#1E3A5F', flexShrink: 0 }} />
+              ) : (
+                <ChevronRight className="h-5 w-5" style={{ color: '#1E3A5F', flexShrink: 0 }} />
+              )}
               <span style={{ fontSize: '24px' }}>💬</span>
-              <div>
-                <p style={{ fontWeight: 700, color: '#1E3A5F', fontSize: '16px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              <div style={{ textAlign: 'left' }}>
+                <p style={{ fontWeight: 700, color: '#1E3A5F', fontSize: '16px', textTransform: 'uppercase', letterSpacing: '0.5px', margin: 0 }}>
                   Questions You Can Ask
                 </p>
-                <p style={{ fontSize: '13px', color: '#6B7280' }}>
-                  Show your interest by asking smart questions
+                <p style={{ fontSize: '13px', color: '#6B7280', margin: 0 }}>
+                  {questionsToAsk.length} questions to show your interest
                 </p>
               </div>
-            </div>
+            </button>
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
-              {questionsToAsk.map((q, idx) => (
-                <div key={q.id || idx} style={{
-                  backgroundColor: 'white',
-                  border: '1px solid #E5E7EB',
-                  borderRadius: '12px',
-                  padding: '20px'
-                }}>
-                  <p style={{ fontWeight: 600, color: '#1E3A5F', marginBottom: '12px', fontSize: '15px' }}>
-                    {idx + 1}. {q.question_text}
-                  </p>
+            {questionsToAskSectionExpanded && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {questionsToAsk.map((q, idx) => {
+                  const questionId = `ask-${q.id || idx}`
+                  const isExpanded = expandedQuestionsToAsk.has(questionId)
                   
-                  {(q.why_ask || q.why_to_ask) && (
-                    <div style={{ 
-                      backgroundColor: '#DBEAFE', 
-                      border: '1px solid #3B82F6',
-                      borderRadius: '8px',
-                      padding: '12px',
-                      marginBottom: '8px'
-                    }}>
-                      <p style={{ fontSize: '13px', color: '#1E40AF', fontWeight: 500, marginBottom: '4px' }}>
-                        Why ask this:
-                      </p>
-                      <p style={{ fontSize: '14px', color: '#1D4ED8' }}>
-                        {q.why_ask || q.why_to_ask}
-                      </p>
+                  return (
+                    <div 
+                      key={questionId}
+                      style={{
+                        border: '1px solid #E5E7EB',
+                        borderRadius: '8px',
+                        overflow: 'hidden'
+                      }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => toggleQuestionToAsk(questionId)}
+                        style={{
+                          width: '100%',
+                          padding: '16px',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          background: isExpanded ? '#F9FAFB' : 'white',
+                          border: 'none',
+                          cursor: 'pointer',
+                          textAlign: 'left'
+                        }}
+                      >
+                        <div style={{ flex: 1 }}>
+                          <span style={{ fontWeight: 500, color: '#1E3A5F', fontSize: '15px' }}>
+                            {idx + 1}. {q.question_text}
+                          </span>
+                        </div>
+                        {isExpanded ? (
+                          <ChevronUp className="h-5 w-5" style={{ color: '#6B7280', flexShrink: 0 }} />
+                        ) : (
+                          <ChevronDown className="h-5 w-5" style={{ color: '#6B7280', flexShrink: 0 }} />
+                        )}
+                      </button>
+                      
+                      {isExpanded && (
+                        <div style={{ padding: '0 16px 16px', backgroundColor: '#F9FAFB' }}>
+                          {(q.why_ask || q.why_to_ask) && (
+                            <div style={{ 
+                              backgroundColor: '#DBEAFE', 
+                              border: '1px solid #3B82F6',
+                              borderRadius: '8px',
+                              padding: '12px',
+                              marginBottom: '8px'
+                            }}>
+                              <p style={{ fontSize: '13px', color: '#1E40AF', fontWeight: 500, marginBottom: '4px' }}>
+                                Why ask this:
+                              </p>
+                              <p style={{ fontSize: '14px', color: '#1D4ED8' }}>
+                                {q.why_ask || q.why_to_ask}
+                              </p>
+                            </div>
+                          )}
+                          
+                          {q.what_to_listen_for && (
+                            <div style={{ 
+                              backgroundColor: '#D1FAE5', 
+                              border: '1px solid #10B981',
+                              borderRadius: '8px',
+                              padding: '12px',
+                              marginBottom: '8px'
+                            }}>
+                              <p style={{ fontSize: '13px', color: '#065F46', fontWeight: 500, marginBottom: '4px' }}>
+                                Listen for:
+                              </p>
+                              <p style={{ fontSize: '14px', color: '#047857' }}>
+                                {q.what_to_listen_for}
+                              </p>
+                            </div>
+                          )}
+                          
+                          {q.warning_signs && (
+                            <div style={{ 
+                              backgroundColor: '#FEF3C7', 
+                              border: '1px solid #F59E0B',
+                              borderRadius: '8px',
+                              padding: '12px'
+                            }}>
+                              <p style={{ fontSize: '13px', color: '#92400E', fontWeight: 500, marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                ⚠️ Warning Signs:
+                              </p>
+                              <p style={{ fontSize: '14px', color: '#B45309' }}>
+                                {q.warning_signs}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
-                  )}
-                  
-                  {q.what_to_listen_for && (
-                    <div style={{ 
-                      backgroundColor: '#D1FAE5', 
-                      border: '1px solid #10B981',
-                      borderRadius: '8px',
-                      padding: '12px',
-                      marginBottom: '8px'
-                    }}>
-                      <p style={{ fontSize: '13px', color: '#065F46', fontWeight: 500, marginBottom: '4px' }}>
-                        Listen for:
-                      </p>
-                      <p style={{ fontSize: '14px', color: '#047857' }}>
-                        {q.what_to_listen_for}
-                      </p>
-                    </div>
-                  )}
-                  
-                  {q.warning_signs && (
-                    <div style={{ 
-                      backgroundColor: '#FEF3C7', 
-                      border: '1px solid #F59E0B',
-                      borderRadius: '8px',
-                      padding: '12px'
-                    }}>
-                      <p style={{ fontSize: '13px', color: '#92400E', fontWeight: 500, marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        ⚠️ Warning Signs:
-                      </p>
-                      <p style={{ fontSize: '14px', color: '#B45309' }}>
-                        {q.warning_signs}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </>
+                  )
+                })}
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>
