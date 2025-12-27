@@ -1,0 +1,97 @@
+## TASK: Add Reset Buttons and Update Page Title
+
+### PART 1: Update Subtitle Text
+
+Find the Smart Questions page header and change:
+
+FROM:
+"AI-powered questions personalized for your specific job and background"
+
+TO:
+"AI-powered questions personalized for your specific job description and your unique background"
+
+### PART 2: Add Reset Buttons
+
+Add two buttons in the top-right area of the page header:
+
+1. "Clear Form" button - Clears all input fields
+2. "Start Over" button - Full reset, returns to initial state
+
+### STEP 1: Update Header Layout
+
+Change the header section to include buttons:
+
+<div className="flex justify-between items-start mb-6">
+    <div>
+        <h1 className="text-2xl font-bold flex items-center gap-2">
+            ✨ Smart Questions Predictor
+        </h1>
+        <p className="text-gray-600 mt-1">
+            AI-powered questions personalized for your specific job description and your unique background
+        </p>
+    </div>
+    
+    <div className="flex gap-2">
+        <button
+            onClick={handleClearForm}
+            className="px-3 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg flex items-center gap-1"
+            title="Clear all form inputs"
+        >
+            🔄 Clear Form
+        </button>
+        <button
+            onClick={handleStartOver}
+            className="px-3 py-2 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg flex items-center gap-1"
+            title="Start completely fresh"
+        >
+            🗑️ Start Over
+        </button>
+    </div>
+</div>
+
+### STEP 2: Add Handler Functions
+
+Add these functions to the component:
+
+const handleClearForm = () => {
+    // Clear job description
+    setJobDescription('');
+    
+    // Clear CV
+    setCvText('');
+    setCvFile(null);
+    setCvOption('skip');
+    
+    // Reset AI provider to default
+    setProvider('gemini');
+    
+    // Clear any error messages
+    setError(null);
+};
+
+const handleStartOver = () => {
+    // Confirm before full reset
+    if (window.confirm('Are you sure you want to start over? All data will be cleared.')) {
+        handleClearForm();
+        
+        // Also clear any results/generated questions
+        setGeneratedQuestions(null);
+        setAnalysisResult(null);
+        
+        // Reset to step 1 if using stepper
+        setCurrentStep(1);
+        
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+};
+
+### STEP 3: Also Update X-Ray Analyzer Page
+
+Apply the same pattern to X-Ray Analyzer page:
+
+1. Add same two buttons (Clear Form, Start Over)
+2. Clear Form: clears job description text
+3. Start Over: clears everything + any analysis results
+
+### EXPECTED RESULT

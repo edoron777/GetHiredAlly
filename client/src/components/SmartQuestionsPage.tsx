@@ -166,6 +166,29 @@ export function SmartQuestionsPage() {
     return jobDescription.length >= 100
   }
 
+  const handleClearForm = () => {
+    setJobDescription('')
+    setCvText('')
+    setCvFile(null)
+    setCvSource('none')
+    setSelectedProvider('gemini')
+    setError(null)
+    if (xrayAnalyses.length > 0) {
+      setJobSource('xray')
+      setSelectedXrayId(xrayAnalyses[0].id)
+    } else {
+      setJobSource('paste')
+      setSelectedXrayId('')
+    }
+  }
+
+  const handleStartOver = () => {
+    if (window.confirm('Are you sure you want to start over? All data will be cleared.')) {
+      handleClearForm()
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#FAF9F7' }}>
@@ -177,14 +200,32 @@ export function SmartQuestionsPage() {
   return (
     <div className="min-h-screen py-8 px-4" style={{ backgroundColor: '#FAF9F7' }}>
       <div className="max-w-3xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2" style={{ color: '#1E3A5F' }}>
-            <Sparkles className="inline h-8 w-8 mr-2" />
-            Smart Questions Predictor
-          </h1>
-          <p className="text-gray-600">
-            AI-powered questions personalized for your specific job and background
-          </p>
+        <div className="flex justify-between items-start mb-8">
+          <div>
+            <h1 className="text-3xl font-bold mb-2" style={{ color: '#1E3A5F' }}>
+              <Sparkles className="inline h-8 w-8 mr-2" />
+              Smart Questions Predictor
+            </h1>
+            <p className="text-gray-600">
+              AI-powered questions personalized for your specific job description and your unique background
+            </p>
+          </div>
+          <div className="flex gap-2 flex-shrink-0">
+            <button
+              onClick={handleClearForm}
+              className="px-3 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg flex items-center gap-1"
+              title="Clear all form inputs"
+            >
+              <span>Clear Form</span>
+            </button>
+            <button
+              onClick={handleStartOver}
+              className="px-3 py-2 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg flex items-center gap-1"
+              title="Start completely fresh"
+            >
+              <span>Start Over</span>
+            </button>
+          </div>
         </div>
 
         {!eligible ? (

@@ -165,6 +165,23 @@ export function UnderstandJobPage() {
     }
   }
 
+  const handleClearForm = () => {
+    setJobDescription('')
+    setSelectedInterviewer(null)
+    setDepthLevel(null)
+    setTouched(false)
+    setError(null)
+    setSelectedProvider('claude')
+  }
+
+  const handleStartOver = () => {
+    if (window.confirm('Are you sure you want to start over? All data will be cleared.')) {
+      handleClearForm()
+      setAnalysis(null)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }
+
   const containerStyle = {
     border: '1px solid #E5E7EB',
     borderRadius: '12px',
@@ -194,12 +211,34 @@ export function UnderstandJobPage() {
           ← Back to Dashboard
         </button>
 
-        <h1 className="text-3xl font-bold mb-1" style={{ color: '#1E3A5F' }}>
-          Analyze This Job
-        </h1>
-        <p className="text-lg mb-6" style={{ color: '#6B7280' }}>
-          Prepare for your upcoming interview
-        </p>
+        <div className="flex justify-between items-start mb-6">
+          <div>
+            <h1 className="text-3xl font-bold mb-1" style={{ color: '#1E3A5F' }}>
+              Analyze This Job
+            </h1>
+            <p className="text-lg" style={{ color: '#6B7280' }}>
+              Prepare for your upcoming interview
+            </p>
+          </div>
+          <div className="flex gap-2 flex-shrink-0">
+            <button
+              type="button"
+              onClick={handleClearForm}
+              className="px-3 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg flex items-center gap-1"
+              title="Clear all form inputs"
+            >
+              <span>Clear Form</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleStartOver}
+              className="px-3 py-2 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg flex items-center gap-1"
+              title="Start completely fresh"
+            >
+              <span>Start Over</span>
+            </button>
+          </div>
+        </div>
 
         <form onSubmit={handleSubmit}>
           <div style={containerStyle}>
