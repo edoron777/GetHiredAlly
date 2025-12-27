@@ -1,0 +1,141 @@
+# MANDATORY: Smart Questions UI - Complete Redesign
+
+---
+
+## ⚠️ CRITICAL INSTRUCTIONS - READ BEFORE STARTING
+
+**DO NOT:**
+- ❌ Add ANY features not explicitly requested
+- ❌ Add upgrade banners, payment prompts, or "Coming Soon" labels
+- ❌ Add new sections or elements of your own design
+- ❌ Improvise or be "creative" with the layout
+- ❌ Ignore any part of these instructions
+
+**YOU MUST:**
+- ✅ Follow these instructions EXACTLY as written
+- ✅ Copy the Static Questionnaire layout EXACTLY
+- ✅ Ask for clarification if something is unclear
+- ✅ Show me the changes before finalizing
+
+**If you add ANYTHING not requested, the task has FAILED.**
+
+---
+
+## THE TASK
+
+Create a **NEW** Smart Questions results page that is an **EXACT COPY** of the Static Interview Questionnaire layout.
+
+### Step 1: Find the Static Questionnaire Page
+
+Locate the file for the Static Interview Questionnaire results page. It's probably named something like:
+- `CommonQuestions.jsx`
+- `StaticQuestions.jsx`
+- `InterviewQuestions.jsx`
+
+Find it and tell me the exact file path.
+
+### Step 2: Copy the ENTIRE Layout
+
+The Smart Questions results page must have **THE SAME STRUCTURE** as Static Questionnaire:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ [PAGE TITLE]                                                │
+│ [SUBTITLE]                                                  │
+│                                                             │
+│ [4 DISPLAY LEVELS: Quick Review | With Example | ...]       │
+│                                                             │
+│ [QUESTION COUNT] [Expand All] [Collapse All] [PDF] [Word]   │
+│                                                             │
+│ ▼ Category 1 (count)                                        │
+│ ▼ Category 2 (count)                                        │
+│ ▼ Category 3 (count)                                        │
+│ ...                                                         │
+│                                                             │
+│ [Back to Questions Service]                                 │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Step 3: Only These Differences from Static
+
+| Element | Static Version | Smart Version |
+|---------|---------------|---------------|
+| Page Title | "Common Interview Questions" | "Smart Questions for [Job Title] - [Company]" |
+| Subtitle | "Master these questions and you'll be ready for any interview" | "Personalized questions based on your profile" |
+| **NEW SECTION** | None | Add "Personalized for You" callout box (see below) |
+| **NEW SECTION** | None | Add "Focus Areas for Your Preparation" section (see below) |
+
+### The 2 Additional Sections for Smart (Insert AFTER title, BEFORE display levels)
+
+**Section A: Personalization Callout**
+```jsx
+<div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+  <div className="flex items-center gap-2 mb-2">
+    <span className="text-blue-600">✨</span>
+    <span className="font-semibold text-blue-900">Personalized for You</span>
+  </div>
+  <p className="text-blue-800 text-sm">
+    These questions were generated specifically for your background and this role.
+    Unlike generic questions, they're tailored to YOUR unique profile.
+  </p>
+</div>
+```
+
+**Section B: Focus Areas (keep current implementation)**
+- Keep the existing Focus Areas component
+- Position it after the callout box, before the display levels
+
+---
+
+## EXACT LAYOUT ORDER (Top to Bottom)
+
+1. **Page Title** - "Smart Questions for [Job Title] - [Company]"
+2. **Subtitle** - "Personalized questions based on your profile"
+3. **Personalization Callout Box** - (Section A above)
+4. **Focus Areas Section** - (Section B above)
+5. **4 Display Level Buttons** - Quick Review, With Example, With Insights, Complete Guide
+6. **Action Row** - "[X] questions [Expand All] [Collapse All] [PDF] [Word]"
+7. **Question Categories** - Collapsible accordions with questions
+8. **Back Link** - "← Back to Questions Service"
+
+**NOTHING ELSE. NO OTHER ELEMENTS.**
+
+---
+
+## DO NOT ADD
+
+I repeat - DO NOT add any of these:
+- ❌ Upgrade banners
+- ❌ Payment prompts
+- ❌ "Coming Soon" labels
+- ❌ Data sources banner (JD, X-Ray, CV icons)
+- ❌ Additional introduction sections
+- ❌ Footer action bars
+- ❌ Any decorative elements not in Static version
+
+---
+
+## VERIFICATION
+
+After making changes, the Smart Questions page should look **almost identical** to Static Questionnaire, with only:
+1. Different title/subtitle
+2. Added personalization callout
+3. Added focus areas section
+4. Personalized question content (from AI)
+
+**Everything else must be EXACTLY the same as Static Questionnaire.**
+
+---
+
+## SHOW ME YOUR WORK
+
+Before finalizing, show me:
+1. The file path of Static Questionnaire you're copying from
+2. The file path of Smart Questions you're modifying
+3. A summary of ONLY the changes you're making
+
+**Do not make changes without confirming these first.**
+
+---
+
+**END OF INSTRUCTIONS**
