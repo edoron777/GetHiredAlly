@@ -1,0 +1,211 @@
+## TASK: Create AI Provider Selector UI Component
+
+### OVERVIEW
+Create a reusable React component that lets users choose between Claude and Gemini.
+
+### STEP 1: Create AIProviderSelector Component
+
+Create file: src/components/AIProviderSelector.jsx
+
+import React, { useState, useEffect } from 'react';
+
+const AIProviderSelector = ({ 
+    selectedProvider, 
+    onProviderChange, 
+    serviceType = null,
+    showCost = true,
+    compact = false 
+}) => {
+    const providers = [
+        {
+            id: 'gemini',
+            name: 'Gemini',
+            company: 'Google',
+            description: 'Cost-effective, great for most tasks',
+            costEstimate: '~$0.04-0.08',
+            badge: 'Best Value',
+            badgeColor: 'bg-green-100 text-green-800',
+            icon: '✨'
+        },
+        {
+            id: 'claude',
+            name: 'Claude',
+            company: 'Anthropic',
+            description: 'Premium quality, nuanced analysis',
+            costEstimate: '~$0.07-0.15',
+            badge: 'Premium',
+            badgeColor: 'bg-purple-100 text-purple-800',
+            icon: '🧠'
+        }
+    ];
+
+    if (compact) {
+        // Compact inline version
+        return (
+            <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+                <span className="text-sm text-gray-600">AI:</span>
+                <div className="flex gap-1">
+                    {providers.map((provider) => (
+                        <button
+                            key={provider.id}
+                            onClick={() => onProviderChange(provider.id)}
+                            className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                                selectedProvider === provider.id
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-white text-gray-700 hover:bg-gray-100 border'
+                            }`}
+                        >
+                            {provider.icon} {provider.name}
+                        </button>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+
+    // Full card version
+    return (
+        <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+                ⚡ Choose AI Provider
+            </label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {providers.map((provider) => (
+                    <div
+                        key={provider.id}
+                        onClick={() => onProviderChange(provider.id)}
+                        className={`relative p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                            selectedProvider === provider.id
+                                ? 'border-blue-500 bg-blue-50'
+                                : 'border-gray-200 hover:border-gray-300 bg-white'
+                        }`}
+                    >
+                        {/* Badge */}
+                        <span className={`absolute top-2 right-2 px-2 py-0.5 text-xs font-medium rounded-full ${provider.badgeColor}`}>
+                            {provider.badge}
+                        </span>
+                        
+                        {/* Radio indicator */}
+                        <div className="flex items-start gap-3">
+                            <div className={`mt-1 w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                                selectedProvider === provider.id
+                                    ? 'border-blue-500'
+                                    : 'border-gray-300'
+                            }`}>
+                                {selectedProvider === provider.id && (
+                                    <div className="w-2 h-2 rounded-full bg-blue-500" />
+                                )}
+                            </div>
+                            
+                            <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-lg">{provider.icon}</span>
+                                    <span className="font-semibold text-gray-900">
+                                        {provider.name}
+                                    </span>
+                                    <span className="text-sm text-gray-500">
+                                        ({provider.company})
+                                    </span>
+                                </div>
+                                
+                                <p className="mt-1 text-sm text-gray-600">
+                                    {provider.description}
+                                </p>
+                                
+                                {showCost && (
+                                    <p className="mt-2 text-sm font-medium text-gray-700">
+                                        💰 {provider.costEstimate} per analysis
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+            
+            <p className="mt-2 text-xs text-gray-500">
+                ℹ️ Both providers deliver excellent results. Your choice is saved for future use.
+            </p>
+        </div>
+    );
+};
+
+export default AIProviderSelector;
+
+### STEP 2: Create useAIProvider Hook
+
+Create file: src/hooks/useAIProvider.js
+
+import { useState, useEffect } from 'react';
+import { useAuth } from './useAuth'; // Adjust import based on your auth setup
+
+const API_BASE = '/api';
+
+export const useAIProvider = (serviceType = null) => {
+    const { user } = useAuth();
+    const [provider, setProvider] = useState('gemini');
+    const [loading, setLoading] = useState(true);
+
+    // Load user's preference on mount
+    useEffect(() => {
+        const loadPreference = async () => {
+            if (!user?.id) {
+                setLoading(false);
+                return;
+            }
+
+            try {
+                const params = new URLSearchParams({ user_id: user.id });
+                if (serviceType) params.append('service_type', serviceType);
+                
+                const response = await fetch(`${API_BASE}/ai/preference?${params}`);
+                const data = await response.json();
+                
+                if (data.provider) {
+                    setProvider(data.provider);
+                }
+            } catch (error) {
+                console.error('Failed to load AI preference:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadPreference();
+    }, [user?.id, serviceType]);
+
+    // Save preference when changed
+    const changeProvider = async (newProvider) => {
+        setProvider(newProvider);
+        
+        if (!user?.id) return;
+
+        try {
+            await fetch(`${API_BASE}/ai/preference?user_id=${user.id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    provider: newProvider,
+                    service_type: serviceType
+                })
+            });
+        } catch (error) {
+            console.error('Failed to save AI preference:', error);
+        }
+    };
+
+    return {
+        provider,
+        setProvider: changeProvider,
+        loading
+    };
+};
+
+export default useAIProvider;
+
+### SUCCESS CHECKLIST
+- [ ] AIProviderSelector.jsx component created
+- [ ] Component has full and compact versions
+- [ ] useAIProvider hook created
+- [ ] Hook loads/saves preferences via API
+- [ ] Both Claude and Gemini options display correctly
