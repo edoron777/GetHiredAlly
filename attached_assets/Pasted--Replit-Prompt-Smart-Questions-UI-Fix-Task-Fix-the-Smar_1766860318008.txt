@@ -1,0 +1,155 @@
+# Replit Prompt: Smart Questions UI Fix
+
+**Task:** Fix the Smart Questions UI to match Static Questionnaire layout
+**Priority:** HIGH
+
+---
+
+## ELEMENT 1: Match Static Questionnaire Interface
+
+The Smart Questions results page should be **almost identical** to the Static Interview Questionnaire page.
+
+### What Should Be THE SAME
+
+Copy these elements exactly from Static Questionnaire:
+
+| Element                           | Location                               | Copy From Static?                                            |
+| --------------------------------- | -------------------------------------- | ------------------------------------------------------------ |
+| Page layout                       | Overall structure                      | ✅ YES                                                        |
+| 4 Display Levels bar              | Top area                               | ✅ YES - Quick Review, With Example, With Insights, Complete Guide |
+| Action buttons (PDF, Word, Print) | Top right (same row as question count) | ✅ YES                                                        |
+| Categories accordion              | Main content                           | ✅ YES                                                        |
+| Question cards design             | Inside categories                      | ✅ YES                                                        |
+| Expand All / Collapse All         | Next to question count                 | ✅ YES                                                        |
+
+### What Should Be DIFFERENT (Only These)
+
+| Element                 | Static Version               | Smart Version                                         |
+| ----------------------- | ---------------------------- | ----------------------------------------------------- |
+| **Page Title**          | "Common Interview Questions" | "Smart Questions - Personalized for You"              |
+| **Subtitle**            | "Master these questions..."  | "Questions tailored to [Job Title] at [Company Name]" |
+| **Introduction Box**    | ❌ None                       | ✅ Add personalization callout (see below)             |
+| **Focus Areas Section** | ❌ None                       | ✅ Keep current Focus Areas section                    |
+
+### Introduction Callout Box (Add at Top)
+
+Add this box AFTER the title, BEFORE the 4 display levels:
+
+```jsx
+<div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+  <div className="flex items-center gap-2 mb-2">
+    <span className="text-blue-600">✨</span>
+    <span className="font-semibold text-blue-900">Personalized for You</span>
+  </div>
+  <p className="text-blue-800 text-sm">
+    These questions were generated specifically for your background and this role.
+    Unlike generic questions, they're tailored to YOUR unique profile.
+  </p>
+</div>
+```
+
+---
+
+## ELEMENT 2: Remove Unauthorized Additions
+
+Replit Agent added elements that were NOT requested. **Remove these:**
+
+### Remove These Elements
+
+| Element to Remove          | Current Location                                             |
+| -------------------------- | ------------------------------------------------------------ |
+| ❌ **Upgrade banner**       | Bottom of page ("Want to generate Smart Questions for another job? $4.99") |
+| ❌ **"Coming Soon" labels** | On PDF, Word, Upgrade buttons                                |
+| ❌ **Bottom action bar**    | Move buttons back to TOP (same position as Static page)      |
+
+### Do NOT Add
+
+- No payment/upgrade prompts
+- No "Coming Soon" labels
+- No footer action bars
+- No new sections that don't exist in Static Questionnaire (except Focus Areas)
+
+---
+
+## Visual Reference
+
+### CORRECT Layout (Same as Static):
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Smart Questions - Personalized for You                      │
+│ Questions tailored to [Job Title] at [Company Name]         │
+│                                                             │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ ✨ Personalized for You                                 │ │
+│ │ These questions were generated specifically for...      │ │
+│ └─────────────────────────────────────────────────────────┘ │
+│                                                             │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ 📋 Focus Areas for Your Preparation (4)                 │ │
+│ │ [Keep current focus areas section]                      │ │
+│ └─────────────────────────────────────────────────────────┘ │
+│                                                             │
+│ How much detail do you need?                                │
+│ [Quick Review] [With Example] [With Insights] [Complete]    │
+│                                                             │
+│ 18 questions    [Expand All] [Collapse All]    [PDF] [Word] │  ← ACTION BUTTONS HERE (TOP)
+│                                                             │
+│ ▼ Universal Questions (4)                                   │
+│ ▼ Behavioral Questions (5)                                  │
+│ ▼ Situational Questions (4)                                 │
+│ ▼ Self-Assessment Questions (2)                             │
+│ ▼ Cultural Fit Questions (3)                                │
+│                                                             │
+│ [NO UPGRADE BANNER AT BOTTOM]                               │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### WRONG Layout (Current - Fix This):
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ ...content...                                               │
+│                                                             │
+│ [Back] [Print] [PDF Coming Soon] [Word Coming Soon]  ← WRONG│
+│                                                             │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ Want to generate Smart Questions for another job?       │ │
+│ │ Upgrade to unlimited analyses - $4.99                   │ │  ← REMOVE THIS
+│ │ [Upgrade Now (Coming Soon)]                             │ │
+│ └─────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Summary of Changes
+
+| Action   | What                                               |
+| -------- | -------------------------------------------------- |
+| ✅ KEEP   | Focus Areas section                                |
+| ✅ KEEP   | Personalized questions content                     |
+| ✅ KEEP   | Blue/purple supportive colors                      |
+| ✅ ADD    | Small personalization callout box at top           |
+| ✅ MOVE   | Action buttons (PDF, Word) to TOP (same as Static) |
+| ❌ REMOVE | Upgrade banner at bottom                           |
+| ❌ REMOVE | "Coming Soon" labels                               |
+| ❌ REMOVE | Bottom action bar                                  |
+| 📋 COPY   | Overall layout from Static Questionnaire page      |
+
+---
+
+## File to Reference
+
+Look at the Static Questionnaire page for the correct layout:
+
+- `client/src/pages/CommonQuestions.jsx` (or similar)
+
+Copy its structure to:
+
+- `client/src/pages/SmartQuestions.jsx` (or similar)
+
+---
+
+**END OF PROMPT**

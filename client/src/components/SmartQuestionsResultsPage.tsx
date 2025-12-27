@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { isAuthenticated, getAuthToken } from '@/lib/auth'
-import { Loader2, ChevronDown, ChevronUp, Sparkles, FileText, BarChart3, FileCheck, ArrowLeft, Download, Printer, List, Lightbulb, BookOpen, Target } from 'lucide-react'
+import { Loader2, ChevronDown, ChevronUp, Sparkles, Download, Printer, List, Lightbulb, BookOpen, Target } from 'lucide-react'
 
 type DepthLevel = 'quick_review' | 'with_example' | 'with_insights' | 'complete_guide'
 
@@ -227,42 +227,15 @@ export function SmartQuestionsResultsPage() {
           )}
         </div>
 
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-6">
-          <h2 className="text-xl font-semibold text-blue-900 mb-3">
-            🎯 Your Personalized Interview Preparation
-          </h2>
-          <p className="text-blue-800 mb-4">
-            Great news! We've analyzed the job requirements against your background 
-            and created a personalized preparation plan just for you.
-          </p>
-          <p className="text-blue-800 mb-2">Below you'll find:</p>
-          <ul className="text-blue-700 ml-4 mb-4 space-y-1">
-            <li>• Focus areas to prepare (so you're ready for tough questions)</li>
-            <li>• Personalized questions based on YOUR experience</li>
-            <li>• Tips and sample answers to help you shine</li>
-          </ul>
-          <p className="text-blue-900 font-medium">
-            Remember: Preparation = Confidence = Success! 💪
-          </p>
-        </div>
-
-        <div className="p-4 rounded-lg mb-6 flex flex-wrap gap-4" style={{ backgroundColor: '#DBEAFE' }}>
-          <div className="flex items-center gap-2 text-blue-800">
-            <FileText className="h-5 w-5" />
-            <span>📄 Job Description</span>
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-blue-600">✨</span>
+            <span className="font-semibold text-blue-900">Personalized for You</span>
           </div>
-          {result.xray_analysis_id && (
-            <div className="flex items-center gap-2 text-blue-800">
-              <BarChart3 className="h-5 w-5" />
-              <span>📊 X-Ray Analysis</span>
-            </div>
-          )}
-          {result.cv_provided && (
-            <div className="flex items-center gap-2 text-blue-800">
-              <FileCheck className="h-5 w-5" />
-              <span>📋 Your CV</span>
-            </div>
-          )}
+          <p className="text-blue-800 text-sm">
+            These questions were generated specifically for your background and this role.
+            Unlike generic questions, they're tailored to YOUR unique profile.
+          </p>
         </div>
 
         {result.focus_areas && result.focus_areas.length > 0 && (
@@ -366,23 +339,48 @@ export function SmartQuestionsResultsPage() {
           </div>
         </div>
 
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold flex items-center gap-2" style={{ color: '#1E3A5F' }}>
-            🎯 Your Personalized Questions ({result.personalized_questions?.length || 0})
-          </h2>
-          <div className="flex gap-2">
-            <button
-              onClick={expandAllCategories}
-              className="text-sm px-3 py-1 rounded border hover:bg-gray-50"
-            >
-              Expand All
-            </button>
-            <button
-              onClick={collapseAllCategories}
-              className="text-sm px-3 py-1 rounded border hover:bg-gray-50"
-            >
-              Collapse All
-            </button>
+        <div className="bg-white rounded-xl p-4 shadow-md mb-6" style={{ boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
+          <div className="flex flex-wrap justify-between items-center gap-3">
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-gray-600">
+                {result.personalized_questions?.length || 0} questions
+              </span>
+              <div className="flex gap-2">
+                <button
+                  onClick={expandAllCategories}
+                  className="text-sm px-3 py-1.5 rounded border border-gray-200 hover:bg-gray-50 text-gray-600"
+                >
+                  Expand All
+                </button>
+                <button
+                  onClick={collapseAllCategories}
+                  className="text-sm px-3 py-1.5 rounded border border-gray-200 hover:bg-gray-50 text-gray-600"
+                >
+                  Collapse All
+                </button>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={handlePrint}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded border border-gray-200 hover:bg-gray-50 text-gray-600"
+              >
+                <Printer className="h-4 w-4" />
+                Print
+              </button>
+              <button
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded border border-gray-200 hover:bg-gray-50 text-gray-600"
+              >
+                <Download className="h-4 w-4" />
+                PDF
+              </button>
+              <button
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded border border-gray-200 hover:bg-gray-50 text-gray-600"
+              >
+                <Download className="h-4 w-4" />
+                Word
+              </button>
+            </div>
           </div>
         </div>
 
@@ -474,48 +472,15 @@ export function SmartQuestionsResultsPage() {
           )
         })}
 
-        <div className="bg-white rounded-xl p-4 shadow-md mb-6 flex flex-wrap gap-3" style={{ boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
+        <div className="mt-6">
           <button
             onClick={() => navigate('/service/predict-questions')}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg border hover:bg-gray-50"
+            className="text-sm transition-colors"
+            style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+            onMouseEnter={(e) => e.currentTarget.style.color = '#1E3A5F'}
+            onMouseLeave={(e) => e.currentTarget.style.color = '#6B7280'}
           >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Questions
-          </button>
-          <button
-            onClick={handlePrint}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg border hover:bg-gray-50"
-          >
-            <Printer className="h-4 w-4" />
-            Print
-          </button>
-          <button
-            disabled
-            className="flex items-center gap-2 px-4 py-2 rounded-lg border opacity-50 cursor-not-allowed"
-          >
-            <Download className="h-4 w-4" />
-            Save as PDF (Coming Soon)
-          </button>
-          <button
-            disabled
-            className="flex items-center gap-2 px-4 py-2 rounded-lg border opacity-50 cursor-not-allowed"
-          >
-            <Download className="h-4 w-4" />
-            Save as Word (Coming Soon)
-          </button>
-        </div>
-
-        <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-6 text-center" style={{ boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-          <h3 className="text-lg font-semibold mb-2" style={{ color: '#1E3A5F' }}>
-            Want to generate Smart Questions for another job?
-          </h3>
-          <p className="text-gray-600 mb-4">Upgrade to unlimited analyses - $4.99</p>
-          <button
-            disabled
-            className="px-6 py-3 rounded-lg text-white font-medium opacity-50 cursor-not-allowed"
-            style={{ backgroundColor: '#7C3AED' }}
-          >
-            Upgrade Now (Coming Soon)
+            ← Back to Questions Service
           </button>
         </div>
       </div>
