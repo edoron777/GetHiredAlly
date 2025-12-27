@@ -34,18 +34,34 @@ class EligibilityResponse(BaseModel):
 def build_smart_questions_prompt(job_data: str, cv_text: Optional[str] = None) -> str:
     prompt = """CRITICAL: You must respond with ONLY valid JSON. No text before or after. No markdown. No code blocks.
 
-You are an expert interview coach with a supportive, encouraging approach. Analyze the job and create a personalized preparation plan.
+You are an INTELLIGENT HUMAN INTERVIEWER who has carefully studied both the job description AND the candidate's background. Your task is to prepare PERSONALIZED interview questions that a smart interviewer would ask THIS specific candidate.
 
-JOB INFORMATION:
+Think like an interviewer who has done their homework and wants to ask questions that:
+- Reference SPECIFIC details from the candidate's CV/background
+- Connect to SPECIFIC requirements from the job description
+- Sound like a real interviewer who knows the candidate's story
+
+JOB DESCRIPTION:
 """
     prompt += job_data[:4000]
     
     if cv_text:
         prompt += """
 
-CANDIDATE CV:
+CANDIDATE'S CV/BACKGROUND:
 """
         prompt += cv_text[:2000]
+        prompt += """
+
+IMPORTANT: Since you have the candidate's CV, you MUST personalize questions by:
+- Referencing their specific companies, roles, or achievements
+- Asking about gaps or transitions in their career
+- Connecting their past experience to the new role's requirements
+
+Example transformation:
+- Generic: "Tell me about yourself"
+- Personalized: "I see you spent 2 years at [Company]. Walk me through how that experience prepared you for this [Role] position."
+"""
     
     prompt += """
 
@@ -55,19 +71,28 @@ Generate a JSON response with this EXACT structure:
 
 RULES:
 1. Generate 3-4 focus_areas (areas where preparation will help the candidate shine)
-   - Use positive, coaching language - these are OPPORTUNITIES to prepare, not weaknesses
-   - priority_level: KEY_FOCUS (most important), WORTH_PREPARING (helpful), GOOD_TO_KNOW (nice to have)
+   - Compare JD requirements vs CV experience to identify preparation opportunities
+   - Use positive, coaching language - these are OPPORTUNITIES, not weaknesses
+   - priority_level: KEY_FOCUS (important gaps), WORTH_PREPARING (helpful), GOOD_TO_KNOW (nice to have)
    - coaching_tip: Brief, encouraging advice
-   - winning_approach: How to turn this into a strength
-2. Generate exactly 15-18 questions with this mix:
-   - 3-4 Universal questions
-   - 5-6 Behavioral questions  
-   - 3-4 Situational questions
+   - winning_approach: How to turn this into a strength with a specific strategy
+
+2. Generate exactly 15-18 PERSONALIZED questions with this mix:
+   - 3-4 Universal questions (personalized to their background)
+   - 5-6 Behavioral questions (referencing their specific experiences)
+   - 3-4 Situational questions (based on role requirements)
    - 2-3 Self-Assessment questions
    - 2-3 Cultural Fit questions
-3. Keep answer examples brief (2-3 sentences max)
-4. Keep what_to_avoid brief (1-2 sentences max)
-5. Frame ALL language positively - focus on opportunities, not problems
+
+3. PERSONALIZATION IS KEY:
+   - Each question should feel like it was written for THIS candidate
+   - Reference specific companies, roles, achievements, or gaps from their CV
+   - Connect questions to specific job requirements
+   - Example: Instead of "Tell me about a leadership challenge" → "Tell me about a leadership challenge you faced when managing the 5-person team at [Company]"
+
+4. Keep answer examples brief (2-3 sentences max)
+5. Keep what_to_avoid brief (1-2 sentences max)
+6. Frame ALL language positively and supportively
 
 Your ENTIRE response must be valid JSON starting with { and ending with }. Nothing else."""
     
