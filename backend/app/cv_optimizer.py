@@ -217,6 +217,7 @@ async def scan_cv(request: Request, scan_request: ScanRequest):
 
 @router.get("/results/{scan_id}")
 async def get_scan_results(scan_id: str, token: str):
+    """Get scan results summary (for summary page)."""
     user = get_user_from_token(token)
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
@@ -226,7 +227,9 @@ async def get_scan_results(scan_id: str, token: str):
         raise HTTPException(status_code=500, detail="Database not available")
 
     try:
-        result = client.table("cv_scan_results").select("*").eq("id", scan_id).eq("user_id", user["id"]).execute()
+        result = client.table("cv_scan_results").select(
+            "id, user_id, cv_id, scan_date, total_issues, critical_count, high_count, medium_count, low_count, status"
+        ).eq("id", scan_id).eq("user_id", user["id"]).execute()
 
         if not result.data:
             raise HTTPException(status_code=404, detail="Scan results not found")
@@ -242,7 +245,47 @@ async def get_scan_results(scan_id: str, token: str):
             'high_count': scan['high_count'],
             'medium_count': scan['medium_count'],
             'low_count': scan['low_count'],
-            'issues': scan['issues_json'],
+            'status': scan['status']
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/report/{scan_id}")
+async def get_detailed_report(scan_id: str, token: str):
+    """Get full scan report with all issues (for report page)."""
+    user = get_user_from_token(token)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    client = get_supabase_client()
+    if not client:
+        raise HTTPException(status_code=500, detail="Database not available")
+
+    try:
+        result = client.table("cv_scan_results").select("*").eq("id", scan_id).eq("user_id", user["id"]).execute()
+
+        if not result.data:
+            raise HTTPException(status_code=404, detail="Scan not found")
+
+        scan = result.data[0]
+
+        issues = scan.get('issues_json', [])
+        if isinstance(issues, str):
+            issues = json.loads(issues)
+
+        return {
+            'scan_id': scan['id'],
+            'scan_date': scan['scan_date'],
+            'total_issues': scan['total_issues'],
+            'critical_count': scan['critical_count'],
+            'high_count': scan['high_count'],
+            'medium_count': scan['medium_count'],
+            'low_count': scan['low_count'],
+            'issues': issues,
             'status': scan['status']
         }
 

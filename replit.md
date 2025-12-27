@@ -70,10 +70,14 @@ GetHiredAlly is an interview preparation application with job description analys
 - `POST /api/smart-questions/generate` - Generate personalized questions with Gemini AI
 - `GET /api/smart-questions/{id}?token=...` - Get a specific smart questions result
 - `GET /api/smart-questions/?token=...` - List user's smart question results
+- `POST /api/cv/upload-for-scan` - Upload CV file for scanning (PDF, DOCX, TXT)
+- `GET /api/cv/list?token=...` - List user's uploaded CVs
+- `POST /api/cv-optimizer/scan` - Scan CV with AI (returns scan_id)
+- `GET /api/cv-optimizer/results/{scan_id}?token=...` - Get scan results summary
+- `GET /api/cv-optimizer/report/{scan_id}?token=...` - Get detailed report with all issues
 
 ## Frontend Routes
 - `/` - Landing page
-- `/service/cv-optimizer` - CV Optimizer placeholder page (protected)
 - `/register` - User registration
 - `/login` - User login
 - `/verify-email` - Email verification page
@@ -83,6 +87,10 @@ GetHiredAlly is an interview preparation application with job description analys
 - `/service/predict-questions/common` - 54 common interview questions (protected)
 - `/service/predict-questions/smart` - Smart Questions AI input page (protected)
 - `/service/predict-questions/smart/results/:id` - Smart Questions results page (protected)
+- `/service/cv-optimizer` - CV Optimizer upload page (protected)
+- `/service/cv-optimizer/scanning` - CV scanning animation page (protected)
+- `/service/cv-optimizer/results/:scanId` - CV scan results summary (protected)
+- `/service/cv-optimizer/report/:scanId` - CV detailed report with filters (protected)
 
 ## Database Tables
 - `user_profiles` - User tier definitions (standard, special, vip)
