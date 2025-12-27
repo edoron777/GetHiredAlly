@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { isAuthenticated, getAuthToken } from '@/lib/auth'
-import { Loader2, ChevronDown, ChevronUp, ChevronRight, Download, List, Lightbulb, BookOpen, Target } from 'lucide-react'
+import { Loader2, ChevronDown, ChevronUp, ChevronRight, List, Lightbulb, BookOpen, Target } from 'lucide-react'
+import { StandardToolbar } from './StandardToolbar'
 
 type DepthLevel = 'quick_review' | 'with_example' | 'with_insights' | 'complete_guide'
 
@@ -95,8 +96,6 @@ export function SmartQuestionsResultsPage() {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
   const [expandedFocusAreas, setExpandedFocusAreas] = useState<Set<number>>(new Set())
   const [focusAreasExpanded, setFocusAreasExpanded] = useState(false)
-  const [downloadingPdf, setDownloadingPdf] = useState(false)
-  const [downloadingDocx, setDownloadingDocx] = useState(false)
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -204,19 +203,29 @@ export function SmartQuestionsResultsPage() {
     return md
   }
 
-  const handleDownload = async (format: 'pdf' | 'docx') => {
-    const setDownloading = format === 'pdf' ? setDownloadingPdf : setDownloadingDocx
-    setDownloading(true)
-    
+  const handleDownload = async (format: 'pdf' | 'docx' | 'md') => {
     try {
       const reportContent = generateReportMarkdown()
+      
+      if (format === 'md') {
+        const blob = new Blob([reportContent], { type: 'text/markdown' })
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `Smart_Questions_${result?.job_title?.replace(/\s+/g, '_') || 'Interview'}.md`
+        a.click()
+        window.URL.revokeObjectURL(url)
+        return
+      }
+      
       const response = await fetch(`/api/xray/download/${format}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           report_content: reportContent,
           job_title: result?.job_title || 'Smart Questions',
-          company_name: result?.company_name || ''
+          company_name: result?.company_name || '',
+          service_name: 'Smart Interview Questionnaire'
         })
       })
       
@@ -231,8 +240,6 @@ export function SmartQuestionsResultsPage() {
       window.URL.revokeObjectURL(url)
     } catch (err) {
       console.error(`${format} download failed:`, err)
-    } finally {
-      setDownloading(false)
     }
   }
 
@@ -452,87 +459,27 @@ export function SmartQuestionsResultsPage() {
           </div>
         </div>
 
-        {/* Action Row */}
-        <div style={{ ...containerStyle, padding: '16px 24px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span style={{ fontSize: '14px', color: '#6B7280' }}>
-                {result.personalized_questions?.length || 0} questions
-              </span>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button
-                  type="button"
-                  onClick={expandAllCategories}
-                  style={{
-                    background: 'none',
-                    border: '1px solid #E5E7EB',
-                    borderRadius: '6px',
-                    padding: '6px 12px',
-                    fontSize: '13px',
-                    color: '#6B7280',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Expand All
-                </button>
-                <button
-                  type="button"
-                  onClick={collapseAllCategories}
-                  style={{
-                    background: 'none',
-                    border: '1px solid #E5E7EB',
-                    borderRadius: '6px',
-                    padding: '6px 12px',
-                    fontSize: '13px',
-                    color: '#6B7280',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Collapse All
-                </button>
-              </div>
-            </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button
-                type="button"
-                disabled={downloadingPdf}
-                onClick={() => handleDownload('pdf')}
-                style={{
-                  background: 'none',
-                  border: '1px solid #E5E7EB',
-                  borderRadius: '6px',
-                  padding: '6px 12px',
-                  fontSize: '13px',
-                  color: downloadingPdf ? '#9CA3AF' : '#6B7280',
-                  cursor: downloadingPdf ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px'
-                }}
-              >
-                {downloadingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} PDF
-              </button>
-              <button
-                type="button"
-                disabled={downloadingDocx}
-                onClick={() => handleDownload('docx')}
-                style={{
-                  background: 'none',
-                  border: '1px solid #E5E7EB',
-                  borderRadius: '6px',
-                  padding: '6px 12px',
-                  fontSize: '13px',
-                  color: downloadingDocx ? '#9CA3AF' : '#6B7280',
-                  cursor: downloadingDocx ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px'
-                }}
-              >
-                {downloadingDocx ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} Word
-              </button>
-            </div>
-          </div>
+        {/* Standard Toolbar */}
+        <StandardToolbar
+          onExpandAll={expandAllCategories}
+          onCollapseAll={collapseAllCategories}
+          onPDF={() => handleDownload('pdf')}
+          onWord={() => handleDownload('docx')}
+          onMarkdown={() => handleDownload('md')}
+          serviceName="Smart Interview Questionnaire"
+        />
+
+        {/* Section Header */}
+        <div 
+          style={{
+            marginBottom: '16px',
+            paddingBottom: '8px',
+            borderBottom: '1px solid #E5E7EB'
+          }}
+        >
+          <p style={{ fontWeight: 700, color: '#1E3A5F', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.5px', margin: 0 }}>
+            PERSONALIZED QUESTIONS  •  {result?.personalized_questions?.length || 0} questions
+          </p>
         </div>
 
         {/* Question Categories */}
