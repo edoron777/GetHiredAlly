@@ -204,7 +204,7 @@ export function SmartQuestionsPage() {
           <div>
             <h1 className="text-3xl font-bold mb-2" style={{ color: '#1E3A5F' }}>
               <Sparkles className="inline h-8 w-8 mr-2" />
-              Smart Questions Predictor
+              Smart Interview Questions Predictor
             </h1>
             <p className="text-gray-600">
               AI-powered questions personalized for your specific job description and your unique background
