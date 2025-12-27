@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { isAuthenticated } from '@/lib/auth'
-import { Loader2, List, Lightbulb, BookOpen, ChevronDown, ChevronUp, ChevronRight, Download, AlertTriangle } from 'lucide-react'
+import { Loader2, List, Lightbulb, BookOpen, ChevronDown, ChevronUp, ChevronRight, AlertTriangle } from 'lucide-react'
+import { StandardToolbar } from './StandardToolbar'
 
 type DepthLevel = 'quick_review' | 'with_example' | 'with_insights' | 'complete_guide'
 
@@ -84,8 +85,6 @@ export function PredictQuestionsPage() {
   const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(new Set())
   const [expandedQuestionsToAsk, setExpandedQuestionsToAsk] = useState<Set<string>>(new Set())
   const [questionsToAskSectionExpanded, setQuestionsToAskSectionExpanded] = useState(false)
-  const [downloadingPdf, setDownloadingPdf] = useState(false)
-  const [downloadingDocx, setDownloadingDocx] = useState(false)
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -223,19 +222,29 @@ export function PredictQuestionsPage() {
     return md
   }
 
-  const handleDownload = async (format: 'pdf' | 'docx') => {
-    const setDownloading = format === 'pdf' ? setDownloadingPdf : setDownloadingDocx
-    setDownloading(true)
-    
+  const handleDownload = async (format: 'pdf' | 'docx' | 'md') => {
     try {
       const reportContent = generateReportMarkdown()
+      
+      if (format === 'md') {
+        const blob = new Blob([reportContent], { type: 'text/markdown' })
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = 'Interview_Questions.md'
+        a.click()
+        window.URL.revokeObjectURL(url)
+        return
+      }
+      
       const response = await fetch(`/api/xray/download/${format}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           report_content: reportContent,
           job_title: 'Interview Questions',
-          company_name: ''
+          company_name: '',
+          service_name: 'Static Interview Questionnaire'
         })
       })
       
@@ -250,8 +259,6 @@ export function PredictQuestionsPage() {
       window.URL.revokeObjectURL(url)
     } catch (err) {
       console.error(`${format} download failed:`, err)
-    } finally {
-      setDownloading(false)
     }
   }
 
@@ -287,81 +294,13 @@ export function PredictQuestionsPage() {
         <h1 className="text-3xl font-bold mb-1" style={{ color: '#1E3A5F' }}>
           Common Interview Questions
         </h1>
-        <p className="text-lg mb-6" style={{ color: '#6B7280' }}>
+        <p className="text-lg mb-4" style={{ color: '#6B7280' }}>
           Master these questions and you'll be ready for any interview
         </p>
 
-        <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '12px' }}>
-          This page includes 2 types of questions:
+        <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '16px' }}>
+          Questions You'll Be Asked ({questions.length}) | Questions You Can Ask ({questionsToAsk.length})
         </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <div 
-            style={{
-              backgroundColor: 'white',
-              border: '1px solid #E5E7EB',
-              borderRadius: '12px',
-              padding: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span style={{ fontSize: '24px' }}>🎯</span>
-              <div>
-                <p style={{ fontWeight: 600, color: '#1E3A5F', fontSize: '15px' }}>Questions You'll Be Asked</p>
-                <p style={{ fontSize: '13px', color: '#6B7280' }}>{questions.length} questions</p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => document.getElementById('questions-asked')?.scrollIntoView({ behavior: 'smooth' })}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#1E3A5F',
-                fontSize: '13px',
-                cursor: 'pointer',
-                textDecoration: 'underline'
-              }}
-            >
-              Jump ↓
-            </button>
-          </div>
-          <div 
-            style={{
-              backgroundColor: 'white',
-              border: '1px solid #E5E7EB',
-              borderRadius: '12px',
-              padding: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span style={{ fontSize: '24px' }}>💬</span>
-              <div>
-                <p style={{ fontWeight: 600, color: '#1E3A5F', fontSize: '15px' }}>Questions You Can Ask</p>
-                <p style={{ fontSize: '13px', color: '#6B7280' }}>{questionsToAsk.length} questions</p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => document.getElementById('questions-to-ask')?.scrollIntoView({ behavior: 'smooth' })}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#1E3A5F',
-                fontSize: '13px',
-                cursor: 'pointer',
-                textDecoration: 'underline'
-              }}
-            >
-              Jump ↓
-            </button>
-          </div>
-        </div>
 
         <div style={containerStyle}>
           <h2 style={stepHeaderStyle}>How much detail do you need?</h2>
@@ -401,87 +340,14 @@ export function PredictQuestionsPage() {
         </div>
 
         {questions.length > 0 && (
-          <div style={{ ...containerStyle, padding: '16px 24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span style={{ fontSize: '14px', color: '#6B7280' }}>
-                  {questions.length} questions
-                </span>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button
-                    type="button"
-                    onClick={expandAllCategories}
-                    style={{
-                      background: 'none',
-                      border: '1px solid #E5E7EB',
-                      borderRadius: '6px',
-                      padding: '6px 12px',
-                      fontSize: '13px',
-                      color: '#6B7280',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    Expand All
-                  </button>
-                  <button
-                    type="button"
-                    onClick={collapseAllCategories}
-                    style={{
-                      background: 'none',
-                      border: '1px solid #E5E7EB',
-                      borderRadius: '6px',
-                      padding: '6px 12px',
-                      fontSize: '13px',
-                      color: '#6B7280',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    Collapse All
-                  </button>
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button
-                  type="button"
-                  disabled={downloadingPdf}
-                  onClick={() => handleDownload('pdf')}
-                  style={{
-                    background: 'none',
-                    border: '1px solid #E5E7EB',
-                    borderRadius: '6px',
-                    padding: '6px 12px',
-                    fontSize: '13px',
-                    color: downloadingPdf ? '#9CA3AF' : '#6B7280',
-                    cursor: downloadingPdf ? 'not-allowed' : 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px'
-                  }}
-                >
-                  {downloadingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} PDF
-                </button>
-                <button
-                  type="button"
-                  disabled={downloadingDocx}
-                  onClick={() => handleDownload('docx')}
-                  style={{
-                    background: 'none',
-                    border: '1px solid #E5E7EB',
-                    borderRadius: '6px',
-                    padding: '6px 12px',
-                    fontSize: '13px',
-                    color: downloadingDocx ? '#9CA3AF' : '#6B7280',
-                    cursor: downloadingDocx ? 'not-allowed' : 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px'
-                  }}
-                >
-                  {downloadingDocx ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} Word
-                </button>
-              </div>
-            </div>
-          </div>
+          <StandardToolbar
+            onExpandAll={expandAllCategories}
+            onCollapseAll={collapseAllCategories}
+            onPDF={() => handleDownload('pdf')}
+            onWord={() => handleDownload('docx')}
+            onMarkdown={() => handleDownload('md')}
+            serviceName="Static Interview Questionnaire"
+          />
         )}
 
         {isLoading && (
@@ -501,24 +367,14 @@ export function PredictQuestionsPage() {
           <div 
             id="questions-asked"
             style={{
-              backgroundColor: '#EFF6FF',
-              borderRadius: '12px',
-              padding: '16px',
-              marginBottom: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px'
+              marginBottom: '16px',
+              paddingBottom: '8px',
+              borderBottom: '1px solid #E5E7EB'
             }}
           >
-            <span style={{ fontSize: '24px' }}>🎯</span>
-            <div>
-              <p style={{ fontWeight: 700, color: '#1E3A5F', fontSize: '16px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                Questions You'll Be Asked
-              </p>
-              <p style={{ fontSize: '13px', color: '#6B7280' }}>
-                Prepare answers for these common interview questions
-              </p>
-            </div>
+            <p style={{ fontWeight: 700, color: '#1E3A5F', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.5px', margin: 0 }}>
+              QUESTIONS YOU'LL BE ASKED  •  {questions.length} questions
+            </p>
           </div>
         )}
 
@@ -715,16 +571,29 @@ export function PredictQuestionsPage() {
         })}
 
         {!isLoading && !error && questionsToAsk.length > 0 && (
+          <>
+          <div 
+            id="questions-to-ask"
+            style={{
+              marginTop: '32px',
+              marginBottom: '16px',
+              paddingBottom: '8px',
+              borderBottom: '1px solid #E5E7EB'
+            }}
+          >
+            <p style={{ fontWeight: 700, color: '#1E3A5F', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.5px', margin: 0 }}>
+              QUESTIONS YOU CAN ASK  •  {questionsToAsk.length} questions
+            </p>
+          </div>
           <div style={containerStyle}>
             <button
               type="button"
-              id="questions-to-ask"
               onClick={() => setQuestionsToAskSectionExpanded(!questionsToAskSectionExpanded)}
               style={{
                 width: '100%',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '12px',
+                gap: '8px',
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
@@ -737,15 +606,18 @@ export function PredictQuestionsPage() {
               ) : (
                 <ChevronRight className="h-5 w-5" style={{ color: '#1E3A5F', flexShrink: 0 }} />
               )}
-              <span style={{ fontSize: '24px' }}>💬</span>
-              <div style={{ textAlign: 'left' }}>
-                <p style={{ fontWeight: 700, color: '#1E3A5F', fontSize: '16px', textTransform: 'uppercase', letterSpacing: '0.5px', margin: 0 }}>
-                  Questions You Can Ask
-                </p>
-                <p style={{ fontSize: '13px', color: '#6B7280', margin: 0 }}>
-                  {questionsToAsk.length} questions to show your interest
-                </p>
-              </div>
+              <h2 style={{ 
+                fontSize: '16px',
+                fontWeight: 600,
+                color: '#1E3A5F',
+                margin: 0,
+                textAlign: 'left'
+              }}>
+                Questions to Ask the Interviewer
+              </h2>
+              <span style={{ fontSize: '13px', color: '#6B7280', marginLeft: '4px' }}>
+                ({questionsToAsk.length})
+              </span>
             </button>
             
             {questionsToAskSectionExpanded && (
@@ -849,6 +721,7 @@ export function PredictQuestionsPage() {
               </div>
             )}
           </div>
+          </>
         )}
       </div>
 
