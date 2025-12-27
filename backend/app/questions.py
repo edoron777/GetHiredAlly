@@ -25,10 +25,7 @@ class QuestionsResponse(BaseModel):
 
 @router.get("/static", response_model=QuestionsResponse)
 async def get_static_questions(
-    category: Optional[str] = Query(None, description="Filter by category"),
-    subcategory: Optional[str] = Query(None, description="Filter by subcategory"),
-    interviewer_type: Optional[str] = Query(None, description="Filter by interviewer type"),
-    depth_level: Optional[str] = Query(None, description="Filter by depth level")
+    category: Optional[str] = Query(None, description="Filter by category")
 ):
     supabase = get_supabase_client()
     
@@ -43,18 +40,11 @@ async def get_static_questions(
             
             if category:
                 query = query.eq('category', category)
-            if subcategory:
-                query = query.eq('subcategory', subcategory)
             
             result = query.order('order_priority').execute()
             
             if result.data and len(result.data) > 0:
                 questions = result.data
-                
-                if interviewer_type:
-                    questions = [q for q in questions if interviewer_type in q.get('interviewer_types', [])]
-                if depth_level:
-                    questions = [q for q in questions if depth_level in q.get('depth_levels', [])]
                 
                 ask_result = supabase.table('questions_to_ask').select('*').eq('is_active', True).order('order_priority').execute()
                 if ask_result.data and len(ask_result.data) > 0:
@@ -73,7 +63,7 @@ async def get_static_questions(
         use_static = True
     
     if use_static:
-        questions = get_filtered_static_questions(category, subcategory, interviewer_type, depth_level)
+        questions = get_filtered_static_questions(category)
         questions_to_ask = QUESTIONS_TO_ASK
     
     return QuestionsResponse(
@@ -82,27 +72,22 @@ async def get_static_questions(
         total_count=len(questions)
     )
 
-def get_filtered_static_questions(category, subcategory, interviewer_type, depth_level):
+def get_filtered_static_questions(category):
     questions = INTERVIEW_QUESTIONS.copy()
     
     if category:
         questions = [q for q in questions if q.get('category') == category]
-    if subcategory:
-        questions = [q for q in questions if q.get('subcategory') == subcategory]
-    if interviewer_type:
-        questions = [q for q in questions if interviewer_type in q.get('interviewer_types', [])]
-    if depth_level:
-        questions = [q for q in questions if depth_level in q.get('depth_levels', [])]
     
     return sorted(questions, key=lambda x: x.get('order_priority', 999))
 
 @router.post("/seed")
-async def seed_questions():
+async def seed_questions(force: bool = False):
     from .seed_questions import seed_all
-    success = seed_all()
+    success = seed_all(force=force)
     
     if success:
-        return {"status": "success", "message": "Questions seeded successfully"}
+        count = len(INTERVIEW_QUESTIONS)
+        return {"status": "success", "message": f"Successfully seeded {count} questions", "count": count}
     else:
         raise HTTPException(status_code=500, detail="Failed to seed questions")
 
