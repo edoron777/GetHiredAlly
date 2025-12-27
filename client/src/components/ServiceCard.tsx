@@ -1,5 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
+import { Play } from 'lucide-react'
+import { VideoModal } from './VideoModal'
 
 interface ServiceCardProps {
   icon: string
@@ -9,6 +11,8 @@ interface ServiceCardProps {
   buttonText: string
   isActive: boolean
   navigateTo?: string
+  videoUrl?: string
+  videoTitle?: string
 }
 
 export function ServiceCard({
@@ -18,10 +22,13 @@ export function ServiceCard({
   description,
   buttonText,
   isActive,
-  navigateTo
+  navigateTo,
+  videoUrl,
+  videoTitle
 }: ServiceCardProps) {
   const navigate = useNavigate()
   const [isHovered, setIsHovered] = useState(false)
+  const [showVideo, setShowVideo] = useState(false)
 
   const handleClick = () => {
     if (isActive && navigateTo) {
@@ -105,6 +112,46 @@ export function ServiceCard({
       >
         {buttonText}
       </button>
+
+      {videoUrl && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            setShowVideo(true)
+          }}
+          style={{
+            marginTop: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '6px',
+            fontSize: '14px',
+            color: '#6B7280',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            transition: 'color 0.2s'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = '#2563EB'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = '#6B7280'
+          }}
+        >
+          <Play size={16} fill="currentColor" />
+          Watch how it works
+        </button>
+      )}
+
+      {videoUrl && (
+        <VideoModal
+          isOpen={showVideo}
+          onClose={() => setShowVideo(false)}
+          videoUrl={videoUrl}
+          title={videoTitle || 'How it works'}
+        />
+      )}
     </div>
   )
 }

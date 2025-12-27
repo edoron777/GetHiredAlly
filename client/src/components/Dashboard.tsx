@@ -54,7 +54,9 @@ export function Dashboard() {
       description: "What's wrong with my CV?",
       buttonText: 'Get Started',
       isActive: true,
-      navigateTo: '/service/cv-optimizer'
+      navigateTo: '/service/cv-optimizer',
+      videoUrl: 'https://www.youtube.com/embed/Tt08KmFfIYQ',
+      videoTitle: 'How CV Optimizer Works'
     }
   ]
 
@@ -81,6 +83,8 @@ export function Dashboard() {
               buttonText={service.buttonText}
               isActive={service.isActive}
               navigateTo={service.navigateTo}
+              videoUrl={service.videoUrl}
+              videoTitle={service.videoTitle}
             />
           ))}
         </div>
