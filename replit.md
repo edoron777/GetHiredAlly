@@ -65,6 +65,10 @@ GetHiredAlly is an interview preparation application with job description analys
 - `GET /api/questions/static` - Get 54 interview questions (filterable by category)
 - `GET /api/questions/categories` - Get available question categories
 - `POST /api/questions/seed?force=true` - Seed interview questions to database (force replaces all)
+- `GET /api/smart-questions/check-eligibility?token=...` - Check if user can use Smart Questions
+- `POST /api/smart-questions/generate` - Generate personalized questions with Gemini AI
+- `GET /api/smart-questions/{id}?token=...` - Get a specific smart questions result
+- `GET /api/smart-questions/?token=...` - List user's smart question results
 
 ## Frontend Routes
 - `/` - Landing page
