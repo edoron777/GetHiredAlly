@@ -67,7 +67,7 @@ class AIResponse:
 
 PROVIDER_MODELS = {
     'claude': 'anthropic/claude-sonnet-4-5',
-    'gemini': 'gemini/gemini-2.5-pro-preview-05-06',
+    'gemini': 'gemini/gemini-1.5-pro',
 }
 
 async def generate_completion(
