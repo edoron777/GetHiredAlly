@@ -11,6 +11,7 @@ interface DepthOption {
   icon: React.ReactNode
   iconColor: string
   label: string
+  tooltip: string
 }
 
 interface Question {
@@ -36,10 +37,10 @@ interface QuestionToAsk {
 }
 
 const depthOptions: DepthOption[] = [
-  { id: 'quick_review', icon: <List className="h-4 w-4" />, iconColor: '#3B82F6', label: 'Quick Review' },
-  { id: 'with_example', icon: <Lightbulb className="h-4 w-4" />, iconColor: '#F59E0B', label: 'With Example' },
-  { id: 'with_insights', icon: <BookOpen className="h-4 w-4" />, iconColor: '#8B5CF6', label: 'With Insights' },
-  { id: 'complete_guide', icon: <Star className="h-4 w-4" />, iconColor: '#EAB308', label: 'Complete Guide' }
+  { id: 'quick_review', icon: <List className="h-4 w-4" />, iconColor: '#3B82F6', label: 'Quick Review', tooltip: 'Show questions only' },
+  { id: 'with_example', icon: <Lightbulb className="h-4 w-4" />, iconColor: '#F59E0B', label: 'With Example', tooltip: 'Show questions with example answers' },
+  { id: 'with_insights', icon: <BookOpen className="h-4 w-4" />, iconColor: '#8B5CF6', label: 'With Insights', tooltip: 'Show questions with tips and explanations' },
+  { id: 'complete_guide', icon: <Star className="h-4 w-4" />, iconColor: '#EAB308', label: 'Complete Guide', tooltip: 'Show all available information' }
 ]
 
 const categoryLabels: Record<string, string> = {
@@ -294,16 +295,18 @@ export function PredictQuestionsPage() {
         <h1 className="text-3xl font-bold mb-1" style={{ color: '#1E3A5F' }}>
           Common Interview Questions
         </h1>
-        <p className="text-lg mb-4" style={{ color: '#6B7280' }}>
+        <p className="text-lg mb-6" style={{ color: '#6B7280' }}>
           Master these questions and you'll be ready for any interview
         </p>
 
-        <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '16px' }}>
-          Questions You'll Be Asked ({questions.length}) | Questions You Can Ask ({questionsToAsk.length})
-        </p>
-
-        {/* Display Level Selector */}
-        <div style={{ marginBottom: '16px' }}>
+        {/* Display Level Selector with Border */}
+        <div style={{ 
+          marginBottom: '16px',
+          border: '1px solid #D1D5DB',
+          borderRadius: '8px',
+          padding: '12px',
+          backgroundColor: '#F9FAFB'
+        }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
             <Filter size={16} style={{ color: '#6B7280' }} />
             <span style={{ color: '#374151', fontSize: '14px' }}>How much detail do you need?</span>
@@ -313,6 +316,7 @@ export function PredictQuestionsPage() {
               <button
                 key={option.id}
                 type="button"
+                title={option.tooltip}
                 onClick={() => setDepthLevel(option.id)}
                 style={{
                   display: 'flex',
@@ -372,6 +376,21 @@ export function PredictQuestionsPage() {
           >
             <p style={{ fontWeight: 700, color: '#1E3A5F', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.5px', margin: 0 }}>
               QUESTIONS YOU'LL BE ASKED  •  {questions.length} questions
+              <span style={{ margin: '0 8px', color: '#9CA3AF' }}>|</span>
+              <a 
+                href="#questions-you-can-ask"
+                style={{ 
+                  color: '#3B82F6', 
+                  fontWeight: 400, 
+                  textTransform: 'none',
+                  textDecoration: 'none',
+                  fontSize: '14px'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
+                onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
+              >
+                Questions You Can Ask ({questionsToAsk.length}) ↓
+              </a>
             </p>
           </div>
         )}
@@ -571,7 +590,7 @@ export function PredictQuestionsPage() {
         {!isLoading && !error && questionsToAsk.length > 0 && (
           <>
           <div 
-            id="questions-to-ask"
+            id="questions-you-can-ask"
             style={{
               marginTop: '32px',
               marginBottom: '16px',

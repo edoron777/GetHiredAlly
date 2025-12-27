@@ -1,0 +1,187 @@
+# Replit Prompt: Static Interview Questionnaire - 3 UI Fixes
+
+**Task:** Make 3 specific UI changes to the Static Interview Questionnaire page
+**Priority:** HIGH
+
+---
+
+## ⚠️ CRITICAL INSTRUCTIONS
+
+- Follow these instructions EXACTLY
+- Do NOT add anything not requested
+- Do NOT remove anything not mentioned
+
+---
+
+## CHANGE 1: Remove Question Summary Line
+
+**DELETE this line completely:**
+```
+Questions You'll Be Asked (54) | Questions You Can Ask (11)
+```
+
+This line (currently below the subtitle "Master these questions...") should be removed entirely.
+
+---
+
+## CHANGE 2: Update Section Header with Link
+
+**CURRENT:**
+```
+QUESTIONS YOU'LL BE ASKED • 54 QUESTIONS
+```
+
+**CHANGE TO:**
+```
+QUESTIONS YOU'LL BE ASKED • 54 questions | Questions You Can Ask (11) ↓
+```
+
+**Requirements:**
+- "Questions You Can Ask (11)" must be a **clickable link**
+- Clicking it scrolls down to the "QUESTIONS YOU CAN ASK" section
+- Add a small down arrow (↓) to indicate it's a link to scroll down
+- Style the link subtly (lighter color or underline on hover)
+
+**Code example:**
+```jsx
+<h2 className="text-lg font-bold">
+  QUESTIONS YOU'LL BE ASKED • 54 questions 
+  <span className="mx-2">|</span>
+  <a 
+    href="#questions-you-can-ask" 
+    className="text-blue-600 hover:underline font-normal text-base"
+  >
+    Questions You Can Ask (11) ↓
+  </a>
+</h2>
+```
+
+Make sure the "QUESTIONS YOU CAN ASK" section has `id="questions-you-can-ask"` for the anchor link to work.
+
+---
+
+## CHANGE 3: Filter Bar Improvements
+
+### 3A: Add Border/Frame Around Filter Section
+
+The filter section (funnel icon + 4 buttons) should have a visible border to make it stand out as a toolbar.
+
+**Add styling:**
+```jsx
+<div className="border border-gray-300 rounded-lg p-3 bg-gray-50">
+  {/* Filter icon + title */}
+  <div className="flex items-center gap-2 mb-2">
+    <Filter size={16} className="text-gray-500" />
+    <span className="text-gray-700">How much detail do you need?</span>
+  </div>
+  
+  {/* 4 filter buttons */}
+  <div className="flex gap-2">
+    ...buttons...
+  </div>
+</div>
+```
+
+**Styling specs:**
+- Border: 1px solid gray (#D1D5DB)
+- Border radius: rounded-lg
+- Padding: p-3
+- Background: light gray (bg-gray-50 or #F9FAFB)
+
+### 3B: Add Tooltips to All 4 Filter Buttons
+
+Each button needs a `title` attribute for tooltip on hover:
+
+| Button | Tooltip (title attribute) |
+|--------|---------------------------|
+| Quick Review | "Show questions only" |
+| With Example | "Show questions with example answers" |
+| With Insights | "Show questions with tips and explanations" |
+| Complete Guide | "Show all available information" |
+
+**Code example:**
+```jsx
+<button 
+  title="Show questions only"
+  className="flex items-center gap-2 px-4 py-2 border rounded hover:bg-gray-100"
+>
+  <List size={16} className="text-blue-500" />
+  <span>Quick Review</span>
+</button>
+
+<button 
+  title="Show questions with example answers"
+  className="flex items-center gap-2 px-4 py-2 border rounded hover:bg-gray-100"
+>
+  <Lightbulb size={16} className="text-yellow-500" />
+  <span>With Example</span>
+</button>
+
+<button 
+  title="Show questions with tips and explanations"
+  className="flex items-center gap-2 px-4 py-2 border rounded hover:bg-gray-100"
+>
+  <BookOpen size={16} className="text-purple-500" />
+  <span>With Insights</span>
+</button>
+
+<button 
+  title="Show all available information"
+  className="flex items-center gap-2 px-4 py-2 border rounded hover:bg-gray-100"
+>
+  <Star size={16} className="text-yellow-400" />
+  <span>Complete Guide</span>
+</button>
+```
+
+---
+
+## VISUAL RESULT
+
+After changes, the page should look like this:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ ← Back to Questions Service                                 │
+│                                                             │
+│ Common Interview Questions                                   │
+│ Master these questions and you'll be ready for any interview │
+│                                                             │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ 🔻 How much detail do you need?                         │ │  ← Filter bar
+│ │ [☰ Quick Review] [💡 With Example] [📖 With Insights] [⭐ Complete Guide] │ │  with border
+│ └─────────────────────────────────────────────────────────┘ │
+│                                                             │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ [+] [−]  │       │  Email  WhatsApp  │  PDF  WORD  MD  │ │  ← Standard Toolbar
+│ └─────────────────────────────────────────────────────────┘ │
+│                                                             │
+│ QUESTIONS YOU'LL BE ASKED • 54 questions | Questions You Can Ask (11) ↓  │
+│                                                             │
+│ > Universal Questions (12)                                  │
+│ > Behavioral Questions (18)                                 │
+│ > Situational Questions (8)                                 │
+│ > Self-Assessment Questions (8)                             │
+│ > Cultural Fit Questions (8)                                │
+│                                                             │
+│ QUESTIONS YOU CAN ASK • 11 questions        [id="questions-you-can-ask"]
+│                                                             │
+│ > Questions to Ask the Interviewer (11)                     │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## VERIFICATION CHECKLIST
+
+- [ ] "Questions You'll Be Asked (54) | Questions You Can Ask (11)" line is REMOVED
+- [ ] Section header shows: "QUESTIONS YOU'LL BE ASKED • 54 questions | Questions You Can Ask (11) ↓"
+- [ ] "Questions You Can Ask (11)" is a clickable link that scrolls to that section
+- [ ] Filter section has visible border/frame
+- [ ] Filter section has light gray background
+- [ ] All 4 filter buttons have tooltips on hover
+- [ ] Tooltips show correct text as specified
+
+---
+
+**END OF PROMPT**
