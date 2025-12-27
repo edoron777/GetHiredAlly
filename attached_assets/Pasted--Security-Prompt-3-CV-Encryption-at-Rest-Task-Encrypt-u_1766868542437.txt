@@ -1,0 +1,357 @@
+# Security Prompt 3: CV Encryption at Rest
+
+**Task:** Encrypt user CVs before storing in database, decrypt when retrieving
+**Priority:** 🟡 P2 - HIGH
+**Estimated Effort:** 3-4 hours
+
+---
+
+## ⚠️ CRITICAL INSTRUCTIONS
+
+- Follow instructions exactly
+- Generate a strong encryption key
+- Store encryption key in environment variable ONLY
+- Test encryption/decryption works correctly
+
+---
+
+## WHY ENCRYPT CVs?
+
+CVs contain sensitive personal information:
+- Full name, address, phone number
+- Work history
+- Education
+- Skills and certifications
+
+If the database is stolen/leaked, encrypted CVs are useless to attackers.
+
+---
+
+## STEP 1: Install cryptography Library
+
+```bash
+pip install cryptography
+```
+
+---
+
+## STEP 2: Generate Encryption Key
+
+**Run this ONCE to generate a key:**
+
+```python
+from cryptography.fernet import Fernet
+
+# Generate a key - DO THIS ONCE
+key = Fernet.generate_key()
+print(key.decode())  # Copy this value
+```
+
+**Add to environment variables:**
+
+```bash
+# In Replit Secrets or .env file
+ENCRYPTION_KEY=your-generated-key-here
+```
+
+⚠️ **NEVER commit the encryption key to code!**
+
+---
+
+## STEP 3: Create Encryption Utility
+
+```python
+# utils/encryption.py
+
+import os
+from cryptography.fernet import Fernet
+from typing import Optional
+
+# Get encryption key from environment
+ENCRYPTION_KEY = os.environ.get('ENCRYPTION_KEY')
+
+if not ENCRYPTION_KEY:
+    raise ValueError("ENCRYPTION_KEY environment variable is not set!")
+
+# Create Fernet instance
+fernet = Fernet(ENCRYPTION_KEY.encode())
+
+
+def encrypt_text(plain_text: str) -> str:
+    """
+    Encrypt plain text string.
+    Returns base64-encoded encrypted string.
+    """
+    if not plain_text:
+        return ""
+    
+    encrypted_bytes = fernet.encrypt(plain_text.encode('utf-8'))
+    return encrypted_bytes.decode('utf-8')
+
+
+def decrypt_text(encrypted_text: str) -> str:
+    """
+    Decrypt encrypted text string.
+    Returns original plain text.
+    """
+    if not encrypted_text:
+        return ""
+    
+    try:
+        decrypted_bytes = fernet.decrypt(encrypted_text.encode('utf-8'))
+        return decrypted_bytes.decode('utf-8')
+    except Exception as e:
+        # Log error but don't expose details
+        print(f"Decryption error: {type(e).__name__}")
+        raise ValueError("Failed to decrypt data")
+
+
+def is_encrypted(text: str) -> bool:
+    """
+    Check if text appears to be encrypted (Fernet format).
+    Fernet tokens start with 'gAAAAA'.
+    """
+    if not text:
+        return False
+    return text.startswith('gAAAAA')
+```
+
+---
+
+## STEP 4: Update CV Storage
+
+### When SAVING a CV
+
+```python
+# routes/cv.py or services/cv_service.py
+
+from utils.encryption import encrypt_text
+
+async def save_cv(user_id: int, cv_content: str, filename: str):
+    """Save CV with encrypted content."""
+    
+    # Encrypt the CV content
+    encrypted_content = encrypt_text(cv_content)
+    
+    # Save to database
+    result = supabase.table('user_cvs').insert({
+        'user_id': user_id,
+        'filename': filename,  # Filename is NOT encrypted (needed for display)
+        'content': encrypted_content,  # Content IS encrypted
+        'created_at': datetime.utcnow().isoformat()
+    }).execute()
+    
+    return result.data[0] if result.data else None
+```
+
+### When RETRIEVING a CV
+
+```python
+# routes/cv.py or services/cv_service.py
+
+from utils.encryption import decrypt_text
+
+async def get_cv(cv_id: int, user_id: int) -> dict:
+    """Get CV with decrypted content."""
+    
+    # Fetch from database
+    result = supabase.table('user_cvs') \
+        .select('*') \
+        .eq('id', cv_id) \
+        .eq('user_id', user_id) \
+        .execute()
+    
+    if not result.data:
+        return None
+    
+    cv = result.data[0]
+    
+    # Decrypt the content
+    cv['content'] = decrypt_text(cv['content'])
+    
+    return cv
+```
+
+### When UPDATING a CV
+
+```python
+async def update_cv(cv_id: int, user_id: int, new_content: str):
+    """Update CV with encrypted content."""
+    
+    # Encrypt the new content
+    encrypted_content = encrypt_text(new_content)
+    
+    # Update in database
+    result = supabase.table('user_cvs') \
+        .update({'content': encrypted_content}) \
+        .eq('id', cv_id) \
+        .eq('user_id', user_id) \
+        .execute()
+    
+    return result.data[0] if result.data else None
+```
+
+---
+
+## STEP 5: Update Services That Use CV Content
+
+Any service that reads CV content needs to decrypt it:
+
+### Smart Questions Service
+
+```python
+# services/smart_questions_service.py
+
+from utils.encryption import decrypt_text
+
+async def generate_smart_questions(job_description_id: int, cv_id: int, user_id: int):
+    # Get CV (already decrypted by get_cv function)
+    cv = await get_cv(cv_id, user_id)
+    
+    if not cv:
+        raise ValueError("CV not found")
+    
+    # Use cv['content'] - it's already decrypted
+    cv_content = cv['content']
+    
+    # ... rest of smart questions generation
+```
+
+### X-Ray Service (if it uses CV)
+
+```python
+# services/xray_service.py
+
+from utils.encryption import decrypt_text
+
+async def generate_xray_with_cv(job_description: str, cv_id: int, user_id: int):
+    # Get CV (already decrypted)
+    cv = await get_cv(cv_id, user_id)
+    
+    if cv:
+        cv_content = cv['content']  # Already decrypted
+    
+    # ... rest of X-Ray generation
+```
+
+---
+
+## STEP 6: Migrate Existing CVs (One-Time)
+
+If you have existing unencrypted CVs, create a migration script:
+
+```python
+# scripts/migrate_encrypt_cvs.py
+
+from utils.encryption import encrypt_text, is_encrypted
+from database import supabase
+
+def migrate_cvs():
+    """Encrypt all existing unencrypted CVs."""
+    
+    # Get all CVs
+    result = supabase.table('user_cvs').select('id, content').execute()
+    
+    migrated = 0
+    skipped = 0
+    
+    for cv in result.data:
+        # Skip if already encrypted
+        if is_encrypted(cv['content']):
+            skipped += 1
+            continue
+        
+        # Encrypt and update
+        encrypted_content = encrypt_text(cv['content'])
+        
+        supabase.table('user_cvs') \
+            .update({'content': encrypted_content}) \
+            .eq('id', cv['id']) \
+            .execute()
+        
+        migrated += 1
+    
+    print(f"Migration complete: {migrated} encrypted, {skipped} skipped")
+
+if __name__ == "__main__":
+    migrate_cvs()
+```
+
+**Run this script ONCE after implementing encryption.**
+
+---
+
+## WHAT TO ENCRYPT vs NOT ENCRYPT
+
+| Field | Encrypt? | Reason |
+|-------|----------|--------|
+| CV content | ✅ YES | Contains personal data |
+| CV filename | ❌ NO | Needed for display |
+| Job description content | ❌ NO | Not personal data |
+| X-Ray report | ❌ NO | Derived data, no personal info |
+| User email | ❌ NO | Needed for login/queries |
+| User name | ❌ NO | Needed for display |
+| Password | ❌ NO | Already hashed (different from encryption) |
+
+---
+
+## VERIFICATION CHECKLIST
+
+- [ ] cryptography library installed
+- [ ] Encryption key generated and stored in environment variable
+- [ ] `encrypt_text()` function works correctly
+- [ ] `decrypt_text()` function works correctly
+- [ ] CV save encrypts content before storing
+- [ ] CV retrieve decrypts content after fetching
+- [ ] CV update encrypts new content
+- [ ] Smart Questions service can read decrypted CV
+- [ ] Existing CVs migrated (if any)
+- [ ] Error handling doesn't expose encryption details
+
+---
+
+## TESTING
+
+### Test Encryption/Decryption
+
+```python
+from utils.encryption import encrypt_text, decrypt_text
+
+# Test
+original = "This is my CV content with personal info"
+encrypted = encrypt_text(original)
+decrypted = decrypt_text(encrypted)
+
+assert decrypted == original
+assert encrypted != original
+assert encrypted.startswith('gAAAAA')
+
+print("✅ Encryption test passed")
+```
+
+### Test CV Flow
+
+1. Upload a new CV
+2. Check database - content should be encrypted (starts with 'gAAAAA')
+3. Retrieve CV via API - content should be readable (decrypted)
+4. Use CV in Smart Questions - should work normally
+
+---
+
+## SECURITY NOTES
+
+1. **Key Rotation:** If you need to change the encryption key in the future, you must decrypt all data with the old key and re-encrypt with the new key.
+
+2. **Backup:** Back up your encryption key securely. If lost, encrypted data is unrecoverable.
+
+3. **Performance:** Fernet encryption is fast. No noticeable performance impact.
+
+4. **Key Storage:** Never store the key in:
+   - Source code
+   - Database
+   - Log files
+   - Git commits
+
+---
+
+**END OF PROMPT**

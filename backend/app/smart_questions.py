@@ -10,6 +10,7 @@ from supabase import create_client, Client
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from services.ai_service import generate_completion
 from config.rate_limiter import limiter
+from utils.encryption import encrypt_text, decrypt_text
 
 router = APIRouter(prefix="/api/smart-questions", tags=["smart-questions"])
 
@@ -298,12 +299,15 @@ async def generate_smart_questions(http_request: Request, request: GenerateReque
     input_tokens = ai_response.input_tokens
     output_tokens = ai_response.output_tokens
     
+    encrypted_cv = encrypt_text(request.cv_text) if request.cv_text else None
+    
     record = {
         "user_id": user_id,
         "xray_analysis_id": request.xray_analysis_id,
         "job_title": job_title,
         "company_name": company_name,
         "cv_provided": bool(request.cv_text),
+        "cv_text_encrypted": encrypted_cv,
         "focus_areas": result.get("focus_areas", []),
         "personalized_questions": result.get("questions", []),
         "generation_model": "gemini-2.0-flash",
