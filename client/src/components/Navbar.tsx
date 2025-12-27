@@ -51,6 +51,22 @@ export function Navbar() {
     navigate('/')
   }
 
+  const isAdminPage = location.pathname.startsWith('/admin')
+
+  const navLinks = [
+    { label: 'Home', path: '/dashboard' },
+    { label: 'Decode Any Job Description', path: '/service/understand-job' },
+    { label: 'Prepare for Questions', path: '/service/predict-questions' },
+    { label: 'Craft Your Answers', path: '/service/answer-builder' }
+  ]
+
+  const isActiveLink = (path: string) => {
+    if (path === '/dashboard') {
+      return location.pathname === '/dashboard' || location.pathname === '/'
+    }
+    return location.pathname.startsWith(path)
+  }
+
   return (
     <nav className="bg-white shadow-sm border-b" style={{ borderColor: '#e5e5e5' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -61,75 +77,127 @@ export function Navbar() {
             </span>
           </Link>
 
+          {isLoggedIn && user && (
+            <div className="hidden lg:flex items-center gap-2">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  className="px-3 py-2 text-sm font-medium rounded transition-colors"
+                  style={{
+                    backgroundColor: isActiveLink(link.path) ? '#1E3A5F' : '#3B82F6',
+                    color: 'white'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActiveLink(link.path)) {
+                      e.currentTarget.style.backgroundColor = '#2563EB'
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActiveLink(link.path)) {
+                      e.currentTarget.style.backgroundColor = '#3B82F6'
+                    }
+                  }}
+                >
+                  {link.label}
+                </Link>
+              ))}
+              {user.is_admin && (
+                <Link
+                  to="/admin/ai-usage"
+                  className="flex items-center gap-1 px-3 py-2 text-sm font-medium rounded transition-colors"
+                  style={{
+                    backgroundColor: isAdminPage ? '#991B1B' : '#DC2626',
+                    color: 'white'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isAdminPage) {
+                      e.currentTarget.style.backgroundColor = '#B91C1C'
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isAdminPage) {
+                      e.currentTarget.style.backgroundColor = '#DC2626'
+                    }
+                  }}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                  Admin
+                </Link>
+              )}
+            </div>
+          )}
+
           <div className="flex items-center gap-3">
             {isLoggedIn && user ? (
-              <>
-                <div className="relative" ref={dropdownRef}>
-                  <button
-                    onClick={() => setDropdownOpen(!dropdownOpen)}
-                    className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <span className="text-sm font-medium hidden sm:inline" style={{ color: '#374151' }}>
+                    {user.name || user.email}
+                  </span>
+                  <div 
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium"
+                    style={{ backgroundColor: '#1E3A5F' }}
                   >
-                    <span className="text-sm font-medium hidden sm:inline" style={{ color: '#374151' }}>
-                      {user.name || user.email}
-                    </span>
-                    <div 
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium"
-                      style={{ backgroundColor: '#1E3A5F' }}
-                    >
-                      {user.name ? user.name.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
-                    </div>
-                    <svg className="w-4 h-4" style={{ color: '#374151' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
+                    {user.name ? user.name.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
+                  </div>
+                  <svg className="w-4 h-4" style={{ color: '#374151' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
 
-                  {dropdownOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border py-1 z-50">
-                      <div className="px-4 py-2 border-b">
-                        <p className="text-sm font-medium" style={{ color: '#333333' }}>
-                          {user.name || 'User'}
-                        </p>
-                        <p className="text-xs text-gray-500">{user.email}</p>
-                      </div>
-                      <Link
-                        to="/dashboard"
-                        className="block px-4 py-2 text-sm hover:bg-gray-100"
-                        style={{ color: '#333333' }}
-                        onClick={() => setDropdownOpen(false)}
-                      >
-                        Dashboard
-                      </Link>
+                {dropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border py-1 z-50">
+                    <div className="px-4 py-2 border-b">
+                      <p className="text-sm font-medium" style={{ color: '#333333' }}>
+                        {user.name || 'User'}
+                      </p>
+                      <p className="text-xs text-gray-500">{user.email}</p>
+                    </div>
+                    <Link
+                      to="/dashboard"
+                      className="block px-4 py-2 text-sm hover:bg-gray-100"
+                      style={{ color: '#333333' }}
+                      onClick={() => setDropdownOpen(false)}
+                    >
+                      Dashboard
+                    </Link>
+                    <Link
+                      to="/settings"
+                      className="block px-4 py-2 text-sm hover:bg-gray-100"
+                      style={{ color: '#333333' }}
+                      onClick={() => setDropdownOpen(false)}
+                    >
+                      Settings
+                    </Link>
+                    {user.is_admin && (
                       <Link
                         to="/admin/ai-usage"
                         className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100"
-                        style={{ color: '#1E3A5F' }}
+                        style={{ color: '#DC2626' }}
                         onClick={() => setDropdownOpen(false)}
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                         </svg>
-                        AI Usage
+                        Admin Panel
                       </Link>
-                      <button
-                        onClick={handleLogout}
-                        className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-                        style={{ color: '#333333' }}
-                      >
-                        Logout
-                      </button>
-                    </div>
-                  )}
-                </div>
-                <button
-                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                  title="Settings"
-                >
-                  <svg className="w-5 h-5" style={{ color: '#374151' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </button>
-              </>
+                    )}
+                    <button
+                      onClick={handleLogout}
+                      className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                      style={{ color: '#333333' }}
+                    >
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
             ) : (
               <>
                 <Link to="/login">

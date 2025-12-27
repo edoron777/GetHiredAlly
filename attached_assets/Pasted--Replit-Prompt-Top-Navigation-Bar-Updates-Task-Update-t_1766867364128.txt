@@ -1,0 +1,176 @@
+# Replit Prompt: Top Navigation Bar Updates
+
+**Task:** Update the top navigation bar with 3 changes
+**Priority:** HIGH
+
+---
+
+## ⚠️ CRITICAL INSTRUCTIONS
+
+- Follow these instructions EXACTLY
+- Do NOT add anything not requested
+- Do NOT change existing functionality
+
+---
+
+## CHANGE 1: Remove Gear Icon
+
+**Current:** User avatar (E) + Gear icon (⚙️)
+**Change:** Remove gear icon completely
+
+**User Avatar Click → Dropdown Menu:**
+- User Profile
+- User Preferences / Settings
+- Logout
+
+The gear icon is redundant - all settings are accessible from the user avatar dropdown.
+
+```jsx
+{/* REMOVE THIS */}
+<button className="...">
+  <Settings size={20} />  {/* or gear icon */}
+</button>
+```
+
+---
+
+## CHANGE 2: Add Service Navigation Buttons
+
+Add navigation buttons between the logo and user avatar.
+
+**Structure:**
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│ GetHiredAlly    [Home] [Decode Any Job Description] [Prepare for Questions] [Craft Your Answers]    Eyal Doron (E) │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Navigation Buttons:**
+
+| Button Label | Route/Link |
+|--------------|------------|
+| Home | `/` (dashboard) |
+| Decode Any Job Description | `/service/jd-xray` |
+| Prepare for Questions | `/service/predict-questions` |
+| Craft Your Answers | `/service/answer-builder` (or coming soon page) |
+
+**Button Styling:**
+- Background: Blue (#3B82F6 or similar to match existing theme)
+- Text: White
+- Padding: `px-4 py-2`
+- Border Radius: `rounded`
+- Hover: Slightly darker blue
+
+**Code Example:**
+```jsx
+// In the top navigation bar component
+
+<nav className="flex items-center justify-between px-6 py-3 bg-white border-b">
+  {/* Logo */}
+  <div className="text-xl font-bold text-gray-800">
+    GetHiredAlly
+  </div>
+  
+  {/* Navigation Buttons - CENTER */}
+  <div className="flex items-center gap-2">
+    <a 
+      href="/"
+      className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+    >
+      Home
+    </a>
+    <a 
+      href="/service/jd-xray"
+      className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+    >
+      Decode Any Job Description
+    </a>
+    <a 
+      href="/service/predict-questions"
+      className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+    >
+      Prepare for Questions
+    </a>
+    <a 
+      href="/service/answer-builder"
+      className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+    >
+      Craft Your Answers
+    </a>
+  </div>
+  
+  {/* User Avatar - RIGHT */}
+  <div className="flex items-center gap-2">
+    <span>Eyal Doron</span>
+    <UserAvatar />  {/* With dropdown menu */}
+  </div>
+</nav>
+```
+
+**Active State:**
+- The current page button should have a different style (darker background or underline)
+
+---
+
+## CHANGE 3: Add Admin Icon in Admin Interface
+
+**Only in the Admin interface** (not in the user-facing app), add an Admin icon.
+
+**Location:** Admin pages only (e.g., `/admin/*` routes)
+
+**Implementation:**
+```jsx
+// Only show on admin pages
+{isAdminPage && (
+  <div className="flex items-center gap-2 text-red-600">
+    <Shield size={20} />
+    <span className="text-sm font-medium">Admin</span>
+  </div>
+)}
+```
+
+**Or add to navigation:**
+```jsx
+{user.isAdmin && (
+  <a 
+    href="/admin"
+    className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+  >
+    Admin
+  </a>
+)}
+```
+
+---
+
+## VISUAL RESULT
+
+**User View:**
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│ GetHiredAlly    [Home] [Decode Any Job Description] [Prepare for Questions] [Craft Your Answers]    Eyal Doron (E) │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Admin View:**
+```
+┌───────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ GetHiredAlly    [Home] [Decode...] [Prepare...] [Craft...] [🛡️ Admin]    Eyal Doron (E) │
+└───────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## VERIFICATION CHECKLIST
+
+- [ ] Gear icon is REMOVED
+- [ ] User avatar click opens dropdown with Profile, Settings, Logout
+- [ ] Navigation buttons appear between logo and user avatar
+- [ ] All 4 navigation buttons work (Home, Decode, Prepare, Craft)
+- [ ] Buttons have blue background with white text
+- [ ] Current page button has active/selected state
+- [ ] Admin icon appears ONLY in admin interface (for admin users)
+
+---
+
+**END OF PROMPT**
