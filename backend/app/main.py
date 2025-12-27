@@ -19,6 +19,7 @@ from .questions import router as questions_router
 from .smart_questions import router as smart_questions_router
 from .admin import router as admin_router
 from .cv import router as cv_router
+from .cv_optimizer import router as cv_optimizer_router
 
 app = FastAPI(title="Backend API")
 
@@ -32,6 +33,7 @@ app.include_router(questions_router)
 app.include_router(smart_questions_router)
 app.include_router(admin_router)
 app.include_router(cv_router)
+app.include_router(cv_optimizer_router)
 
 app.add_middleware(SecurityHeadersMiddleware)
 

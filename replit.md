@@ -145,6 +145,9 @@ GetHiredAlly is an interview preparation application with job description analys
 - **Password Security**: bcrypt hashing, passwords never logged
 
 ## Recent Changes
+- December 27, 2025: Built CV scanning animation page with grid visualization, progress bar, and issue counters
+- December 27, 2025: Added AI-powered CV analysis using Gemini with detailed issue detection (severity, category, suggestions)
+- December 27, 2025: Created CV results page showing all issues with severity badges and fix suggestions
 - December 27, 2025: Built CV upload page with drag & drop, file validation, and backend API for text extraction
 - December 27, 2025: Added user_cvs table and CV management endpoints (/api/cv/list, /api/cv/upload-for-scan)
 - December 27, 2025: Added CV Optimizer service card to dashboard and cv_scan_results database table
