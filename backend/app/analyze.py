@@ -288,6 +288,33 @@ async def get_combined_prompt(interviewer_type: str, depth_level: str) -> str:
     
     return combined
 
+@router.get("/xray/analyses")
+async def list_xray_analyses(token: str):
+    """List user's X-Ray analyses for Smart Questions selection"""
+    import hashlib
+    
+    supabase = get_supabase_client()
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Database not configured")
+    
+    token_hash = hashlib.sha256(token.encode()).hexdigest()
+    session_result = supabase.table("user_sessions").select("user_id").eq("token_hash", token_hash).execute()
+    
+    if not session_result.data:
+        raise HTTPException(status_code=401, detail="Invalid or expired session")
+    
+    user_id = session_result.data[0]["user_id"]
+    
+    try:
+        result = supabase.table("xray_analyses").select(
+            "id, job_title, company_name, created_at"
+        ).eq("user_id", user_id).order("created_at", desc=True).limit(20).execute()
+        
+        return {"analyses": result.data or []}
+    except Exception as e:
+        logger.error(f"Error fetching analyses: {e}")
+        return {"analyses": []}
+
 @router.post("/analyze-job", response_model=AnalyzeJobResponse)
 async def analyze_job(request: AnalyzeJobRequest):
     if len(request.job_description) < 100:

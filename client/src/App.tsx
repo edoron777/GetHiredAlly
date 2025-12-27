@@ -8,6 +8,7 @@ import { Dashboard } from '@/components/Dashboard'
 import { UnderstandJobPage } from '@/components/UnderstandJobPage'
 import { QuestionsServicePage } from '@/components/QuestionsServicePage'
 import { PredictQuestionsPage } from '@/components/PredictQuestionsPage'
+import { SmartQuestionsPage } from '@/components/SmartQuestionsPage'
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -31,6 +32,7 @@ function App() {
           <Route path="/service/understand-job" element={<UnderstandJobPage />} />
           <Route path="/service/predict-questions" element={<QuestionsServicePage />} />
           <Route path="/service/predict-questions/common" element={<PredictQuestionsPage />} />
+          <Route path="/service/predict-questions/smart" element={<SmartQuestionsPage />} />
         </Routes>
       </Layout>
     </BrowserRouter>

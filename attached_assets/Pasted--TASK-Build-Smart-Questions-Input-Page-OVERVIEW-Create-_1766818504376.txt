@@ -1,0 +1,100 @@
+## TASK: Build Smart Questions Input Page
+
+### OVERVIEW
+Create the input page where users select their X-Ray analysis and optionally upload their CV.
+
+### ROUTE
+/service/predict-questions/smart
+
+### PAGE STRUCTURE
+
+SECTION 1: PAGE HEADER
+- Title: "🎯 Smart Questions Predictor"
+- Subtitle: "AI-powered questions personalized for your specific job and background"
+
+SECTION 2: ELIGIBILITY CHECK
+On page load, call GET /api/smart-questions/check-eligibility
+
+If NOT eligible (free trial used):
+- Show upgrade prompt card:
+  - "You've used your free Smart Analysis"
+  - "Upgrade to generate unlimited personalized questions"
+  - Button: "Upgrade - $4.99" (link to payment page, disabled for now)
+- Hide the rest of the form
+
+If eligible:
+- Show free trial badge if applicable: "✨ Free Trial - 1 Analysis"
+- Continue to show the form
+
+SECTION 3: STEP 1 - SELECT JOB SOURCE
+Title: "Step 1: Select Job"
+
+Two options (radio buttons):
+A) "Use Previous X-Ray Analysis" (default if user has analyses)
+   - Show dropdown with user's previous X-Ray analyses
+   - Format: "{job_title} at {company_name} - {date}"
+   - Load from GET /api/xray/analyses (user's analyses)
+   
+B) "Paste New Job Description"
+   - Show textarea (same as X-Ray input)
+   - Placeholder: "Paste the job description here..."
+   - Note: "A new X-Ray analysis will be created"
+
+SECTION 4: STEP 2 - ADD YOUR CV (OPTIONAL)
+Title: "Step 2: Add Your CV (Optional but Recommended)"
+
+Subtitle: "Adding your CV allows us to identify specific gaps and personalize questions to YOUR background"
+
+Two options:
+A) "Upload CV" - File input (.pdf, .doc, .docx, .txt)
+B) "Paste CV Text" - Textarea
+
+Privacy notice (light blue box #DBEAFE):
+"🔒 Privacy: Your CV is used only for this analysis and is NOT stored. It will be deleted immediately after generating your questions."
+
+SECTION 5: GENERATE BUTTON
+- Large button: "Generate Smart Questions"
+- If free trial: Show "✨ This will use your 1 free analysis"
+- Disabled until Step 1 is completed
+
+SECTION 6: LOADING STATE
+When generating:
+- Show spinner
+- Rotating messages every 3 seconds:
+  1. "Analyzing job requirements..."
+  2. "Reviewing your background..."
+  3. "Identifying potential weak areas..."
+  4. "Generating personalized questions..."
+  5. "Almost ready..."
+
+On success:
+- Redirect to /service/predict-questions/smart/results/{id}
+
+On error:
+- Show error message in red
+- Keep form filled so user can retry
+
+### STYLING
+- Use same card style as other pages
+- Background: #FAF9F7
+- Primary color: #1E3A5F (navy)
+- Step numbers: Circle badges with navy background
+- Selected option: Light blue border (#3B82F6) + light blue background (#EFF6FF)
+- Privacy notice: Light blue background (#DBEAFE)
+
+### API CALLS
+1. On load: GET /api/smart-questions/check-eligibility
+2. On load: GET /api/xray/analyses (to populate dropdown)
+3. On submit: POST /api/smart-questions/generate
+
+### SUCCESS CHECKLIST
+- [ ] Page loads at /service/predict-questions/smart
+- [ ] Eligibility check works and shows upgrade prompt if needed
+- [ ] Can select previous X-Ray from dropdown
+- [ ] Can paste new job description
+- [ ] Can upload CV file or paste CV text
+- [ ] Privacy notice displays
+- [ ] Generate button works
+- [ ] Loading state with rotating messages
+- [ ] Redirects to results page on success
+- [ ] Error handling works
