@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { isAuthenticated } from '@/lib/auth'
-import { Loader2, List, Lightbulb, BookOpen, ChevronDown, ChevronUp, Download, MessageCircle, AlertTriangle } from 'lucide-react'
+import { Loader2, List, Lightbulb, BookOpen, ChevronDown, ChevronUp, ChevronRight, Download, MessageCircle, AlertTriangle } from 'lucide-react'
 
 type DepthLevel = 'questions_only' | 'with_tips' | 'full_prep'
 
@@ -79,6 +79,8 @@ export function PredictQuestionsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [expandedQuestions, setExpandedQuestions] = useState<Set<string>>(new Set())
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
+  const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(new Set())
   const [downloadingPdf, setDownloadingPdf] = useState(false)
   const [downloadingDocx, setDownloadingDocx] = useState(false)
 
@@ -103,6 +105,10 @@ export function PredictQuestionsPage() {
       const data = await response.json()
       setQuestions(data.questions || [])
       setQuestionsToAsk(data.questions_to_ask || [])
+      
+      const allCategories = new Set<string>()
+      ;(data.questions || []).forEach((q: Question) => allCategories.add(q.category))
+      setExpandedCategories(allCategories)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
     } finally {
@@ -120,6 +126,39 @@ export function PredictQuestionsPage() {
       }
       return newSet
     })
+  }
+
+  const toggleCategory = (category: string) => {
+    setExpandedCategories(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(category)) {
+        newSet.delete(category)
+      } else {
+        newSet.add(category)
+      }
+      return newSet
+    })
+  }
+
+  const toggleDescription = (category: string) => {
+    setExpandedDescriptions(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(category)) {
+        newSet.delete(category)
+      } else {
+        newSet.add(category)
+      }
+      return newSet
+    })
+  }
+
+  const expandAllCategories = () => {
+    const allCategories = new Set(Object.keys(groupedQuestions))
+    setExpandedCategories(allCategories)
+  }
+
+  const collapseAllCategories = () => {
+    setExpandedCategories(new Set())
   }
 
   const groupedQuestions = questions.reduce((acc, q) => {
@@ -274,10 +313,44 @@ export function PredictQuestionsPage() {
 
         {questions.length > 0 && (
           <div style={{ ...containerStyle, padding: '16px 24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '14px', color: '#6B7280' }}>
-                {questions.length} questions found
-              </span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{ fontSize: '14px', color: '#6B7280' }}>
+                  {questions.length} questions
+                </span>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={expandAllCategories}
+                    style={{
+                      background: 'none',
+                      border: '1px solid #E5E7EB',
+                      borderRadius: '6px',
+                      padding: '6px 12px',
+                      fontSize: '13px',
+                      color: '#6B7280',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Expand All
+                  </button>
+                  <button
+                    type="button"
+                    onClick={collapseAllCategories}
+                    style={{
+                      background: 'none',
+                      border: '1px solid #E5E7EB',
+                      borderRadius: '6px',
+                      padding: '6px 12px',
+                      fontSize: '13px',
+                      color: '#6B7280',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Collapse All
+                  </button>
+                </div>
+              </div>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button
                   type="button"
@@ -338,144 +411,210 @@ export function PredictQuestionsPage() {
         {!isLoading && !error && sortedCategories.map((category) => {
           const categoryQuestions = groupedQuestions[category]
           const catInfo = categoryDescriptions[category]
+          const isCategoryExpanded = expandedCategories.has(category)
+          const isDescriptionExpanded = expandedDescriptions.has(category)
           
           return (
             <div key={category} style={containerStyle}>
-              <h2 style={{ ...stepHeaderStyle, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ 
-                  backgroundColor: '#E8F0F5', 
-                  padding: '4px 10px', 
-                  borderRadius: '12px',
-                  fontSize: '12px',
-                  color: '#1E3A5F'
+              <button
+                type="button"
+                onClick={() => toggleCategory(category)}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: 0,
+                  marginBottom: isCategoryExpanded ? '12px' : '0'
+                }}
+              >
+                {isCategoryExpanded ? (
+                  <ChevronDown className="h-5 w-5" style={{ color: '#1E3A5F', flexShrink: 0 }} />
+                ) : (
+                  <ChevronRight className="h-5 w-5" style={{ color: '#1E3A5F', flexShrink: 0 }} />
+                )}
+                <h2 style={{ 
+                  fontSize: '16px',
+                  fontWeight: 600,
+                  color: '#1E3A5F',
+                  margin: 0,
+                  textAlign: 'left'
                 }}>
-                  {categoryQuestions.length}
+                  {categoryLabels[category] || category}
+                </h2>
+                <span style={{ fontSize: '13px', color: '#6B7280', marginLeft: '4px' }}>
+                  ({categoryQuestions.length})
                 </span>
-                {categoryLabels[category] || category}
-              </h2>
-              {catInfo && (
-                <p style={{ fontSize: '13px', color: '#6B7280', marginBottom: '16px' }}>
-                  {catInfo.description} <strong>Answer method:</strong> {catInfo.method}
-                </p>
-              )}
+              </button>
               
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {categoryQuestions.map((question, idx) => {
-                  const questionId = question.id || `${category}-${idx}`
-                  const isExpanded = expandedQuestions.has(questionId)
-                  
-                  return (
-                    <div 
-                      key={questionId}
-                      style={{
-                        border: '1px solid #E5E7EB',
-                        borderRadius: '8px',
-                        overflow: 'hidden'
-                      }}
-                    >
+              {isCategoryExpanded && (
+                <>
+                  {catInfo && (
+                    <div style={{ 
+                      backgroundColor: '#F9FAFB',
+                      border: '1px solid #E5E7EB',
+                      borderRadius: '8px',
+                      marginBottom: '16px',
+                      overflow: 'hidden'
+                    }}>
                       <button
                         type="button"
-                        onClick={() => toggleQuestion(questionId)}
+                        onClick={() => toggleDescription(category)}
                         style={{
                           width: '100%',
-                          padding: '16px',
                           display: 'flex',
-                          justifyContent: 'space-between',
                           alignItems: 'center',
-                          background: isExpanded ? '#F9FAFB' : 'white',
+                          justifyContent: 'space-between',
+                          padding: '10px 12px',
+                          background: 'none',
                           border: 'none',
-                          cursor: 'pointer',
-                          textAlign: 'left'
+                          cursor: 'pointer'
                         }}
                       >
-                        <div style={{ flex: 1 }}>
-                          <span style={{ fontWeight: 500, color: '#1E3A5F', fontSize: '15px' }}>
-                            {question.question_text}
-                          </span>
-                        </div>
-                        {isExpanded ? (
-                          <ChevronUp className="h-5 w-5" style={{ color: '#6B7280', flexShrink: 0 }} />
+                        <span style={{ fontSize: '13px', fontWeight: 500, color: '#6B7280' }}>
+                          Category Description
+                        </span>
+                        {isDescriptionExpanded ? (
+                          <ChevronUp className="h-4 w-4" style={{ color: '#6B7280' }} />
                         ) : (
-                          <ChevronDown className="h-5 w-5" style={{ color: '#6B7280', flexShrink: 0 }} />
+                          <ChevronDown className="h-4 w-4" style={{ color: '#6B7280' }} />
                         )}
                       </button>
+                      {isDescriptionExpanded && (
+                        <div style={{ padding: '0 12px 12px' }}>
+                          <p style={{ fontSize: '13px', color: '#4B5563', marginBottom: '8px' }}>
+                            {catInfo.description}
+                          </p>
+                          <p style={{ fontSize: '13px', color: '#4B5563' }}>
+                            <strong>Answer method:</strong> {catInfo.method}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {categoryQuestions.map((question, idx) => {
+                      const questionId = question.id || `${category}-${idx}`
+                      const isExpanded = expandedQuestions.has(questionId)
                       
-                      {isExpanded && depthLevel !== 'questions_only' && (
-                        <div style={{ padding: '0 16px 16px', backgroundColor: '#F9FAFB' }}>
-                          <div style={{ 
-                            backgroundColor: '#FEF3C7', 
-                            border: '1px solid #F59E0B',
+                      return (
+                        <div 
+                          key={questionId}
+                          style={{
+                            border: '1px solid #E5E7EB',
                             borderRadius: '8px',
-                            padding: '12px',
-                            marginBottom: '12px'
-                          }}>
-                            <p style={{ fontSize: '13px', color: '#92400E', fontWeight: 500, marginBottom: '4px' }}>
-                              Why they ask this:
-                            </p>
-                            <p style={{ fontSize: '14px', color: '#78350F' }}>
-                              {question.why_they_ask}
-                            </p>
-                          </div>
-                          
-                          {question.framework && (
-                            <div style={{ marginBottom: '12px' }}>
-                              <p style={{ fontSize: '13px', color: '#6B7280', marginBottom: '4px' }}>Framework:</p>
-                              <p style={{ 
-                                fontSize: '14px', 
-                                color: '#1E3A5F', 
-                                fontWeight: 500,
-                                backgroundColor: '#E8F0F5',
-                                padding: '8px 12px',
-                                borderRadius: '6px',
-                                display: 'inline-block'
-                              }}>
-                                {question.framework}
-                              </p>
+                            overflow: 'hidden'
+                          }}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => toggleQuestion(questionId)}
+                            style={{
+                              width: '100%',
+                              padding: '16px',
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              background: isExpanded ? '#F9FAFB' : 'white',
+                              border: 'none',
+                              cursor: 'pointer',
+                              textAlign: 'left'
+                            }}
+                          >
+                            <div style={{ flex: 1 }}>
+                              <span style={{ fontWeight: 500, color: '#1E3A5F', fontSize: '15px' }}>
+                                {question.question_text}
+                              </span>
                             </div>
-                          )}
+                            {isExpanded ? (
+                              <ChevronUp className="h-5 w-5" style={{ color: '#6B7280', flexShrink: 0 }} />
+                            ) : (
+                              <ChevronDown className="h-5 w-5" style={{ color: '#6B7280', flexShrink: 0 }} />
+                            )}
+                          </button>
                           
-                          {depthLevel === 'full_prep' && (
-                            <>
-                              {question.good_answer_example && (
-                                <div style={{ 
-                                  backgroundColor: '#D1FAE5', 
-                                  border: '1px solid #10B981',
-                                  borderRadius: '8px',
-                                  padding: '12px',
-                                  marginBottom: '12px'
-                                }}>
-                                  <p style={{ fontSize: '13px', color: '#065F46', fontWeight: 500, marginBottom: '4px' }}>
-                                    Good Answer Example:
-                                  </p>
-                                  <p style={{ fontSize: '14px', color: '#047857', whiteSpace: 'pre-wrap' }}>
-                                    {question.good_answer_example}
+                          {isExpanded && depthLevel !== 'questions_only' && (
+                            <div style={{ padding: '0 16px 16px', backgroundColor: '#F9FAFB' }}>
+                              <div style={{ 
+                                backgroundColor: '#FEF3C7', 
+                                border: '1px solid #F59E0B',
+                                borderRadius: '8px',
+                                padding: '12px',
+                                marginBottom: '12px'
+                              }}>
+                                <p style={{ fontSize: '13px', color: '#92400E', fontWeight: 500, marginBottom: '4px' }}>
+                                  Why they ask this:
+                                </p>
+                                <p style={{ fontSize: '14px', color: '#78350F' }}>
+                                  {question.why_they_ask}
+                                </p>
+                              </div>
+                              
+                              {question.framework && (
+                                <div style={{ marginBottom: '12px' }}>
+                                  <p style={{ fontSize: '13px', color: '#6B7280', marginBottom: '4px' }}>Framework:</p>
+                                  <p style={{ 
+                                    fontSize: '14px', 
+                                    color: '#1E3A5F', 
+                                    fontWeight: 500,
+                                    backgroundColor: '#E8F0F5',
+                                    padding: '8px 12px',
+                                    borderRadius: '6px',
+                                    display: 'inline-block'
+                                  }}>
+                                    {question.framework}
                                   </p>
                                 </div>
                               )}
                               
-                              {question.what_to_avoid && (
-                                <div style={{ 
-                                  backgroundColor: '#FEE2E2', 
-                                  border: '1px solid #EF4444',
-                                  borderRadius: '8px',
-                                  padding: '12px'
-                                }}>
-                                  <p style={{ fontSize: '13px', color: '#991B1B', fontWeight: 500, marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                    <AlertTriangle className="h-4 w-4" /> What to Avoid:
-                                  </p>
-                                  <p style={{ fontSize: '14px', color: '#B91C1C' }}>
-                                    {question.what_to_avoid}
-                                  </p>
-                                </div>
+                              {depthLevel === 'full_prep' && (
+                                <>
+                                  {question.good_answer_example && (
+                                    <div style={{ 
+                                      backgroundColor: '#D1FAE5', 
+                                      border: '1px solid #10B981',
+                                      borderRadius: '8px',
+                                      padding: '12px',
+                                      marginBottom: '12px'
+                                    }}>
+                                      <p style={{ fontSize: '13px', color: '#065F46', fontWeight: 500, marginBottom: '4px' }}>
+                                        Good Answer Example:
+                                      </p>
+                                      <p style={{ fontSize: '14px', color: '#047857', whiteSpace: 'pre-wrap' }}>
+                                        {question.good_answer_example}
+                                      </p>
+                                    </div>
+                                  )}
+                                  
+                                  {question.what_to_avoid && (
+                                    <div style={{ 
+                                      backgroundColor: '#FEE2E2', 
+                                      border: '1px solid #EF4444',
+                                      borderRadius: '8px',
+                                      padding: '12px'
+                                    }}>
+                                      <p style={{ fontSize: '13px', color: '#991B1B', fontWeight: 500, marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                        <AlertTriangle className="h-4 w-4" /> What to Avoid:
+                                      </p>
+                                      <p style={{ fontSize: '14px', color: '#B91C1C' }}>
+                                        {question.what_to_avoid}
+                                      </p>
+                                    </div>
+                                  )}
+                                </>
                               )}
-                            </>
+                            </div>
                           )}
                         </div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
+                      )
+                    })}
+                  </div>
+                </>
+              )}
             </div>
           )
         })}
