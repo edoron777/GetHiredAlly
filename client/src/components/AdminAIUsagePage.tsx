@@ -46,6 +46,16 @@ interface RecentCall {
   created_at: string
 }
 
+interface UserUsage {
+  user_id: string
+  email: string | null
+  total_requests: number
+  total_cost: number
+  total_input_tokens: number
+  total_output_tokens: number
+  last_used: string | null
+}
+
 interface UsageData {
   period_days: number
   summary: Summary
@@ -62,6 +72,7 @@ export function AdminAIUsagePage() {
   const [error, setError] = useState<string | null>(null)
   const [usageData, setUsageData] = useState<UsageData | null>(null)
   const [recentCalls, setRecentCalls] = useState<RecentCall[]>([])
+  const [userUsage, setUserUsage] = useState<UserUsage[]>([])
   const [periodDays, setPeriodDays] = useState(30)
 
   useEffect(() => {
@@ -73,9 +84,10 @@ export function AdminAIUsagePage() {
     setError(null)
     
     try {
-      const [summaryRes, recentRes] = await Promise.all([
+      const [summaryRes, recentRes, userRes] = await Promise.all([
         fetch(`/api/admin/ai-usage/summary?days=${periodDays}`),
-        fetch('/api/admin/ai-usage/recent?limit=50')
+        fetch('/api/admin/ai-usage/recent?limit=50'),
+        fetch(`/api/admin/ai-usage/by-user?days=${periodDays}&limit=20`)
       ])
       
       if (!summaryRes.ok || !recentRes.ok) {
@@ -84,9 +96,11 @@ export function AdminAIUsagePage() {
       
       const summaryData = await summaryRes.json()
       const recentData = await recentRes.json()
+      const userData = userRes.ok ? await userRes.json() : { users: [] }
       
       setUsageData(summaryData)
       setRecentCalls(recentData.calls || [])
+      setUserUsage(userData.users || [])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load data')
     } finally {
@@ -248,6 +262,56 @@ export function AdminAIUsagePage() {
                   })}
                 </div>
               </div>
+            </div>
+
+            <div className="bg-white rounded-xl p-6 shadow-md mb-8">
+              <h2 className="text-lg font-semibold mb-4" style={{ color: '#1E3A5F' }}>Cost by User</h2>
+              {userUsage.length === 0 ? (
+                <div className="text-center text-gray-500 py-8">No user data available for this period</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b bg-gray-50">
+                        <th className="text-left py-3 px-4 font-medium text-gray-500 uppercase text-xs">User</th>
+                        <th className="text-right py-3 px-4 font-medium text-gray-500 uppercase text-xs">Requests</th>
+                        <th className="text-right py-3 px-4 font-medium text-gray-500 uppercase text-xs">Tokens</th>
+                        <th className="text-right py-3 px-4 font-medium text-gray-500 uppercase text-xs">Cost</th>
+                        <th className="text-right py-3 px-4 font-medium text-gray-500 uppercase text-xs">Last Used</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {userUsage.map((userRow, index) => (
+                        <tr key={userRow.user_id || index} className="border-b hover:bg-gray-50">
+                          <td className="py-3 px-4">
+                            <div className="font-medium text-gray-900">
+                              {userRow.email || 'Unknown User'}
+                            </div>
+                            <div className="text-xs text-gray-400">
+                              {userRow.user_id?.slice(0, 8)}...
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 text-right text-gray-600">
+                            {userRow.total_requests || 0}
+                          </td>
+                          <td className="py-3 px-4 text-right text-gray-600">
+                            {((userRow.total_input_tokens || 0) + (userRow.total_output_tokens || 0)).toLocaleString()}
+                          </td>
+                          <td className="py-3 px-4 text-right font-semibold" style={{ color: '#1E3A5F' }}>
+                            {formatCost(userRow.total_cost || 0)}
+                          </td>
+                          <td className="py-3 px-4 text-right text-gray-500">
+                            {userRow.last_used 
+                              ? new Date(userRow.last_used).toLocaleDateString()
+                              : 'Never'
+                            }
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
 
             <div className="bg-white rounded-xl p-6 shadow-md mb-8">

@@ -117,3 +117,49 @@ async def get_recent_ai_calls(limit: int = Query(default=50, ge=1, le=200)):
         return {"calls": calls}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch recent calls: {str(e)}")
+
+
+@router.get("/ai-usage/by-user")
+async def get_usage_by_user(days: int = Query(default=30, ge=1, le=365), limit: int = Query(default=20, ge=1, le=100)):
+    """Get AI usage breakdown by user"""
+    cutoff_date = (datetime.utcnow() - timedelta(days=days)).isoformat()
+    
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute(
+            """SELECT 
+                l.user_id,
+                u.email,
+                COUNT(*) as total_requests,
+                COALESCE(SUM(l.cost_usd), 0) as total_cost,
+                COALESCE(SUM(l.input_tokens), 0) as total_input_tokens,
+                COALESCE(SUM(l.output_tokens), 0) as total_output_tokens,
+                MAX(l.created_at) as last_used
+            FROM ai_usage_logs l
+            LEFT JOIN users u ON l.user_id = u.id
+            WHERE l.created_at >= %s
+            GROUP BY l.user_id, u.email
+            ORDER BY total_cost DESC
+            LIMIT %s""",
+            (cutoff_date, limit)
+        )
+        users = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        
+        for user in users:
+            if user.get('user_id'):
+                user['user_id'] = str(user['user_id'])
+            if user.get('last_used'):
+                user['last_used'] = user['last_used'].isoformat()
+            if user.get('total_cost'):
+                user['total_cost'] = float(user['total_cost'])
+            if user.get('total_input_tokens'):
+                user['total_input_tokens'] = int(user['total_input_tokens'])
+            if user.get('total_output_tokens'):
+                user['total_output_tokens'] = int(user['total_output_tokens'])
+        
+        return {"users": users}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch user usage: {str(e)}")
