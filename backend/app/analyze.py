@@ -3,24 +3,16 @@ import json
 import logging
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from anthropic import Anthropic
 from supabase import create_client, Client
 from typing import Optional, Tuple, Dict, Any
+import sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from services.ai_service import generate_completion
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api", tags=["analyze"])
-
-ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
-
-logger.info(f"Anthropic API key found: {'Yes' if ANTHROPIC_API_KEY else 'No'}")
-if ANTHROPIC_API_KEY:
-    logger.info(f"API key starts with: {ANTHROPIC_API_KEY[:8]}...")
-
-anthropic_client = Anthropic(
-    api_key=ANTHROPIC_API_KEY
-)
 
 def get_supabase_client() -> Client | None:
     url = os.environ.get("SUPABASE_URL")
@@ -328,17 +320,15 @@ async def analyze_job(request: AnalyzeJobRequest):
         
         max_tokens = 2500 if depth_level == "ready" else 5000
         
-        message = anthropic_client.messages.create(
-            model="claude-sonnet-4-5",
+        ai_response = await generate_completion(
+            prompt=f"Analyze this job description:\n\n{request.job_description}",
+            system_prompt=system_prompt,
+            provider='claude',
             max_tokens=max_tokens,
-            system=system_prompt,
-            messages=[{
-                "role": "user",
-                "content": f"Analyze this job description:\n\n{request.job_description}"
-            }]
+            temperature=0.7
         )
         
-        analysis_text = message.content[0].text if message.content else "Unable to generate analysis"
+        analysis_text = ai_response.content or "Unable to generate analysis"
         
         markdown, structured_data = parse_analysis_response(analysis_text)
         

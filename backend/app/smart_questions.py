@@ -1,10 +1,13 @@
 import os
 import json
+import sys
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 from typing import Optional, List, Any
-import google.generativeai as genai
 from supabase import create_client, Client
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from services.ai_service import generate_completion
 
 router = APIRouter(prefix="/api/smart-questions", tags=["smart-questions"])
 
@@ -15,12 +18,6 @@ def get_supabase_client() -> Client:
         raise HTTPException(status_code=500, detail="Supabase not configured")
     return create_client(url, key)
 
-def get_gemini_model():
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if not api_key:
-        raise HTTPException(status_code=500, detail="GEMINI_API_KEY not configured")
-    genai.configure(api_key=api_key)
-    return genai.GenerativeModel('gemini-2.5-pro-preview-05-06')
 
 class GenerateRequest(BaseModel):
     xray_analysis_id: Optional[str] = None
@@ -203,20 +200,21 @@ async def generate_smart_questions(request: GenerateRequest):
     if not xray_data:
         raise HTTPException(status_code=400, detail="Either xray_analysis_id or job_description is required")
     
-    model = get_gemini_model()
     prompt = build_smart_questions_prompt(xray_data, request.cv_text)
     
     try:
-        response = model.generate_content(prompt)
-        result = parse_gemini_response(response.text)
+        ai_response = await generate_completion(
+            prompt=prompt,
+            provider='gemini',
+            max_tokens=8192,
+            temperature=0.7
+        )
+        result = parse_gemini_response(ai_response.content)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"AI generation failed: {str(e)}")
     
-    input_tokens = None
-    output_tokens = None
-    if hasattr(response, 'usage_metadata'):
-        input_tokens = getattr(response.usage_metadata, 'prompt_token_count', None)
-        output_tokens = getattr(response.usage_metadata, 'candidates_token_count', None)
+    input_tokens = ai_response.input_tokens
+    output_tokens = ai_response.output_tokens
     
     record = {
         "user_id": user_id,
