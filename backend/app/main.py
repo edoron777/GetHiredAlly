@@ -1,10 +1,16 @@
 import os
+import sys
 from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from supabase import create_client, Client
+from slowapi.errors import RateLimitExceeded
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from config.rate_limiter import limiter, rate_limit_exceeded_handler
+
 from .auth import router as auth_router
 from .analyze import router as analyze_router
 from .downloads import router as downloads_router
@@ -13,6 +19,10 @@ from .smart_questions import router as smart_questions_router
 from .admin import router as admin_router
 
 app = FastAPI(title="Backend API")
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
+
 app.include_router(auth_router)
 app.include_router(analyze_router)
 app.include_router(downloads_router)

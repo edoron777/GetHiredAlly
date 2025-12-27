@@ -1,0 +1,310 @@
+# Security Prompt 2: Rate Limiting + Secure Cookies
+
+**Task:** Implement rate limiting on API endpoints and secure cookie configuration
+**Priority:** 🟡 P2 - HIGH
+**Estimated Effort:** 3-4 hours
+
+---
+
+## ⚠️ CRITICAL INSTRUCTIONS
+
+- Follow instructions exactly
+- Test rate limiting works correctly
+- Verify cookies have all security flags
+
+---
+
+## PART A: Rate Limiting
+
+### Task
+
+Add rate limiting to prevent brute force attacks and DoS abuse.
+
+### Step 1: Install slowapi
+
+```bash
+pip install slowapi
+```
+
+### Step 2: Configure Rate Limiter
+
+```python
+# config/rate_limiter.py
+
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from fastapi import Request
+from fastapi.responses import JSONResponse
+
+# Use IP address for rate limiting
+limiter = Limiter(key_func=get_remote_address)
+
+async def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
+    return JSONResponse(
+        status_code=429,
+        content={
+            "error": "Too many requests. Please try again later.",
+            "retry_after": exc.detail
+        }
+    )
+```
+
+### Step 3: Add to FastAPI App
+
+```python
+# main.py
+
+from fastapi import FastAPI
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from config.rate_limiter import limiter, rate_limit_exceeded_handler
+
+app = FastAPI()
+
+# Add rate limiter to app state
+app.state.limiter = limiter
+
+# Add exception handler
+app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
+```
+
+### Step 4: Apply Rate Limits to Endpoints
+
+**Rate Limit Rules:**
+
+| Endpoint Type | Limit | Reason |
+|---------------|-------|--------|
+| Login | 5/minute | Prevent brute force |
+| Register | 10/hour | Prevent spam accounts |
+| Password Reset | 3/hour | Prevent email spam |
+| AI Generation (X-Ray, Smart Questions) | 10/hour | Expensive API calls |
+| File Upload | 20/hour | Prevent storage abuse |
+| General API | 100/minute | Prevent DoS |
+
+**Implementation:**
+
+```python
+# routes/auth.py
+
+from config.rate_limiter import limiter
+from fastapi import Request
+
+@app.post("/api/auth/login")
+@limiter.limit("5/minute")
+async def login(request: Request, user_input: UserLoginInput):
+    # login logic
+    pass
+
+@app.post("/api/auth/register")
+@limiter.limit("10/hour")
+async def register(request: Request, user_input: UserRegisterInput):
+    # register logic
+    pass
+
+@app.post("/api/auth/forgot-password")
+@limiter.limit("3/hour")
+async def forgot_password(request: Request, email_input: EmailInput):
+    # forgot password logic
+    pass
+```
+
+```python
+# routes/xray.py
+
+@app.post("/api/xray/generate")
+@limiter.limit("10/hour")
+async def generate_xray(request: Request, xray_input: XRayInput):
+    # X-Ray generation logic
+    pass
+```
+
+```python
+# routes/questions.py
+
+@app.post("/api/questions/smart/generate")
+@limiter.limit("10/hour")
+async def generate_smart_questions(request: Request, input_data: SmartQuestionsInput):
+    # Smart questions generation logic
+    pass
+```
+
+```python
+# routes/cv.py
+
+@app.post("/api/cv/upload")
+@limiter.limit("20/hour")
+async def upload_cv(request: Request, file: UploadFile):
+    # CV upload logic
+    pass
+```
+
+### Endpoints to Rate Limit
+
+- [ ] POST /api/auth/login - 5/minute
+- [ ] POST /api/auth/register - 10/hour
+- [ ] POST /api/auth/forgot-password - 3/hour
+- [ ] POST /api/auth/reset-password - 5/hour
+- [ ] POST /api/xray/generate - 10/hour
+- [ ] POST /api/questions/smart/generate - 10/hour
+- [ ] POST /api/cv/upload - 20/hour
+- [ ] All other POST/PUT endpoints - 100/minute
+
+---
+
+## PART B: Secure Cookie Configuration
+
+### Task
+
+Ensure all cookies (especially session/auth cookies) have security flags.
+
+### Security Flags Required
+
+| Flag | Value | Purpose |
+|------|-------|---------|
+| `httponly` | True | Prevent JavaScript access (XSS protection) |
+| `secure` | True | HTTPS only |
+| `samesite` | "strict" or "lax" | Prevent CSRF |
+| `max_age` | 86400 (24 hours) | Auto-expire sessions |
+
+### Implementation
+
+**Find all places where cookies are set and update them:**
+
+```python
+# WRONG - Insecure cookie
+response.set_cookie(key="session_token", value=token)
+
+# CORRECT - Secure cookie
+response.set_cookie(
+    key="session_token",
+    value=token,
+    httponly=True,      # JavaScript cannot access
+    secure=True,        # HTTPS only
+    samesite="strict",  # Prevent CSRF
+    max_age=86400       # 24 hours expiration
+)
+```
+
+### Create Cookie Helper Function
+
+```python
+# utils/cookies.py
+
+from fastapi import Response
+
+def set_secure_cookie(
+    response: Response,
+    key: str,
+    value: str,
+    max_age: int = 86400  # 24 hours default
+):
+    """Set a cookie with all security flags enabled."""
+    response.set_cookie(
+        key=key,
+        value=value,
+        httponly=True,
+        secure=True,
+        samesite="strict",
+        max_age=max_age,
+        path="/"
+    )
+
+def delete_secure_cookie(response: Response, key: str):
+    """Delete a cookie securely."""
+    response.delete_cookie(
+        key=key,
+        httponly=True,
+        secure=True,
+        samesite="strict",
+        path="/"
+    )
+```
+
+### Usage
+
+```python
+# routes/auth.py
+
+from utils.cookies import set_secure_cookie, delete_secure_cookie
+
+@app.post("/api/auth/login")
+async def login(user_input: UserLoginInput):
+    # ... validate user ...
+    
+    token = create_session_token(user)
+    
+    response = JSONResponse(content={"message": "Login successful"})
+    set_secure_cookie(response, "session_token", token)
+    
+    return response
+
+@app.post("/api/auth/logout")
+async def logout():
+    response = JSONResponse(content={"message": "Logged out"})
+    delete_secure_cookie(response, "session_token")
+    
+    return response
+```
+
+### Cookies Checklist
+
+Find and update ALL cookies:
+
+- [ ] session_token
+- [ ] auth_token
+- [ ] refresh_token (if exists)
+- [ ] Any other cookies set by the application
+
+---
+
+## VERIFICATION CHECKLIST
+
+**Rate Limiting:**
+- [ ] slowapi is installed
+- [ ] Rate limiter is configured in app
+- [ ] Login endpoint: 5/minute limit
+- [ ] Register endpoint: 10/hour limit
+- [ ] AI generation endpoints: 10/hour limit
+- [ ] File upload: 20/hour limit
+- [ ] Rate limit exceeded returns 429 status code
+- [ ] Error message is user-friendly
+
+**Secure Cookies:**
+- [ ] All cookies have `httponly=True`
+- [ ] All cookies have `secure=True`
+- [ ] All cookies have `samesite="strict"`
+- [ ] All cookies have reasonable `max_age`
+- [ ] Logout properly deletes cookies
+
+---
+
+## TESTING
+
+### Test Rate Limiting
+
+```bash
+# Test login rate limit (should fail after 5 attempts)
+for i in {1..10}; do
+  curl -X POST http://localhost:8000/api/auth/login \
+    -H "Content-Type: application/json" \
+    -d '{"email":"test@test.com","password":"wrong"}'
+  echo ""
+done
+
+# Should see 429 error after 5th request
+```
+
+### Test Secure Cookies
+
+1. Login to the application
+2. Open browser DevTools → Application → Cookies
+3. Verify session cookie has:
+   - HttpOnly: ✓
+   - Secure: ✓
+   - SameSite: Strict
+   - Expiration: ~24 hours from now
+
+---
+
+**END OF PROMPT**

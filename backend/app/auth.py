@@ -1,4 +1,5 @@
 import os
+import sys
 import random
 import secrets
 import hashlib
@@ -6,8 +7,11 @@ from datetime import datetime, timedelta
 import bcrypt
 import resend
 from pydantic import BaseModel, EmailStr, field_validator
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from supabase import create_client, Client
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from config.rate_limiter import limiter
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -157,7 +161,8 @@ def send_verification_email(email: str, code: str, name: str | None = None, base
         return False
 
 @router.post("/register", response_model=RegisterResponse)
-async def register_user(request: RegisterRequest):
+@limiter.limit("10/hour")
+async def register_user(http_request: Request, request: RegisterRequest):
     client = get_supabase_client()
     if not client:
         raise HTTPException(status_code=500, detail="Database connection not available")
@@ -216,7 +221,8 @@ async def register_user(request: RegisterRequest):
         raise HTTPException(status_code=500, detail=f"Registration failed: {str(e)}")
 
 @router.post("/send-verification", response_model=SendVerificationResponse)
-async def send_verification_code(request: SendVerificationRequest):
+@limiter.limit("5/hour")
+async def send_verification_code(http_request: Request, request: SendVerificationRequest):
     client = get_supabase_client()
     if not client:
         raise HTTPException(status_code=500, detail="Database connection not available")
@@ -261,7 +267,8 @@ async def send_verification_code(request: SendVerificationRequest):
         raise HTTPException(status_code=500, detail=f"Failed to send verification: {str(e)}")
 
 @router.post("/verify-email", response_model=VerifyEmailResponse)
-async def verify_email(request: VerifyEmailRequest):
+@limiter.limit("10/hour")
+async def verify_email(http_request: Request, request: VerifyEmailRequest):
     client = get_supabase_client()
     if not client:
         raise HTTPException(status_code=500, detail="Database connection not available")
@@ -308,7 +315,8 @@ async def verify_email(request: VerifyEmailRequest):
         raise HTTPException(status_code=500, detail=f"Verification failed: {str(e)}")
 
 @router.post("/login", response_model=LoginResponse)
-async def login_user(request: LoginRequest):
+@limiter.limit("5/minute")
+async def login_user(http_request: Request, request: LoginRequest):
     client = get_supabase_client()
     if not client:
         raise HTTPException(status_code=500, detail="Database connection not available")

@@ -2,13 +2,14 @@ import os
 import json
 import sys
 import uuid
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List, Any
 from supabase import create_client, Client
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from services.ai_service import generate_completion
+from config.rate_limiter import limiter
 
 router = APIRouter(prefix="/api/smart-questions", tags=["smart-questions"])
 
@@ -236,7 +237,8 @@ async def check_eligibility(token: str = Query(...)):
         return {"eligible": False, "reason": "free_trial_exhausted", "free_trial_used": True}
 
 @router.post("/generate")
-async def generate_smart_questions(request: GenerateRequest):
+@limiter.limit("10/hour")
+async def generate_smart_questions(http_request: Request, request: GenerateRequest):
     """Generate personalized interview questions using Gemini"""
     
     user = await get_user_from_token(request.token)

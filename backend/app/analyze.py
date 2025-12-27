@@ -1,13 +1,15 @@
 import os
+import sys
 import json
 import re
 import logging
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field, field_validator
 from supabase import create_client, Client
 from typing import Optional, Tuple, Dict, Any
-import sys
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from config.rate_limiter import limiter
 from services.ai_service import generate_completion
 
 logging.basicConfig(level=logging.INFO)
@@ -343,7 +345,8 @@ async def list_xray_analyses(token: str):
         return {"analyses": []}
 
 @router.post("/analyze-job", response_model=AnalyzeJobResponse)
-async def analyze_job(request: AnalyzeJobRequest):
+@limiter.limit("20/hour")
+async def analyze_job(http_request: Request, request: AnalyzeJobRequest):
     if len(request.job_description) < 100:
         raise HTTPException(status_code=400, detail="Job description must be at least 100 characters")
     
