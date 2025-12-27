@@ -219,17 +219,17 @@ export function PredictQuestionsPage() {
       <div className="max-w-4xl mx-auto">
         <button
           type="button"
-          onClick={() => navigate('/dashboard')}
+          onClick={() => navigate('/service/predict-questions')}
           className="mb-6 text-sm transition-colors"
           style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
           onMouseEnter={(e) => e.currentTarget.style.color = '#1E3A5F'}
           onMouseLeave={(e) => e.currentTarget.style.color = '#6B7280'}
         >
-          ← Back to Dashboard
+          ← Back to Questions Service
         </button>
 
         <h1 className="text-3xl font-bold mb-1" style={{ color: '#1E3A5F' }}>
-          54 Interview Questions You Must Know
+          Common Interview Questions
         </h1>
         <p className="text-lg mb-6" style={{ color: '#6B7280' }}>
           Master these questions and you'll be ready for any interview

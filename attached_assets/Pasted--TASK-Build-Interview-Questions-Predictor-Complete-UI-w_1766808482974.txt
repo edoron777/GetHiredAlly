@@ -1,0 +1,801 @@
+## TASK: Build Interview Questions Predictor - Complete UI with 54 Questions
+
+### OVERVIEW
+Build the complete Interview Questions Predictor service with:
+1. Service home page with 2 cards (Common Questions + Smart Predictor)
+2. Static questionnaire page with filters, actions, and categories
+3. 54 questions database with 4 display levels
+4. Download functionality (Word, PDF, Print, Email)
+
+---
+
+### PART 1: SERVICE HOME PAGE
+
+Create a home page for the "Prepare for Questions" service at: /service/predict-questions
+
+This page shows 2 cards:
+
+CARD 1:
+- Title: "Common Interview Questions"
+- Subtitle: "54 most asked questions with expert tips"
+- Button: "Browse Questions"
+- Links to: /service/predict-questions/common
+
+CARD 2:
+- Title: "Smart Questions Predictor"
+- Subtitle: "AI-predicted questions based on your job"
+- Button: "Coming Soon" (disabled, grayed out)
+- Note: This will be built later
+
+Design: Use same card style as the main dashboard cards.
+
+---
+
+### PART 2: UPDATE DATABASE SCHEMA
+
+Run this SQL in Supabase:
+
+-- Add new columns if missing
+ALTER TABLE interview_questions ADD COLUMN IF NOT EXISTS good_answer_example TEXT;
+ALTER TABLE interview_questions ADD COLUMN IF NOT EXISTS what_to_avoid TEXT;
+
+-- Create category descriptions table
+CREATE TABLE IF NOT EXISTS question_categories (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    category_key TEXT UNIQUE NOT NULL,
+    category_name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    question_format TEXT,
+    answer_method TEXT,
+    display_order INTEGER,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE question_categories ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can read categories" ON question_categories FOR SELECT USING (true);
+CREATE POLICY "Service can insert categories" ON question_categories FOR INSERT WITH CHECK (true);
+CREATE POLICY "Service can delete categories" ON question_categories FOR DELETE USING (true);
+
+---
+
+### PART 3: CREATE STATIC QUESTIONS DATA FILE
+
+Create or replace backend/static_questions.py with:
+
+CATEGORY_DESCRIPTIONS = [
+    {
+        "category_key": "universal",
+        "category_name": "Universal Questions",
+        "description": "Questions asked in almost every interview. These set the tone, assess basic communication skills, and help interviewers understand your motivation and fit.",
+        "question_format": "Direct questions about you, your goals, and your interest",
+        "answer_method": "Structured response with specific examples",
+        "display_order": 1
+    },
+    {
+        "category_key": "behavioral",
+        "category_name": "Behavioral Questions",
+        "description": "Questions about your past experiences and how you handled specific situations. Interviewers believe past behavior is the best predictor of future behavior.",
+        "question_format": "Tell me about a time when...",
+        "answer_method": "STAR Method (Situation, Task, Action, Result)",
+        "display_order": 2
+    },
+    {
+        "category_key": "situational",
+        "category_name": "Situational Questions",
+        "description": "Hypothetical scenarios that test your judgment, problem-solving, and decision-making skills. These ask what you WOULD do, not what you DID.",
+        "question_format": "What would you do if...",
+        "answer_method": "Structured approach showing your thinking process",
+        "display_order": 3
+    },
+    {
+        "category_key": "self_assessment",
+        "category_name": "Self-Assessment Questions",
+        "description": "Questions that test your self-awareness, honesty, and ability to reflect on your own strengths and weaknesses. Interviewers want to see growth mindset.",
+        "question_format": "Direct questions about yourself",
+        "answer_method": "Honest reflection with specific examples",
+        "display_order": 4
+    },
+    {
+        "category_key": "cultural_fit",
+        "category_name": "Cultural Fit Questions",
+        "description": "Questions about your work style, values, and preferences. These help interviewers determine if you will thrive in their specific work environment.",
+        "question_format": "Questions about preferences and values",
+        "answer_method": "Authentic response showing self-awareness",
+        "display_order": 5
+    }
+]
+
+INTERVIEW_QUESTIONS = [
+    # ========== UNIVERSAL (12) ==========
+    {
+        "category": "universal",
+        "question_text": "Tell me about yourself",
+        "good_answer_example": "I am a [role] with [X] years of experience in [industry]. Currently at [company], I [key achievement]. Before that, I [relevant experience]. I am excited about this role because [connection to job].",
+        "why_they_ask": "First impression assessment. They want to see how you communicate, what you prioritize, and whether you understand what is relevant for this role.",
+        "what_to_avoid": "Do not tell your life story from childhood. Do not recite your entire resume. Keep it under 2 minutes. Stay professional, not personal.",
+        "framework": "Present - Past - Future (30 seconds each)",
+        "order_priority": 1
+    },
+    {
+        "category": "universal",
+        "question_text": "Why are you interested in this role?",
+        "good_answer_example": "I have been following [company] because of [specific reason]. This role excites me because it combines [skill 1] and [skill 2], which are my strengths. I am particularly drawn to [specific aspect of job description].",
+        "why_they_ask": "Testing genuine interest and research. They want to know if you understand the role and have specific reasons beyond needing a job.",
+        "what_to_avoid": "Generic answers like 'It seems like a great company.' Do not mention salary as primary motivation. Never say 'I just need a job.'",
+        "framework": "Why Company - Why Role - Why You",
+        "order_priority": 2
+    },
+    {
+        "category": "universal",
+        "question_text": "Why are you leaving your current job?",
+        "good_answer_example": "I have learned a lot at [current company], especially [skill]. Now I am looking for [growth opportunity] that aligns with my career goals in [area]. This role offers exactly that.",
+        "why_they_ask": "Red flag detection. They want to know if you are running FROM something bad or running TO something better.",
+        "what_to_avoid": "Never badmouth your current employer. Do not complain about coworkers or management. Avoid mentioning conflicts.",
+        "framework": "Positive Pivot (focus on what you are moving toward)",
+        "order_priority": 3
+    },
+    {
+        "category": "universal",
+        "question_text": "What do you know about our company?",
+        "good_answer_example": "I know [company] is [brief description]. I was impressed by [recent news or achievement]. Your mission to [mission statement] really resonates with me.",
+        "why_they_ask": "Testing if you did your homework. Shows genuine interest versus mass applying everywhere.",
+        "what_to_avoid": "Do not say 'Not much' or 'I did not have time to research.' Avoid generic information anyone could guess.",
+        "framework": "Facts - Impression - Connection to You",
+        "order_priority": 4
+    },
+    {
+        "category": "universal",
+        "question_text": "Where do you see yourself in 5 years?",
+        "good_answer_example": "In 5 years, I see myself having grown into a [realistic next role] where I can [contribution]. I want to deepen my expertise in [relevant area]. This role is a perfect stepping stone.",
+        "why_they_ask": "Testing ambition and retention risk. They want someone with goals who will stay long enough to contribute.",
+        "what_to_avoid": "Do not say 'Your job' or 'Running my own company.' Avoid unrealistic goals. Do not say 'I do not know.'",
+        "framework": "Growth Within (show ambition connected to this company)",
+        "order_priority": 5
+    },
+    {
+        "category": "universal",
+        "question_text": "What are your salary expectations?",
+        "good_answer_example": "Based on my research and experience level, I am looking at a range of [X-Y]. However, I am flexible and more focused on finding the right fit.",
+        "why_they_ask": "Budget alignment and negotiation baseline. They want to ensure you are in their range before investing more time.",
+        "what_to_avoid": "Do not give a number too early if you can avoid it. Never undersell yourself. Do not be inflexible.",
+        "framework": "Research-Based Range + Flexibility",
+        "order_priority": 6
+    },
+    {
+        "category": "universal",
+        "question_text": "What questions do you have for me?",
+        "good_answer_example": "Yes, I have a few: 1) What does success look like in this role in the first 90 days? 2) What are the biggest challenges the team is currently facing?",
+        "why_they_ask": "Testing preparation and genuine interest. This is your chance to show you have thought deeply about the role.",
+        "what_to_avoid": "Never say 'No, I think you covered everything.' Do not ask only about salary or benefits.",
+        "framework": "Prepared Questions (always have 2-3 ready)",
+        "order_priority": 7
+    },
+    {
+        "category": "universal",
+        "question_text": "Walk me through your resume",
+        "good_answer_example": "I started at [first job] where I [key learning]. Then I moved to [second job] because [reason], where I [achievement]. Most recently at [current job], I [current focus].",
+        "why_they_ask": "They want to understand your career progression and decisions.",
+        "what_to_avoid": "Do not read your resume word-by-word. Skip irrelevant early jobs. Do not spend too long on any one role.",
+        "framework": "Chronological with Transitions",
+        "order_priority": 8
+    },
+    {
+        "category": "universal",
+        "question_text": "Why should we hire you?",
+        "good_answer_example": "You should hire me because I bring [skill 1] proven by [achievement], [skill 2] demonstrated when I [example], and genuine passion for [relevant area].",
+        "why_they_ask": "Direct test of your value proposition. They want to see if you can confidently articulate your worth.",
+        "what_to_avoid": "Do not be arrogant. Do not be too humble. Avoid generic answers.",
+        "framework": "Skills + Evidence + Contribution",
+        "order_priority": 9
+    },
+    {
+        "category": "universal",
+        "question_text": "What makes you unique?",
+        "good_answer_example": "What makes me unique is my combination of [skill 1] and [skill 2]. Most people have one or the other, but I developed both through [experience].",
+        "why_they_ask": "Differentiation. With many qualified candidates, they want to know what sets you apart.",
+        "what_to_avoid": "Do not say 'Nothing, I am just like everyone else.' Avoid irrelevant personal quirks.",
+        "framework": "Unique Combination + Evidence",
+        "order_priority": 10
+    },
+    {
+        "category": "universal",
+        "question_text": "How did you hear about this position?",
+        "good_answer_example": "I found this role on [source]. I have been following [company] for a while because [reason], so when I saw this opening, I was excited to apply.",
+        "why_they_ask": "Understanding their recruiting channels. Also testing if you specifically targeted them.",
+        "what_to_avoid": "Do not say 'I do not remember' or 'I apply to everything.' If through a referral, mention it!",
+        "framework": "Source + Genuine Interest",
+        "order_priority": 11
+    },
+    {
+        "category": "universal",
+        "question_text": "When can you start?",
+        "good_answer_example": "I need to give [X weeks] notice at my current job. So I could start on [specific date].",
+        "why_they_ask": "Practical planning. Also testing your professionalism regarding current employer.",
+        "what_to_avoid": "Do not say 'Tomorrow' if you are currently employed. Do not be vague.",
+        "framework": "Professional Notice + Specific Date",
+        "order_priority": 12
+    },
+    # ========== BEHAVIORAL (18) ==========
+    {
+        "category": "behavioral",
+        "question_text": "Tell me about a time you worked with a difficult team member",
+        "good_answer_example": "At [company], I worked with a colleague who [difficulty]. I approached them privately to understand their perspective. Together, we agreed to [solution]. The result was [positive outcome].",
+        "why_they_ask": "Testing conflict resolution and interpersonal skills.",
+        "what_to_avoid": "Do not make yourself the victim. Do not badmouth the other person excessively. Ensure there is a resolution.",
+        "framework": "STAR (Situation, Task, Action, Result)",
+        "order_priority": 13
+    },
+    {
+        "category": "behavioral",
+        "question_text": "Tell me about a time you led a team through a challenging project",
+        "good_answer_example": "I led a team of [X] people on [project]. The challenge was [obstacle]. I [leadership actions]. As a result, we [measurable outcome].",
+        "why_they_ask": "Assessing leadership style and effectiveness.",
+        "what_to_avoid": "Do not take all the credit. Show how you empowered others.",
+        "framework": "STAR",
+        "order_priority": 14
+    },
+    {
+        "category": "behavioral",
+        "question_text": "Describe a time you failed",
+        "good_answer_example": "At [company], I [specific failure]. I took responsibility by [action]. The lesson I learned was [learning]. Since then, I have [how you applied that lesson].",
+        "why_they_ask": "Testing honesty, accountability, and learning ability.",
+        "what_to_avoid": "Do not pretend you have never failed. Do not blame others. Show clear learning and growth.",
+        "framework": "STAR + Learning",
+        "order_priority": 15
+    },
+    {
+        "category": "behavioral",
+        "question_text": "Tell me about a time you had to meet a tight deadline",
+        "good_answer_example": "We had [project] due in [short timeframe]. I prioritized by [method], delegated [what], and focused on [critical path]. We delivered on time with [result].",
+        "why_they_ask": "Testing time management and performance under pressure.",
+        "what_to_avoid": "Do not just say 'I worked late.' Show systematic approach.",
+        "framework": "STAR",
+        "order_priority": 16
+    },
+    {
+        "category": "behavioral",
+        "question_text": "Describe a situation where you had to solve a complex problem",
+        "good_answer_example": "We faced [complex problem] causing [impact]. I broke it down into [components], discovered [root cause], and implemented [solution], resulting in [improvement].",
+        "why_they_ask": "Testing analytical thinking and problem-solving approach.",
+        "what_to_avoid": "Do not skip the process. Show your methodology. Include measurable results.",
+        "framework": "STAR",
+        "order_priority": 17
+    },
+    {
+        "category": "behavioral",
+        "question_text": "Tell me about a time you disagreed with your manager",
+        "good_answer_example": "My manager wanted to [decision]. I had concerns about [issue]. I requested a private meeting, presented data showing [evidence], and proposed [alternative]. We ultimately [outcome].",
+        "why_they_ask": "Testing professional maturity and communication skills.",
+        "what_to_avoid": "Do not show you always agree or always fight. Show respectful disagreement.",
+        "framework": "STAR",
+        "order_priority": 18
+    },
+    {
+        "category": "behavioral",
+        "question_text": "Describe a time you had to learn something new quickly",
+        "good_answer_example": "When I joined [project], I needed to learn [new skill] with no background. I [learning approach]. Within [timeframe], I was able to [demonstrate competency].",
+        "why_they_ask": "Testing adaptability and learning agility.",
+        "what_to_avoid": "Do not just say 'I am a fast learner.' Show specific strategy and results.",
+        "framework": "STAR",
+        "order_priority": 19
+    },
+    {
+        "category": "behavioral",
+        "question_text": "Tell me about your greatest professional achievement",
+        "good_answer_example": "My greatest achievement was [accomplishment] at [company]. The situation was [context]. I contributed by [actions]. The result was [measurable impact].",
+        "why_they_ask": "Understanding what you are proud of reveals your values and capabilities.",
+        "what_to_avoid": "Do not be falsely modest. Choose something relevant to this role. Include metrics.",
+        "framework": "STAR",
+        "order_priority": 20
+    },
+    {
+        "category": "behavioral",
+        "question_text": "Describe a time you received criticism",
+        "good_answer_example": "My manager told me [criticism]. Initially I felt [reaction], but I asked for specific examples. I realized [their point was valid]. I improved by [actions]. Now [positive outcome].",
+        "why_they_ask": "Testing receptiveness to feedback and growth mindset.",
+        "what_to_avoid": "Do not say you have never been criticized. Do not be defensive. Show genuine growth.",
+        "framework": "STAR + Growth",
+        "order_priority": 21
+    },
+    {
+        "category": "behavioral",
+        "question_text": "Tell me about a time you had to persuade someone",
+        "good_answer_example": "I needed to convince [stakeholder] to [decision]. They were hesitant because [concerns]. I addressed this by [approach]. They agreed, and the result was [outcome].",
+        "why_they_ask": "Testing influence and communication skills.",
+        "what_to_avoid": "Do not show manipulation. Show respect for their concerns.",
+        "framework": "STAR",
+        "order_priority": 22
+    },
+    {
+        "category": "behavioral",
+        "question_text": "Describe a time you went above and beyond",
+        "good_answer_example": "While my job was [normal responsibility], I noticed [opportunity]. Without being asked, I [extra effort]. This resulted in [impact].",
+        "why_they_ask": "Testing initiative and commitment.",
+        "what_to_avoid": "Do not confuse working overtime with going above and beyond. Show initiative, not just extra hours.",
+        "framework": "STAR",
+        "order_priority": 23
+    },
+    {
+        "category": "behavioral",
+        "question_text": "Tell me about a time you made a mistake at work",
+        "good_answer_example": "I made a mistake when I [error]. I immediately [took responsibility]. I fixed it by [action]. I learned [lesson] and implemented [prevention measure].",
+        "why_they_ask": "Testing accountability and problem-solving.",
+        "what_to_avoid": "Do not minimize the mistake. Take full responsibility. Show what you learned.",
+        "framework": "STAR + Learning",
+        "order_priority": 24
+    },
+    {
+        "category": "behavioral",
+        "question_text": "Describe a time you worked under pressure",
+        "good_answer_example": "During [high-pressure situation], I had to [responsibility]. I managed the pressure by [techniques]. Despite the stress, I [successful outcome].",
+        "why_they_ask": "Testing resilience and stress management.",
+        "what_to_avoid": "Do not say 'I work well under pressure' without proof. Show specific coping strategies.",
+        "framework": "STAR",
+        "order_priority": 25
+    },
+    {
+        "category": "behavioral",
+        "question_text": "Tell me about a time you had to give negative feedback",
+        "good_answer_example": "I needed to tell [person] that [issue]. I scheduled a private meeting, started with positives, then clearly explained [concern] with examples. They responded by [outcome].",
+        "why_they_ask": "Testing communication skills and emotional intelligence.",
+        "what_to_avoid": "Do not show you avoided the conversation. Be direct but kind.",
+        "framework": "STAR",
+        "order_priority": 26
+    },
+    {
+        "category": "behavioral",
+        "question_text": "Describe a time you had to handle multiple priorities",
+        "good_answer_example": "I was juggling [project A], [project B], and [project C]. I prioritized by [method]. I communicated with stakeholders about [timeline adjustments]. I delivered all three.",
+        "why_they_ask": "Testing organizational skills and prioritization.",
+        "what_to_avoid": "Do not just say you did everything. Show your prioritization method.",
+        "framework": "STAR",
+        "order_priority": 27
+    },
+    {
+        "category": "behavioral",
+        "question_text": "Tell me about a time you had to adapt to change",
+        "good_answer_example": "When [change happened], I initially [honest reaction]. I adapted by [actions]. The result was [positive outcome]. I actually ended up [benefit from change].",
+        "why_they_ask": "Testing flexibility and adaptability.",
+        "what_to_avoid": "Do not pretend you love all change. Show honest adaptation process. End positively.",
+        "framework": "STAR",
+        "order_priority": 28
+    },
+    {
+        "category": "behavioral",
+        "question_text": "Describe a time you helped a struggling colleague",
+        "good_answer_example": "I noticed [colleague] was struggling with [issue]. I offered to [help]. I specifically helped them by [actions]. As a result, they [improvement].",
+        "why_they_ask": "Testing teamwork and empathy.",
+        "what_to_avoid": "Do not be condescending about the colleague. Show genuine help.",
+        "framework": "STAR",
+        "order_priority": 29
+    },
+    {
+        "category": "behavioral",
+        "question_text": "Tell me about a time you worked with someone very different from you",
+        "good_answer_example": "I worked with [person] who had a very different [work style]. Initially we [friction]. I approached it by [finding common ground]. We ended up [successful collaboration].",
+        "why_they_ask": "Testing ability to work with diverse people.",
+        "what_to_avoid": "Do not be judgmental about differences. Show respect and adaptation.",
+        "framework": "STAR",
+        "order_priority": 30
+    },
+    # ========== SITUATIONAL (8) ==========
+    {
+        "category": "situational",
+        "question_text": "What would you do if you disagreed with a decision from leadership?",
+        "good_answer_example": "I would first make sure I fully understand their reasoning. If I still disagreed, I would request a private conversation to share my concerns with data. If they still decided to proceed, I would support the decision professionally.",
+        "why_they_ask": "Testing judgment and professionalism.",
+        "what_to_avoid": "Do not say you would always agree. Do not say you would ignore it. Show professional disagreement process.",
+        "framework": "Understand - Express - Support",
+        "order_priority": 31
+    },
+    {
+        "category": "situational",
+        "question_text": "How would you handle a situation where you could not meet a deadline?",
+        "good_answer_example": "First, I would assess if there is any way to meet it through prioritization or help. If truly impossible, I would communicate immediately with stakeholders, explain honestly, and propose a new timeline.",
+        "why_they_ask": "Testing communication and problem-solving.",
+        "what_to_avoid": "Do not say 'I always meet deadlines.' Show realistic approach. Communication is key.",
+        "framework": "Assess - Communicate - Propose Solutions",
+        "order_priority": 32
+    },
+    {
+        "category": "situational",
+        "question_text": "What would you do if a colleague took credit for your work?",
+        "good_answer_example": "I would first consider if it might be a misunderstanding. Then I would speak with them privately, assuming positive intent. If it continues, I would proactively share my contributions with my manager.",
+        "why_they_ask": "Testing conflict resolution and professional maturity.",
+        "what_to_avoid": "Do not say you would confront them publicly. Do not say you would do nothing.",
+        "framework": "Private Conversation - Document - Escalate if Needed",
+        "order_priority": 33
+    },
+    {
+        "category": "situational",
+        "question_text": "How would you prioritize if everything is urgent?",
+        "good_answer_example": "I would quickly assess each task on impact and true deadline. I would communicate with stakeholders to understand real priorities. I would focus on high-impact items first while keeping others informed.",
+        "why_they_ask": "Testing prioritization skills.",
+        "what_to_avoid": "Do not say 'I would do everything' or 'Work all night.' Show systematic approach.",
+        "framework": "Assess Impact - Communicate - Prioritize - Inform",
+        "order_priority": 34
+    },
+    {
+        "category": "situational",
+        "question_text": "What would you do if you saw a colleague doing something unethical?",
+        "good_answer_example": "First, I would make sure I understood the situation correctly. If it was clearly unethical, I would report it through proper channels - likely my manager or HR. I believe in speaking up.",
+        "why_they_ask": "Testing integrity and judgment.",
+        "what_to_avoid": "Do not say you would ignore it. Do not say you would confront them publicly. Show proper escalation.",
+        "framework": "Verify - Report Through Channels - Document",
+        "order_priority": 35
+    },
+    {
+        "category": "situational",
+        "question_text": "How would you handle a project with unclear requirements?",
+        "good_answer_example": "I would schedule meetings with stakeholders to clarify expectations. I would document assumptions and get sign-off. I would propose a phased approach with feedback loops.",
+        "why_they_ask": "Testing initiative and communication.",
+        "what_to_avoid": "Do not say you would just guess. Do not blame stakeholders. Show proactive clarification.",
+        "framework": "Clarify - Document - Iterate - Communicate",
+        "order_priority": 36
+    },
+    {
+        "category": "situational",
+        "question_text": "What would you do if you realized you made a significant mistake after submitting work?",
+        "good_answer_example": "I would immediately assess the impact. Then I would notify relevant stakeholders right away. I would take responsibility, explain what happened, present a fix, and implement safeguards.",
+        "why_they_ask": "Testing accountability and problem-solving.",
+        "what_to_avoid": "Do not say you would hope no one notices. Take immediate responsibility.",
+        "framework": "Assess - Notify - Fix - Prevent",
+        "order_priority": 37
+    },
+    {
+        "category": "situational",
+        "question_text": "How would you approach a task you have never done before?",
+        "good_answer_example": "I would start by researching and learning as much as possible. I would identify people who have experience and ask for guidance. I would break it into smaller pieces and start with a small test.",
+        "why_they_ask": "Testing learning approach and resourcefulness.",
+        "what_to_avoid": "Do not say you would figure it out alone. Show you use resources and ask for help.",
+        "framework": "Research - Ask Experts - Break Down - Test - Iterate",
+        "order_priority": 38
+    },
+    # ========== SELF-ASSESSMENT (8) ==========
+    {
+        "category": "self_assessment",
+        "question_text": "What is your greatest strength?",
+        "good_answer_example": "My greatest strength is [specific strength]. For example, at [company], I [achievement demonstrating strength]. This would help me [contribution to this role].",
+        "why_they_ask": "Testing self-awareness and fit. They want strengths relevant to THIS job, backed by evidence.",
+        "what_to_avoid": "Do not give generic answers like 'hard-working.' Be specific. Back it up with evidence.",
+        "framework": "Strength - Evidence - Relevance to Role",
+        "order_priority": 39
+    },
+    {
+        "category": "self_assessment",
+        "question_text": "What is your greatest weakness?",
+        "good_answer_example": "I tend to [genuine weakness]. For example, [brief example]. I have been working on this by [improvement actions]. I have seen progress because [evidence].",
+        "why_they_ask": "Testing self-awareness and growth mindset.",
+        "what_to_avoid": "Do not say 'I work too hard' or 'I am a perfectionist.' Do not name a weakness critical to the role. Show improvement actions.",
+        "framework": "Weakness - Context - Improvement Actions - Progress",
+        "order_priority": 40
+    },
+    {
+        "category": "self_assessment",
+        "question_text": "How would your manager describe you?",
+        "good_answer_example": "I think my manager would say I am [quality 1] because [evidence]. They would also say I am [quality 2]. They might say I could improve on [honest area].",
+        "why_they_ask": "Testing self-awareness and relationship with authority.",
+        "what_to_avoid": "Do not only say positive things. Include something you are working on. Be honest.",
+        "framework": "Strength 1 + Evidence - Strength 2 + Evidence - Growth Area",
+        "order_priority": 41
+    },
+    {
+        "category": "self_assessment",
+        "question_text": "How would your colleagues describe you?",
+        "good_answer_example": "My colleagues would probably say I am [quality] because [how you demonstrate it]. One colleague actually told me [specific feedback].",
+        "why_they_ask": "Testing teamwork and self-awareness.",
+        "what_to_avoid": "Do not brag. Include specific feedback you have received. Be balanced.",
+        "framework": "Quality + Evidence from Colleagues",
+        "order_priority": 42
+    },
+    {
+        "category": "self_assessment",
+        "question_text": "What motivates you?",
+        "good_answer_example": "I am motivated by [specific motivator]. For example, at [company], I was most energized when [example]. This role excites me because [connection].",
+        "why_they_ask": "Testing fit and self-awareness.",
+        "what_to_avoid": "Do not say 'money' even if true. Connect your motivator to the role. Be genuine.",
+        "framework": "Motivator - Example - Connection to Role",
+        "order_priority": 43
+    },
+    {
+        "category": "self_assessment",
+        "question_text": "How do you handle stress?",
+        "good_answer_example": "I handle stress by [specific techniques]. When I was under pressure during [situation], I [how you coped]. This helped me [positive outcome].",
+        "why_they_ask": "Testing self-management and resilience.",
+        "what_to_avoid": "Do not say 'I do not get stressed' - it is not believable. Show healthy coping mechanisms.",
+        "framework": "Techniques - Example - Outcome",
+        "order_priority": 44
+    },
+    {
+        "category": "self_assessment",
+        "question_text": "What are you passionate about?",
+        "good_answer_example": "I am passionate about [genuine interest]. For example, I [how you pursue this passion]. This connects to my work because [relevance].",
+        "why_they_ask": "Testing personality and authenticity.",
+        "what_to_avoid": "Do not make something up. Be genuine. Try to connect it to work if possible.",
+        "framework": "Passion - How You Pursue It - Connection to Work",
+        "order_priority": 45
+    },
+    {
+        "category": "self_assessment",
+        "question_text": "What do you like to do outside of work?",
+        "good_answer_example": "Outside of work, I enjoy [hobby]. I [how you engage with it]. It helps me [benefit].",
+        "why_they_ask": "Testing personality and work-life balance.",
+        "what_to_avoid": "Do not say 'I just work.' Be genuine. Show you have interests and balance.",
+        "framework": "Activity - Engagement - Benefit",
+        "order_priority": 46
+    },
+    # ========== CULTURAL FIT (8) ==========
+    {
+        "category": "cultural_fit",
+        "question_text": "What type of work environment do you thrive in?",
+        "good_answer_example": "I thrive in environments that are [characteristics]. At [company], I did my best work when [example]. I have researched [this company] and I think [connection to their culture].",
+        "why_they_ask": "Testing cultural fit.",
+        "what_to_avoid": "Do not give a generic answer. Research their culture first. Be honest.",
+        "framework": "Preferred Environment - Example - Connection to Their Culture",
+        "order_priority": 47
+    },
+    {
+        "category": "cultural_fit",
+        "question_text": "How do you prefer to be managed?",
+        "good_answer_example": "I prefer managers who [specific style]. My best manager relationship was with [example] because [why it worked]. I am also adaptable to different styles.",
+        "why_they_ask": "Testing fit with their management style and self-awareness.",
+        "what_to_avoid": "Do not say 'I do not need management.' Show you understand your needs and can adapt.",
+        "framework": "Preference - Example - Adaptability",
+        "order_priority": 48
+    },
+    {
+        "category": "cultural_fit",
+        "question_text": "Do you prefer working independently or on a team?",
+        "good_answer_example": "I enjoy both. I value team collaboration for [reasons] and independent work for [reasons]. In this role, I understand it is [their expectation] and I am comfortable with that.",
+        "why_they_ask": "Testing fit with their work style.",
+        "what_to_avoid": "Do not say only one. Show flexibility. Know what the role requires.",
+        "framework": "Both + When Each Works Best + Fit with Role",
+        "order_priority": 49
+    },
+    {
+        "category": "cultural_fit",
+        "question_text": "How do you handle feedback?",
+        "good_answer_example": "I actively seek feedback because it helps me grow. When I receive it, I listen without being defensive, ask clarifying questions, and create action items.",
+        "why_they_ask": "Testing coachability and growth mindset.",
+        "what_to_avoid": "Do not be defensive in your answer. Show you seek feedback proactively.",
+        "framework": "Approach - Process - Example of Acting on Feedback",
+        "order_priority": 50
+    },
+    {
+        "category": "cultural_fit",
+        "question_text": "What does work-life balance mean to you?",
+        "good_answer_example": "To me, work-life balance means [your definition]. I am committed to delivering results and I also know that rest makes me more effective. I am happy to go above and beyond when needed.",
+        "why_they_ask": "Testing expectations alignment.",
+        "what_to_avoid": "Do not say 'I live to work.' Do not say 'I stop at 5pm sharp.' Show balance and flexibility.",
+        "framework": "Definition - How You Maintain It - Flexibility",
+        "order_priority": 51
+    },
+    {
+        "category": "cultural_fit",
+        "question_text": "What values are important to you in a workplace?",
+        "good_answer_example": "The values most important to me are [specific values]. I look for workplaces where [how these show up]. I noticed [this company] values [their stated value] which resonates with me.",
+        "why_they_ask": "Testing values alignment.",
+        "what_to_avoid": "Do not just list their values back. Be genuine. Show you have researched their values.",
+        "framework": "Your Values - What They Look Like - Connection to Their Values",
+        "order_priority": 52
+    },
+    {
+        "category": "cultural_fit",
+        "question_text": "How do you handle conflict in the workplace?",
+        "good_answer_example": "I address conflict directly but professionally. I try to understand the other perspective first, then find common ground. I focus on the issue, not the person.",
+        "why_they_ask": "Testing conflict resolution skills.",
+        "what_to_avoid": "Do not say you avoid conflict. Do not be aggressive. Show mature approach.",
+        "framework": "Approach - Focus on Issue - Example",
+        "order_priority": 53
+    },
+    {
+        "category": "cultural_fit",
+        "question_text": "What role do you typically play in a team?",
+        "good_answer_example": "I naturally tend toward [role] but I can adapt based on team needs. In my last team, I [example]. When the team needed [different role], I stepped into that too.",
+        "why_they_ask": "Testing self-awareness and flexibility.",
+        "what_to_avoid": "Do not only claim leadership. Show flexibility. Give specific examples.",
+        "framework": "Natural Role - Example - Adaptability",
+        "order_priority": 54
+    }
+]
+
+QUESTIONS_TO_ASK = [
+    {
+        "category": "role",
+        "question_text": "What does success look like in this role in the first 90 days?",
+        "why_ask": "Shows you are focused on delivering results quickly.",
+        "what_to_listen_for": "Clear metrics and priorities.",
+        "warning_signs": "If they cannot define success, the role may be poorly defined.",
+        "order_priority": 1
+    },
+    {
+        "category": "role",
+        "question_text": "What are the biggest challenges someone in this role would face?",
+        "why_ask": "Shows realistic thinking and preparation.",
+        "what_to_listen_for": "Honest challenges you can address.",
+        "warning_signs": "If everything is 'great' - they may be hiding problems.",
+        "order_priority": 2
+    },
+    {
+        "category": "team",
+        "question_text": "Can you tell me about the team I would be working with?",
+        "why_ask": "Shows you care about collaboration.",
+        "what_to_listen_for": "Team structure, tenure, collaboration style.",
+        "warning_signs": "High turnover, vague answers.",
+        "order_priority": 3
+    },
+    {
+        "category": "growth",
+        "question_text": "What growth opportunities exist for someone in this role?",
+        "why_ask": "Shows ambition and long-term thinking.",
+        "what_to_listen_for": "Clear paths for advancement.",
+        "warning_signs": "No clear path or 'we will see' answers.",
+        "order_priority": 4
+    },
+    {
+        "category": "culture",
+        "question_text": "How would you describe the company culture?",
+        "why_ask": "Shows you care about fit.",
+        "what_to_listen_for": "Specific examples, not just buzzwords.",
+        "warning_signs": "Generic answers, culture sounds toxic.",
+        "order_priority": 5
+    },
+    {
+        "category": "interviewer",
+        "question_text": "What do you enjoy most about working here?",
+        "why_ask": "Personal question that builds rapport.",
+        "what_to_listen_for": "Genuine enthusiasm.",
+        "warning_signs": "Hesitation, generic answers.",
+        "order_priority": 6
+    },
+    {
+        "category": "role",
+        "question_text": "What would a typical day or week look like in this role?",
+        "why_ask": "Helps you understand the actual job.",
+        "what_to_listen_for": "Concrete activities, balance.",
+        "warning_signs": "Very vague answers.",
+        "order_priority": 7
+    },
+    {
+        "category": "team",
+        "question_text": "How does the team handle disagreements or conflicts?",
+        "why_ask": "Shows emotional intelligence.",
+        "what_to_listen_for": "Healthy conflict resolution.",
+        "warning_signs": "'We do not have conflicts' (unrealistic).",
+        "order_priority": 8
+    },
+    {
+        "category": "growth",
+        "question_text": "How does the company support professional development?",
+        "why_ask": "Shows you are invested in growing.",
+        "what_to_listen_for": "Training budgets, mentorship.",
+        "warning_signs": "No budget, no time allocated.",
+        "order_priority": 9
+    },
+    {
+        "category": "culture",
+        "question_text": "What is something you wish you had known before joining?",
+        "why_ask": "Gets honest insight.",
+        "what_to_listen_for": "Thoughtful reflection.",
+        "warning_signs": "Cannot answer or overly positive.",
+        "order_priority": 10
+    },
+    {
+        "category": "next_steps",
+        "question_text": "What are the next steps in the interview process?",
+        "why_ask": "Shows you are organized and interested.",
+        "what_to_listen_for": "Clear timeline.",
+        "warning_signs": "Very vague answers.",
+        "order_priority": 11
+    }
+]
+
+---
+
+### PART 4: CREATE SEED ENDPOINT
+
+Update or create the seed endpoint POST /api/questions/seed to:
+1. Delete existing data from interview_questions, questions_to_ask, question_categories
+2. Insert all CATEGORY_DESCRIPTIONS into question_categories
+3. Insert all 54 INTERVIEW_QUESTIONS into interview_questions
+4. Insert all 11 QUESTIONS_TO_ASK into questions_to_ask
+5. Return: {"success": true, "categories": 5, "questions": 54, "questions_to_ask": 11}
+
+---
+
+### PART 5: BUILD STATIC QUESTIONNAIRE PAGE
+
+Create page at: /service/predict-questions/common
+
+PAGE STRUCTURE:
+
+SECTION A - Display Level Filter (Single Selection)
+Four buttons in a row, only one can be selected at a time:
+- "Quick Review" - Shows only question_text
+- "With Example" - Shows question_text + good_answer_example
+- "With Insights" - Shows question_text + good_answer_example + why_they_ask
+- "Complete Guide" - Shows all: question_text + good_answer_example + why_they_ask + what_to_avoid + framework
+
+Default selected: "Quick Review"
+
+SECTION B - Actions Bar
+- "Save as Word" button - downloads .docx
+- "Save as PDF" button - downloads .pdf
+- "Print" button - opens browser print
+- "Send via Email" button - (disabled for now, show "Coming Soon" tooltip)
+
+SECTION C - View Toggle
+- "By Category" (default) - shows questions grouped under category headers
+- "All Questions" - shows flat list of all 54 questions
+
+SECTION D - Questions Display
+
+If "By Category" view:
+For each category (universal, behavioral, situational, self_assessment, cultural_fit):
+
+[Category Name Header] - e.g., "Universal Questions (12)"
+  [+] Category Description (Expand/Collapse) - collapsed by default
+      When expanded, show: category description, question_format, answer_method
+  
+  Question 1: [question_text]
+    [Content based on selected display level]
+  
+  Question 2: [question_text]
+    [Content based on selected display level]
+  
+  ...
+
+If "All Questions" view:
+Show all 54 questions in a flat numbered list
+
+STYLING:
+- Category headers: Navy blue (#1E3A5F), bold, with question count
+- Category description expand/collapse: Light gray background when expanded
+- Questions: White cards with light border
+- Display level content: Use light blue background (#DBEAFE) for "why_they_ask", light green (#D1FAE5) for "good_answer_example", light red (#FEE2E2) for "what_to_avoid"
+- Framework: Show as a small badge/pill
+
+---
+
+### PART 6: API ENDPOINTS
+
+GET /api/questions/static
+Returns all questions and categories:
+{
+  "categories": [...],
+  "questions": [...],
+  "questions_to_ask": [...]
+}
+
+GET /api/questions/static?category=behavioral
+Returns filtered questions for specific category
+
+POST /api/questions/download/pdf
+Body: { level: "complete_guide", view: "by_category" }
+Returns: PDF file download
+
+POST /api/questions/download/docx
+Body: { level: "complete_guide", view: "by_category" }
+Returns: Word file download
+
+---
+
+### SUCCESS CHECKLIST
+
+- [ ] Service home page shows 2 cards (Common Questions + Smart Predictor)
+- [ ] Smart Predictor card shows "Coming Soon" disabled button
+- [ ] Common Questions card links to /service/predict-questions/common
+- [ ] question_categories table has 5 categories with descriptions
+- [ ] interview_questions table has 54 questions
+- [ ] questions_to_ask table has 11 questions
+- [ ] Display level filter works (4 levels, single selection)
+- [ ] Quick Review shows only question text
+- [ ] With Example shows question + good answer
+- [ ] With Insights shows question + good answer + why they ask
+- [ ] Complete Guide shows all 4 parts
+- [ ] Category headers show with expand/collapse description
+- [ ] View toggle switches between "By Category" and "All Questions"
+- [ ] PDF download works
+- [ ] Word download works
+- [ ] Print button works
+- [ ] Colors: blue for insights, green for good answer, red for what to avoid

@@ -73,7 +73,8 @@ GetHiredAlly is an interview preparation application with job description analys
 - `/verify-email` - Email verification page
 - `/dashboard` - Main dashboard with service cards (protected)
 - `/service/understand-job` - X-Ray analyzer input form (protected)
-- `/service/predict-questions` - Interview questions predictor with filters (protected)
+- `/service/predict-questions` - Questions service home with 2 cards (protected)
+- `/service/predict-questions/common` - 54 common interview questions (protected)
 
 ## Database Tables
 - `user_profiles` - User tier definitions (standard, special, vip)

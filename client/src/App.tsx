@@ -6,6 +6,7 @@ import { LoginPage } from '@/components/LoginPage'
 import { VerifyEmailPage } from '@/components/VerifyEmailPage'
 import { Dashboard } from '@/components/Dashboard'
 import { UnderstandJobPage } from '@/components/UnderstandJobPage'
+import { QuestionsServicePage } from '@/components/QuestionsServicePage'
 import { PredictQuestionsPage } from '@/components/PredictQuestionsPage'
 
 function Layout({ children }: { children: React.ReactNode }) {
@@ -28,7 +29,8 @@ function App() {
           <Route path="/verify-email" element={<VerifyEmailPage />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/service/understand-job" element={<UnderstandJobPage />} />
-          <Route path="/service/predict-questions" element={<PredictQuestionsPage />} />
+          <Route path="/service/predict-questions" element={<QuestionsServicePage />} />
+          <Route path="/service/predict-questions/common" element={<PredictQuestionsPage />} />
         </Routes>
       </Layout>
     </BrowserRouter>
