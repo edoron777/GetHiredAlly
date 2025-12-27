@@ -10,6 +10,7 @@ import { QuestionsServicePage } from '@/components/QuestionsServicePage'
 import { PredictQuestionsPage } from '@/components/PredictQuestionsPage'
 import { SmartQuestionsPage } from '@/components/SmartQuestionsPage'
 import { SmartQuestionsResultsPage } from '@/components/SmartQuestionsResultsPage'
+import { AdminAIUsagePage } from '@/components/AdminAIUsagePage'
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -35,6 +36,7 @@ function App() {
           <Route path="/service/predict-questions/common" element={<PredictQuestionsPage />} />
           <Route path="/service/predict-questions/smart" element={<SmartQuestionsPage />} />
           <Route path="/service/predict-questions/smart/results/:id" element={<SmartQuestionsResultsPage />} />
+          <Route path="/admin/ai-usage" element={<AdminAIUsagePage />} />
         </Routes>
       </Layout>
     </BrowserRouter>
