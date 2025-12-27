@@ -61,7 +61,7 @@ export function Dashboard() {
           </p>
         </div>
 
-        <div className="flex flex-wrap justify-center gap-6">
+        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '24px', alignItems: 'stretch' }}>
           {services.map((service, index) => (
             <ServiceCard
               key={index}
