@@ -107,9 +107,7 @@ export function PredictQuestionsPage() {
       setQuestions(data.questions || [])
       setQuestionsToAsk(data.questions_to_ask || [])
       
-      const allCategories = new Set<string>()
-      ;(data.questions || []).forEach((q: Question) => allCategories.add(q.category))
-      setExpandedCategories(allCategories)
+      setExpandedCategories(new Set())
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
     } finally {
@@ -638,23 +636,6 @@ export function PredictQuestionsPage() {
                           
                           {isExpanded && depthLevel !== 'quick_review' && (
                             <div style={{ padding: '0 16px 16px', backgroundColor: '#F9FAFB' }}>
-                              {question.good_answer_example && (
-                                <div style={{ 
-                                  backgroundColor: '#D1FAE5', 
-                                  border: '1px solid #10B981',
-                                  borderRadius: '8px',
-                                  padding: '12px',
-                                  marginBottom: '12px'
-                                }}>
-                                  <p style={{ fontSize: '13px', color: '#065F46', fontWeight: 500, marginBottom: '4px' }}>
-                                    Sample Answer:
-                                  </p>
-                                  <p style={{ fontSize: '14px', color: '#047857', whiteSpace: 'pre-wrap' }}>
-                                    {question.good_answer_example}
-                                  </p>
-                                </div>
-                              )}
-                              
                               {(depthLevel === 'with_insights' || depthLevel === 'complete_guide') && (
                                 <div style={{ 
                                   backgroundColor: '#DBEAFE', 
@@ -664,7 +645,7 @@ export function PredictQuestionsPage() {
                                   marginBottom: '12px'
                                 }}>
                                   <p style={{ fontSize: '13px', color: '#1E40AF', fontWeight: 500, marginBottom: '4px' }}>
-                                    What they want to know:
+                                    What the Interviewer Wants to Know:
                                   </p>
                                   <p style={{ fontSize: '14px', color: '#1D4ED8' }}>
                                     {question.why_they_ask}
@@ -672,17 +653,34 @@ export function PredictQuestionsPage() {
                                 </div>
                               )}
                               
+                              {question.good_answer_example && (
+                                <div style={{ 
+                                  backgroundColor: '#D1FAE5', 
+                                  border: '1px solid #10B981',
+                                  borderRadius: '8px',
+                                  padding: '12px',
+                                  marginBottom: '12px'
+                                }}>
+                                  <p style={{ fontSize: '13px', color: '#065F46', fontWeight: 500, marginBottom: '4px' }}>
+                                    Example of a Good Answer:
+                                  </p>
+                                  <p style={{ fontSize: '14px', color: '#047857', whiteSpace: 'pre-wrap' }}>
+                                    {question.good_answer_example}
+                                  </p>
+                                </div>
+                              )}
+                              
                               {depthLevel === 'complete_guide' && question.what_to_avoid && (
                                 <div style={{ 
-                                  backgroundColor: '#FEE2E2', 
-                                  border: '1px solid #EF4444',
+                                  backgroundColor: '#FEF3C7', 
+                                  border: '1px solid #F59E0B',
                                   borderRadius: '8px',
                                   padding: '12px'
                                 }}>
-                                  <p style={{ fontSize: '13px', color: '#991B1B', fontWeight: 500, marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                    <AlertTriangle className="h-4 w-4" /> What to avoid:
+                                  <p style={{ fontSize: '13px', color: '#92400E', fontWeight: 500, marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    ⚠️ What to Avoid:
                                   </p>
-                                  <p style={{ fontSize: '14px', color: '#B91C1C' }}>
+                                  <p style={{ fontSize: '14px', color: '#B45309' }}>
                                     {question.what_to_avoid}
                                   </p>
                                 </div>
@@ -772,15 +770,15 @@ export function PredictQuestionsPage() {
                   
                   {q.warning_signs && (
                     <div style={{ 
-                      backgroundColor: '#FEE2E2', 
-                      border: '1px solid #EF4444',
+                      backgroundColor: '#FEF3C7', 
+                      border: '1px solid #F59E0B',
                       borderRadius: '8px',
                       padding: '12px'
                     }}>
-                      <p style={{ fontSize: '13px', color: '#991B1B', fontWeight: 500, marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <AlertTriangle className="h-4 w-4" /> Warning signs:
+                      <p style={{ fontSize: '13px', color: '#92400E', fontWeight: 500, marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        ⚠️ Warning Signs:
                       </p>
-                      <p style={{ fontSize: '14px', color: '#B91C1C' }}>
+                      <p style={{ fontSize: '14px', color: '#B45309' }}>
                         {q.warning_signs}
                       </p>
                     </div>
