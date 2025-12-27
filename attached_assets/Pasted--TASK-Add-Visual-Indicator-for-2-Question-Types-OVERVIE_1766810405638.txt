@@ -1,0 +1,65 @@
+## TASK: Add Visual Indicator for 2 Question Types
+
+### OVERVIEW
+Add a clear visual indicator at the top of the page showing users there are 2 types of questions.
+
+### STEP 1: Add Info Cards at Top (After Page Title, Before Filters)
+
+Add two cards between the page title and the filter buttons.
+
+Card 1:
+- Icon: 🎯
+- Title: "Questions You'll Be Asked"
+- Count: "54 questions"
+- Link: "Jump ↓" (scrolls to id="questions-asked")
+
+Card 2:
+- Icon: 💬
+- Title: "Questions You Can Ask"
+- Count: "11 questions"
+- Link: "Jump ↓" (scrolls to id="questions-to-ask")
+
+Card styling:
+- White background
+- Light gray border (1px solid #E5E7EB)
+- Rounded corners
+- Padding: 16px
+- Display cards side by side
+
+Add text above the cards: "This page includes 2 types of questions:"
+
+### STEP 2: Add Section Headers
+
+Add section header before the categories (Questions You'll Be Asked):
+- id="questions-asked"
+- Icon: 🎯
+- Title: "QUESTIONS YOU'LL BE ASKED"
+- Subtitle: "Prepare answers for these common interview questions"
+- Background: Light blue (#EFF6FF)
+- Text color: Navy (#1E3A5F), bold
+- Full width, padding 16px
+
+Add section header before questions to ask:
+- id="questions-to-ask"
+- Icon: 💬
+- Title: "QUESTIONS YOU CAN ASK"
+- Subtitle: "Show your interest by asking smart questions"
+- Background: Light blue (#EFF6FF)
+- Text color: Navy (#1E3A5F), bold
+- Full width, padding 16px
+
+### STEP 3: Style the Questions You Can Ask Section
+
+Each question to ask should display:
+- Question text (bold)
+- "Why ask this:" with light blue background (#DBEAFE)
+- "Listen for:" with light green background (#D1FAE5)
+- "Warning signs:" with light red background (#FEE2E2)
+
+### SUCCESS CHECKLIST
+- [ ] Two info cards appear at top of page
+- [ ] Cards show count (54 questions, 11 questions)
+- [ ] Jump links scroll to correct section
+- [ ] Section header "QUESTIONS YOU'LL BE ASKED" is visible
+- [ ] Section header "QUESTIONS YOU CAN ASK" is visible
+- [ ] Questions to ask section shows all 11 questions with styling

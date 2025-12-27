@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { isAuthenticated } from '@/lib/auth'
-import { Loader2, List, Lightbulb, BookOpen, ChevronDown, ChevronUp, ChevronRight, Download, MessageCircle, AlertTriangle } from 'lucide-react'
+import { Loader2, List, Lightbulb, BookOpen, ChevronDown, ChevronUp, ChevronRight, Download, AlertTriangle } from 'lucide-react'
 
 type DepthLevel = 'quick_review' | 'with_example' | 'with_insights' | 'complete_guide'
 
@@ -276,6 +276,78 @@ export function PredictQuestionsPage() {
           Master these questions and you'll be ready for any interview
         </p>
 
+        <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '12px' }}>
+          This page includes 2 types of questions:
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div 
+            style={{
+              backgroundColor: 'white',
+              border: '1px solid #E5E7EB',
+              borderRadius: '12px',
+              padding: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span style={{ fontSize: '24px' }}>🎯</span>
+              <div>
+                <p style={{ fontWeight: 600, color: '#1E3A5F', fontSize: '15px' }}>Questions You'll Be Asked</p>
+                <p style={{ fontSize: '13px', color: '#6B7280' }}>{questions.length} questions</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => document.getElementById('questions-asked')?.scrollIntoView({ behavior: 'smooth' })}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#1E3A5F',
+                fontSize: '13px',
+                cursor: 'pointer',
+                textDecoration: 'underline'
+              }}
+            >
+              Jump ↓
+            </button>
+          </div>
+          <div 
+            style={{
+              backgroundColor: 'white',
+              border: '1px solid #E5E7EB',
+              borderRadius: '12px',
+              padding: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span style={{ fontSize: '24px' }}>💬</span>
+              <div>
+                <p style={{ fontWeight: 600, color: '#1E3A5F', fontSize: '15px' }}>Questions You Can Ask</p>
+                <p style={{ fontSize: '13px', color: '#6B7280' }}>{questionsToAsk.length} questions</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => document.getElementById('questions-to-ask')?.scrollIntoView({ behavior: 'smooth' })}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#1E3A5F',
+                fontSize: '13px',
+                cursor: 'pointer',
+                textDecoration: 'underline'
+              }}
+            >
+              Jump ↓
+            </button>
+          </div>
+        </div>
+
         <div style={containerStyle}>
           <h2 style={stepHeaderStyle}>How much detail do you need?</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -407,6 +479,31 @@ export function PredictQuestionsPage() {
         {error && (
           <div style={{ ...containerStyle, backgroundColor: '#FEF2F2', border: '1px solid #EF4444' }}>
             <p style={{ color: '#DC2626' }}>{error}</p>
+          </div>
+        )}
+
+        {!isLoading && !error && sortedCategories.length > 0 && (
+          <div 
+            id="questions-asked"
+            style={{
+              backgroundColor: '#EFF6FF',
+              borderRadius: '12px',
+              padding: '16px',
+              marginBottom: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px'
+            }}
+          >
+            <span style={{ fontSize: '24px' }}>🎯</span>
+            <div>
+              <p style={{ fontWeight: 700, color: '#1E3A5F', fontSize: '16px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Questions You'll Be Asked
+              </p>
+              <p style={{ fontSize: '13px', color: '#6B7280' }}>
+                Prepare answers for these common interview questions
+              </p>
+            </div>
           </div>
         )}
 
@@ -603,45 +700,95 @@ export function PredictQuestionsPage() {
         })}
 
         {!isLoading && !error && questionsToAsk.length > 0 && (
-          <div style={{ ...containerStyle, backgroundColor: '#F0FDF4', border: '1px solid #86EFAC' }}>
-            <h2 style={{ ...stepHeaderStyle, display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <MessageCircle className="h-5 w-5" style={{ color: '#16A34A' }} />
-              Questions to Ask the Interviewer
-            </h2>
-            <p style={{ fontSize: '14px', color: '#166534', marginBottom: '16px' }}>
-              Always have 2-3 thoughtful questions ready. Here are {questionsToAsk.length} smart questions to consider:
-            </p>
+          <>
+            <div 
+              id="questions-to-ask"
+              style={{
+                backgroundColor: '#EFF6FF',
+                borderRadius: '12px',
+                padding: '16px',
+                marginBottom: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px'
+              }}
+            >
+              <span style={{ fontSize: '24px' }}>💬</span>
+              <div>
+                <p style={{ fontWeight: 700, color: '#1E3A5F', fontSize: '16px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Questions You Can Ask
+                </p>
+                <p style={{ fontSize: '13px', color: '#6B7280' }}>
+                  Show your interest by asking smart questions
+                </p>
+              </div>
+            </div>
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
               {questionsToAsk.map((q, idx) => (
                 <div key={q.id || idx} style={{
                   backgroundColor: 'white',
-                  border: '1px solid #BBF7D0',
-                  borderRadius: '8px',
-                  padding: '16px'
+                  border: '1px solid #E5E7EB',
+                  borderRadius: '12px',
+                  padding: '20px'
                 }}>
-                  <p style={{ fontWeight: 500, color: '#1E3A5F', marginBottom: '8px' }}>
+                  <p style={{ fontWeight: 600, color: '#1E3A5F', marginBottom: '12px', fontSize: '15px' }}>
                     {idx + 1}. {q.question_text}
                   </p>
+                  
                   {(q.why_ask || q.why_to_ask) && (
-                    <p style={{ fontSize: '13px', color: '#059669', marginBottom: '4px' }}>
-                      <strong>Why ask:</strong> {q.why_ask || q.why_to_ask}
-                    </p>
+                    <div style={{ 
+                      backgroundColor: '#DBEAFE', 
+                      border: '1px solid #3B82F6',
+                      borderRadius: '8px',
+                      padding: '12px',
+                      marginBottom: '8px'
+                    }}>
+                      <p style={{ fontSize: '13px', color: '#1E40AF', fontWeight: 500, marginBottom: '4px' }}>
+                        Why ask this:
+                      </p>
+                      <p style={{ fontSize: '14px', color: '#1D4ED8' }}>
+                        {q.why_ask || q.why_to_ask}
+                      </p>
+                    </div>
                   )}
-                  {depthLevel === 'complete_guide' && q.what_to_listen_for && (
-                    <p style={{ fontSize: '13px', color: '#6B7280', marginBottom: '4px' }}>
-                      <strong>Listen for:</strong> {q.what_to_listen_for}
-                    </p>
+                  
+                  {q.what_to_listen_for && (
+                    <div style={{ 
+                      backgroundColor: '#D1FAE5', 
+                      border: '1px solid #10B981',
+                      borderRadius: '8px',
+                      padding: '12px',
+                      marginBottom: '8px'
+                    }}>
+                      <p style={{ fontSize: '13px', color: '#065F46', fontWeight: 500, marginBottom: '4px' }}>
+                        Listen for:
+                      </p>
+                      <p style={{ fontSize: '14px', color: '#047857' }}>
+                        {q.what_to_listen_for}
+                      </p>
+                    </div>
                   )}
-                  {depthLevel === 'complete_guide' && q.warning_signs && (
-                    <p style={{ fontSize: '13px', color: '#DC2626' }}>
-                      <strong>Warning signs:</strong> {q.warning_signs}
-                    </p>
+                  
+                  {q.warning_signs && (
+                    <div style={{ 
+                      backgroundColor: '#FEE2E2', 
+                      border: '1px solid #EF4444',
+                      borderRadius: '8px',
+                      padding: '12px'
+                    }}>
+                      <p style={{ fontSize: '13px', color: '#991B1B', fontWeight: 500, marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <AlertTriangle className="h-4 w-4" /> Warning signs:
+                      </p>
+                      <p style={{ fontSize: '14px', color: '#B91C1C' }}>
+                        {q.warning_signs}
+                      </p>
+                    </div>
                   )}
                 </div>
               ))}
             </div>
-          </div>
+          </>
         )}
       </div>
     </div>
