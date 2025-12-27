@@ -1,8 +1,9 @@
 import os
 import json
+import re
 import logging
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
 from supabase import create_client, Client
 from typing import Optional, Tuple, Dict, Any
 import sys
@@ -22,10 +23,43 @@ def get_supabase_client() -> Client | None:
     return None
 
 class AnalyzeJobRequest(BaseModel):
-    job_description: str
-    mode: str
-    interviewer_type: str
-    provider: str = 'claude'
+    job_description: str = Field(..., min_length=10, max_length=50000)
+    mode: str = Field(default='standard')
+    interviewer_type: str = Field(default='general')
+    provider: str = Field(default='claude')
+    token: Optional[str] = Field(None, max_length=256)
+    
+    @field_validator('job_description')
+    @classmethod
+    def validate_job_description(cls, v: str) -> str:
+        cleaned = v.strip()
+        if len(cleaned) < 10:
+            raise ValueError('Job description must be at least 10 characters')
+        return cleaned
+    
+    @field_validator('mode')
+    @classmethod
+    def validate_mode(cls, v: str) -> str:
+        allowed = ['quick', 'standard', 'deep', 'max']
+        if v.lower() not in allowed:
+            raise ValueError(f'Mode must be one of: {", ".join(allowed)}')
+        return v.lower()
+    
+    @field_validator('interviewer_type')
+    @classmethod
+    def validate_interviewer_type(cls, v: str) -> str:
+        allowed = ['hr', 'technical', 'manager', 'general']
+        if v.lower() not in allowed:
+            raise ValueError(f'Interviewer type must be one of: {", ".join(allowed)}')
+        return v.lower()
+    
+    @field_validator('provider')
+    @classmethod
+    def validate_provider(cls, v: str) -> str:
+        allowed = ['claude', 'gemini']
+        if v.lower() not in allowed:
+            raise ValueError(f'Provider must be one of: {", ".join(allowed)}')
+        return v.lower()
 
 class AnalyzeJobResponse(BaseModel):
     analysis: str

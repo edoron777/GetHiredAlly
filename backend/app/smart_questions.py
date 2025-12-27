@@ -1,8 +1,9 @@
 import os
 import json
 import sys
+import uuid
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List, Any
 from supabase import create_client, Client
 
@@ -10,6 +11,14 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from services.ai_service import generate_completion
 
 router = APIRouter(prefix="/api/smart-questions", tags=["smart-questions"])
+
+def validate_uuid(value: str) -> bool:
+    """Check if a string is a valid UUID."""
+    try:
+        uuid.UUID(str(value))
+        return True
+    except (ValueError, AttributeError):
+        return False
 
 def get_supabase_client() -> Client:
     url = os.environ.get("SUPABASE_URL")
@@ -20,11 +29,29 @@ def get_supabase_client() -> Client:
 
 
 class GenerateRequest(BaseModel):
-    xray_analysis_id: Optional[str] = None
-    job_description: Optional[str] = None
-    cv_text: Optional[str] = None
-    token: str
-    provider: Optional[str] = 'gemini'
+    xray_analysis_id: Optional[str] = Field(None, max_length=256)
+    job_description: Optional[str] = Field(None, max_length=50000)
+    cv_text: Optional[str] = Field(None, max_length=100000)
+    token: str = Field(..., min_length=1, max_length=256)
+    provider: Optional[str] = Field(default='gemini')
+    
+    @field_validator('xray_analysis_id')
+    @classmethod
+    def validate_xray_id(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and v.strip():
+            if not validate_uuid(v):
+                raise ValueError('Invalid analysis ID format')
+        return v
+    
+    @field_validator('provider')
+    @classmethod
+    def validate_provider(cls, v: Optional[str]) -> str:
+        if v is None:
+            return 'gemini'
+        allowed = ['claude', 'gemini']
+        if v.lower() not in allowed:
+            raise ValueError(f'Provider must be one of: {", ".join(allowed)}')
+        return v.lower()
 
 class EligibilityResponse(BaseModel):
     eligible: bool
