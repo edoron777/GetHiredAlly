@@ -67,6 +67,7 @@ class UserData(BaseModel):
     name: str | None
     profile_name: str | None
     is_verified: bool = False
+    is_admin: bool = False
 
 class LoginResponse(BaseModel):
     success: bool
@@ -314,7 +315,7 @@ async def login_user(request: LoginRequest):
     
     try:
         user_result = client.table("users").select(
-            "id, email, name, password_hash, profile_id, is_verified"
+            "id, email, name, password_hash, profile_id, is_verified, is_admin"
         ).eq("email", request.email.lower()).execute()
         
         if not user_result.data or len(user_result.data) == 0:
@@ -353,7 +354,8 @@ async def login_user(request: LoginRequest):
                 email=user["email"],
                 name=user.get("name"),
                 profile_name=profile_name,
-                is_verified=user.get("is_verified", False)
+                is_verified=user.get("is_verified", False),
+                is_admin=user.get("is_admin", False)
             )
         )
         
@@ -400,7 +402,7 @@ async def get_current_user(token: str):
             client.table("user_sessions").delete().eq("token_hash", token_hash).execute()
             raise HTTPException(status_code=401, detail="Session expired")
         
-        user_result = client.table("users").select("id, email, name, profile_id, is_verified").eq("id", session["user_id"]).execute()
+        user_result = client.table("users").select("id, email, name, profile_id, is_verified, is_admin").eq("id", session["user_id"]).execute()
         
         if not user_result.data or len(user_result.data) == 0:
             raise HTTPException(status_code=401, detail="User not found")
@@ -418,7 +420,8 @@ async def get_current_user(token: str):
             "email": user["email"],
             "name": user.get("name"),
             "profile_name": profile_name,
-            "is_verified": user.get("is_verified", False)
+            "is_verified": user.get("is_verified", False),
+            "is_admin": user.get("is_admin", False)
         }
         
     except HTTPException:
