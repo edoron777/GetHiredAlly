@@ -135,7 +135,18 @@ GetHiredAlly is an interview preparation application with job description analys
 - Introduction section with encouraging preparation message
 - Backward compatible with legacy data (weak_areas → focus_areas mapping)
 
+## Security Implementation
+- **Security Headers Middleware**: X-Frame-Options, X-Content-Type-Options, X-XSS-Protection, HSTS, Referrer-Policy, Permissions-Policy
+- **Rate Limiting**: Login 5/min, Register 10/hr, AI calls 10-20/hr
+- **Audit Logging**: Login attempts, security events logged to `backend/logs/audit.log`
+- **CV Encryption**: CV text encrypted at rest using Fernet (ENCRYPTION_KEY secret required)
+- **Input Validation**: Pydantic models for all API inputs with sanitization
+- **Password Security**: bcrypt hashing, passwords never logged
+
 ## Recent Changes
+- December 27, 2025: Added security headers middleware and audit logging for login/security events
+- December 27, 2025: Implemented CV encryption at rest with Fernet cryptography
+- December 27, 2025: Added rate limiting to sensitive API endpoints
 - December 27, 2025: Display level buttons now one-line horizontal with colored icons (blue List, yellow Lightbulb, purple BookOpen, gold Star)
 - December 27, 2025: Added Filter icon on title line, removed sublabels for cleaner compact design
 - December 27, 2025: Navy blue StandardToolbar with Expand/Collapse, Email, WhatsApp, PDF, Word, and Markdown buttons

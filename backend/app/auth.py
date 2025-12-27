@@ -12,6 +12,7 @@ from supabase import create_client, Client
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config.rate_limiter import limiter
+from utils.audit_logger import AuditLogger
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -321,17 +322,31 @@ async def login_user(http_request: Request, request: LoginRequest):
     if not client:
         raise HTTPException(status_code=500, detail="Database connection not available")
     
+    ip_address = http_request.client.host if http_request.client else "unknown"
+    
     try:
         user_result = client.table("users").select(
             "id, email, name, password_hash, profile_id, is_verified, is_admin"
         ).eq("email", request.email.lower()).execute()
         
         if not user_result.data or len(user_result.data) == 0:
+            AuditLogger.log_login_attempt(
+                email=request.email,
+                success=False,
+                ip_address=ip_address,
+                reason="User not found"
+            )
             raise HTTPException(status_code=401, detail="Invalid email or password")
         
         user = user_result.data[0]
         
         if not verify_password(request.password, user["password_hash"]):
+            AuditLogger.log_login_attempt(
+                email=request.email,
+                success=False,
+                ip_address=ip_address,
+                reason="Invalid password"
+            )
             raise HTTPException(status_code=401, detail="Invalid email or password")
         
         profile_name = None
@@ -352,6 +367,12 @@ async def login_user(http_request: Request, request: LoginRequest):
         client.table("user_sessions").insert(session_data).execute()
         
         client.table("users").update({"last_login": datetime.utcnow().isoformat()}).eq("id", user["id"]).execute()
+        
+        AuditLogger.log_login_attempt(
+            email=request.email,
+            success=True,
+            ip_address=ip_address
+        )
         
         return LoginResponse(
             success=True,

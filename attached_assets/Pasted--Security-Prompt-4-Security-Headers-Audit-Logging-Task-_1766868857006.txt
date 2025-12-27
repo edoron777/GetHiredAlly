@@ -1,0 +1,441 @@
+# Security Prompt 4: Security Headers + Audit Logging
+
+**Task:** Add HTTP security headers and implement secure audit logging
+**Priority:** 🟢 P3 - MEDIUM
+**Estimated Effort:** 2-3 hours
+
+---
+
+## ⚠️ CRITICAL INSTRUCTIONS
+
+- Follow instructions exactly
+- Test headers are applied correctly
+- Ensure NO sensitive data in logs
+
+---
+
+## PART A: Security Headers
+
+### Why Security Headers?
+
+Security headers protect against common web attacks:
+
+| Header | Protection Against |
+|--------|-------------------|
+| Content-Security-Policy | XSS, code injection |
+| X-Frame-Options | Clickjacking |
+| X-Content-Type-Options | MIME sniffing |
+| Strict-Transport-Security | Downgrade attacks |
+| X-XSS-Protection | XSS (legacy browsers) |
+| Referrer-Policy | Information leakage |
+
+### Step 1: Create Security Headers Middleware
+
+```python
+# middleware/security_headers.py
+
+from fastapi import Request
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import Response
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response: Response = await call_next(request)
+        
+        # Prevent clickjacking - don't allow site to be embedded in iframes
+        response.headers["X-Frame-Options"] = "DENY"
+        
+        # Prevent MIME type sniffing
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        
+        # XSS protection for legacy browsers
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        
+        # Control referrer information
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        
+        # Force HTTPS (Strict Transport Security)
+        # max-age=31536000 = 1 year
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        
+        # Content Security Policy
+        # Adjust based on your needs (CDNs, external scripts, etc.)
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+            "font-src 'self' https://fonts.gstatic.com; "
+            "img-src 'self' data: https:; "
+            "connect-src 'self' https://api.anthropic.com https://*.supabase.co; "
+            "frame-ancestors 'none';"
+        )
+        
+        # Permissions Policy (formerly Feature-Policy)
+        response.headers["Permissions-Policy"] = (
+            "geolocation=(), "
+            "microphone=(), "
+            "camera=(), "
+            "payment=()"
+        )
+        
+        return response
+```
+
+### Step 2: Add Middleware to FastAPI App
+
+```python
+# main.py
+
+from fastapi import FastAPI
+from middleware.security_headers import SecurityHeadersMiddleware
+
+app = FastAPI()
+
+# Add security headers middleware
+app.add_middleware(SecurityHeadersMiddleware)
+
+# ... rest of app configuration
+```
+
+### Step 3: Adjust CSP for Your Needs
+
+If you use external services, update Content-Security-Policy:
+
+```python
+# For Tailwind CDN
+"style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; "
+
+# For Google Fonts
+"font-src 'self' https://fonts.gstatic.com; "
+
+# For Resend email API
+"connect-src 'self' https://api.resend.com; "
+
+# For images from any HTTPS source
+"img-src 'self' data: https:; "
+```
+
+---
+
+## PART B: Audit Logging
+
+### Why Audit Logging?
+
+Track important security events:
+- Login attempts (success/failure)
+- Password changes
+- Data access
+- Admin actions
+
+### Step 1: Create Audit Logger
+
+```python
+# utils/audit_logger.py
+
+import logging
+from datetime import datetime
+from typing import Optional
+import json
+
+# Configure audit logger
+audit_logger = logging.getLogger('audit')
+audit_logger.setLevel(logging.INFO)
+
+# Create file handler
+file_handler = logging.FileHandler('logs/audit.log')
+file_handler.setLevel(logging.INFO)
+
+# Create formatter
+formatter = logging.Formatter(
+    '%(asctime)s | %(levelname)s | %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+file_handler.setFormatter(formatter)
+
+# Add handler to logger
+audit_logger.addHandler(file_handler)
+
+
+class AuditLogger:
+    """
+    Secure audit logger - NEVER logs sensitive data.
+    """
+    
+    @staticmethod
+    def log_login_attempt(
+        email: str,
+        success: bool,
+        ip_address: str,
+        reason: Optional[str] = None
+    ):
+        """Log login attempt - NEVER log password."""
+        event = {
+            "event": "LOGIN_ATTEMPT",
+            "email": email,
+            "success": success,
+            "ip": ip_address,
+            "reason": reason if not success else None
+        }
+        audit_logger.info(json.dumps(event))
+    
+    @staticmethod
+    def log_logout(user_id: int, email: str, ip_address: str):
+        """Log user logout."""
+        event = {
+            "event": "LOGOUT",
+            "user_id": user_id,
+            "email": email,
+            "ip": ip_address
+        }
+        audit_logger.info(json.dumps(event))
+    
+    @staticmethod
+    def log_password_change(user_id: int, email: str, ip_address: str):
+        """Log password change - NEVER log old or new password."""
+        event = {
+            "event": "PASSWORD_CHANGE",
+            "user_id": user_id,
+            "email": email,
+            "ip": ip_address
+        }
+        audit_logger.info(json.dumps(event))
+    
+    @staticmethod
+    def log_data_access(
+        user_id: int,
+        resource_type: str,
+        resource_id: int,
+        action: str,
+        ip_address: str
+    ):
+        """Log data access (CV view, report generation, etc.)."""
+        event = {
+            "event": "DATA_ACCESS",
+            "user_id": user_id,
+            "resource_type": resource_type,  # e.g., "cv", "xray_report"
+            "resource_id": resource_id,
+            "action": action,  # e.g., "view", "create", "delete"
+            "ip": ip_address
+        }
+        audit_logger.info(json.dumps(event))
+    
+    @staticmethod
+    def log_admin_action(
+        admin_id: int,
+        admin_email: str,
+        action: str,
+        target_user_id: Optional[int],
+        details: str,
+        ip_address: str
+    ):
+        """Log admin actions."""
+        event = {
+            "event": "ADMIN_ACTION",
+            "admin_id": admin_id,
+            "admin_email": admin_email,
+            "action": action,
+            "target_user_id": target_user_id,
+            "details": details,
+            "ip": ip_address
+        }
+        audit_logger.warning(json.dumps(event))  # Warning level for visibility
+    
+    @staticmethod
+    def log_security_event(
+        event_type: str,
+        details: str,
+        ip_address: str,
+        user_id: Optional[int] = None
+    ):
+        """Log security events (rate limit hit, suspicious activity, etc.)."""
+        event = {
+            "event": "SECURITY_EVENT",
+            "type": event_type,
+            "details": details,
+            "user_id": user_id,
+            "ip": ip_address
+        }
+        audit_logger.warning(json.dumps(event))
+```
+
+### Step 2: Create Logs Directory
+
+```bash
+mkdir -p logs
+```
+
+Add to `.gitignore`:
+```
+logs/
+*.log
+```
+
+### Step 3: Use Audit Logger in Code
+
+**Login endpoint:**
+```python
+# routes/auth.py
+
+from utils.audit_logger import AuditLogger
+
+@app.post("/api/auth/login")
+async def login(request: Request, user_input: UserLoginInput):
+    ip_address = request.client.host
+    
+    # ... validate user ...
+    
+    if not user:
+        AuditLogger.log_login_attempt(
+            email=user_input.email,
+            success=False,
+            ip_address=ip_address,
+            reason="User not found"
+        )
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    if not verify_password(user_input.password, user.password_hash):
+        AuditLogger.log_login_attempt(
+            email=user_input.email,
+            success=False,
+            ip_address=ip_address,
+            reason="Invalid password"
+        )
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    # Success
+    AuditLogger.log_login_attempt(
+        email=user_input.email,
+        success=True,
+        ip_address=ip_address
+    )
+    
+    # ... create session, return response ...
+```
+
+**Password change:**
+```python
+@app.put("/api/user/password")
+async def change_password(request: Request, ...):
+    ip_address = request.client.host
+    
+    # ... change password logic ...
+    
+    AuditLogger.log_password_change(
+        user_id=current_user.id,
+        email=current_user.email,
+        ip_address=ip_address
+    )
+```
+
+**Data access:**
+```python
+@app.get("/api/cv/{cv_id}")
+async def get_cv(cv_id: int, request: Request, current_user: User):
+    ip_address = request.client.host
+    
+    cv = await get_cv_from_db(cv_id, current_user.id)
+    
+    AuditLogger.log_data_access(
+        user_id=current_user.id,
+        resource_type="cv",
+        resource_id=cv_id,
+        action="view",
+        ip_address=ip_address
+    )
+    
+    return cv
+```
+
+**Rate limit exceeded:**
+```python
+# In rate_limit_exceeded_handler
+
+from utils.audit_logger import AuditLogger
+
+async def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
+    AuditLogger.log_security_event(
+        event_type="RATE_LIMIT_EXCEEDED",
+        details=f"Endpoint: {request.url.path}",
+        ip_address=request.client.host
+    )
+    
+    return JSONResponse(
+        status_code=429,
+        content={"error": "Too many requests"}
+    )
+```
+
+---
+
+## ⚠️ WHAT TO NEVER LOG
+
+| Never Log | Why |
+|-----------|-----|
+| Passwords | Obvious security risk |
+| Password hashes | Can be cracked |
+| Session tokens | Can be stolen |
+| CV content | Personal data |
+| API keys | Security risk |
+| Full request bodies | May contain sensitive data |
+
+**Always log:**
+- User ID (not personal details)
+- Email (for identification)
+- IP address (for security analysis)
+- Action type
+- Timestamp (automatic)
+- Success/failure status
+
+---
+
+## VERIFICATION CHECKLIST
+
+**Security Headers:**
+- [ ] SecurityHeadersMiddleware created
+- [ ] Middleware added to FastAPI app
+- [ ] X-Frame-Options: DENY
+- [ ] X-Content-Type-Options: nosniff
+- [ ] Strict-Transport-Security configured
+- [ ] Content-Security-Policy configured
+- [ ] Headers visible in browser DevTools
+
+**Audit Logging:**
+- [ ] AuditLogger class created
+- [ ] logs/ directory created
+- [ ] logs/ added to .gitignore
+- [ ] Login attempts logged
+- [ ] Logout logged
+- [ ] Password changes logged
+- [ ] Data access logged
+- [ ] Rate limit events logged
+- [ ] NO sensitive data in logs
+
+---
+
+## TESTING
+
+### Test Security Headers
+
+1. Open browser DevTools → Network tab
+2. Make any request to your API
+3. Click on the request → Headers → Response Headers
+4. Verify all security headers are present
+
+Or use curl:
+```bash
+curl -I https://app.gethiredally.com/api/health
+```
+
+### Test Audit Logging
+
+1. Attempt to login with wrong password
+2. Check `logs/audit.log`
+3. Verify entry exists with:
+   - Event type: LOGIN_ATTEMPT
+   - success: false
+   - Email visible
+   - Password NOT visible
+
+---
+
+**END OF PROMPT**

@@ -10,6 +10,7 @@ from slowapi.errors import RateLimitExceeded
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config.rate_limiter import limiter, rate_limit_exceeded_handler
+from middleware.security_headers import SecurityHeadersMiddleware
 
 from .auth import router as auth_router
 from .analyze import router as analyze_router
@@ -29,6 +30,8 @@ app.include_router(downloads_router)
 app.include_router(questions_router)
 app.include_router(smart_questions_router)
 app.include_router(admin_router)
+
+app.add_middleware(SecurityHeadersMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
