@@ -1,0 +1,196 @@
+## TASK: Create Admin Dashboard Backend API
+
+### OVERVIEW
+Create API endpoints for the admin dashboard to view AI usage statistics.
+
+### STEP 1: Create Admin Router
+
+Create file: backend/routers/admin.py
+
+from fastapi import APIRouter, HTTPException, Depends
+from datetime import datetime, date, timedelta
+from typing import Optional
+
+router = APIRouter(prefix="/api/admin", tags=["admin"])
+
+# Middleware to check admin access
+async def verify_admin(user_id: str):
+    user = supabase.table('users').select('is_admin').eq('id', user_id).single().execute()
+    if not user.data or not user.data.get('is_admin'):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return True
+
+@router.get("/ai-usage/summary")
+async def get_usage_summary(
+    user_id: str,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None
+):
+    """Get overall AI usage summary"""
+    await verify_admin(user_id)
+    
+    # Default to last 30 days
+    if not end_date:
+        end_date = date.today()
+    if not start_date:
+        start_date = end_date - timedelta(days=30)
+    
+    # Query aggregated data
+    result = supabase.table('ai_usage_logs').select(
+        'ai_provider',
+        'service_type',
+        'success',
+        'cost_usd',
+        'input_tokens',
+        'output_tokens',
+        'response_time_ms'
+    ).gte('created_at', start_date.isoformat()).lte('created_at', end_date.isoformat()).execute()
+    
+    logs = result.data or []
+    
+    # Calculate summary
+    total_cost = sum(log.get('cost_usd', 0) or 0 for log in logs)
+    total_requests = len(logs)
+    successful = len([l for l in logs if l.get('success')])
+    total_tokens = sum((log.get('input_tokens', 0) or 0) + (log.get('output_tokens', 0) or 0) for log in logs)
+    avg_response_time = sum(log.get('response_time_ms', 0) or 0 for log in logs) / max(total_requests, 1)
+    
+    # By provider
+    by_provider = {}
+    for log in logs:
+        provider = log.get('ai_provider', 'unknown')
+        if provider not in by_provider:
+            by_provider[provider] = {'requests': 0, 'cost': 0, 'tokens': 0}
+        by_provider[provider]['requests'] += 1
+        by_provider[provider]['cost'] += log.get('cost_usd', 0) or 0
+        by_provider[provider]['tokens'] += (log.get('input_tokens', 0) or 0) + (log.get('output_tokens', 0) or 0)
+    
+    # By service
+    by_service = {}
+    for log in logs:
+        service = log.get('service_type', 'unknown')
+        if service not in by_service:
+            by_service[service] = {'requests': 0, 'cost': 0}
+        by_service[service]['requests'] += 1
+        by_service[service]['cost'] += log.get('cost_usd', 0) or 0
+    
+    return {
+        'period': {
+            'start_date': start_date.isoformat(),
+            'end_date': end_date.isoformat()
+        },
+        'summary': {
+            'total_cost_usd': round(total_cost, 4),
+            'total_requests': total_requests,
+            'successful_requests': successful,
+            'failed_requests': total_requests - successful,
+            'success_rate': round(successful / max(total_requests, 1) * 100, 1),
+            'total_tokens': total_tokens,
+            'avg_response_time_ms': round(avg_response_time)
+        },
+        'by_provider': by_provider,
+        'by_service': by_service
+    }
+
+@router.get("/ai-usage/daily")
+async def get_daily_usage(
+    user_id: str,
+    days: int = 7
+):
+    """Get daily usage breakdown for charts"""
+    await verify_admin(user_id)
+    
+    end_date = date.today()
+    start_date = end_date - timedelta(days=days)
+    
+    result = supabase.table('ai_usage_logs').select(
+        'created_at',
+        'ai_provider',
+        'cost_usd',
+        'success'
+    ).gte('created_at', start_date.isoformat()).execute()
+    
+    logs = result.data or []
+    
+    # Group by date
+    daily = {}
+    for log in logs:
+        log_date = log.get('created_at', '')[:10]  # Get YYYY-MM-DD
+        if log_date not in daily:
+            daily[log_date] = {'date': log_date, 'requests': 0, 'cost': 0, 'claude': 0, 'gemini': 0}
+        daily[log_date]['requests'] += 1
+        daily[log_date]['cost'] += log.get('cost_usd', 0) or 0
+        provider = log.get('ai_provider', '')
+        if provider in ['claude', 'gemini']:
+            daily[log_date][provider] += 1
+    
+    # Sort by date
+    return sorted(daily.values(), key=lambda x: x['date'])
+
+@router.get("/ai-usage/recent")
+async def get_recent_logs(
+    user_id: str,
+    limit: int = 50
+):
+    """Get recent AI usage logs for table view"""
+    await verify_admin(user_id)
+    
+    result = supabase.table('ai_usage_logs').select('*').order('created_at', desc=True).limit(limit).execute()
+    
+    return result.data or []
+
+@router.get("/ai-usage/by-user")
+async def get_usage_by_user(
+    user_id: str,
+    limit: int = 20
+):
+    """Get usage breakdown by user"""
+    await verify_admin(user_id)
+    
+    # This requires a more complex query - simplified version
+    result = supabase.rpc('get_usage_by_user', {'limit_count': limit}).execute()
+    
+    return result.data or []
+
+### STEP 2: Add SQL Function for User Usage
+
+Run in Supabase SQL Editor:
+
+CREATE OR REPLACE FUNCTION get_usage_by_user(limit_count INTEGER DEFAULT 20)
+RETURNS TABLE (
+    user_id UUID,
+    user_email TEXT,
+    total_requests BIGINT,
+    total_cost DECIMAL,
+    last_used TIMESTAMP WITH TIME ZONE
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        l.user_id,
+        u.email as user_email,
+        COUNT(*)::BIGINT as total_requests,
+        SUM(l.cost_usd)::DECIMAL as total_cost,
+        MAX(l.created_at) as last_used
+    FROM ai_usage_logs l
+    LEFT JOIN users u ON l.user_id = u.id
+    GROUP BY l.user_id, u.email
+    ORDER BY total_cost DESC
+    LIMIT limit_count;
+END;
+$$ LANGUAGE plpgsql;
+
+### STEP 3: Add Router to Main App
+
+In main.py:
+from routers.admin import router as admin_router
+app.include_router(admin_router)
+
+### SUCCESS CHECKLIST
+- [ ] Admin router created
+- [ ] verify_admin middleware works
+- [ ] GET /api/admin/ai-usage/summary returns summary data
+- [ ] GET /api/admin/ai-usage/daily returns daily breakdown
+- [ ] GET /api/admin/ai-usage/recent returns recent logs
+- [ ] SQL function created for user breakdown
+- [ ] Router added to main app
