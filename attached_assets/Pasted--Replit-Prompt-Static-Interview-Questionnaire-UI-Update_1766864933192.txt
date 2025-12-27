@@ -1,0 +1,375 @@
+# Replit Prompt: Static Interview Questionnaire UI Update + Standard Toolbar
+
+**Task:** Update the Static Interview Questionnaire page with new UI improvements
+**Priority:** HIGH
+**This toolbar will become the STANDARD for all services**
+
+---
+
+## ⚠️ CRITICAL INSTRUCTIONS
+
+**DO NOT:**
+- ❌ Add ANY features not explicitly requested
+- ❌ Change the height of the toolbar (must be ONE line)
+- ❌ Add extra styling, shadows, or decorations not specified
+- ❌ Improvise or be "creative"
+
+**YOU MUST:**
+- ✅ Follow these instructions EXACTLY
+- ✅ Keep everything simple and clean
+- ✅ Ask for clarification if something is unclear
+
+---
+
+## CHANGE 1: Fix Display Level Buttons (Reduce Height)
+
+**PROBLEM:** The 4 display level buttons (Quick Review, With Example, etc.) are too tall. Icon is above text, wasting vertical space.
+
+**CURRENT (Wrong):**
+```
+┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
+│      ☰      │ │      💡     │ │      📖     │ │      ⚙      │
+│ Quick Review│ │ With Example│ │With Insights│ │Complete Guide│
+│Just the     │ │See sample   │ │Understand   │ │Full         │
+│questions    │ │answers      │ │the purpose  │ │preparation  │
+└─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘
+```
+
+**FIXED (Correct) - One line per button with colored icons:**
+```
+🔻 How much detail do you need?
+[☰ Quick Review] [💡 With Example] [📖 With Insights] [⭐ Complete Guide]
+```
+
+**Icon and Color Specifications:**
+
+| Element | Icon (lucide-react) | Color |
+|---------|---------------------|-------|
+| Title | `Filter` (funnel) | Gray (#6B7280) |
+| Quick Review | `List` | Blue (#3B82F6) |
+| With Example | `Lightbulb` | Yellow/Orange (#F59E0B) |
+| With Insights | `BookOpen` | Purple (#8B5CF6) |
+| Complete Guide | `Star` | Gold (#EAB308) |
+
+**Implementation:**
+- Funnel icon on the TITLE line only (not on buttons)
+- Icon on the LEFT of text (not above)
+- Main label only (e.g., "Quick Review")
+- Remove subtitle (e.g., "Just the questions") - not needed
+- One line height per button
+- Horizontal row of buttons
+- Each icon has its own color
+
+**Code structure:**
+```jsx
+{/* Title with funnel icon */}
+<div className="flex items-center gap-2 mb-2">
+  <Filter size={16} className="text-gray-500" />
+  <span className="text-gray-700">How much detail do you need?</span>
+</div>
+
+{/* Buttons row */}
+<div className="flex gap-2">
+  <button className="flex items-center gap-2 px-4 py-2 border rounded hover:bg-gray-50">
+    <List size={16} className="text-blue-500" />
+    <span>Quick Review</span>
+  </button>
+  <button className="flex items-center gap-2 px-4 py-2 border rounded hover:bg-gray-50">
+    <Lightbulb size={16} className="text-yellow-500" />
+    <span>With Example</span>
+  </button>
+  <button className="flex items-center gap-2 px-4 py-2 border rounded hover:bg-gray-50">
+    <BookOpen size={16} className="text-purple-500" />
+    <span>With Insights</span>
+  </button>
+  <button className="flex items-center gap-2 px-4 py-2 border rounded hover:bg-gray-50">
+    <Star size={16} className="text-yellow-400" />
+    <span>Complete Guide</span>
+  </button>
+</div>
+```
+
+**Import statement:**
+```jsx
+import { Filter, List, Lightbulb, BookOpen, Star } from 'lucide-react'
+```
+
+**The focus should be on the QUESTIONS, not on these control buttons.**
+
+---
+
+## CHANGE 2: Remove the "Jump to" Banner
+
+**REMOVE this entire section** (the large banner with "Questions You'll Be Asked" and "Questions You Can Ask" cards with "Jump" links):
+
+```
+❌ REMOVE THIS:
+┌─────────────────────────────────────────────────────────────┐
+│  This page includes 2 types of questions:                   │
+│                                                             │
+│  ┌─────────────────────┐  ┌─────────────────────┐          │
+│  │ Questions You'll    │  │ Questions You Can   │          │
+│  │ Be Asked           │  │ Ask                 │          │
+│  │ 54 questions       │  │ 11 questions        │          │
+│  │ [Jump ↓]           │  │ [Jump ↓]            │          │
+│  └─────────────────────┘  └─────────────────────┘          │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**REPLACE with a simple text line** (normal text size, no special styling):
+
+```
+✅ ADD THIS (simple text, one line):
+Questions You'll Be Asked (54) | Questions You Can Ask (11)
+```
+
+This text line should appear **above the section headers**, just as a simple informational line.
+
+---
+
+## CHANGE 3: Create Standard Toolbar
+
+**REMOVE the current toolbar/action row.**
+
+**CREATE a new Standard Toolbar** with this EXACT structure:
+
+```
+┌────────────────────────────────────────────────────────────────────────────┐
+│ [+] [−]  │  [         SPACE         ]  │  Email  WhatsApp  │  PDF  WORD  MD │
+└────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Toolbar Specifications:
+
+**Layout (Left to Right):**
+
+| Position | Content | Purpose |
+|----------|---------|---------|
+| FAR LEFT | `+` and `−` buttons | Expand All / Collapse All |
+| SEPARATOR | `│` pipe | Visual separation |
+| MIDDLE | Empty flexible space | Separates view actions from export actions |
+| SEPARATOR | `│` pipe | Visual separation |
+| RIGHT | `Email` `WhatsApp` | Share options |
+| SEPARATOR | `│` pipe | Visual separation |
+| FAR RIGHT | `PDF` `WORD` `MD` | Document downloads |
+
+**Styling:**
+- Background: Blue (#1E3A5F or similar to match your theme)
+- Text/Icons: White
+- Height: ONE line only (same as current toolbar height)
+- Pipe separators: Subtle, lighter color or opacity
+
+**Tooltips (on mouse hover):**
+- `+` button → Tooltip: "Expand All"
+- `−` button → Tooltip: "Collapse All"
+- `MD` button → Tooltip: "Download as Markdown"
+- Other buttons: No tooltip needed (text is clear)
+
+### Toolbar Code Structure:
+
+```jsx
+<div className="flex items-center justify-between px-4 py-2" 
+     style={{ backgroundColor: '#1E3A5F' }}>
+  
+  {/* LEFT: Expand/Collapse */}
+  <div className="flex items-center gap-2">
+    <button title="Expand All" className="text-white px-2 py-1 hover:bg-white/20 rounded">
+      +
+    </button>
+    <button title="Collapse All" className="text-white px-2 py-1 hover:bg-white/20 rounded">
+      −
+    </button>
+  </div>
+  
+  {/* Separator */}
+  <div className="text-white/50">│</div>
+  
+  {/* MIDDLE: Flexible space */}
+  <div className="flex-grow"></div>
+  
+  {/* Separator */}
+  <div className="text-white/50">│</div>
+  
+  {/* RIGHT: Share options */}
+  <div className="flex items-center gap-3">
+    <button className="text-white hover:bg-white/20 px-2 py-1 rounded">
+      Email
+    </button>
+    <button className="text-white hover:bg-white/20 px-2 py-1 rounded">
+      WhatsApp
+    </button>
+  </div>
+  
+  {/* Separator */}
+  <div className="text-white/50">│</div>
+  
+  {/* FAR RIGHT: Document downloads */}
+  <div className="flex items-center gap-3">
+    <button className="text-white hover:bg-white/20 px-2 py-1 rounded">
+      PDF
+    </button>
+    <button className="text-white hover:bg-white/20 px-2 py-1 rounded">
+      WORD
+    </button>
+    <button title="Download as Markdown" className="text-white hover:bg-white/20 px-2 py-1 rounded">
+      MD
+    </button>
+  </div>
+</div>
+```
+
+---
+
+## CHANGE 4: Move Question Count
+
+**REMOVE** the question count from the toolbar.
+
+**MOVE** it to appear near the section header:
+
+```
+QUESTIONS YOU'LL BE ASKED  •  54 questions
+
+▼ Universal Questions (12)
+▼ Behavioral Questions (18)
+...
+```
+
+Or simply above the first category.
+
+---
+
+## CHANGE 5: Document Footer Standard
+
+When generating PDF, WORD, or MD documents, **ALWAYS include this footer** on every page:
+
+**Footer Content (Left to Right):**
+1. **Page number** - "Page X of Y"
+2. **Service name** - e.g., "Static Interview Questionnaire"
+3. **Links:**
+   - Website: https://gethiredally.com/
+   - App: https://app.gethiredally.com/
+
+**Footer Design:**
+- Clean, professional, modern
+- Small font size
+- Subtle separator line above footer
+
+---
+
+## CHANGE 6: Button Functionality
+
+### Email Button:
+- Opens email composer OR
+- Shows modal to enter email address
+- Sends the questionnaire content to the email
+- Use existing Resend integration
+
+### WhatsApp Button:
+- Opens WhatsApp share with pre-filled message
+- URL format: `https://wa.me/?text=YOUR_MESSAGE`
+- Message should include link to the results page
+
+### PDF / WORD / MD Buttons:
+- Generate document with professional styling
+- Include the footer defined above
+- Modern, clean design
+
+---
+
+## PAGE STRUCTURE (Top to Bottom)
+
+After all changes, the page should look like this:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Common Interview Questions                                   │
+│ Master these questions and you'll be ready for any interview │
+│                                                             │
+│ Questions You'll Be Asked (54) | Questions You Can Ask (11) │  ← Simple text line
+│                                                             │
+│ 🔻 How much detail do you need?                              │  ← Funnel icon (gray)
+│ [☰ Quick Review] [💡 With Example] [📖 With Insights] [⭐ Complete Guide]  ← Colored icons
+│   (blue)           (yellow)          (purple)         (gold)
+│                                                             │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ [+] [−]  │       │  Email  WhatsApp  │  PDF  WORD  MD  │ │  ← Standard Toolbar
+│ └─────────────────────────────────────────────────────────┘ │
+│                                                             │
+│ QUESTIONS YOU'LL BE ASKED  •  54 questions                  │
+│                                                             │
+│ ▼ Universal Questions (12)                                  │
+│ ▼ Behavioral Questions (18)                                 │
+│ ▼ Situational Questions (8)                                 │
+│ ▼ Self-Assessment Questions (8)                             │
+│ ▼ Cultural Fit Questions (8)                                │
+│                                                             │
+│ QUESTIONS YOU CAN ASK  •  11 questions                      │
+│                                                             │
+│ ▼ Questions to Ask the Interviewer (11)                     │
+│                                                             │
+│ ← Back to Questions Service                                 │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## FILES TO MODIFY
+
+1. **Static Questionnaire page** - Main UI changes
+2. **Create reusable Toolbar component** - For use across services
+3. **Document generation service** - Add footer to PDF/WORD/MD
+
+---
+
+## IMPORTANT: REUSABLE COMPONENT
+
+The **Toolbar** should be created as a **separate, reusable component** that can be imported into any service page:
+
+```jsx
+// components/StandardToolbar.jsx
+export const StandardToolbar = ({ 
+  onExpandAll, 
+  onCollapseAll, 
+  onEmail, 
+  onWhatsApp, 
+  onPDF, 
+  onWord, 
+  onMarkdown,
+  serviceName // For document footer
+}) => {
+  // ... toolbar implementation
+}
+```
+
+This way it can be used in:
+- Static Interview Questionnaire
+- Smart (Dynamic) Interview Questionnaire
+- Future services
+
+---
+
+## VERIFICATION CHECKLIST
+
+After implementation, verify:
+
+- [ ] Display level buttons are ONE line height (icon LEFT of text, no subtitle)
+- [ ] Funnel icon (gray) appears on title "How much detail do you need?"
+- [ ] Quick Review has List icon (blue)
+- [ ] With Example has Lightbulb icon (yellow)
+- [ ] With Insights has BookOpen icon (purple)
+- [ ] Complete Guide has Star icon (gold)
+- [ ] "Jump to" banner is REMOVED
+- [ ] Simple text line shows question counts
+- [ ] Toolbar is ONE line height only
+- [ ] Toolbar has correct structure: `[+] [−] | SPACE | Email WhatsApp | PDF WORD MD`
+- [ ] Tooltips work on `+`, `−`, and `MD`
+- [ ] Question count is near section header, NOT in toolbar
+- [ ] Email button works (sends email)
+- [ ] WhatsApp button works (opens share)
+- [ ] PDF/WORD/MD generate documents with footer
+- [ ] Footer includes: page number, service name, links
+- [ ] Toolbar is a reusable component
+
+---
+
+**END OF PROMPT**

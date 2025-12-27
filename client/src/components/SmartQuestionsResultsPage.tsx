@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { isAuthenticated, getAuthToken } from '@/lib/auth'
-import { Loader2, ChevronDown, ChevronUp, ChevronRight, List, Lightbulb, BookOpen, Target } from 'lucide-react'
+import { Loader2, ChevronDown, ChevronUp, ChevronRight, List, Lightbulb, BookOpen, Star, Filter } from 'lucide-react'
 import { StandardToolbar } from './StandardToolbar'
 
 type DepthLevel = 'quick_review' | 'with_example' | 'with_insights' | 'complete_guide'
@@ -9,8 +9,8 @@ type DepthLevel = 'quick_review' | 'with_example' | 'with_insights' | 'complete_
 interface DepthOption {
   id: DepthLevel
   icon: React.ReactNode
+  iconColor: string
   label: string
-  sublabel: string
 }
 
 interface FocusArea {
@@ -42,10 +42,10 @@ interface SmartQuestionsResult {
 }
 
 const depthOptions: DepthOption[] = [
-  { id: 'quick_review', icon: <List className="h-5 w-5" />, label: 'Quick Review', sublabel: 'Just the questions' },
-  { id: 'with_example', icon: <Lightbulb className="h-5 w-5" />, label: 'With Example', sublabel: 'See sample answers' },
-  { id: 'with_insights', icon: <BookOpen className="h-5 w-5" />, label: 'With Insights', sublabel: 'Understand the purpose' },
-  { id: 'complete_guide', icon: <Target className="h-5 w-5" />, label: 'Complete Guide', sublabel: 'Full preparation' }
+  { id: 'quick_review', icon: <List className="h-4 w-4" />, iconColor: '#3B82F6', label: 'Quick Review' },
+  { id: 'with_example', icon: <Lightbulb className="h-4 w-4" />, iconColor: '#F59E0B', label: 'With Example' },
+  { id: 'with_insights', icon: <BookOpen className="h-4 w-4" />, iconColor: '#8B5CF6', label: 'With Insights' },
+  { id: 'complete_guide', icon: <Star className="h-4 w-4" />, iconColor: '#EAB308', label: 'Complete Guide' }
 ]
 
 const categoryLabels: Record<string, string> = {
@@ -421,38 +421,35 @@ export function SmartQuestionsResultsPage() {
           </div>
         )}
 
-        {/* Display Levels */}
-        <div style={containerStyle}>
-          <h2 style={stepHeaderStyle}>How much detail do you need?</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {/* Display Level Selector */}
+        <div style={{ marginBottom: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+            <Filter size={16} style={{ color: '#6B7280' }} />
+            <span style={{ color: '#374151', fontSize: '14px' }}>How much detail do you need?</span>
+          </div>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             {depthOptions.map((option) => (
               <button
                 key={option.id}
                 type="button"
                 onClick={() => setDepthLevel(option.id)}
                 style={{
-                  height: '80px',
                   display: 'flex',
-                  flexDirection: 'column',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '4px',
-                  padding: '12px',
-                  borderRadius: '8px',
+                  gap: '8px',
+                  padding: '8px 16px',
+                  borderRadius: '6px',
                   cursor: 'pointer',
                   transition: 'all 0.2s',
                   backgroundColor: depthLevel === option.id ? '#E8F0F5' : 'white',
                   border: depthLevel === option.id ? '2px solid #1E3A5F' : '1px solid #E5E7EB'
                 }}
               >
-                <div style={{ color: depthLevel === option.id ? '#1E3A5F' : '#6B7280' }}>
+                <div style={{ color: option.iconColor }}>
                   {option.icon}
                 </div>
-                <span style={{ fontWeight: 500, fontSize: '13px', color: '#1E3A5F', textAlign: 'center' }}>
+                <span style={{ fontWeight: 500, fontSize: '14px', color: '#1E3A5F' }}>
                   {option.label}
-                </span>
-                <span style={{ fontSize: '11px', color: '#6B7280', textAlign: 'center' }}>
-                  {option.sublabel}
                 </span>
               </button>
             ))}
