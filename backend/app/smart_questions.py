@@ -34,7 +34,7 @@ class EligibilityResponse(BaseModel):
 def build_smart_questions_prompt(job_data: str, cv_text: Optional[str] = None) -> str:
     prompt = """CRITICAL: You must respond with ONLY valid JSON. No text before or after. No markdown. No code blocks.
 
-You are an expert interview coach. Analyze the job and generate personalized interview questions.
+You are an expert interview coach with a supportive, encouraging approach. Analyze the job and create a personalized preparation plan.
 
 JOB INFORMATION:
 """
@@ -51,10 +51,14 @@ CANDIDATE CV:
 
 Generate a JSON response with this EXACT structure:
 
-{"weak_areas":[{"area":"string","risk_level":"high|medium|low","detection_reason":"string","preparation_tip":"string"}],"questions":[{"category":"universal|behavioral|situational|self_assessment|cultural_fit","question_text":"string","why_they_ask":"string","good_answer_example":"string","what_to_avoid":"string"}]}
+{"focus_areas":[{"area":"string","priority_level":"KEY_FOCUS|WORTH_PREPARING|GOOD_TO_KNOW","focus_reason":"string","coaching_tip":"string","winning_approach":"string"}],"questions":[{"category":"universal|behavioral|situational|self_assessment|cultural_fit","question_text":"string","why_they_ask":"string","good_answer_example":"string","what_to_avoid":"string"}]}
 
 RULES:
-1. Generate 3-4 weak_areas (potential interview challenges)
+1. Generate 3-4 focus_areas (areas where preparation will help the candidate shine)
+   - Use positive, coaching language - these are OPPORTUNITIES to prepare, not weaknesses
+   - priority_level: KEY_FOCUS (most important), WORTH_PREPARING (helpful), GOOD_TO_KNOW (nice to have)
+   - coaching_tip: Brief, encouraging advice
+   - winning_approach: How to turn this into a strength
 2. Generate exactly 15-18 questions with this mix:
    - 3-4 Universal questions
    - 5-6 Behavioral questions  
@@ -63,6 +67,7 @@ RULES:
    - 2-3 Cultural Fit questions
 3. Keep answer examples brief (2-3 sentences max)
 4. Keep what_to_avoid brief (1-2 sentences max)
+5. Frame ALL language positively - focus on opportunities, not problems
 
 Your ENTIRE response must be valid JSON starting with { and ending with }. Nothing else."""
     
@@ -114,15 +119,15 @@ def parse_gemini_response(response_text: str) -> dict:
         
         print(f"JSON recovery failed, returning empty structure")
         return {
-            "weak_areas": [],
+            "focus_areas": [],
             "questions": [],
             "parse_error": str(e)
         }
 
 def validate_smart_questions_response(data: dict) -> dict:
     """Ensure response has required structure"""
-    if "weak_areas" not in data:
-        data["weak_areas"] = []
+    if "focus_areas" not in data:
+        data["focus_areas"] = []
     
     if "questions" not in data:
         data["questions"] = []
@@ -245,9 +250,9 @@ async def generate_smart_questions(request: GenerateRequest):
         "job_title": job_title,
         "company_name": company_name,
         "cv_provided": bool(request.cv_text),
-        "weak_areas": result.get("weak_areas", []),
+        "focus_areas": result.get("focus_areas", []),
         "personalized_questions": result.get("questions", []),
-        "generation_model": "gemini-2.5-pro",
+        "generation_model": "gemini-2.0-flash",
         "input_tokens": input_tokens,
         "output_tokens": output_tokens
     }
@@ -268,7 +273,7 @@ async def generate_smart_questions(request: GenerateRequest):
         "id": saved_id,
         "job_title": job_title,
         "company_name": company_name,
-        "weak_areas": result.get("weak_areas", []),
+        "focus_areas": result.get("focus_areas", []),
         "questions": result.get("questions", []),
         "questions_count": len(result.get("questions", [])),
         "message": "Smart questions generated successfully"

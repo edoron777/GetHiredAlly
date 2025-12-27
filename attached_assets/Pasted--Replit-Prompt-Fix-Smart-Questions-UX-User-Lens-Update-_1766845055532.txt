@@ -1,0 +1,248 @@
+# Replit Prompt: Fix Smart Questions UX - User Lens Update
+
+**Task:** Update the Smart Questions feature UI to follow User Lens principles
+**Priority:** CRITICAL - Current implementation creates anxiety instead of confidence
+**Reference Document:** `Smart_Interview_Questionnaire_Knowledge_Document_v1.4.md`
+
+---
+
+## Problem Summary
+
+The current Smart Questions results page uses scary, warning-style language and colors that make users anxious. We need to change it to supportive, coaching-style design.
+
+---
+
+## Changes Required
+
+### 1. LANGUAGE CHANGES (Backend + Frontend)
+
+#### In Backend (AI Response / Database):
+
+Change the JSON field names and values:
+
+| OLD | NEW |
+|-----|-----|
+| `risk_level: "HIGH"` | `priority_level: "KEY_FOCUS"` |
+| `risk_level: "MEDIUM"` | `priority_level: "WORTH_PREPARING"` |
+| `risk_level: "LOW"` | `priority_level: "GOOD_TO_KNOW"` |
+| `weak_areas` | `focus_areas` |
+| `weak_area_type` | `focus_area_type` |
+
+#### In Frontend (Display Labels):
+
+| OLD Display | NEW Display |
+|-------------|-------------|
+| "🔴 High Risk" | "💪 Key Focus Area" |
+| "🟡 Medium Risk" | "📝 Worth Preparing" |
+| "🟢 Low Risk" | "💡 Good to Know" |
+| "Potential Weak Areas" | "Focus Areas for Your Preparation" |
+| "Areas to Prepare For" | "Your Preparation Priorities" |
+
+---
+
+### 2. COLOR CHANGES (Frontend CSS)
+
+#### Priority Indicators:
+
+| Priority | OLD Color | NEW Color |
+|----------|-----------|-----------|
+| Key Focus | Red #EF4444 | Blue #3B82F6 |
+| Worth Preparing | Yellow #F59E0B | Purple #8B5CF6 |
+| Good to Know | Green #10B981 | Gray #6B7280 |
+
+#### Card Backgrounds:
+
+| Card Type | OLD | NEW |
+|-----------|-----|-----|
+| Key Focus card | Red tint | Light blue #EFF6FF |
+| Worth Preparing card | Yellow tint | Light purple #F5F3FF |
+| Question card border | Gray | Purple gradient (from #7C3AED to #3B82F6) |
+
+---
+
+### 3. ADD INTRODUCTION SECTION (Frontend)
+
+Add this section at the TOP of the results page, BEFORE any focus areas or questions:
+
+```jsx
+<div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
+  <h2 className="text-xl font-semibold text-blue-900 mb-3">
+    🎯 Your Personalized Interview Preparation
+  </h2>
+  <p className="text-blue-800 mb-4">
+    Great news! We've analyzed the job requirements against your background 
+    and created a personalized preparation plan just for you.
+  </p>
+  <p className="text-blue-800 mb-2">Below you'll find:</p>
+  <ul className="text-blue-700 ml-4 mb-4">
+    <li>• Focus areas to prepare (so you're ready for tough questions)</li>
+    <li>• Personalized questions based on YOUR experience</li>
+    <li>• Tips and sample answers to help you shine</li>
+  </ul>
+  <p className="text-blue-900 font-medium">
+    Remember: Preparation = Confidence = Success! 💪
+  </p>
+</div>
+```
+
+---
+
+### 4. UPDATE FOCUS AREAS SECTION (Frontend)
+
+#### Section Header:
+```jsx
+// OLD:
+<h3>⚠️ Potential Weak Areas ({count})</h3>
+
+// NEW:
+<h3>📋 Focus Areas for Your Preparation ({count})</h3>
+```
+
+#### Section Description:
+```jsx
+// OLD:
+<p>We found {count} potential weak areas. Prepare answers for these:</p>
+
+// NEW:
+<p>We identified {count} areas where preparation will help you stand out. 
+   Here's your coaching guide:</p>
+```
+
+#### Individual Focus Area Cards:
+
+```jsx
+// OLD:
+<div className="bg-red-50 border-red-200 ...">
+  <span className="text-red-600">🔴 HIGH RISK: Experience Gap</span>
+  <p>JD Requirement: 5+ years</p>
+  <p>Your CV Shows: 2 years</p>
+</div>
+
+// NEW:
+<div className="bg-blue-50 border-blue-200 rounded-lg p-4 mb-4">
+  <div className="flex items-center gap-2 mb-3">
+    <span className="text-blue-600 font-semibold">💪 Key Focus: Experience Level</span>
+  </div>
+  <p className="text-gray-700 mb-2">
+    <span className="font-medium">The role asks for:</span> 5+ years of product management
+  </p>
+  <p className="text-gray-700 mb-3">
+    <span className="font-medium">Your background:</span> 2 years of product management
+  </p>
+  
+  <div className="mt-3">
+    <p className="font-medium text-gray-800 mb-2">💬 They'll likely ask:</p>
+    <ul className="text-gray-600 ml-4">
+      <li>• "How will you handle responsibilities typically given to someone with more experience?"</li>
+    </ul>
+  </div>
+  
+  <div className="mt-3 bg-green-50 p-3 rounded">
+    <p className="font-medium text-green-800 mb-2">💡 Your Winning Approach:</p>
+    <p className="text-green-700">
+      Focus on your achievements and impact, not just years. 
+      Quality of experience matters more than quantity.
+    </p>
+  </div>
+</div>
+```
+
+---
+
+### 5. UPDATE PRIORITY INDICATOR COMPONENT
+
+Create or update a priority badge component:
+
+```jsx
+const PriorityBadge = ({ priority }) => {
+  const config = {
+    KEY_FOCUS: {
+      icon: '💪',
+      label: 'Key Focus',
+      bgColor: 'bg-blue-100',
+      textColor: 'text-blue-700',
+      borderColor: 'border-blue-300'
+    },
+    WORTH_PREPARING: {
+      icon: '📝',
+      label: 'Worth Preparing',
+      bgColor: 'bg-purple-100',
+      textColor: 'text-purple-700',
+      borderColor: 'border-purple-300'
+    },
+    GOOD_TO_KNOW: {
+      icon: '💡',
+      label: 'Good to Know',
+      bgColor: 'bg-gray-100',
+      textColor: 'text-gray-600',
+      borderColor: 'border-gray-300'
+    }
+  };
+
+  const { icon, label, bgColor, textColor, borderColor } = config[priority] || config.GOOD_TO_KNOW;
+
+  return (
+    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${bgColor} ${textColor} border ${borderColor}`}>
+      {icon} {label}
+    </span>
+  );
+};
+```
+
+---
+
+### 6. FILE LOCATIONS TO MODIFY
+
+Based on typical project structure:
+
+| File | Changes Needed |
+|------|----------------|
+| `client/src/pages/SmartQuestions.jsx` | Add introduction section, update focus areas UI |
+| `client/src/components/FocusAreaCard.jsx` | Update colors, labels, language |
+| `client/src/components/PriorityBadge.jsx` | Create new or update existing |
+| `backend/routers/smart_questions.py` | Update JSON field names if needed |
+| `backend/services/ai_service.py` | Update AI prompt to use new terminology |
+
+---
+
+### 7. AI PROMPT UPDATE (Backend)
+
+If the AI generates the focus areas, update the prompt to use new language:
+
+```python
+# OLD prompt sections:
+"Identify weak areas..."
+"Assign risk levels: HIGH, MEDIUM, LOW..."
+
+# NEW prompt sections:
+"Identify focus areas for preparation..."
+"Assign priority levels: KEY_FOCUS, WORTH_PREPARING, GOOD_TO_KNOW..."
+"Frame all language positively - these are opportunities to prepare, not weaknesses..."
+"Use coaching tone, not warning tone..."
+```
+
+---
+
+## Testing Checklist
+
+After making changes, verify:
+
+- [ ] No red or yellow warning colors anywhere
+- [ ] No "Risk" labels visible to users
+- [ ] No "Weak" or "Problem" language
+- [ ] Introduction section appears first
+- [ ] Focus areas use supportive language
+- [ ] All tips frame challenges as opportunities
+- [ ] Page feels encouraging, not scary
+
+---
+
+## Expected Result
+
+**Before:** User sees scary red/yellow warnings about "High Risk" and "Weak Areas" → Feels anxious
+
+**After:** User sees supportive blue/purple guidance about "Key Focus Areas" with coaching tips → Feels prepared and confident
+
+---
+
+**END OF PROMPT**

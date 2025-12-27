@@ -1,0 +1,278 @@
+# Replit Prompt: Smart Questions Predictor - Complete Implementation Guide
+
+**Task:** Fix and complete the Smart Questions Predictor feature
+**Priority:** CRITICAL
+**Reference Documents:** 
+- `Smart_Interview_Questionnaire_Knowledge_Document_v1.4.md`
+- `Interview_Questions_Predictor_PRD.md`
+
+---
+
+## PART 1: CORE CONCEPT - What Smart Questions Is
+
+### The Purpose
+
+Smart Questions Predictor does the **same thing** as Static Interview Questionnaire, but with one **huge difference**:
+
+| Aspect | Static Questionnaire | Smart Questions Predictor |
+|--------|---------------------|---------------------------|
+| **Questions** | Generic, same for everyone | Personalized to THIS specific user |
+| **Data Used** | None | Job Description + User CV |
+| **AI Role** | No AI | AI simulates an intelligent human interviewer |
+| **Output** | "Tell me about yourself" | "I see you led a team of 5 at IBM. Tell me about a challenge you faced leading that team" |
+
+### The "Intelligent Interviewer" Simulation
+
+The AI must act like a **smart human interviewer** who:
+
+1. **Has read the Job Description** - knows exactly what the company wants
+2. **Has read the User's CV** - knows the candidate's background, experience, gaps
+3. **Asks personalized questions** - transforms standard interview questions to match THIS specific candidate applying for THIS specific job
+
+### Question Transformation Example
+
+**Input Data:**
+- Job Description: "Product Manager at Google, 5+ years experience required"
+- User CV: "2 years as PM at a B2B SaaS startup, managed team of 3"
+
+**Static Question:**
+> "Why do you want this job?"
+
+**Smart Question (AI Output):**
+> "You've spent 2 years in B2B SaaS at a smaller startup. Why are you now interested in the Product Manager role at Google, which is a much larger organization with different challenges?"
+
+### The Formula
+
+```
+Standard Interview Question 
+        + 
+    User's CV 
+        + 
+  Job Description 
+        ↓
+  AI "Interviewer Intelligence"
+        ↓
+Personalized Smart Question that matches the user's unique DNA/profile
+```
+
+---
+
+## PART 2: WHAT THE AI SHOULD GENERATE
+
+### Input to AI
+
+The AI receives:
+1. **Job Description** (raw text or structured from X-Ray)
+2. **User CV** (parsed text)
+3. **Static Questions Pool** (54 standard interview questions)
+
+### Output from AI
+
+The AI should return JSON with:
+
+```json
+{
+  "personalized_questions": [
+    {
+      "category": "Universal",
+      "original_static_question": "Why do you want this job?",
+      "personalized_question": "You've been in B2B SaaS for 2 years. Why are you interested in the PM role at Google?",
+      "personalization_source": "CV: B2B SaaS experience + JD: Google PM role",
+      "why_they_ask": "Testing genuine interest and whether you've researched the company",
+      "good_answer_tips": "Show you understand the difference between startup and enterprise. Mention specific Google initiatives.",
+      "example_answer": "I've been following Google's AI product launches..."
+    }
+  ],
+  "focus_areas": [
+    {
+      "focus_area_type": "Experience Gap",
+      "priority_level": "KEY_FOCUS",
+      "job_requirement": "5+ years of product management",
+      "user_background": "2 years of product management",
+      "likely_questions": [
+        "How will you handle responsibilities typically given to someone with more experience?"
+      ],
+      "winning_approach": "Focus on achievements and impact, not years. Quality over quantity.",
+      "example_answer": "In my 2 years, I led products that generated $2M revenue..."
+    }
+  ]
+}
+```
+
+---
+
+## PART 3: AI PROMPT TEMPLATE
+
+Use this prompt structure when calling the AI:
+
+```python
+SMART_QUESTIONS_PROMPT = """
+You are an intelligent human interviewer preparing to interview a candidate.
+
+You have access to:
+1. The JOB DESCRIPTION for the role
+2. The CANDIDATE'S CV/RESUME
+
+Your task is to transform standard interview questions into PERSONALIZED questions 
+that a smart interviewer would ask THIS specific candidate for THIS specific job.
+
+## Job Description:
+{job_description}
+
+## Candidate's CV:
+{user_cv}
+
+## Standard Questions to Personalize:
+{static_questions}
+
+## Instructions:
+
+1. For each standard question, create a PERSONALIZED version that:
+   - References specific details from the candidate's CV
+   - Connects to specific requirements from the job description
+   - Sounds like a real interviewer who has done their homework
+
+2. Identify FOCUS AREAS where the candidate should prepare extra:
+   - Gaps between JD requirements and CV experience
+   - Skills mentioned in JD but not in CV
+   - Employment gaps or short tenures
+   - Career transitions
+
+3. For each focus area, provide:
+   - The likely questions an interviewer will ask
+   - A winning approach to answer
+   - An example answer
+
+## Important Guidelines:
+- Use supportive, coaching language (NOT scary warnings)
+- Priority levels are: KEY_FOCUS, WORTH_PREPARING, GOOD_TO_KNOW
+- Frame gaps as "opportunities to prepare" not "weaknesses"
+- The goal is to help the candidate feel CONFIDENT and PREPARED
+
+Return your response as valid JSON matching this structure:
+{output_structure}
+"""
+```
+
+---
+
+## PART 4: UX FIXES - User Lens Design
+
+### Problem with Current Implementation
+
+The current UI uses scary, warning-style design that creates anxiety instead of confidence.
+
+### Language Changes Required
+
+| ❌ OLD (Scary) | ✅ NEW (Supportive) |
+|----------------|---------------------|
+| "High Risk" 🔴 | "Key Focus Area" 💪 |
+| "Medium Risk" 🟡 | "Worth Preparing" 📝 |
+| "Low Risk" 🟢 | "Good to Know" 💡 |
+| "Weak Areas" | "Focus Areas for Your Preparation" |
+| "Potential Problems" | "Opportunities to Prepare" |
+
+### Color Changes Required
+
+| Element | ❌ OLD Color | ✅ NEW Color |
+|---------|-------------|--------------|
+| Key Focus | Red #EF4444 | Blue #3B82F6 |
+| Worth Preparing | Yellow #F59E0B | Purple #8B5CF6 |
+| Good to Know | Green #10B981 | Gray #6B7280 |
+| Card backgrounds | Red/Yellow tints | Light blue #EFF6FF / Light purple #F5F3FF |
+
+### Required Introduction Section
+
+Add this at the TOP of results page, BEFORE any content:
+
+```jsx
+<div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
+  <h2 className="text-xl font-semibold text-blue-900 mb-3">
+    🎯 Your Personalized Interview Preparation
+  </h2>
+  <p className="text-blue-800 mb-4">
+    Great news! We've analyzed the job requirements against your background 
+    and created a personalized preparation plan just for you.
+  </p>
+  <p className="text-blue-800 mb-2">Below you'll find:</p>
+  <ul className="text-blue-700 ml-4 mb-4">
+    <li>• Focus areas to prepare (so you're ready for tough questions)</li>
+    <li>• Personalized questions based on YOUR experience</li>
+    <li>• Tips and sample answers to help you shine</li>
+  </ul>
+  <p className="text-blue-900 font-medium">
+    Remember: Preparation = Confidence = Success! 💪
+  </p>
+</div>
+```
+
+---
+
+## PART 5: FILES TO MODIFY
+
+| File | Changes Needed |
+|------|----------------|
+| `backend/services/ai_service.py` | Update AI prompt to use the template above |
+| `backend/routers/smart_questions.py` | Update JSON field names (risk_level → priority_level, weak_areas → focus_areas) |
+| `client/src/pages/SmartQuestions.jsx` | Add introduction section, update all UI components |
+| `client/src/components/FocusAreaCard.jsx` | Update colors, labels, language |
+| `client/src/components/PriorityBadge.jsx` | Create/update with new design |
+
+---
+
+## PART 6: TESTING CHECKLIST
+
+After implementation, verify:
+
+### Core Functionality
+- [ ] AI receives Job Description + User CV
+- [ ] AI returns personalized questions (not generic)
+- [ ] Questions reference specific details from CV
+- [ ] Questions connect to specific JD requirements
+- [ ] Focus areas identify real gaps between JD and CV
+
+### UX/Design
+- [ ] No red or yellow warning colors anywhere
+- [ ] No "Risk" labels visible to users
+- [ ] No "Weak" or "Problem" language
+- [ ] Introduction section appears first
+- [ ] Focus areas use supportive, coaching language
+- [ ] Page feels encouraging, not scary
+
+### User Experience Test
+Ask a test user: "How does this page make you feel?"
+- ✅ Good answers: "Prepared", "Confident", "Guided", "Helped"
+- ❌ Bad answers: "Anxious", "Worried", "Scared", "Overwhelmed"
+
+---
+
+## PART 7: EXPECTED RESULT
+
+### Before (Current State)
+- Generic questions OR wrong output structure
+- Scary red/yellow warnings about "High Risk" and "Weak Areas"
+- User feels anxious
+
+### After (Fixed State)
+- Personalized questions that reference user's specific background
+- Supportive blue/purple guidance about "Key Focus Areas"
+- Coaching tips that help user prepare
+- User feels confident and prepared
+
+---
+
+## SUMMARY
+
+The Smart Questions Predictor should:
+
+1. **Take** Job Description + User CV as input
+2. **Use AI** to simulate an intelligent human interviewer
+3. **Transform** standard questions into personalized questions
+4. **Identify** focus areas where preparation will help
+5. **Present** everything in a supportive, confidence-building way
+
+**The end goal:** User sees questions that feel like they were written specifically for them, and they feel PREPARED and CONFIDENT for their interview.
+
+---
+
+**END OF PROMPT**
