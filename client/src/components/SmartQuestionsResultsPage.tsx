@@ -120,6 +120,17 @@ export function SmartQuestionsResultsPage() {
         return res.json()
       })
       .then((data) => {
+        // Handle legacy weak_areas field for backward compatibility
+        if (data.weak_areas && !data.focus_areas) {
+          data.focus_areas = data.weak_areas.map((wa: any) => ({
+            area: wa.area,
+            priority_level: wa.risk_level === 'high' ? 'KEY_FOCUS' : 
+                           wa.risk_level === 'medium' ? 'WORTH_PREPARING' : 'GOOD_TO_KNOW',
+            focus_reason: wa.detection_reason,
+            coaching_tip: wa.preparation_tip,
+            winning_approach: wa.sample_answer_approach
+          }))
+        }
         setResult(data)
         const categories = new Set(data.personalized_questions?.map((q: SmartQuestion) => q.category) || [])
         setExpandedCategories(categories as Set<string>)
