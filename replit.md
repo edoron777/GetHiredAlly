@@ -79,9 +79,10 @@ GetHiredAlly is an interview preparation application with job description analys
 ## Database Tables
 - `user_profiles` - User tier definitions (standard, special, vip)
 - `profile_limits` - Usage limits per profile and service
-- `users` - User accounts with password hashes
+- `users` - User accounts with password hashes (includes smart_questions_free_used flag)
 - `services` - Available services (xray, questions, playbook)
 - `usage_tracking` - Track user usage per service
+- `smart_question_results` - AI-generated personalized interview questions (stores weak_areas and personalized_questions as JSONB)
 - See `supabase_schema.sql` for complete schema
 
 ## User Profiles

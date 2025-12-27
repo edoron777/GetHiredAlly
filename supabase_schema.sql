@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS users (
     is_verified BOOLEAN DEFAULT FALSE,
     is_admin BOOLEAN DEFAULT FALSE,
     admin_role TEXT,
+    smart_questions_free_used BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW(),
     last_login TIMESTAMP
@@ -237,3 +238,37 @@ CREATE POLICY "Users can view own analyses" ON xray_analyses
     FOR SELECT USING (user_id = (SELECT id FROM users WHERE id = user_id));
 CREATE POLICY "Users can insert own analyses" ON xray_analyses
     FOR INSERT WITH CHECK (user_id IS NOT NULL);
+
+-- 10. SMART QUESTIONS (AI-Generated Personalized Questions)
+
+CREATE TABLE IF NOT EXISTS smart_question_results (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    xray_analysis_id UUID REFERENCES xray_analyses(id) ON DELETE SET NULL,
+    job_title TEXT NOT NULL,
+    company_name TEXT,
+    cv_provided BOOLEAN DEFAULT FALSE,
+    weak_areas JSONB,
+    personalized_questions JSONB,
+    generation_model TEXT DEFAULT 'gemini-2.5-pro',
+    input_tokens INTEGER,
+    output_tokens INTEGER,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Indexes for performance
+CREATE INDEX IF NOT EXISTS idx_smart_questions_user_id ON smart_question_results(user_id);
+CREATE INDEX IF NOT EXISTS idx_smart_questions_created_at ON smart_question_results(created_at DESC);
+
+-- Enable RLS
+ALTER TABLE smart_question_results ENABLE ROW LEVEL SECURITY;
+
+-- Policies for smart_question_results
+CREATE POLICY "Users can view own smart questions" ON smart_question_results
+    FOR SELECT USING (user_id = (SELECT id FROM users WHERE id = user_id));
+CREATE POLICY "Users can insert own smart questions" ON smart_question_results
+    FOR INSERT WITH CHECK (user_id IS NOT NULL);
+
+-- JSONB Structure Documentation:
+-- weak_areas stores: [{"area": "...", "risk_level": "high|medium|low", "detection_reason": "...", "preparation_tip": "..."}]
+-- personalized_questions stores: [{"category": "...", "question_text": "...", "personalized_context": "...", "why_they_ask": "...", "good_answer_example": "...", "what_to_avoid": "...", "source": "cv_gap|job_specific|..."}]
