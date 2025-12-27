@@ -125,7 +125,19 @@ GetHiredAlly is an interview preparation application with job description analys
   - cost_usd (calculated by LiteLLM's built-in cost tracking)
   - duration_ms, success/failure, error_message
 
+## Smart Questions UX Design
+- Uses supportive coaching-style language instead of warning-style
+- Focus Areas (not "weak areas") with priority levels:
+  - KEY_FOCUS (blue) - Most important areas to prepare
+  - WORTH_PREPARING (purple) - Helpful to practice
+  - GOOD_TO_KNOW (gray) - Nice to have
+- Each focus area includes coaching tips and winning approaches
+- Introduction section with encouraging preparation message
+- Backward compatible with legacy data (weak_areas → focus_areas mapping)
+
 ## Recent Changes
+- December 27, 2025: Updated Smart Questions UX with coaching-style language and supportive design (focus_areas, priority_levels, blue/purple colors)
+- December 27, 2025: Changed Gemini model to gemini-2.0-flash (1.5 models retired)
 - December 27, 2025: Added automatic AI usage logging with LiteLLM cost tracking to ai_usage_logs table
 - December 27, 2025: Added AIProviderSelector component to X-Ray and Smart Questions pages
 - December 27, 2025: Expanded to 54 interview questions with new structure (good_answer_example, what_to_avoid fields)
