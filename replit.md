@@ -90,6 +90,8 @@ GetHiredAlly is an interview preparation application with job description analys
 - `services` - Available services (xray, questions, playbook)
 - `usage_tracking` - Track user usage per service
 - `smart_question_results` - AI-generated personalized interview questions (stores weak_areas and personalized_questions as JSONB)
+- `ai_usage_logs` - Tracks every AI API call (provider, tokens, cost, duration)
+- `user_ai_preferences` - User preferences for AI providers per service
 - See `supabase_schema.sql` for complete schema
 
 ## User Profiles

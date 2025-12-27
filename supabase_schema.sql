@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS users (
     is_admin BOOLEAN DEFAULT FALSE,
     admin_role TEXT,
     smart_questions_free_used BOOLEAN DEFAULT FALSE,
+    preferred_ai_provider VARCHAR(20) DEFAULT 'auto',
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW(),
     last_login TIMESTAMP
@@ -272,3 +273,39 @@ CREATE POLICY "Users can insert own smart questions" ON smart_question_results
 -- JSONB Structure Documentation:
 -- weak_areas stores: [{"area": "...", "risk_level": "high|medium|low", "detection_reason": "...", "preparation_tip": "..."}]
 -- personalized_questions stores: [{"category": "...", "question_text": "...", "personalized_context": "...", "why_they_ask": "...", "good_answer_example": "...", "what_to_avoid": "...", "source": "cv_gap|job_specific|..."}]
+
+-- 11. AI USAGE LOGGING & PREFERENCES
+
+CREATE TABLE IF NOT EXISTS ai_usage_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    service_name VARCHAR(50) NOT NULL,
+    provider VARCHAR(20) NOT NULL,
+    model VARCHAR(100) NOT NULL,
+    input_tokens INTEGER,
+    output_tokens INTEGER,
+    total_tokens INTEGER,
+    cost_usd DECIMAL(10, 6),
+    request_type VARCHAR(50),
+    success BOOLEAN DEFAULT TRUE,
+    error_message TEXT,
+    duration_ms INTEGER,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_ai_usage_user_id ON ai_usage_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_ai_usage_created_at ON ai_usage_logs(created_at);
+CREATE INDEX IF NOT EXISTS idx_ai_usage_service_provider ON ai_usage_logs(service_name, provider);
+
+CREATE TABLE IF NOT EXISTS user_ai_preferences (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    preferred_xray_provider VARCHAR(20) DEFAULT 'claude',
+    preferred_questions_provider VARCHAR(20) DEFAULT 'gemini',
+    auto_select_cheapest BOOLEAN DEFAULT FALSE,
+    show_provider_choice BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_ai_prefs_user_id ON user_ai_preferences(user_id);
