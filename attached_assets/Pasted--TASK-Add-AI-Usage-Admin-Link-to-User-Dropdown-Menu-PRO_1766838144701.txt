@@ -1,0 +1,88 @@
+## TASK: Add AI Usage Admin Link to User Dropdown Menu
+
+### PROBLEM
+The admin link "AI Usage" is missing from the user dropdown menu.
+
+### LOCATION
+Find the Navbar/Header component that renders the user dropdown menu.
+Likely: client/src/components/Navbar.tsx
+
+### FIND THIS SECTION
+Look for the dropdown menu that shows:
+- Eyal Doron (user name/email)
+- Dashboard
+- Logout
+
+### ADD THE ADMIN LINK
+
+Between "Dashboard" and "Logout", add the AI Usage link (only for admin users):
+
+{user?.is_admin && (
+    <a 
+        href="/admin/ai-usage"
+        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+    >
+        📊 AI Usage
+    </a>
+)}
+
+### FULL DROPDOWN STRUCTURE SHOULD BE:
+
+<div className="dropdown-menu">
+    {/* User info */}
+    <div className="px-4 py-2">
+        <p className="font-medium">{user?.name}</p>
+        <p className="text-sm text-gray-500">{user?.email}</p>
+    </div>
+    
+    <hr />
+    
+    {/* Dashboard link */}
+    <a href="/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+        Dashboard
+    </a>
+    
+    {/* AI Usage - ADMIN ONLY - ADD THIS */}
+    {user?.is_admin && (
+        <a 
+            href="/admin/ai-usage"
+            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+        >
+            📊 AI Usage
+        </a>
+    )}
+    
+    {/* Logout */}
+    <button onClick={handleLogout} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+        Logout
+    </button>
+</div>
+
+### ALSO: Make sure is_admin is loaded
+
+In the auth context, ensure is_admin is fetched:
+
+const { data } = await supabase
+    .from('users')
+    .select('id, email, name, is_admin')  // Include is_admin
+    .eq('id', userId)
+    .single();
+
+### EXPECTED RESULT
+
+Dropdown should show:
+┌─────────────────────┐
+│ Eyal Doron          │
+│ edoron777@gmail.com │
+├─────────────────────┤
+│ Dashboard           │
+│ 📊 AI Usage         │  ← NEW (admin only)
+│ Logout              │
+└─────────────────────┘
+
+### SUCCESS CHECKLIST
+- [ ] is_admin field is fetched with user data
+- [ ] AI Usage link added to dropdown
+- [ ] Link only shows for admin users (is_admin = true)
+- [ ] Link goes to /admin/ai-usage
+- [ ] Link has 📊 icon
