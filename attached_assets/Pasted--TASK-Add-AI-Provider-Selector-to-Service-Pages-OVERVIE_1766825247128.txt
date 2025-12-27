@@ -1,0 +1,107 @@
+## TASK: Add AI Provider Selector to Service Pages
+
+### OVERVIEW
+Integrate the AIProviderSelector component into X-Ray Analyzer and Smart Questions pages.
+
+### STEP 1: Update X-Ray Analyzer Page
+
+In the X-Ray Analyzer input page (find the file, likely src/pages/XRayAnalyzer.jsx or similar):
+
+1. Import the components:
+import AIProviderSelector from '../components/AIProviderSelector';
+import { useAIProvider } from '../hooks/useAIProvider';
+
+2. Add the hook at the top of the component:
+const { provider, setProvider } = useAIProvider('xray');
+
+3. Add the selector UI BEFORE the "Analyze" button:
+<AIProviderSelector
+    selectedProvider={provider}
+    onProviderChange={setProvider}
+    serviceType="xray"
+    showCost={true}
+/>
+
+4. Update the API call to include provider:
+const response = await fetch('/api/xray/analyze', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+        job_description: jobDescription,
+        ai_provider: provider  // Add this line
+    })
+});
+
+### STEP 2: Update Smart Questions Page
+
+In the Smart Questions input page (src/pages/SmartQuestions.jsx or similar):
+
+1. Import the components:
+import AIProviderSelector from '../components/AIProviderSelector';
+import { useAIProvider } from '../hooks/useAIProvider';
+
+2. Add the hook:
+const { provider, setProvider } = useAIProvider('smart_questions');
+
+3. Add the selector UI BEFORE the "Generate" button:
+<AIProviderSelector
+    selectedProvider={provider}
+    onProviderChange={setProvider}
+    serviceType="smart_questions"
+    showCost={true}
+/>
+
+4. Update the API call:
+const response = await fetch('/api/smart-questions/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+        ...existingData,
+        ai_provider: provider  // Add this line
+    })
+});
+
+### STEP 3: Update Backend to Accept Provider Parameter
+
+In backend X-Ray router (backend/routers/xray.py or similar):
+
+1. Add provider to request model:
+class AnalyzeRequest(BaseModel):
+    job_description: str
+    ai_provider: str = 'gemini'  # Add this
+
+2. Update the analyze function to use AIService:
+from services.ai_service import get_ai_service
+
+@router.post("/analyze")
+async def analyze_job(request: AnalyzeRequest, user_id: str):
+    ai_service = get_ai_service(supabase)
+    
+    result = await ai_service.generate(
+        prompt=build_xray_prompt(request.job_description),
+        user_id=user_id,
+        service_type='xray',
+        provider=request.ai_provider,
+        metadata={'jd_length': len(request.job_description)}
+    )
+    
+    # Continue with existing logic using result['content']
+
+In backend Smart Questions router (backend/routers/smart_questions.py):
+
+1. Add provider to request model:
+class GenerateRequest(BaseModel):
+    xray_analysis_id: Optional[str] = None
+    job_description: Optional[str] = None
+    cv_text: Optional[str] = None
+    ai_provider: str = 'gemini'  # Add this
+
+2. Update generate function to use AIService instead of direct Gemini call
+
+### SUCCESS CHECKLIST
+- [ ] AIProviderSelector added to X-Ray page
+- [ ] AIProviderSelector added to Smart Questions page
+- [ ] Provider parameter passed to API calls
+- [ ] Backend accepts provider parameter
+- [ ] Backend uses AIService for AI calls
+- [ ] User's selection is saved and remembered
