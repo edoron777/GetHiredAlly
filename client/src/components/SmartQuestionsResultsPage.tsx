@@ -94,7 +94,7 @@ export function SmartQuestionsResultsPage() {
   const [depthLevel, setDepthLevel] = useState<DepthLevel>('with_example')
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
   const [expandedFocusAreas, setExpandedFocusAreas] = useState<Set<number>>(new Set())
-  const [focusAreasExpanded, setFocusAreasExpanded] = useState(true)
+  const [focusAreasExpanded, setFocusAreasExpanded] = useState(false)
   const [downloadingPdf, setDownloadingPdf] = useState(false)
   const [downloadingDocx, setDownloadingDocx] = useState(false)
 
