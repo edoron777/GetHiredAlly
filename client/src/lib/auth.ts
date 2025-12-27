@@ -4,6 +4,7 @@ export interface User {
   name: string | null
   profile_name: string | null
   is_verified?: boolean
+  is_admin?: boolean
 }
 
 export function getAuthToken(): string | null {
