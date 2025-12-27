@@ -1,0 +1,119 @@
+## TASK: Build Smart Questions Results Page
+
+### OVERVIEW
+Create the results page showing weak areas and personalized questions with visual differentiation from Static Questions.
+
+### ROUTE
+/service/predict-questions/smart/results/{id}
+
+### PAGE STRUCTURE
+
+SECTION 1: HEADER
+- Title: "🎯 Smart Questions for {job_title}"
+- Subtitle: "at {company_name}" (if available)
+- Badge: "Personalized for You"
+
+SECTION 2: DATA SOURCES BANNER
+Light blue background (#DBEAFE) showing what data was used:
+- "📄 Job Description" (always shown)
+- "📊 X-Ray Analysis" (if xray_analysis_id exists)
+- "📋 Your CV" (if cv_provided is true)
+
+SECTION 3: WEAK AREAS (Collapsible Section)
+Title: "⚠️ Potential Weak Areas ({count})"
+Default: Expanded
+
+For each weak area, show a card:
+- Left border color based on risk_level:
+  - high: Red (#EF4444)
+  - medium: Orange (#F59E0B)
+  - low: Yellow (#FCD34D)
+- Area name (bold)
+- Risk badge: "High Risk" / "Medium Risk" / "Low Risk"
+- Detection reason (gray text)
+- Collapsible section with:
+  - "💡 Preparation Tip:" + preparation_tip
+  - "✅ Answer Approach:" + sample_answer_approach
+
+SECTION 4: FILTER CONTROLS
+Same as Static Questions - 4 display levels:
+- "Quick Review" - question only
+- "With Example" - question + good_answer_example
+- "With Insights" - question + good_answer_example + why_they_ask
+- "Complete Guide" - all fields
+
+SECTION 5: PERSONALIZED QUESTIONS
+Title: "🎯 Your Personalized Questions ({count})"
+
+For each question, show a card with:
+- Purple gradient left border (to differentiate from Static)
+- ✨ icon before question text
+- Category badge (Universal, Behavioral, etc.)
+- Source badge showing origin:
+  - "📄 From Job Requirements" (jd_requirement)
+  - "⚠️ Addresses CV Gap" (cv_gap)  
+  - "⭐ Highlights Your Strength" (cv_strength)
+  - "📋 Common for Role" (common_question)
+
+PERSONALIZED TEXT STYLING:
+- Any text in personalized_context should be shown in purple (#7C3AED)
+- Show personalized_context in an info box above the answer example
+- Label: "📌 Why this question matters for YOU:"
+
+Content display based on filter level:
+- Quick Review: question_text only
+- With Example: + good_answer_example (green box #D1FAE5)
+- With Insights: + why_they_ask (blue box #DBEAFE)
+- Complete Guide: + what_to_avoid (orange box #FEF3C7) + personalized_context
+
+SECTION 6: CATEGORY GROUPING
+Group questions by category with collapsible sections:
+- Universal Questions (X)
+- Behavioral Questions (X)
+- Situational Questions (X)
+- Self-Assessment Questions (X)
+- Cultural Fit Questions (X)
+
+Each category header shows count and can be expanded/collapsed.
+
+SECTION 7: ACTIONS BAR
+- "Save as PDF" button
+- "Save as Word" button
+- "Print" button
+- "Back to Questions" button (links to /service/predict-questions)
+
+SECTION 8: UPGRADE PROMPT (for free users)
+At bottom of page, show:
+- "Want to generate Smart Questions for another job?"
+- "Upgrade to unlimited analyses - $4.99"
+- Button: "Upgrade Now" (disabled for now)
+
+### API CALL
+On load: GET /api/smart-questions/{id}
+
+### STYLING SPECIFICATIONS
+
+| Element | Color |
+|---------|-------|
+| Personalized text | #7C3AED (purple) |
+| Card border (Smart) | Purple gradient |
+| High risk | #EF4444 (red) |
+| Medium risk | #F59E0B (orange) |
+| Low risk | #FCD34D (yellow) |
+| Info boxes | #DBEAFE (blue) |
+| Good answer | #D1FAE5 (green) |
+| What to avoid | #FEF3C7 (orange) |
+| Source badges | Light gray background |
+
+### SUCCESS CHECKLIST
+- [ ] Page loads with correct data from API
+- [ ] Header shows job title and company
+- [ ] Data sources banner shows correctly
+- [ ] Weak areas display with risk colors
+- [ ] Questions grouped by category
+- [ ] Filter levels work (4 levels)
+- [ ] Personalized text highlighted in purple
+- [ ] Source badges show on each question
+- [ ] Expand/collapse works for categories
+- [ ] Actions bar works (PDF, Word, Print)
+- [ ] Upgrade prompt shows for free users

@@ -81,6 +81,7 @@ GetHiredAlly is an interview preparation application with job description analys
 - `/service/predict-questions` - Questions service home with 2 cards (protected)
 - `/service/predict-questions/common` - 54 common interview questions (protected)
 - `/service/predict-questions/smart` - Smart Questions AI input page (protected)
+- `/service/predict-questions/smart/results/:id` - Smart Questions results page (protected)
 
 ## Database Tables
 - `user_profiles` - User tier definitions (standard, special, vip)
