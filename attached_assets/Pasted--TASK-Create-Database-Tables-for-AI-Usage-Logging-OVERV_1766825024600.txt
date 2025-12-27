@@ -1,0 +1,107 @@
+## TASK: Create Database Tables for AI Usage Logging
+
+### OVERVIEW
+Create Supabase tables to track AI usage and store user preferences.
+
+### STEP 1: Create ai_usage_logs Table
+
+Run this SQL in Supabase SQL Editor:
+
+-- AI Usage Logs Table
+CREATE TABLE ai_usage_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    service_type TEXT NOT NULL,
+    ai_provider TEXT NOT NULL,
+    model_name TEXT NOT NULL,
+    input_tokens INTEGER DEFAULT 0,
+    output_tokens INTEGER DEFAULT 0,
+    total_tokens INTEGER GENERATED ALWAYS AS (input_tokens + output_tokens) STORED,
+    cost_usd DECIMAL(10, 6) DEFAULT 0,
+    response_time_ms INTEGER,
+    success BOOLEAN DEFAULT TRUE,
+    error_message TEXT,
+    request_metadata JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Indexes for fast queries
+CREATE INDEX idx_ai_usage_user_id ON ai_usage_logs(user_id);
+CREATE INDEX idx_ai_usage_created_at ON ai_usage_logs(created_at DESC);
+CREATE INDEX idx_ai_usage_provider ON ai_usage_logs(ai_provider);
+CREATE INDEX idx_ai_usage_service ON ai_usage_logs(service_type);
+CREATE INDEX idx_ai_usage_date ON ai_usage_logs(DATE(created_at));
+
+-- Enable RLS
+ALTER TABLE ai_usage_logs ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users view own logs" ON ai_usage_logs
+    FOR SELECT USING (user_id = auth.uid()::uuid);
+
+CREATE POLICY "Service can insert logs" ON ai_usage_logs
+    FOR INSERT WITH CHECK (true);
+
+### STEP 2: Create user_ai_preferences Table
+
+-- User AI Preferences Table
+CREATE TABLE user_ai_preferences (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    service_type TEXT NOT NULL,
+    ai_provider TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(user_id, service_type)
+);
+
+CREATE INDEX idx_user_ai_prefs_user ON user_ai_preferences(user_id);
+
+ALTER TABLE user_ai_preferences ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users manage own preferences" ON user_ai_preferences
+    FOR ALL USING (user_id = auth.uid()::uuid);
+
+### STEP 3: Add Default Provider to Users Table
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS preferred_ai_provider TEXT DEFAULT 'gemini';
+
+### STEP 4: Create Daily Summary Table (for fast reporting)
+
+CREATE TABLE ai_usage_daily_summary (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    date DATE NOT NULL,
+    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    ai_provider TEXT NOT NULL,
+    service_type TEXT NOT NULL,
+    total_requests INTEGER DEFAULT 0,
+    successful_requests INTEGER DEFAULT 0,
+    failed_requests INTEGER DEFAULT 0,
+    total_input_tokens INTEGER DEFAULT 0,
+    total_output_tokens INTEGER DEFAULT 0,
+    total_tokens INTEGER DEFAULT 0,
+    total_cost_usd DECIMAL(10, 4) DEFAULT 0,
+    avg_response_time_ms INTEGER,
+    success_rate DECIMAL(5, 2),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(date, user_id, ai_provider, service_type)
+);
+
+CREATE INDEX idx_daily_summary_date ON ai_usage_daily_summary(date DESC);
+CREATE INDEX idx_daily_summary_user ON ai_usage_daily_summary(user_id);
+
+### STEP 5: Add is_admin Column to Users (if not exists)
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE;
+
+-- Set yourself as admin (replace with your user ID or email)
+-- UPDATE users SET is_admin = TRUE WHERE email = 'your-email@example.com';
+
+### SUCCESS CHECKLIST
+- [ ] ai_usage_logs table created
+- [ ] user_ai_preferences table created
+- [ ] users table has preferred_ai_provider column
+- [ ] ai_usage_daily_summary table created
+- [ ] users table has is_admin column
+- [ ] All indexes created
+- [ ] RLS policies enabled

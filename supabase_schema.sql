@@ -309,3 +309,28 @@ CREATE TABLE IF NOT EXISTS user_ai_preferences (
 );
 
 CREATE INDEX IF NOT EXISTS idx_user_ai_prefs_user_id ON user_ai_preferences(user_id);
+
+-- 12. AI USAGE DAILY SUMMARY (for fast reporting)
+
+CREATE TABLE IF NOT EXISTS ai_usage_daily_summary (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    date DATE NOT NULL,
+    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    ai_provider TEXT NOT NULL,
+    service_type TEXT NOT NULL,
+    total_requests INTEGER DEFAULT 0,
+    successful_requests INTEGER DEFAULT 0,
+    failed_requests INTEGER DEFAULT 0,
+    total_input_tokens INTEGER DEFAULT 0,
+    total_output_tokens INTEGER DEFAULT 0,
+    total_tokens INTEGER DEFAULT 0,
+    total_cost_usd DECIMAL(10, 4) DEFAULT 0,
+    avg_response_time_ms INTEGER,
+    success_rate DECIMAL(5, 2),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(date, user_id, ai_provider, service_type)
+);
+
+CREATE INDEX IF NOT EXISTS idx_daily_summary_date ON ai_usage_daily_summary(date DESC);
+CREATE INDEX IF NOT EXISTS idx_daily_summary_user ON ai_usage_daily_summary(user_id);
