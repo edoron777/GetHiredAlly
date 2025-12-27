@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { isAuthenticated } from '@/lib/auth'
 import { Loader2, List, Lightbulb, BookOpen, ChevronDown, ChevronUp, ChevronRight, Download, MessageCircle, AlertTriangle } from 'lucide-react'
 
-type DepthLevel = 'questions_only' | 'with_tips' | 'full_prep'
+type DepthLevel = 'quick_review' | 'with_example' | 'with_insights' | 'complete_guide'
 
 interface DepthOption {
   id: DepthLevel
@@ -35,9 +35,10 @@ interface QuestionToAsk {
 }
 
 const depthOptions: DepthOption[] = [
-  { id: 'questions_only', icon: <List className="h-5 w-5" />, label: 'Questions Only', sublabel: 'Quick review' },
-  { id: 'with_tips', icon: <Lightbulb className="h-5 w-5" />, label: 'With Tips', sublabel: 'Key pointers' },
-  { id: 'full_prep', icon: <BookOpen className="h-5 w-5" />, label: 'Full Prep', sublabel: 'Complete guide' }
+  { id: 'quick_review', icon: <List className="h-5 w-5" />, label: 'Quick Review', sublabel: 'Just the questions' },
+  { id: 'with_example', icon: <Lightbulb className="h-5 w-5" />, label: 'With Example', sublabel: 'See sample answers' },
+  { id: 'with_insights', icon: <BookOpen className="h-5 w-5" />, label: 'With Insights', sublabel: 'Understand the purpose' },
+  { id: 'complete_guide', icon: <AlertTriangle className="h-5 w-5" />, label: 'Complete Guide', sublabel: 'Full preparation' }
 ]
 
 const categoryLabels: Record<string, string> = {
@@ -73,7 +74,7 @@ const categoryDescriptions: Record<string, { description: string; method: string
 
 export function PredictQuestionsPage() {
   const navigate = useNavigate()
-  const [depthLevel, setDepthLevel] = useState<DepthLevel>('with_tips')
+  const [depthLevel, setDepthLevel] = useState<DepthLevel>('with_example')
   const [questions, setQuestions] = useState<Question[]>([])
   const [questionsToAsk, setQuestionsToAsk] = useState<QuestionToAsk[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -183,12 +184,13 @@ export function PredictQuestionsPage() {
       md += `## ${categoryLabels[category] || category}\n\n`
       qs.forEach((q, idx) => {
         md += `### ${idx + 1}. ${q.question_text}\n\n`
-        if (depthLevel !== 'questions_only') {
-          md += `**Why they ask:** ${q.why_they_ask}\n\n`
-          if (q.framework) md += `**Framework:** ${q.framework}\n\n`
-          if (depthLevel === 'full_prep') {
-            if (q.good_answer_example) md += `**Good Answer Example:**\n${q.good_answer_example}\n\n`
-            if (q.what_to_avoid) md += `**What to Avoid:**\n${q.what_to_avoid}\n\n`
+        if (depthLevel !== 'quick_review') {
+          if (q.good_answer_example) md += `**Sample Answer:**\n${q.good_answer_example}\n\n`
+          if (depthLevel === 'with_insights' || depthLevel === 'complete_guide') {
+            md += `**What they want to know:** ${q.why_they_ask}\n\n`
+          }
+          if (depthLevel === 'complete_guide' && q.what_to_avoid) {
+            md += `**What to avoid:**\n${q.what_to_avoid}\n\n`
           }
         }
       })
@@ -276,7 +278,7 @@ export function PredictQuestionsPage() {
 
         <div style={containerStyle}>
           <h2 style={stepHeaderStyle}>How much detail do you need?</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {depthOptions.map((option) => (
               <button
                 key={option.id}
@@ -537,75 +539,56 @@ export function PredictQuestionsPage() {
                             )}
                           </button>
                           
-                          {isExpanded && depthLevel !== 'questions_only' && (
+                          {isExpanded && depthLevel !== 'quick_review' && (
                             <div style={{ padding: '0 16px 16px', backgroundColor: '#F9FAFB' }}>
-                              <div style={{ 
-                                backgroundColor: '#FEF3C7', 
-                                border: '1px solid #F59E0B',
-                                borderRadius: '8px',
-                                padding: '12px',
-                                marginBottom: '12px'
-                              }}>
-                                <p style={{ fontSize: '13px', color: '#92400E', fontWeight: 500, marginBottom: '4px' }}>
-                                  Why they ask this:
-                                </p>
-                                <p style={{ fontSize: '14px', color: '#78350F' }}>
-                                  {question.why_they_ask}
-                                </p>
-                              </div>
-                              
-                              {question.framework && (
-                                <div style={{ marginBottom: '12px' }}>
-                                  <p style={{ fontSize: '13px', color: '#6B7280', marginBottom: '4px' }}>Framework:</p>
-                                  <p style={{ 
-                                    fontSize: '14px', 
-                                    color: '#1E3A5F', 
-                                    fontWeight: 500,
-                                    backgroundColor: '#E8F0F5',
-                                    padding: '8px 12px',
-                                    borderRadius: '6px',
-                                    display: 'inline-block'
-                                  }}>
-                                    {question.framework}
+                              {question.good_answer_example && (
+                                <div style={{ 
+                                  backgroundColor: '#D1FAE5', 
+                                  border: '1px solid #10B981',
+                                  borderRadius: '8px',
+                                  padding: '12px',
+                                  marginBottom: '12px'
+                                }}>
+                                  <p style={{ fontSize: '13px', color: '#065F46', fontWeight: 500, marginBottom: '4px' }}>
+                                    Sample Answer:
+                                  </p>
+                                  <p style={{ fontSize: '14px', color: '#047857', whiteSpace: 'pre-wrap' }}>
+                                    {question.good_answer_example}
                                   </p>
                                 </div>
                               )}
                               
-                              {depthLevel === 'full_prep' && (
-                                <>
-                                  {question.good_answer_example && (
-                                    <div style={{ 
-                                      backgroundColor: '#D1FAE5', 
-                                      border: '1px solid #10B981',
-                                      borderRadius: '8px',
-                                      padding: '12px',
-                                      marginBottom: '12px'
-                                    }}>
-                                      <p style={{ fontSize: '13px', color: '#065F46', fontWeight: 500, marginBottom: '4px' }}>
-                                        Good Answer Example:
-                                      </p>
-                                      <p style={{ fontSize: '14px', color: '#047857', whiteSpace: 'pre-wrap' }}>
-                                        {question.good_answer_example}
-                                      </p>
-                                    </div>
-                                  )}
-                                  
-                                  {question.what_to_avoid && (
-                                    <div style={{ 
-                                      backgroundColor: '#FEE2E2', 
-                                      border: '1px solid #EF4444',
-                                      borderRadius: '8px',
-                                      padding: '12px'
-                                    }}>
-                                      <p style={{ fontSize: '13px', color: '#991B1B', fontWeight: 500, marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                        <AlertTriangle className="h-4 w-4" /> What to Avoid:
-                                      </p>
-                                      <p style={{ fontSize: '14px', color: '#B91C1C' }}>
-                                        {question.what_to_avoid}
-                                      </p>
-                                    </div>
-                                  )}
-                                </>
+                              {(depthLevel === 'with_insights' || depthLevel === 'complete_guide') && (
+                                <div style={{ 
+                                  backgroundColor: '#DBEAFE', 
+                                  border: '1px solid #3B82F6',
+                                  borderRadius: '8px',
+                                  padding: '12px',
+                                  marginBottom: '12px'
+                                }}>
+                                  <p style={{ fontSize: '13px', color: '#1E40AF', fontWeight: 500, marginBottom: '4px' }}>
+                                    What they want to know:
+                                  </p>
+                                  <p style={{ fontSize: '14px', color: '#1D4ED8' }}>
+                                    {question.why_they_ask}
+                                  </p>
+                                </div>
+                              )}
+                              
+                              {depthLevel === 'complete_guide' && question.what_to_avoid && (
+                                <div style={{ 
+                                  backgroundColor: '#FEE2E2', 
+                                  border: '1px solid #EF4444',
+                                  borderRadius: '8px',
+                                  padding: '12px'
+                                }}>
+                                  <p style={{ fontSize: '13px', color: '#991B1B', fontWeight: 500, marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <AlertTriangle className="h-4 w-4" /> What to avoid:
+                                  </p>
+                                  <p style={{ fontSize: '14px', color: '#B91C1C' }}>
+                                    {question.what_to_avoid}
+                                  </p>
+                                </div>
                               )}
                             </div>
                           )}
@@ -645,12 +628,12 @@ export function PredictQuestionsPage() {
                       <strong>Why ask:</strong> {q.why_ask || q.why_to_ask}
                     </p>
                   )}
-                  {depthLevel === 'full_prep' && q.what_to_listen_for && (
+                  {depthLevel === 'complete_guide' && q.what_to_listen_for && (
                     <p style={{ fontSize: '13px', color: '#6B7280', marginBottom: '4px' }}>
                       <strong>Listen for:</strong> {q.what_to_listen_for}
                     </p>
                   )}
-                  {depthLevel === 'full_prep' && q.warning_signs && (
+                  {depthLevel === 'complete_guide' && q.warning_signs && (
                     <p style={{ fontSize: '13px', color: '#DC2626' }}>
                       <strong>Warning signs:</strong> {q.warning_signs}
                     </p>
