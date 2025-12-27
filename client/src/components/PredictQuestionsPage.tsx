@@ -308,35 +308,38 @@ export function PredictQuestionsPage() {
           backgroundColor: '#F9FAFB'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-            <Filter size={16} style={{ color: '#6B7280' }} />
-            <span style={{ color: '#374151', fontSize: '14px' }}>How much detail do you need?</span>
+            <Filter size={16} style={{ color: '#3B82F6' }} />
+            <span style={{ color: '#374151', fontSize: '14px' }}>How much help do you want with each question?</span>
           </div>
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
             {depthOptions.map((option) => (
-              <button
-                key={option.id}
-                type="button"
-                title={option.tooltip}
-                onClick={() => setDepthLevel(option.id)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '8px 16px',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  backgroundColor: depthLevel === option.id ? '#E8F0F5' : 'white',
-                  border: depthLevel === option.id ? '2px solid #1E3A5F' : '1px solid #E5E7EB'
-                }}
-              >
-                <div style={{ color: option.iconColor }}>
-                  {option.icon}
-                </div>
-                <span style={{ fontWeight: 500, fontSize: '14px', color: '#1E3A5F' }}>
-                  {option.label}
+              <div key={option.id} className="group relative">
+                <button
+                  type="button"
+                  onClick={() => setDepthLevel(option.id)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '8px 16px',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    backgroundColor: depthLevel === option.id ? '#E8F0F5' : 'white',
+                    border: depthLevel === option.id ? '2px solid #1E3A5F' : '1px solid #E5E7EB'
+                  }}
+                >
+                  <div style={{ color: option.iconColor }}>
+                    {option.icon}
+                  </div>
+                  <span style={{ fontWeight: 500, fontSize: '14px', color: '#1E3A5F' }}>
+                    {option.label}
+                  </span>
+                </button>
+                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                  {option.tooltip}
                 </span>
-              </button>
+              </div>
             ))}
           </div>
         </div>

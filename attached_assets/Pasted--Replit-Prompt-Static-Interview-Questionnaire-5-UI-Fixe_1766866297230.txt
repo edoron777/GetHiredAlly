@@ -1,0 +1,179 @@
+# Replit Prompt: Static Interview Questionnaire - 5 UI Fixes
+
+**Task:** Make 5 specific UI changes to the Static Interview Questionnaire page
+**Priority:** HIGH
+
+---
+
+## ⚠️ CRITICAL INSTRUCTIONS
+
+- Follow these instructions EXACTLY
+- Do NOT add anything not requested
+- Do NOT change toolbar height
+
+---
+
+## CHANGE 1: Center the 4 Filter Buttons
+
+The 4 filter buttons (Quick Review, With Example, With Insights, Complete Guide) should be **centered** within the filter bar.
+
+**Current:** Buttons aligned left
+**Fixed:** Buttons centered
+
+```jsx
+<div className="flex justify-center gap-2">
+  {/* 4 buttons here */}
+</div>
+```
+
+---
+
+## CHANGE 2: Color the Funnel Icon
+
+The funnel (Filter) icon should be **colored**, not gray.
+
+**Current:** Gray funnel icon
+**Fixed:** Blue funnel icon (or match your theme color)
+
+```jsx
+<Filter size={16} className="text-blue-500" />
+```
+
+---
+
+## CHANGE 3: Improve Tooltip Visibility
+
+The tooltips on the filter buttons are hard to read.
+
+**Fix:**
+- Darker background color (dark gray or black)
+- Larger font size
+- Better contrast
+
+**Option A - CSS custom tooltip:**
+```jsx
+<button 
+  className="relative group ..."
+>
+  <List size={16} className="text-blue-500" />
+  <span>Quick Review</span>
+  
+  {/* Custom tooltip */}
+  <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 
+                   bg-gray-900 text-white text-sm rounded-lg opacity-0 
+                   group-hover:opacity-100 transition-opacity whitespace-nowrap">
+    Show questions only
+  </span>
+</button>
+```
+
+**Option B - If using title attribute, add CSS:**
+```css
+[title] {
+  position: relative;
+}
+```
+
+**Tooltip styling requirements:**
+- Background: Dark (#1F2937 or #111827)
+- Text: White
+- Font size: 14px (text-sm)
+- Padding: px-3 py-2
+- Border radius: rounded-lg
+
+---
+
+## CHANGE 4: Make + and − Buttons Larger
+
+The Expand All (+) and Collapse All (−) buttons are too small.
+
+**Requirements:**
+- Make buttons as large as possible
+- Do NOT change toolbar height
+- Buttons should be clearly visible
+
+**Fixed:**
+```jsx
+<button 
+  title="Expand All" 
+  className="text-white text-2xl font-bold px-3 hover:bg-white/20 rounded"
+>
+  +
+</button>
+<button 
+  title="Collapse All" 
+  className="text-white text-2xl font-bold px-3 hover:bg-white/20 rounded"
+>
+  −
+</button>
+```
+
+**Changes:**
+- Font size: `text-2xl` (larger)
+- Font weight: `font-bold` (bolder)
+- Padding: `px-3` (more clickable area)
+
+---
+
+## CHANGE 5: Improve Filter Bar Title Text
+
+**Current:** "How much detail do you need?"
+**Problem:** User doesn't understand what "detail" means
+
+**Fixed:** "How much help do you want with each question?"
+
+This is clearer because:
+- User understands it's about the questions
+- "Help" is clearer than "detail"
+- User knows they can choose their level of guidance
+
+```jsx
+<div className="flex items-center gap-2 mb-2">
+  <Filter size={16} className="text-blue-500" />
+  <span className="text-gray-700">How much help do you want with each question?</span>
+</div>
+```
+
+---
+
+## SUMMARY OF ALL CHANGES
+
+| # | Element | Change |
+|---|---------|--------|
+| 1 | 4 filter buttons | Center them |
+| 2 | Funnel icon | Make it colored (blue) |
+| 3 | Tooltips | Darker background, larger font |
+| 4 | + and − buttons | Make larger (text-2xl, font-bold) |
+| 5 | Filter bar title | Change to "How much help do you want with each question?" |
+
+---
+
+## VISUAL RESULT
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ 🔻 How much help do you want with each question?            │  ← Blue funnel, new text
+│                                                             │
+│        [☰ Quick Review] [💡 With Example] [📖 With Insights] [⭐ Complete Guide]  ← Centered
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│ [+] [−]  │       │  Email  WhatsApp  │  PDF  WORD  MD      │  ← Larger +/−
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## VERIFICATION CHECKLIST
+
+- [ ] 4 filter buttons are centered
+- [ ] Funnel icon is colored (blue)
+- [ ] Tooltips have dark background and larger font
+- [ ] + and − buttons are clearly visible and larger
+- [ ] Filter bar title says "How much help do you want with each question?"
+- [ ] Toolbar height is NOT changed
+
+---
+
+**END OF PROMPT**

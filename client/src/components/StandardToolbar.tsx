@@ -106,7 +106,12 @@ export function StandardToolbar({
           type="button"
           title="Expand All"
           onClick={onExpandAll}
-          style={buttonStyle}
+          style={{
+            ...buttonStyle,
+            fontSize: '20px',
+            fontWeight: 700,
+            padding: '4px 12px'
+          }}
           onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)'}
           onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
         >
@@ -116,7 +121,12 @@ export function StandardToolbar({
           type="button"
           title="Collapse All"
           onClick={onCollapseAll}
-          style={buttonStyle}
+          style={{
+            ...buttonStyle,
+            fontSize: '20px',
+            fontWeight: 700,
+            padding: '4px 12px'
+          }}
           onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)'}
           onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
         >
