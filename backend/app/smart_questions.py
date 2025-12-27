@@ -111,19 +111,79 @@ Now generate the JSON output:"""
     return prompt
 
 def parse_gemini_response(response_text: str) -> dict:
+    """Parse AI response with error recovery for truncated JSON"""
     text = response_text.strip()
+    
     if text.startswith("```json"):
         text = text[7:]
-    if text.startswith("```"):
+    elif text.startswith("```"):
         text = text[3:]
     if text.endswith("```"):
         text = text[:-3]
     text = text.strip()
     
+    start_idx = text.find('{')
+    end_idx = text.rfind('}')
+    
+    if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
+        text = text[start_idx:end_idx + 1]
+    
     try:
-        return json.loads(text)
+        result = json.loads(text)
+        return validate_smart_questions_response(result)
     except json.JSONDecodeError as e:
-        raise ValueError(f"Failed to parse JSON: {str(e)}")
+        print(f"Initial JSON parse failed: {e}, attempting recovery...")
+        
+        for i in range(len(text), 0, -50):
+            try:
+                test_text = text[:i]
+                
+                open_quotes = test_text.count('"') % 2
+                if open_quotes:
+                    test_text += '"'
+                
+                open_brackets = test_text.count('[') - test_text.count(']')
+                open_braces = test_text.count('{') - test_text.count('}')
+                
+                test_text += ']' * max(0, open_brackets)
+                test_text += '}' * max(0, open_braces)
+                
+                result = json.loads(test_text)
+                print(f"Recovered JSON by truncating at position {i}")
+                return validate_smart_questions_response(result)
+            except:
+                continue
+        
+        print(f"JSON recovery failed, returning empty structure")
+        return {
+            "weak_areas": [],
+            "questions": [],
+            "parse_error": str(e)
+        }
+
+def validate_smart_questions_response(data: dict) -> dict:
+    """Ensure response has required structure"""
+    if "weak_areas" not in data:
+        data["weak_areas"] = []
+    
+    if "questions" not in data:
+        data["questions"] = []
+    
+    valid_questions = []
+    for q in data["questions"]:
+        if isinstance(q, dict) and q.get("question_text"):
+            if "category" not in q:
+                q["category"] = "universal"
+            if "why_they_ask" not in q:
+                q["why_they_ask"] = ""
+            if "good_answer_example" not in q:
+                q["good_answer_example"] = ""
+            if "what_to_avoid" not in q:
+                q["what_to_avoid"] = ""
+            valid_questions.append(q)
+    
+    data["questions"] = valid_questions
+    return data
 
 async def get_user_from_token(token: str) -> dict:
     import hashlib

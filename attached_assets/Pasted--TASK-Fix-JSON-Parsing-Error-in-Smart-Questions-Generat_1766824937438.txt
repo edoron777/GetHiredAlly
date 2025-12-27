@@ -1,0 +1,113 @@
+## TASK: Fix JSON Parsing Error in Smart Questions Generation
+
+### PROBLEM
+Error: "Failed to parse JSON: Unterminated string starting at: line 258 column 30"
+
+This happens when the AI response is too long and gets truncated, or contains invalid JSON.
+
+### SOLUTION
+
+Update the Smart Questions generation code to:
+
+1. Increase max_tokens to ensure full response
+2. Add better JSON parsing with error recovery
+3. Add response validation
+
+### STEP 1: Update AI Call Parameters
+
+In the Smart Questions generation code, ensure max_tokens is set high enough:
+
+# When calling Claude or Gemini, set:
+max_tokens = 8000  # Increase from default
+
+# For LiteLLM:
+response = completion(
+    model=model,
+    messages=messages,
+    max_tokens=8000,  # Add this parameter
+    temperature=0.7
+)
+
+### STEP 2: Improve JSON Parsing
+
+Update the parse function to handle edge cases:
+
+import json
+import re
+
+def parse_ai_response(response_text: str) -> dict:
+    """Parse AI response with error recovery"""
+    
+    text = response_text.strip()
+    
+    # Remove markdown code blocks if present
+    if text.startswith("```json"):
+        text = text[7:]
+    elif text.startswith("```"):
+        text = text[3:]
+    
+    if text.endswith("```"):
+        text = text[:-3]
+    
+    text = text.strip()
+    
+    # Try to find JSON object boundaries
+    start_idx = text.find('{')
+    end_idx = text.rfind('}')
+    
+    if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
+        text = text[start_idx:end_idx + 1]
+    
+    # Try to parse
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError as e:
+        # Try to fix common issues
+        
+        # Fix unterminated strings by finding the last valid JSON
+        try:
+            # Try parsing progressively smaller chunks
+            for i in range(len(text), 0, -100):
+                try:
+                    # Try to close any open structures
+                    test_text = text[:i]
+                    # Count open braces/brackets
+                    open_braces = test_text.count('{') - test_text.count('}')
+                    open_brackets = test_text.count('[') - test_text.count(']')
+                    
+                    # Close them
+                    test_text += '"' * (test_text.count('"') % 2)  # Close open string
+                    test_text += ']' * open_brackets
+                    test_text += '}' * open_braces
+                    
+                    result = json.loads(test_text)
+                    print(f"Recovered JSON by truncating at position {i}")
+                    return result
+                except:
+                    continue
+        except:
+            pass
+        
+        # If all else fails, return empty structure
+        print(f"JSON parse error: {e}")
+        return {
+            "weak_areas": [],
+            "questions": [],
+            "parse_error": str(e)
+        }
+
+### STEP 3: Add Response Validation
+
+After parsing, validate the structure:
+
+def validate_smart_questions_response(data: dict) -> dict:
+    """Ensure response has required structure"""
+    
+    if "weak_areas" not in data:
+        data["weak_areas"] = []
+    
+    if "questions" not in data:
+        data["questions"] = []
+    
+    # Ensure each question has required fields
+    for q
