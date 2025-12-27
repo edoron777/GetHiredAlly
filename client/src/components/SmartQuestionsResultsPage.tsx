@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { isAuthenticated, getAuthToken } from '@/lib/auth'
-import { Loader2, ChevronDown, ChevronUp, Sparkles, Download, Printer, List, Lightbulb, BookOpen, Target } from 'lucide-react'
+import { Loader2, ChevronDown, ChevronUp, ChevronRight, Download, List, Lightbulb, BookOpen, Target } from 'lucide-react'
 
 type DepthLevel = 'quick_review' | 'with_example' | 'with_insights' | 'complete_guide'
 
@@ -27,7 +27,6 @@ interface SmartQuestion {
   why_they_ask?: string
   good_answer_example?: string
   what_to_avoid?: string
-  source?: string
 }
 
 interface SmartQuestionsResult {
@@ -54,13 +53,6 @@ const categoryLabels: Record<string, string> = {
   self_assessment: 'Self-Assessment Questions',
   situational: 'Situational Questions',
   cultural_fit: 'Cultural Fit Questions'
-}
-
-const sourceLabels: Record<string, { icon: string; label: string }> = {
-  jd_requirement: { icon: '📄', label: 'From Job Requirements' },
-  cv_gap: { icon: '📝', label: 'Worth Preparing' },
-  cv_strength: { icon: '⭐', label: 'Highlights Your Strength' },
-  common_question: { icon: '📋', label: 'Common for Role' }
 }
 
 const priorityConfig: Record<string, { icon: string; label: string; bgColor: string; textColor: string; borderColor: string; cardBg: string }> = {
@@ -90,6 +82,8 @@ const priorityConfig: Record<string, { icon: string; label: string; bgColor: str
   }
 }
 
+const categoryOrder = ['universal', 'behavioral', 'situational', 'self_assessment', 'cultural_fit']
+
 export function SmartQuestionsResultsPage() {
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
@@ -101,6 +95,8 @@ export function SmartQuestionsResultsPage() {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
   const [expandedFocusAreas, setExpandedFocusAreas] = useState<Set<number>>(new Set())
   const [focusAreasExpanded, setFocusAreasExpanded] = useState(true)
+  const [downloadingPdf, setDownloadingPdf] = useState(false)
+  const [downloadingDocx, setDownloadingDocx] = useState(false)
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -120,7 +116,6 @@ export function SmartQuestionsResultsPage() {
         return res.json()
       })
       .then((data) => {
-        // Handle legacy weak_areas field for backward compatibility
         if (data.weak_areas && !data.focus_areas) {
           data.focus_areas = data.weak_areas.map((wa: any) => ({
             area: wa.area,
@@ -132,8 +127,6 @@ export function SmartQuestionsResultsPage() {
           }))
         }
         setResult(data)
-        const categories = new Set(data.personalized_questions?.map((q: SmartQuestion) => q.category) || [])
-        setExpandedCategories(categories as Set<string>)
         setLoading(false)
       })
       .catch((err) => {
@@ -166,15 +159,6 @@ export function SmartQuestionsResultsPage() {
     })
   }
 
-  const expandAllCategories = () => {
-    const allCategories = new Set(result?.personalized_questions?.map(q => q.category) || [])
-    setExpandedCategories(allCategories)
-  }
-
-  const collapseAllCategories = () => {
-    setExpandedCategories(new Set())
-  }
-
   const groupedQuestions = result?.personalized_questions?.reduce((acc, q) => {
     const cat = q.category || 'other'
     if (!acc[cat]) acc[cat] = []
@@ -182,8 +166,89 @@ export function SmartQuestionsResultsPage() {
     return acc
   }, {} as Record<string, SmartQuestion[]>) || {}
 
-  const handlePrint = () => {
-    window.print()
+  const sortedCategories = Object.keys(groupedQuestions).sort((a, b) => {
+    return categoryOrder.indexOf(a) - categoryOrder.indexOf(b)
+  })
+
+  const expandAllCategories = () => {
+    setExpandedCategories(new Set(sortedCategories))
+  }
+
+  const collapseAllCategories = () => {
+    setExpandedCategories(new Set())
+  }
+
+  const generateReportMarkdown = () => {
+    let md = `# Smart Interview Questions - ${result?.job_title || 'Interview'}\n\n`
+    if (result?.company_name) md += `**Company:** ${result.company_name}\n\n`
+    md += `**Preparation Level:** ${depthOptions.find(o => o.id === depthLevel)?.label || 'With Example'}\n\n`
+    md += `---\n\n`
+    
+    sortedCategories.forEach(category => {
+      const qs = groupedQuestions[category]
+      md += `## ${categoryLabels[category] || category}\n\n`
+      qs.forEach((q, idx) => {
+        md += `### ${idx + 1}. ${q.question_text}\n\n`
+        if (depthLevel !== 'quick_review') {
+          if (q.good_answer_example) md += `**Sample Answer:**\n${q.good_answer_example}\n\n`
+          if (depthLevel === 'with_insights' || depthLevel === 'complete_guide') {
+            if (q.why_they_ask) md += `**What they want to know:** ${q.why_they_ask}\n\n`
+          }
+          if (depthLevel === 'complete_guide' && q.what_to_avoid) {
+            md += `**What to avoid:**\n${q.what_to_avoid}\n\n`
+          }
+        }
+      })
+    })
+    
+    return md
+  }
+
+  const handleDownload = async (format: 'pdf' | 'docx') => {
+    const setDownloading = format === 'pdf' ? setDownloadingPdf : setDownloadingDocx
+    setDownloading(true)
+    
+    try {
+      const reportContent = generateReportMarkdown()
+      const response = await fetch(`/api/xray/download/${format}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          report_content: reportContent,
+          job_title: result?.job_title || 'Smart Questions',
+          company_name: result?.company_name || ''
+        })
+      })
+      
+      if (!response.ok) throw new Error(`${format.toUpperCase()} generation failed`)
+      
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `Smart_Questions_${result?.job_title?.replace(/\s+/g, '_') || 'Interview'}.${format}`
+      a.click()
+      window.URL.revokeObjectURL(url)
+    } catch (err) {
+      console.error(`${format} download failed:`, err)
+    } finally {
+      setDownloading(false)
+    }
+  }
+
+  const containerStyle = {
+    border: '1px solid #E5E7EB',
+    borderRadius: '12px',
+    padding: '24px',
+    marginBottom: '20px',
+    backgroundColor: 'white'
+  }
+
+  const stepHeaderStyle = {
+    fontSize: '16px',
+    fontWeight: 600 as const,
+    color: '#1E3A5F',
+    marginBottom: '16px'
   }
 
   if (loading) {
@@ -212,22 +277,30 @@ export function SmartQuestionsResultsPage() {
   }
 
   return (
-    <div className="min-h-screen py-8 px-4" style={{ backgroundColor: '#FAF9F7' }}>
+    <div className="min-h-[calc(100vh-64px)] p-4 md:p-8" style={{ backgroundColor: '#FAF9F7' }}>
       <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium mb-3" style={{ backgroundColor: '#E9D5FF', color: '#7C3AED' }}>
-            <Sparkles className="h-4 w-4" />
-            Personalized for You
-          </div>
-          <h1 className="text-3xl font-bold mb-2" style={{ color: '#1E3A5F' }}>
-            🎯 Smart Questions for {result.job_title}
-          </h1>
-          {result.company_name && (
-            <p className="text-gray-600">at {result.company_name}</p>
-          )}
-        </div>
+        {/* Back Link */}
+        <button
+          type="button"
+          onClick={() => navigate('/service/predict-questions')}
+          className="mb-6 text-sm transition-colors"
+          style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+          onMouseEnter={(e) => e.currentTarget.style.color = '#1E3A5F'}
+          onMouseLeave={(e) => e.currentTarget.style.color = '#6B7280'}
+        >
+          ← Back to Questions Service
+        </button>
 
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        {/* Title & Subtitle */}
+        <h1 className="text-3xl font-bold mb-1" style={{ color: '#1E3A5F' }}>
+          Smart Questions for {result.job_title}{result.company_name ? ` - ${result.company_name}` : ''}
+        </h1>
+        <p className="text-lg mb-6" style={{ color: '#6B7280' }}>
+          Personalized questions based on your profile
+        </p>
+
+        {/* Section A: Personalization Callout */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
           <div className="flex items-center gap-2 mb-2">
             <span className="text-blue-600">✨</span>
             <span className="font-semibold text-blue-900">Personalized for You</span>
@@ -238,251 +311,336 @@ export function SmartQuestionsResultsPage() {
           </p>
         </div>
 
+        {/* Section B: Focus Areas */}
         {result.focus_areas && result.focus_areas.length > 0 && (
-          <div className="bg-white rounded-xl shadow-md mb-6 overflow-hidden" style={{ boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
+          <div style={containerStyle}>
             <button
+              type="button"
               onClick={() => setFocusAreasExpanded(!focusAreasExpanded)}
-              className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0,
+                marginBottom: focusAreasExpanded ? '12px' : '0'
+              }}
             >
-              <h2 className="text-lg font-semibold flex items-center gap-2" style={{ color: '#1E3A5F' }}>
-                <Target className="h-5 w-5 text-blue-500" />
-                📋 Focus Areas for Your Preparation ({result.focus_areas.length})
+              {focusAreasExpanded ? (
+                <ChevronDown className="h-5 w-5" style={{ color: '#1E3A5F', flexShrink: 0 }} />
+              ) : (
+                <ChevronRight className="h-5 w-5" style={{ color: '#1E3A5F', flexShrink: 0 }} />
+              )}
+              <h2 style={{ 
+                fontSize: '16px',
+                fontWeight: 600,
+                color: '#1E3A5F',
+                margin: 0,
+                textAlign: 'left'
+              }}>
+                Focus Areas for Your Preparation
               </h2>
-              {focusAreasExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+              <span style={{ fontSize: '13px', color: '#6B7280', marginLeft: '4px' }}>
+                ({result.focus_areas.length})
+              </span>
             </button>
             
             {focusAreasExpanded && (
-              <div className="p-4 pt-0">
-                <p className="text-gray-600 mb-4">
-                  We identified {result.focus_areas.length} areas where preparation will help you stand out. Here's your coaching guide:
-                </p>
-                <div className="space-y-4">
-                  {result.focus_areas.map((area, idx) => {
-                    const config = priorityConfig[area.priority_level] || priorityConfig.GOOD_TO_KNOW
-                    const isExpanded = expandedFocusAreas.has(idx)
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {result.focus_areas.map((area, idx) => {
+                  const config = priorityConfig[area.priority_level] || priorityConfig.GOOD_TO_KNOW
+                  const isExpanded = expandedFocusAreas.has(idx)
+                  
+                  return (
+                    <div
+                      key={idx}
+                      style={{
+                        borderLeft: `4px solid ${config.borderColor}`,
+                        backgroundColor: config.cardBg,
+                        borderRadius: '8px',
+                        padding: '16px'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                            <span style={{ fontWeight: 600, color: '#1E3A5F' }}>{area.area}</span>
+                            <span
+                              className={`${config.bgColor} ${config.textColor}`}
+                              style={{ padding: '4px 12px', borderRadius: '9999px', fontSize: '13px', fontWeight: 500 }}
+                            >
+                              {config.icon} {config.label}
+                            </span>
+                          </div>
+                          <p style={{ color: '#6B7280', fontSize: '14px' }}>{area.focus_reason}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => toggleFocusArea(idx)}
+                          style={{ marginLeft: '8px', padding: '4px', background: 'none', border: 'none', cursor: 'pointer' }}
+                        >
+                          {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                        </button>
+                      </div>
+                      
+                      {isExpanded && (
+                        <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #E5E7EB' }}>
+                          {area.coaching_tip && (
+                            <div style={{ padding: '12px', borderRadius: '8px', backgroundColor: '#DBEAFE', marginBottom: '8px' }}>
+                              <p style={{ fontSize: '14px' }}>
+                                <span style={{ fontWeight: 500, color: '#1E40AF' }}>💬 Coaching Tip:</span>{' '}
+                                <span style={{ color: '#1D4ED8' }}>{area.coaching_tip}</span>
+                              </p>
+                            </div>
+                          )}
+                          {area.winning_approach && (
+                            <div style={{ padding: '12px', borderRadius: '8px', backgroundColor: '#D1FAE5' }}>
+                              <p style={{ fontSize: '14px' }}>
+                                <span style={{ fontWeight: 500, color: '#065F46' }}>💡 Your Winning Approach:</span>{' '}
+                                <span style={{ color: '#047857' }}>{area.winning_approach}</span>
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Display Levels */}
+        <div style={containerStyle}>
+          <h2 style={stepHeaderStyle}>How much detail do you need?</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {depthOptions.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => setDepthLevel(option.id)}
+                style={{
+                  height: '80px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '4px',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  backgroundColor: depthLevel === option.id ? '#E8F0F5' : 'white',
+                  border: depthLevel === option.id ? '2px solid #1E3A5F' : '1px solid #E5E7EB'
+                }}
+              >
+                <div style={{ color: depthLevel === option.id ? '#1E3A5F' : '#6B7280' }}>
+                  {option.icon}
+                </div>
+                <span style={{ fontWeight: 500, fontSize: '13px', color: '#1E3A5F', textAlign: 'center' }}>
+                  {option.label}
+                </span>
+                <span style={{ fontSize: '11px', color: '#6B7280', textAlign: 'center' }}>
+                  {option.sublabel}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Action Row */}
+        <div style={{ ...containerStyle, padding: '16px 24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span style={{ fontSize: '14px', color: '#6B7280' }}>
+                {result.personalized_questions?.length || 0} questions
+              </span>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={expandAllCategories}
+                  style={{
+                    background: 'none',
+                    border: '1px solid #E5E7EB',
+                    borderRadius: '6px',
+                    padding: '6px 12px',
+                    fontSize: '13px',
+                    color: '#6B7280',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Expand All
+                </button>
+                <button
+                  type="button"
+                  onClick={collapseAllCategories}
+                  style={{
+                    background: 'none',
+                    border: '1px solid #E5E7EB',
+                    borderRadius: '6px',
+                    padding: '6px 12px',
+                    fontSize: '13px',
+                    color: '#6B7280',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Collapse All
+                </button>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                type="button"
+                disabled={downloadingPdf}
+                onClick={() => handleDownload('pdf')}
+                style={{
+                  background: 'none',
+                  border: '1px solid #E5E7EB',
+                  borderRadius: '6px',
+                  padding: '6px 12px',
+                  fontSize: '13px',
+                  color: downloadingPdf ? '#9CA3AF' : '#6B7280',
+                  cursor: downloadingPdf ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+              >
+                {downloadingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} PDF
+              </button>
+              <button
+                type="button"
+                disabled={downloadingDocx}
+                onClick={() => handleDownload('docx')}
+                style={{
+                  background: 'none',
+                  border: '1px solid #E5E7EB',
+                  borderRadius: '6px',
+                  padding: '6px 12px',
+                  fontSize: '13px',
+                  color: downloadingDocx ? '#9CA3AF' : '#6B7280',
+                  cursor: downloadingDocx ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+              >
+                {downloadingDocx ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} Word
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Question Categories */}
+        {sortedCategories.map((category) => {
+          const categoryQuestions = groupedQuestions[category]
+          const isCategoryExpanded = expandedCategories.has(category)
+          
+          return (
+            <div key={category} style={containerStyle}>
+              <button
+                type="button"
+                onClick={() => toggleCategory(category)}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: 0,
+                  marginBottom: isCategoryExpanded ? '12px' : '0'
+                }}
+              >
+                {isCategoryExpanded ? (
+                  <ChevronDown className="h-5 w-5" style={{ color: '#1E3A5F', flexShrink: 0 }} />
+                ) : (
+                  <ChevronRight className="h-5 w-5" style={{ color: '#1E3A5F', flexShrink: 0 }} />
+                )}
+                <h2 style={{ 
+                  fontSize: '16px',
+                  fontWeight: 600,
+                  color: '#1E3A5F',
+                  margin: 0,
+                  textAlign: 'left'
+                }}>
+                  {categoryLabels[category] || category}
+                </h2>
+                <span style={{ fontSize: '13px', color: '#6B7280', marginLeft: '4px' }}>
+                  ({categoryQuestions.length})
+                </span>
+              </button>
+              
+              {isCategoryExpanded && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {categoryQuestions.map((question, idx) => {
+                    const questionId = `${category}-${idx}`
                     
                     return (
                       <div
-                        key={idx}
-                        className="rounded-lg p-4 border-l-4"
-                        style={{ borderLeftColor: config.borderColor, backgroundColor: config.cardBg }}
+                        key={questionId}
+                        style={{
+                          backgroundColor: '#F9FAFB',
+                          border: '1px solid #E5E7EB',
+                          borderRadius: '8px',
+                          padding: '16px'
+                        }}
                       >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <span className="font-semibold" style={{ color: '#1E3A5F' }}>{area.area}</span>
-                              <span
-                                className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${config.bgColor} ${config.textColor}`}
-                              >
-                                {config.icon} {config.label}
-                              </span>
-                            </div>
-                            <p className="text-gray-600 text-sm">{area.focus_reason}</p>
+                        <p style={{ fontWeight: 500, color: '#1E3A5F', fontSize: '15px', marginBottom: '8px' }}>
+                          {question.question_text}
+                        </p>
+
+                        {(depthLevel === 'with_example' || depthLevel === 'with_insights' || depthLevel === 'complete_guide') && question.good_answer_example && (
+                          <div style={{ backgroundColor: '#D1FAE5', borderRadius: '8px', padding: '12px', marginTop: '12px' }}>
+                            <p style={{ fontSize: '13px', fontWeight: 500, color: '#065F46', marginBottom: '4px' }}>
+                              Example of a Good Answer:
+                            </p>
+                            <p style={{ fontSize: '13px', color: '#047857' }}>{question.good_answer_example}</p>
                           </div>
-                          <button
-                            onClick={() => toggleFocusArea(idx)}
-                            className="ml-2 p-1 rounded hover:bg-white/50"
-                          >
-                            {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
-                          </button>
-                        </div>
-                        
-                        {isExpanded && (
-                          <div className="mt-3 pt-3 border-t border-gray-200 space-y-3">
-                            {area.coaching_tip && (
-                              <div className="p-3 rounded-lg bg-blue-50">
-                                <p className="text-sm">
-                                  <span className="font-medium text-blue-800">💬 Coaching Tip:</span>{' '}
-                                  <span className="text-blue-700">{area.coaching_tip}</span>
-                                </p>
-                              </div>
-                            )}
-                            {area.winning_approach && (
-                              <div className="p-3 rounded-lg bg-green-50">
-                                <p className="text-sm">
-                                  <span className="font-medium text-green-800">💡 Your Winning Approach:</span>{' '}
-                                  <span className="text-green-700">{area.winning_approach}</span>
-                                </p>
-                              </div>
-                            )}
+                        )}
+
+                        {(depthLevel === 'with_insights' || depthLevel === 'complete_guide') && question.why_they_ask && (
+                          <div style={{ backgroundColor: '#DBEAFE', borderRadius: '8px', padding: '12px', marginTop: '12px' }}>
+                            <p style={{ fontSize: '13px', fontWeight: 500, color: '#1E40AF', marginBottom: '4px' }}>
+                              What they want to know:
+                            </p>
+                            <p style={{ fontSize: '13px', color: '#1D4ED8' }}>{question.why_they_ask}</p>
+                          </div>
+                        )}
+
+                        {depthLevel === 'complete_guide' && question.what_to_avoid && (
+                          <div style={{ backgroundColor: '#FEF3C7', borderRadius: '8px', padding: '12px', marginTop: '12px' }}>
+                            <p style={{ fontSize: '13px', fontWeight: 500, color: '#92400E', marginBottom: '4px' }}>
+                              What to avoid:
+                            </p>
+                            <p style={{ fontSize: '13px', color: '#B45309' }}>{question.what_to_avoid}</p>
                           </div>
                         )}
                       </div>
                     )
                   })}
                 </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        <div className="bg-white rounded-xl p-4 shadow-md mb-6" style={{ boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-          <div className="flex flex-wrap gap-2">
-            {depthOptions.map((option) => (
-              <button
-                key={option.id}
-                onClick={() => setDepthLevel(option.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                  depthLevel === option.id
-                    ? 'text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-                style={depthLevel === option.id ? { backgroundColor: '#1E3A5F' } : {}}
-              >
-                {option.icon}
-                <div className="text-left">
-                  <div className="font-medium text-sm">{option.label}</div>
-                  <div className="text-xs opacity-75">{option.sublabel}</div>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl p-4 shadow-md mb-6" style={{ boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-          <div className="flex flex-wrap justify-between items-center gap-3">
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-gray-600">
-                {result.personalized_questions?.length || 0} questions
-              </span>
-              <div className="flex gap-2">
-                <button
-                  onClick={expandAllCategories}
-                  className="text-sm px-3 py-1.5 rounded border border-gray-200 hover:bg-gray-50 text-gray-600"
-                >
-                  Expand All
-                </button>
-                <button
-                  onClick={collapseAllCategories}
-                  className="text-sm px-3 py-1.5 rounded border border-gray-200 hover:bg-gray-50 text-gray-600"
-                >
-                  Collapse All
-                </button>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={handlePrint}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded border border-gray-200 hover:bg-gray-50 text-gray-600"
-              >
-                <Printer className="h-4 w-4" />
-                Print
-              </button>
-              <button
-                className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded border border-gray-200 hover:bg-gray-50 text-gray-600"
-              >
-                <Download className="h-4 w-4" />
-                PDF
-              </button>
-              <button
-                className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded border border-gray-200 hover:bg-gray-50 text-gray-600"
-              >
-                <Download className="h-4 w-4" />
-                Word
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {Object.entries(groupedQuestions).map(([category, questions]) => {
-          const isExpanded = expandedCategories.has(category)
-          const label = categoryLabels[category] || category.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())
-          
-          return (
-            <div key={category} className="bg-white rounded-xl shadow-md mb-4 overflow-hidden" style={{ boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-              <button
-                onClick={() => toggleCategory(category)}
-                className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
-              >
-                <h3 className="text-lg font-semibold" style={{ color: '#1E3A5F' }}>
-                  {label} ({questions.length})
-                </h3>
-                {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
-              </button>
-              
-              {isExpanded && (
-                <div className="p-4 pt-0 space-y-4">
-                  {questions.map((q, idx) => (
-                    <div
-                      key={idx}
-                      className="rounded-lg p-4 border-l-4"
-                      style={{ 
-                        borderImage: 'linear-gradient(to bottom, #7C3AED, #3B82F6) 1',
-                        borderLeftWidth: '4px',
-                        borderLeftStyle: 'solid',
-                        backgroundColor: '#FAFAFA'
-                      }}
-                    >
-                      <div className="flex flex-wrap items-center gap-2 mb-2">
-                        <span className="px-2 py-0.5 rounded text-xs font-medium" style={{ backgroundColor: '#E9D5FF', color: '#7C3AED' }}>
-                          {categoryLabels[q.category] || q.category}
-                        </span>
-                        {q.source && sourceLabels[q.source] && (
-                          <span className="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
-                            {sourceLabels[q.source].icon} {sourceLabels[q.source].label}
-                          </span>
-                        )}
-                      </div>
-                      
-                      <p className="font-medium text-lg flex items-start gap-2" style={{ color: '#1E3A5F' }}>
-                        <Sparkles className="h-5 w-5 flex-shrink-0 mt-1" style={{ color: '#7C3AED' }} />
-                        {q.question_text}
-                      </p>
-
-                      {depthLevel === 'complete_guide' && q.personalized_context && (
-                        <div className="mt-3 p-3 rounded-lg" style={{ backgroundColor: '#F3E8FF' }}>
-                          <p className="text-sm font-medium mb-1" style={{ color: '#7C3AED' }}>
-                            📌 Why this question matters for YOU:
-                          </p>
-                          <p className="text-sm" style={{ color: '#6B21A8' }}>{q.personalized_context}</p>
-                        </div>
-                      )}
-
-                      {(depthLevel === 'with_insights' || depthLevel === 'complete_guide') && q.why_they_ask && (
-                        <div className="mt-3 p-3 rounded-lg" style={{ backgroundColor: '#DBEAFE' }}>
-                          <p className="text-sm font-medium mb-1" style={{ color: '#1E40AF' }}>
-                            What the Interviewer Wants to Know:
-                          </p>
-                          <p className="text-sm text-blue-800">{q.why_they_ask}</p>
-                        </div>
-                      )}
-
-                      {(depthLevel === 'with_example' || depthLevel === 'with_insights' || depthLevel === 'complete_guide') && q.good_answer_example && (
-                        <div className="mt-3 p-3 rounded-lg" style={{ backgroundColor: '#D1FAE5' }}>
-                          <p className="text-sm font-medium mb-1" style={{ color: '#065F46' }}>
-                            Example of a Good Answer:
-                          </p>
-                          <p className="text-sm text-green-800">{q.good_answer_example}</p>
-                        </div>
-                      )}
-
-                      {depthLevel === 'complete_guide' && q.what_to_avoid && (
-                        <div className="mt-3 p-3 rounded-lg" style={{ backgroundColor: '#FEF3C7' }}>
-                          <p className="text-sm font-medium mb-1" style={{ color: '#92400E' }}>
-                            💡 Tips to Keep in Mind:
-                          </p>
-                          <p className="text-sm text-yellow-800">{q.what_to_avoid}</p>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
               )}
             </div>
           )
         })}
 
-        <div className="mt-6">
-          <button
-            onClick={() => navigate('/service/predict-questions')}
-            className="text-sm transition-colors"
-            style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-            onMouseEnter={(e) => e.currentTarget.style.color = '#1E3A5F'}
-            onMouseLeave={(e) => e.currentTarget.style.color = '#6B7280'}
-          >
-            ← Back to Questions Service
-          </button>
-        </div>
+        {/* Back Link at Bottom */}
+        <button
+          type="button"
+          onClick={() => navigate('/service/predict-questions')}
+          className="mt-4 text-sm transition-colors"
+          style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+          onMouseEnter={(e) => e.currentTarget.style.color = '#1E3A5F'}
+          onMouseLeave={(e) => e.currentTarget.style.color = '#6B7280'}
+        >
+          ← Back to Questions Service
+        </button>
       </div>
     </div>
   )
