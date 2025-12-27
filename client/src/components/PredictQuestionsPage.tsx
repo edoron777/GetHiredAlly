@@ -851,6 +851,81 @@ export function PredictQuestionsPage() {
           </div>
         )}
       </div>
+
+      <div 
+        style={{ 
+          marginTop: '48px',
+          padding: '32px',
+          background: 'linear-gradient(to right, white, #F5F3FF)',
+          borderRadius: '16px',
+          border: '2px dashed #A78BFA'
+        }}
+      >
+        <div style={{ textAlign: 'center' }}>
+          <h3 style={{ fontSize: '22px', fontWeight: 600, color: '#1E3A5F', marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '24px' }}>✨</span>
+            Want Questions Personalized for YOUR Background?
+          </h3>
+          
+          <p style={{ fontSize: '15px', color: '#4B5563', marginBottom: '20px', maxWidth: '500px', margin: '0 auto 20px' }}>
+            Our Smart Questions Predictor analyzes YOUR specific job and CV to identify:
+          </p>
+          
+          <ul style={{ 
+            listStyle: 'none', 
+            padding: 0, 
+            margin: '0 auto 24px',
+            maxWidth: '400px',
+            textAlign: 'left'
+          }}>
+            <li style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', color: '#4B5563' }}>
+              <span style={{ color: '#7C3AED' }}>•</span>
+              Weak areas where you might face tough questions
+            </li>
+            <li style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', color: '#4B5563' }}>
+              <span style={{ color: '#7C3AED' }}>•</span>
+              Questions tailored to YOUR experience gaps
+            </li>
+            <li style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#4B5563' }}>
+              <span style={{ color: '#7C3AED' }}>•</span>
+              Personalized answer strategies
+            </li>
+          </ul>
+          
+          <button
+            onClick={() => navigate('/service/predict-questions/smart')}
+            style={{
+              backgroundColor: '#7C3AED',
+              color: 'white',
+              padding: '14px 28px',
+              borderRadius: '10px',
+              border: 'none',
+              fontSize: '16px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              boxShadow: '0 4px 12px rgba(124, 58, 237, 0.3)',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)'
+              e.currentTarget.style.boxShadow = '0 6px 16px rgba(124, 58, 237, 0.4)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)'
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(124, 58, 237, 0.3)'
+            }}
+          >
+            Try Smart Questions - Free Trial ✨
+          </button>
+          
+          <p style={{ fontSize: '13px', color: '#6B7280', marginTop: '12px' }}>
+            One free analysis included
+          </p>
+        </div>
+      </div>
     </div>
   )
 }

@@ -1,0 +1,109 @@
+## TASK: Implement Free Tier Logic and Teaser Strategy
+
+### OVERVIEW
+Add the teaser at the bottom of Static Questions page and implement the complete free tier flow.
+
+### PART 1: ADD TEASER TO STATIC QUESTIONS PAGE
+
+At the bottom of /service/predict-questions/common, after all questions, add:
+
+TEASER SECTION:
+- Background: Gradient from white to light purple (#F5F3FF)
+- Border: Purple dashed border
+
+Content:
+┌─────────────────────────────────────────────────────────────┐
+│  ✨ Want Questions Personalized for YOUR Background?       │
+│                                                             │
+│  Our Smart Questions Predictor analyzes YOUR specific job  │
+│  and CV to identify:                                        │
+│  • Weak areas where you might face tough questions          │
+│  • Questions tailored to YOUR experience gaps               │
+│  • Personalized answer strategies                           │
+│                                                             │
+│  [Try Smart Questions - Free Trial ✨]                      │
+│                                                             │
+│  "One free analysis included"                               │
+└─────────────────────────────────────────────────────────────┘
+
+Button links to: /service/predict-questions/smart
+
+### PART 2: UPDATE SERVICE HOME PAGE
+
+On /service/predict-questions, update the Smart Predictor card:
+
+CARD 2 (Smart Questions):
+- Title: "Smart Questions Predictor"
+- Subtitle: "AI-predicted questions based on your job + CV"
+- Badge: "✨ 1 Free Analysis" (for users who haven't used it)
+- Badge: "Upgrade Required" (for users who used free trial)
+- Button: "Try Free" or "Upgrade - $4.99" based on eligibility
+
+On page load, check eligibility and update card accordingly.
+
+### PART 3: DATABASE FUNCTION FOR FREE TRIAL
+
+Create helper functions in backend:
+
+async def check_smart_questions_eligibility(user_id: str) -> dict:
+    """Check if user can use Smart Questions"""
+    user = await supabase.table("users").select("smart_questions_free_used").eq("id", user_id).single().execute()
+    
+    free_used = user.data.get("smart_questions_free_used", False) if user.data else False
+    
+    # TODO: Check paid subscription status
+    is_paid = False
+    
+    return {
+        "eligible": is_paid or not free_used,
+        "reason": "paid" if is_paid else ("free_trial" if not free_used else "exhausted"),
+        "free_trial_used": free_used
+    }
+
+async def mark_free_trial_used(user_id: str):
+    """Mark user's free trial as used"""
+    await supabase.table("users").update({"smart_questions_free_used": True}).eq("id", user_id).execute()
+
+### PART 4: USAGE TRACKING
+
+After successful generation, save usage record:
+
+async def log_smart_questions_usage(user_id: str, result_id: str, tokens_used: int):
+    """Log usage for analytics"""
+    # This data is already saved in smart_question_results table
+    # Additional analytics can be added here if needed
+    pass
+
+### PART 5: UPGRADE PROMPT STYLING
+
+For the upgrade prompt (shown when free trial exhausted):
+
+┌─────────────────────────────────────────────────────────────┐
+│  🔒 Free Trial Used                                         │
+│                                                             │
+│  You've used your 1 free Smart Questions analysis.         │
+│                                                             │
+│  Upgrade to generate unlimited personalized questions       │
+│  for all your job applications.                             │
+│                                                             │
+│  [Upgrade - $4.99]                                          │
+│                                                             │
+│  ✓ Unlimited Smart Questions analyses                       │
+│  ✓ Unlimited X-Ray analyses                                 │
+│  ✓ Priority support                                         │
+└─────────────────────────────────────────────────────────────┘
+
+Style: 
+- Background: Light gray (#F9FAFB)
+- Border: Gray (#E5E7EB)
+- Button: Navy background (#1E3A5F)
+
+### SUCCESS CHECKLIST
+- [ ] Teaser appears at bottom of Static Questions page
+- [ ] Teaser links to Smart Questions page
+- [ ] Service home page shows correct badge based on eligibility
+- [ ] Free trial check works correctly
+- [ ] After using free trial, user sees "Free Trial Used"
+- [ ] Upgrade prompt displays for users who exhausted free trial
+- [ ] User can still view their previous Smart Questions results
+- [ ] Usage is logged in database
