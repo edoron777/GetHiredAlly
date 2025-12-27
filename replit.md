@@ -136,7 +136,9 @@ GetHiredAlly is an interview preparation application with job description analys
 - Backward compatible with legacy data (weak_areas → focus_areas mapping)
 
 ## Recent Changes
-- December 27, 2025: Created StandardToolbar component with Expand/Collapse, Email, WhatsApp, PDF, Word, and Markdown download buttons
+- December 27, 2025: Display level buttons now one-line horizontal with colored icons (blue List, yellow Lightbulb, purple BookOpen, gold Star)
+- December 27, 2025: Added Filter icon on title line, removed sublabels for cleaner compact design
+- December 27, 2025: Navy blue StandardToolbar with Expand/Collapse, Email, WhatsApp, PDF, Word, and Markdown buttons
 - December 27, 2025: Unified layout across Static and Smart Questionnaire pages with identical toolbar and section headers
 - December 27, 2025: Added document footer with branding (GetHiredAlly | service_name | gethiredally.com) to PDF/Word downloads
 - December 27, 2025: Updated Smart Questions UX with coaching-style language and supportive design (focus_areas, priority_levels, blue/purple colors)
