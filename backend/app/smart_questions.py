@@ -210,7 +210,9 @@ async def generate_smart_questions(request: GenerateRequest):
             prompt=prompt,
             provider=provider,
             max_tokens=8192,
-            temperature=0.7
+            temperature=0.7,
+            user_id=user_id,
+            service_name="smart_questions"
         )
         result = parse_gemini_response(ai_response.content)
     except Exception as e:

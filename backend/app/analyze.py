@@ -328,7 +328,9 @@ async def analyze_job(request: AnalyzeJobRequest):
             system_prompt=system_prompt,
             provider=provider,
             max_tokens=max_tokens,
-            temperature=0.7
+            temperature=0.7,
+            user_id=None,
+            service_name="xray"
         )
         
         analysis_text = ai_response.content or "Unable to generate analysis"

@@ -116,7 +116,18 @@ GetHiredAlly is an interview preparation application with job description analys
 - 11 "Questions to Ask the Interviewer" with: why_ask, what_to_listen_for, warning_signs
 - Depth levels control display only: questions_only (just questions), with_tips (+ why + framework), full_prep (+ good example + what to avoid)
 
+## AI Service Architecture
+- Unified AI service (`backend/services/ai_service.py`) routes to Claude or Gemini via LiteLLM
+- AIProviderSelector component allows users to choose Claude (~$0.02) or Gemini (~$0.01)
+- **Automatic Usage Logging**: Every AI call logs to `ai_usage_logs` table with:
+  - user_id, service_name (xray/smart_questions), provider, model
+  - input_tokens, output_tokens, total_tokens
+  - cost_usd (calculated by LiteLLM's built-in cost tracking)
+  - duration_ms, success/failure, error_message
+
 ## Recent Changes
+- December 27, 2025: Added automatic AI usage logging with LiteLLM cost tracking to ai_usage_logs table
+- December 27, 2025: Added AIProviderSelector component to X-Ray and Smart Questions pages
 - December 27, 2025: Expanded to 54 interview questions with new structure (good_answer_example, what_to_avoid fields)
 - December 27, 2025: Removed interviewer type filter, simplified to category-only filtering
 - December 27, 2025: Added question_categories table with category descriptions and answer methods
