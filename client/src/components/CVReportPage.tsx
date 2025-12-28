@@ -8,6 +8,8 @@ import { isAuthenticated, getAuthToken } from '@/lib/auth'
 import CategoryFilterPanel from './cv-optimizer/CategoryFilterPanel'
 import StrengthsSection from './cv-optimizer/StrengthsSection'
 import EncouragementMessage from './cv-optimizer/EncouragementMessage'
+import ViewModeToggle from './cv-optimizer/ViewModeToggle'
+import EffortGroupView from './cv-optimizer/EffortGroupView'
 import { mapIssueCategoryToId } from '../config/cvCategories'
 import { detectStrengths } from '../utils/strengthsDetector'
 import type { Strength } from '../utils/strengthsDetector'
@@ -72,6 +74,7 @@ export function CVReportPage() {
   const [expandedIssues, setExpandedIssues] = useState<Set<number>>(new Set())
   const [textSize, setTextSize] = useState(16)
   const [isGeneratingFix, setIsGeneratingFix] = useState(false)
+  const [viewMode, setViewMode] = useState<'severity' | 'effort'>('severity')
 
   const [enabledCategories, setEnabledCategories] = useState<Record<string, boolean>>({
     spelling_grammar: true,
@@ -272,35 +275,42 @@ export function CVReportPage() {
           </div>
         </div>
 
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
-          <p className="text-sm text-gray-600 mb-3 flex items-center">
-            <Filter size={16} className="mr-2" />
-            Filter by priority
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {SEVERITY_FILTERS.map(filter => (
-              <button
-                key={filter.id}
-                onClick={() => setSeverityFilter(filter.id)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
-                  severityFilter === filter.id
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                {filter.icon && <span>{filter.icon}</span>}
-                {filter.label}
-                {filter.id !== 'all' && (
-                  <span className={`ml-1 px-1.5 py-0.5 rounded text-xs ${
-                    severityFilter === filter.id ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'
-                  }`}>
-                    {groupedIssues[filter.id]?.length || 0}
-                  </span>
-                )}
-              </button>
-            ))}
+        <ViewModeToggle
+          currentMode={viewMode}
+          onModeChange={setViewMode}
+        />
+
+        {viewMode === 'severity' && (
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+            <p className="text-sm text-gray-600 mb-3 flex items-center">
+              <Filter size={16} className="mr-2" />
+              Filter by priority
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {SEVERITY_FILTERS.map(filter => (
+                <button
+                  key={filter.id}
+                  onClick={() => setSeverityFilter(filter.id)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
+                    severityFilter === filter.id
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  {filter.icon && <span>{filter.icon}</span>}
+                  {filter.label}
+                  {filter.id !== 'all' && (
+                    <span className={`ml-1 px-1.5 py-0.5 rounded text-xs ${
+                      severityFilter === filter.id ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'
+                    }`}>
+                      {groupedIssues[filter.id]?.length || 0}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="bg-white border border-gray-200 rounded-lg p-3 mb-6 flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-2">
@@ -359,91 +369,100 @@ export function CVReportPage() {
           <EncouragementMessage type="effort" quickWinsCount={quickWinsCount} />
         )}
 
-        <div className="space-y-8">
-          {SEVERITY_SECTIONS.map(section => {
-            const sectionIssues = groupedIssues[section.key]
-            if (!sectionIssues || sectionIssues.length === 0) return null
+        {viewMode === 'severity' ? (
+          <div className="space-y-8">
+            {SEVERITY_SECTIONS.map(section => {
+              const sectionIssues = groupedIssues[section.key]
+              if (!sectionIssues || sectionIssues.length === 0) return null
 
-            return (
-              <div key={section.key}>
-                <div className={`flex items-center gap-2 mb-4 pb-2 border-b-2 ${section.borderColor}`}>
-                  <span className="text-xl">{section.icon}</span>
-                  <h2 className={`font-bold ${section.textColor}`}>
-                    {section.label}
-                  </h2>
-                  <span className="text-gray-500">({sectionIssues.length} suggestion{sectionIssues.length !== 1 ? 's' : ''})</span>
-                </div>
+              return (
+                <div key={section.key}>
+                  <div className={`flex items-center gap-2 mb-4 pb-2 border-b-2 ${section.borderColor}`}>
+                    <span className="text-xl">{section.icon}</span>
+                    <h2 className={`font-bold ${section.textColor}`}>
+                      {section.label}
+                    </h2>
+                    <span className="text-gray-500">({sectionIssues.length} suggestion{sectionIssues.length !== 1 ? 's' : ''})</span>
+                  </div>
 
-                <div className="space-y-3">
-                  {sectionIssues.map(issue => (
-                    <div key={issue.id} className={`border ${section.borderColor} rounded-lg overflow-hidden`}>
-                      <button
-                        onClick={() => toggleIssue(issue.id)}
-                        className={`w-full flex items-center justify-between p-4 ${section.bgColor} hover:opacity-90 transition-opacity text-left`}
-                      >
-                        <div className="flex items-center gap-3">
-                          {expandedIssues.has(issue.id) ? (
-                            <ChevronDown size={20} className="text-gray-500" />
-                          ) : (
-                            <ChevronRight size={20} className="text-gray-500" />
-                          )}
-                          <span className="font-medium text-gray-900">{issue.issue}</span>
-                        </div>
-
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          {getFixDifficultyIcon(issue.fix_difficulty)}
-                          <span>{getFixDifficultyLabel(issue.fix_difficulty)}</span>
-                        </div>
-                      </button>
-
-                      {expandedIssues.has(issue.id) && displayLevel >= 2 && (
-                        <div className="p-4 bg-white border-t border-gray-100">
-                          <div className="grid grid-cols-2 gap-4 mb-4">
-                            <div>
-                              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Category</p>
-                              <p className="text-gray-700">{issue.category}</p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Location</p>
-                              <p className="text-gray-700">{issue.location}</p>
-                            </div>
+                  <div className="space-y-3">
+                    {sectionIssues.map(issue => (
+                      <div key={issue.id} className={`border ${section.borderColor} rounded-lg overflow-hidden`}>
+                        <button
+                          onClick={() => toggleIssue(issue.id)}
+                          className={`w-full flex items-center justify-between p-4 ${section.bgColor} hover:opacity-90 transition-opacity text-left`}
+                        >
+                          <div className="flex items-center gap-3">
+                            {expandedIssues.has(issue.id) ? (
+                              <ChevronDown size={20} className="text-gray-500" />
+                            ) : (
+                              <ChevronRight size={20} className="text-gray-500" />
+                            )}
+                            <span className="font-medium text-gray-900">{issue.issue}</span>
                           </div>
 
-                          {displayLevel >= 3 && (
-                            <>
-                              <div className="mb-4">
-                                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Found</p>
-                                <div className="bg-red-50 border border-red-200 rounded p-3">
-                                  <p className="text-red-800 font-mono text-sm">"{issue.current_text}"</p>
-                                </div>
-                              </div>
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            {getFixDifficultyIcon(issue.fix_difficulty)}
+                            <span>{getFixDifficultyLabel(issue.fix_difficulty)}</span>
+                          </div>
+                        </button>
 
+                        {expandedIssues.has(issue.id) && displayLevel >= 2 && (
+                          <div className="p-4 bg-white border-t border-gray-100">
+                            <div className="grid grid-cols-2 gap-4 mb-4">
                               <div>
-                                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Suggested Fix</p>
-                                <div className="bg-green-50 border border-green-200 rounded p-3">
-                                  <p className="text-green-800">{issue.suggested_fix}</p>
-                                </div>
+                                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Category</p>
+                                <p className="text-gray-700">{issue.category}</p>
                               </div>
-                            </>
-                          )}
-
-                          {displayLevel >= 4 && issue.additional_info && (
-                            <div className="mt-4 pt-4 border-t border-gray-100">
-                              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Additional Information</p>
-                              <p className="text-gray-600 text-sm">{issue.additional_info}</p>
+                              <div>
+                                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Location</p>
+                                <p className="text-gray-700">{issue.location}</p>
+                              </div>
                             </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )
-          })}
-        </div>
 
-        {filteredIssues.length === 0 && (
+                            {displayLevel >= 3 && (
+                              <>
+                                <div className="mb-4">
+                                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Found</p>
+                                  <div className="bg-red-50 border border-red-200 rounded p-3">
+                                    <p className="text-red-800 font-mono text-sm">"{issue.current_text}"</p>
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Suggested Fix</p>
+                                  <div className="bg-green-50 border border-green-200 rounded p-3">
+                                    <p className="text-green-800">{issue.suggested_fix}</p>
+                                  </div>
+                                </div>
+                              </>
+                            )}
+
+                            {displayLevel >= 4 && issue.additional_info && (
+                              <div className="mt-4 pt-4 border-t border-gray-100">
+                                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Additional Information</p>
+                                <p className="text-gray-600 text-sm">{issue.additional_info}</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        ) : (
+          <EffortGroupView
+            issues={categoryFilteredIssues}
+            displayLevel={displayLevel}
+            expandedIssues={expandedIssues}
+            onToggleIssue={toggleIssue}
+          />
+        )}
+
+        {filteredIssues.length === 0 && viewMode === 'severity' && (
           <div className="text-center py-12 bg-gray-50 rounded-lg">
             <p className="text-gray-500">No suggestions found matching your filter.</p>
             <button
