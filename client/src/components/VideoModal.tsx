@@ -10,6 +10,8 @@ interface VideoModalProps {
 
 export function VideoModal({ isOpen, onClose, videoUrl, title }: VideoModalProps) {
   const [isExpanded, setIsExpanded] = useState(false)
+  
+  console.log('VideoModal - isExpanded:', isExpanded, 'height should be:', isExpanded ? '80vh' : '0')
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -98,15 +100,11 @@ export function VideoModal({ isOpen, onClose, videoUrl, title }: VideoModalProps
         </div>
 
         <div
-          className="relative bg-black overflow-hidden rounded-b-lg"
-          style={isExpanded ? {
-            width: '100%',
-            height: '80vh',
-          } : {
-            width: '100%',
-            paddingBottom: '56.25%',
-            height: 0,
-          }}
+          className={`relative bg-black overflow-hidden ${
+            isExpanded 
+              ? 'w-full h-[80vh]' 
+              : 'w-full h-0 pb-[56.25%] rounded-b-lg'
+          }`}
         >
           <iframe
             className="absolute top-0 left-0 w-full h-full"
