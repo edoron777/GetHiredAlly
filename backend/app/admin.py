@@ -418,10 +418,19 @@ async def delete_user(user_id: str, admin_user: dict = Depends(require_admin)):
             conn.close()
             raise HTTPException(status_code=403, detail="Cannot delete protected admin account")
         
+        # Delete from all tables with foreign keys to users
+        cursor.execute("DELETE FROM user_sessions WHERE user_id = %s", (user_id,))
+        cursor.execute("DELETE FROM email_verification_codes WHERE user_id = %s", (user_id,))
+        cursor.execute("DELETE FROM password_reset_tokens WHERE user_id = %s", (user_id,))
+        cursor.execute("DELETE FROM ai_usage_logs WHERE user_id = %s", (user_id,))
+        cursor.execute("DELETE FROM ai_usage_daily_summary WHERE user_id = %s", (user_id,))
         cursor.execute("DELETE FROM cv_scan_results WHERE user_id = %s", (user_id,))
         cursor.execute("DELETE FROM smart_question_results WHERE user_id = %s", (user_id,))
-        cursor.execute("DELETE FROM ai_usage_logs WHERE user_id = %s", (user_id,))
-        cursor.execute("DELETE FROM user_sessions WHERE user_id = %s", (user_id,))
+        cursor.execute("DELETE FROM usage_tracking WHERE user_id = %s", (user_id,))
+        cursor.execute("DELETE FROM analysis_sessions WHERE user_id = %s", (user_id,))
+        cursor.execute("DELETE FROM user_ai_preferences WHERE user_id = %s", (user_id,))
+        cursor.execute("DELETE FROM user_cvs WHERE user_id = %s", (user_id,))
+        # Finally delete the user
         cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
         
         conn.commit()

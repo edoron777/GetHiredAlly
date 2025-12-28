@@ -157,12 +157,21 @@ async def delete_account(request: DeleteAccountRequest, authorization: Optional[
         raise HTTPException(status_code=500, detail="Database connection not available")
     
     try:
-        client.table("user_sessions").delete().eq("user_id", user["id"]).execute()
-        client.table("email_verification_codes").delete().eq("user_id", user["id"]).execute()
-        client.table("ai_usage_logs").delete().eq("user_id", user["id"]).execute()
-        client.table("cv_scan_results").delete().eq("user_id", user["id"]).execute()
-        client.table("smart_question_results").delete().eq("user_id", user["id"]).execute()
-        client.table("users").delete().eq("id", user["id"]).execute()
+        user_id = user["id"]
+        # Delete from all tables with foreign keys to users
+        client.table("user_sessions").delete().eq("user_id", user_id).execute()
+        client.table("email_verification_codes").delete().eq("user_id", user_id).execute()
+        client.table("password_reset_tokens").delete().eq("user_id", user_id).execute()
+        client.table("ai_usage_logs").delete().eq("user_id", user_id).execute()
+        client.table("ai_usage_daily_summary").delete().eq("user_id", user_id).execute()
+        client.table("cv_scan_results").delete().eq("user_id", user_id).execute()
+        client.table("smart_question_results").delete().eq("user_id", user_id).execute()
+        client.table("usage_tracking").delete().eq("user_id", user_id).execute()
+        client.table("analysis_sessions").delete().eq("user_id", user_id).execute()
+        client.table("user_ai_preferences").delete().eq("user_id", user_id).execute()
+        client.table("user_cvs").delete().eq("user_id", user_id).execute()
+        # Finally delete the user
+        client.table("users").delete().eq("id", user_id).execute()
         
         return {"success": True, "message": "Account deleted successfully"}
     except Exception as e:
