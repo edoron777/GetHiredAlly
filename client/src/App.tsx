@@ -17,6 +17,7 @@ import { CVScanningPage } from '@/components/CVScanningPage'
 import { CVResultsPage } from '@/components/CVResultsPage'
 import { CVReportPage } from '@/components/CVReportPage'
 import { CVFixedPage } from '@/components/CVFixedPage'
+import { UserSettingsPage } from '@/components/UserSettingsPage'
 import { isAuthenticated } from '@/lib/auth'
 
 function Layout({ children }: { children: React.ReactNode }) {
@@ -60,6 +61,7 @@ function App() {
               <Route path="/service/cv-optimizer/results/:scanId" element={<CVResultsPage />} />
               <Route path="/service/cv-optimizer/report/:scanId" element={<CVReportPage />} />
               <Route path="/service/cv-optimizer/fixed/:scanId" element={<CVFixedPage />} />
+              <Route path="/settings" element={<UserSettingsPage />} />
             </Routes>
           </Layout>
         } />

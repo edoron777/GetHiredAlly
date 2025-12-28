@@ -1,0 +1,770 @@
+# Replit Prompt: User Settings Page (MVP)
+
+**Task:** Create User Settings page with profile management
+**Priority:** 🟡 Medium
+**Estimated Effort:** 3-4 hours
+
+---
+
+## ⚠️ IMPORTANT NOTE
+
+This prompt assumes the `users` table already exists in the database with the necessary fields. Do NOT create or modify database tables - only create the frontend and API endpoints.
+
+---
+
+## OVERVIEW
+
+Create a User Settings page accessible from the user dropdown menu. The page allows users to:
+- Update their display name
+- Update their email
+- Change their password
+- Log out
+- Delete their account
+
+---
+
+## VISUAL DESIGN
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  User Settings                                                              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌───────────────────────────────────────────────────────────────────────┐ │
+│  │  👤 PROFILE                                                           │ │
+│  │                                                                       │ │
+│  │  Display Name                                                         │ │
+│  │  ┌─────────────────────────────────────────┐                         │ │
+│  │  │ Eyal Doron                              │  [Save]                 │ │
+│  │  └─────────────────────────────────────────┘                         │ │
+│  │                                                                       │ │
+│  │  Email Address                                                        │ │
+│  │  ┌─────────────────────────────────────────┐                         │ │
+│  │  │ eyal@example.com                        │  [Save]                 │ │
+│  │  └─────────────────────────────────────────┘                         │ │
+│  │                                                                       │ │
+│  └───────────────────────────────────────────────────────────────────────┘ │
+│                                                                             │
+│  ┌───────────────────────────────────────────────────────────────────────┐ │
+│  │  🔒 SECURITY                                                          │ │
+│  │                                                                       │ │
+│  │  Password                                                             │ │
+│  │  ••••••••                                    [Change Password]       │ │
+│  │                                                                       │ │
+│  └───────────────────────────────────────────────────────────────────────┘ │
+│                                                                             │
+│  ┌───────────────────────────────────────────────────────────────────────┐ │
+│  │  ⚙️ ACCOUNT                                                           │ │
+│  │                                                                       │ │
+│  │  [Log Out]                                                           │ │
+│  │                                                                       │ │
+│  │  ─────────────────────────────────────────────────────────           │ │
+│  │                                                                       │ │
+│  │  [Delete Account]  ← Red, dangerous action                           │ │
+│  │                                                                       │ │
+│  └───────────────────────────────────────────────────────────────────────┘ │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## TASK 1: Create User Settings Page
+
+### File: `client/src/pages/UserSettingsPage.tsx`
+
+```tsx
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { User, Lock, Settings, LogOut, Trash2, Check, X } from 'lucide-react';
+
+export default function UserSettingsPage() {
+  const navigate = useNavigate();
+  
+  // User data state
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [originalName, setOriginalName] = useState('');
+  const [originalEmail, setOriginalEmail] = useState('');
+  
+  // UI state
+  const [loading, setLoading] = useState(true);
+  const [savingName, setSavingName] = useState(false);
+  const [savingEmail, setSavingEmail] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [message, setMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
+
+  // Load user data on mount
+  useEffect(() => {
+    fetchUserData();
+  }, []);
+
+  const fetchUserData = async () => {
+    try {
+      const response = await fetch('/api/user/profile', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setName(data.name || '');
+        setEmail(data.email || '');
+        setOriginalName(data.name || '');
+        setOriginalEmail(data.email || '');
+      }
+    } catch (error) {
+      console.error('Failed to fetch user data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveName = async () => {
+    if (name === originalName) return;
+    
+    setSavingName(true);
+    try {
+      const response = await fetch('/api/user/update-name', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ name })
+      });
+      
+      if (response.ok) {
+        setOriginalName(name);
+        showMessage('success', 'Name updated successfully');
+      } else {
+        const error = await response.json();
+        showMessage('error', error.message || 'Failed to update name');
+      }
+    } catch (error) {
+      showMessage('error', 'Failed to update name');
+    } finally {
+      setSavingName(false);
+    }
+  };
+
+  const handleSaveEmail = async () => {
+    if (email === originalEmail) return;
+    
+    setSavingEmail(true);
+    try {
+      const response = await fetch('/api/user/update-email', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ email })
+      });
+      
+      if (response.ok) {
+        setOriginalEmail(email);
+        showMessage('success', 'Email updated successfully');
+      } else {
+        const error = await response.json();
+        showMessage('error', error.message || 'Failed to update email');
+      }
+    } catch (error) {
+      showMessage('error', 'Failed to update email');
+    } finally {
+      setSavingEmail(false);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/login');
+  };
+
+  const showMessage = (type: 'success' | 'error', text: string) => {
+    setMessage({ type, text });
+    setTimeout(() => setMessage(null), 3000);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#FAF9F7' }}>
+        <div className="text-gray-500">Loading...</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen py-8 px-4" style={{ backgroundColor: '#FAF9F7' }}>
+      <div className="max-w-2xl mx-auto">
+        
+        {/* Page Title */}
+        <h1 className="text-2xl font-bold text-gray-900 mb-8 flex items-center gap-2">
+          <Settings size={28} />
+          User Settings
+        </h1>
+
+        {/* Success/Error Message */}
+        {message && (
+          <div className={`mb-6 p-4 rounded-lg flex items-center gap-2 ${
+            message.type === 'success' 
+              ? 'bg-green-100 text-green-800' 
+              : 'bg-red-100 text-red-800'
+          }`}>
+            {message.type === 'success' ? <Check size={20} /> : <X size={20} />}
+            {message.text}
+          </div>
+        )}
+
+        {/* Profile Section */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <User size={20} />
+            Profile
+          </h2>
+          
+          {/* Display Name */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Display Name
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Your name"
+              />
+              <button
+                onClick={handleSaveName}
+                disabled={name === originalName || savingName}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  name === originalName || savingName
+                    ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
+              >
+                {savingName ? 'Saving...' : 'Save'}
+              </button>
+            </div>
+          </div>
+          
+          {/* Email Address */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Email Address
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="your@email.com"
+              />
+              <button
+                onClick={handleSaveEmail}
+                disabled={email === originalEmail || savingEmail}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  email === originalEmail || savingEmail
+                    ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
+              >
+                {savingEmail ? 'Saving...' : 'Save'}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Security Section */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <Lock size={20} />
+            Security
+          </h2>
+          
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-sm font-medium text-gray-700">Password</div>
+              <div className="text-gray-500">••••••••</div>
+            </div>
+            <button
+              onClick={() => setShowPasswordModal(true)}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              Change Password
+            </button>
+          </div>
+        </div>
+
+        {/* Account Section */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <Settings size={20} />
+            Account
+          </h2>
+          
+          {/* Log Out */}
+          <button
+            onClick={handleLogout}
+            className="w-full mb-4 px-4 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+          >
+            <LogOut size={20} />
+            Log Out
+          </button>
+          
+          <hr className="my-4" />
+          
+          {/* Delete Account */}
+          <div>
+            <p className="text-sm text-gray-500 mb-2">
+              Permanently delete your account and all associated data. This action cannot be undone.
+            </p>
+            <button
+              onClick={() => setShowDeleteModal(true)}
+              className="w-full px-4 py-3 bg-red-50 border border-red-300 rounded-lg text-red-700 hover:bg-red-100 transition-colors flex items-center justify-center gap-2"
+            >
+              <Trash2 size={20} />
+              Delete Account
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      {/* Change Password Modal */}
+      {showPasswordModal && (
+        <ChangePasswordModal 
+          onClose={() => setShowPasswordModal(false)}
+          onSuccess={() => {
+            setShowPasswordModal(false);
+            showMessage('success', 'Password changed successfully');
+          }}
+        />
+      )}
+
+      {/* Delete Account Modal */}
+      {showDeleteModal && (
+        <DeleteAccountModal 
+          onClose={() => setShowDeleteModal(false)}
+          onSuccess={() => {
+            localStorage.removeItem('token');
+            navigate('/login');
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+// Change Password Modal Component
+function ChangePasswordModal({ onClose, onSuccess }: { onClose: () => void, onSuccess: () => void }) {
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    if (newPassword.length < 8) {
+      setError('Password must be at least 8 characters');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch('/api/user/change-password', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ currentPassword, newPassword })
+      });
+
+      if (response.ok) {
+        onSuccess();
+      } else {
+        const data = await response.json();
+        setError(data.message || 'Failed to change password');
+      }
+    } catch (error) {
+      setError('Failed to change password');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black bg-opacity-50" onClick={onClose} />
+      <div className="relative bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+        <h3 className="text-lg font-semibold mb-4">Change Password</h3>
+        
+        <form onSubmit={handleSubmit}>
+          {error && (
+            <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
+              {error}
+            </div>
+          )}
+          
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Current Password
+            </label>
+            <input
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+          
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              New Password
+            </label>
+            <input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              required
+              minLength={8}
+            />
+            <p className="text-xs text-gray-500 mt-1">Minimum 8 characters</p>
+          </div>
+          
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Confirm New Password
+            </label>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+          
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            >
+              {loading ? 'Changing...' : 'Change Password'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// Delete Account Modal Component
+function DeleteAccountModal({ onClose, onSuccess }: { onClose: () => void, onSuccess: () => void }) {
+  const [password, setPassword] = useState('');
+  const [confirmText, setConfirmText] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    if (confirmText !== 'DELETE') {
+      setError('Please type DELETE to confirm');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch('/api/user/delete-account', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ password })
+      });
+
+      if (response.ok) {
+        onSuccess();
+      } else {
+        const data = await response.json();
+        setError(data.message || 'Failed to delete account');
+      }
+    } catch (error) {
+      setError('Failed to delete account');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black bg-opacity-50" onClick={onClose} />
+      <div className="relative bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+        <h3 className="text-lg font-semibold text-red-600 mb-4">Delete Account</h3>
+        
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-sm text-red-700">
+            <strong>Warning:</strong> This action is permanent and cannot be undone. 
+            All your data, reports, and history will be permanently deleted.
+          </p>
+        </div>
+        
+        <form onSubmit={handleSubmit}>
+          {error && (
+            <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
+              {error}
+            </div>
+          )}
+          
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Enter your password
+            </label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
+              required
+            />
+          </div>
+          
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Type DELETE to confirm
+            </label>
+            <input
+              type="text"
+              value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
+              placeholder="DELETE"
+              required
+            />
+          </div>
+          
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading || confirmText !== 'DELETE'}
+              className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+            >
+              {loading ? 'Deleting...' : 'Delete Account'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+```
+
+---
+
+## TASK 2: Add Route for Settings Page
+
+### Update your routes file (e.g., `App.tsx` or router config):
+
+```tsx
+import UserSettingsPage from './pages/UserSettingsPage';
+
+// Add this route:
+<Route path="/settings" element={<UserSettingsPage />} />
+```
+
+---
+
+## TASK 3: Update User Dropdown Menu
+
+### Find the user dropdown in your Header/Navbar and add Settings link:
+
+```tsx
+// User dropdown menu items:
+<div className="dropdown-menu">
+  <Link 
+    to="/settings" 
+    className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100"
+  >
+    <Settings size={16} />
+    Settings
+  </Link>
+  <hr />
+  <button 
+    onClick={handleLogout}
+    className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 text-red-600 w-full"
+  >
+    <LogOut size={16} />
+    Log Out
+  </button>
+</div>
+```
+
+---
+
+## TASK 4: Create Backend API Endpoints
+
+### Add these endpoints to your backend:
+
+#### 1. GET /api/user/profile
+```python
+@app.route('/api/user/profile', methods=['GET'])
+@require_auth
+def get_profile():
+    user = get_current_user()
+    return jsonify({
+        'id': user.id,
+        'name': user.name,
+        'email': user.email
+    })
+```
+
+#### 2. PUT /api/user/update-name
+```python
+@app.route('/api/user/update-name', methods=['PUT'])
+@require_auth
+def update_name():
+    data = request.json
+    user = get_current_user()
+    user.name = data['name']
+    db.session.commit()
+    return jsonify({'success': True})
+```
+
+#### 3. PUT /api/user/update-email
+```python
+@app.route('/api/user/update-email', methods=['PUT'])
+@require_auth
+def update_email():
+    data = request.json
+    user = get_current_user()
+    
+    # Check if email already exists
+    existing = User.query.filter_by(email=data['email']).first()
+    if existing and existing.id != user.id:
+        return jsonify({'message': 'Email already in use'}), 400
+    
+    user.email = data['email']
+    db.session.commit()
+    return jsonify({'success': True})
+```
+
+#### 4. PUT /api/user/change-password
+```python
+@app.route('/api/user/change-password', methods=['PUT'])
+@require_auth
+def change_password():
+    data = request.json
+    user = get_current_user()
+    
+    # Verify current password
+    if not check_password(user.password_hash, data['currentPassword']):
+        return jsonify({'message': 'Current password is incorrect'}), 400
+    
+    # Update password
+    user.password_hash = hash_password(data['newPassword'])
+    db.session.commit()
+    return jsonify({'success': True})
+```
+
+#### 5. DELETE /api/user/delete-account
+```python
+@app.route('/api/user/delete-account', methods=['DELETE'])
+@require_auth
+def delete_account():
+    data = request.json
+    user = get_current_user()
+    
+    # Verify password
+    if not check_password(user.password_hash, data['password']):
+        return jsonify({'message': 'Password is incorrect'}), 400
+    
+    # Delete user and all associated data
+    db.session.delete(user)
+    db.session.commit()
+    return jsonify({'success': True})
+```
+
+---
+
+## VERIFICATION CHECKLIST
+
+### Settings Page
+- [ ] Settings page loads at `/settings`
+- [ ] Current name and email are displayed
+- [ ] "Save" button is disabled when no changes
+- [ ] "Save" button is enabled when field is changed
+- [ ] Name update works and shows success message
+- [ ] Email update works and shows success message
+- [ ] Email validation prevents invalid emails
+- [ ] Email validation prevents duplicate emails
+
+### Change Password
+- [ ] "Change Password" button opens modal
+- [ ] Current password is required
+- [ ] New password must be 8+ characters
+- [ ] Passwords must match
+- [ ] Wrong current password shows error
+- [ ] Successful change shows success message
+
+### Delete Account
+- [ ] "Delete Account" button opens confirmation modal
+- [ ] Warning message is displayed
+- [ ] Password is required
+- [ ] Must type "DELETE" to confirm
+- [ ] Account is deleted and user is logged out
+
+### Navigation
+- [ ] Settings link in user dropdown menu
+- [ ] Settings link navigates to /settings
+- [ ] Log Out works from settings page
+
+---
+
+## FILE STRUCTURE
+
+```
+client/src/
+  pages/
+    UserSettingsPage.tsx    ← NEW
+
+server/
+  routes/
+    user.py                 ← UPDATE (add endpoints)
+```
+
+---
+
+**END OF PROMPT**
