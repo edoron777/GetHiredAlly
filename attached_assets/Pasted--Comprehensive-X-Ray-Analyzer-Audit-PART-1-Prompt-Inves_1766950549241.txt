@@ -1,0 +1,100 @@
+## Comprehensive X-Ray Analyzer Audit
+
+### PART 1: Prompt Investigation
+
+**Task 1A: Show me the FULL content of each prompt template**
+
+Query the database and print the COMPLETE content of each row in prompt_templates where service_name = 'xray_analyzer':
+```python
+from supabase import create_client
+result = supabase.table('prompt_templates').select('*').eq('service_name', 'xray_analyzer').execute()
+for row in result.data:
+    print(f"\n{'='*60}")
+    print(f"template_type: {row.get('template_type')}")
+    print(f"mode: {row.get('mode')}")
+    print(f"content:\n{row.get('content')}")
+    print(f"{'='*60}")
+```
+
+**Task 1B: Show me the FALLBACK prompts in the code**
+
+Find and print the complete fallback prompts defined in backend/app/analyze.py:
+- FALLBACK_SYSTEM_PROMPT
+- FALLBACK_INTERVIEWER_PROMPTS (all 4 types)
+- FALLBACK_DEPTH_PROMPTS (ready and full)
+
+**Task 1C: Verify which prompts are actually being used**
+
+Add logging to get_combined_prompt() to show:
+1. Is it using database templates or fallbacks?
+2. What is the final combined prompt being sent to AI?
+
+### PART 2: Database Connection Debug
+
+**Task 2A: Test if code can read from prompt_templates**
+
+Add a test endpoint or debug code that:
+1. Queries prompt_templates for xray_analyzer
+2. Prints number of rows found
+3. Prints column names and values
+
+**Task 2B: Check for column name mismatches**
+
+Compare:
+- Column names the code expects (in the SELECT query)
+- Actual column names in the database table
+
+### PART 3: Report UI/UX Audit
+
+**Task 3A: Find the report display component**
+
+Locate the React component that displays the X-Ray report (likely in client/src/components/).
+Show me the file path and the key parts of the code.
+
+**Task 3B: Check toolbar implementation**
+
+1. Is there a shared StandardToolbar component?
+2. Is the report using the shared component or inline code?
+3. Where is StandardToolbar defined?
+
+**Task 3C: Check TOC (Table of Contents) implementation**
+
+1. How are the TOC links generated?
+2. Do the section anchors (IDs) match the TOC links?
+3. Why aren't the links working?
+
+**Task 3D: Check markdown rendering**
+
+1. Is react-markdown installed and configured?
+2. Is there special handling for tables?
+3. Why are tables showing as raw text `| Column |` instead of formatted?
+
+### PART 4: Report Structure Audit
+
+**Task 4A: Verify section structure**
+
+The report should have these 6 sections:
+1. Executive Summary
+2. What They Really Want
+3. Key Terms & Language
+4. Requirements Breakdown
+5. Soft Skills & STAR Prep
+6. Challenges & How to Address
+
+Check if the prompts define this structure or if it's different.
+
+**Task 4B: Check CTA (Call to Action) box**
+
+1. Is there code for the "Ready for the Next Step?" box?
+2. Is it appearing at the end of reports?
+
+### Expected Output
+
+Create a report with these sections:
+
+1. **DATABASE PROMPTS** - Full content of all prompts from DB
+2. **FALLBACK PROMPTS** - Full content of all fallback prompts in code
+3. **WHICH IS BEING USED** - Database or fallbacks, and why
+4. **UI COMPONENT FILES** - List of relevant files for report display
+5. **IDENTIFIED BUGS** - List of all UI/UX issues found
+6. **RECOMMENDED FIXES** - Step by step fixes for each issue
