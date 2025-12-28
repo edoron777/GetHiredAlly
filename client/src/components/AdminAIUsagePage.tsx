@@ -84,7 +84,7 @@ export function AdminAIUsagePage() {
     setError(null)
     
     try {
-      const token = localStorage.getItem('session_token')
+      const token = localStorage.getItem('auth_token')
       const headers = { 'Authorization': `Bearer ${token}` }
       
       const [summaryRes, recentRes, userRes] = await Promise.all([

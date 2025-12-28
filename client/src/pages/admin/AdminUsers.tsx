@@ -43,7 +43,7 @@ export function AdminUsers() {
   const fetchUsers = async () => {
     setLoading(true)
     try {
-      const token = localStorage.getItem('session_token')
+      const token = localStorage.getItem('auth_token')
       const params = new URLSearchParams({
         page: page.toString(),
         limit: LIMIT.toString(),
@@ -79,7 +79,7 @@ export function AdminUsers() {
     
     setActionLoading(user.id)
     try {
-      const token = localStorage.getItem('session_token')
+      const token = localStorage.getItem('auth_token')
       const response = await fetch(`/api/admin/users/${user.id}`, {
         method: 'PUT',
         headers: { 
@@ -105,7 +105,7 @@ export function AdminUsers() {
     
     setActionLoading(deleteModal.id)
     try {
-      const token = localStorage.getItem('session_token')
+      const token = localStorage.getItem('auth_token')
       const response = await fetch(`/api/admin/users/${deleteModal.id}`, {
         method: 'DELETE',
         headers: {
