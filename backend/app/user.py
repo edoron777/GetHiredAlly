@@ -145,6 +145,9 @@ async def change_password(request: ChangePasswordRequest, authorization: Optiona
 async def delete_account(request: DeleteAccountRequest, authorization: Optional[str] = Header(None)):
     user = await get_user_from_token(authorization)
     
+    if user.get("is_protected"):
+        raise HTTPException(status_code=403, detail="This account cannot be deleted")
+    
     if not verify_password(request.password, user["password_hash"]):
         raise HTTPException(status_code=400, detail="Password is incorrect")
     
