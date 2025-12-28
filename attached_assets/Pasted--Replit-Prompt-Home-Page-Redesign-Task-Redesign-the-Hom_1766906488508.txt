@@ -1,0 +1,591 @@
+# Replit Prompt: Home Page Redesign
+
+**Task:** Redesign the Home Page with two sections, new Service Card component, and fixed Video Modal
+**Priority:** 🔴 Critical
+**Estimated Effort:** 6-8 hours
+
+---
+
+## ⚠️ CRITICAL INSTRUCTIONS
+
+- Follow these instructions EXACTLY in order
+- Create REUSABLE components in the `components/common/` folder
+- Do NOT duplicate code - use the same ServiceCard component for all cards
+- Test the video modal aspect ratio carefully
+
+---
+
+## OVERVIEW
+
+### Current Problems:
+1. All service cards in one group - no clear journey
+2. Card titles and descriptions are vague
+3. Video modal has distorted dimensions when expanded
+4. No "Coming Soon" placeholders for future services
+
+### New Design:
+1. Two sections: "Perfect Your CV" and "Ace Your Interview"
+2. Visual separator between sections
+3. New ServiceCard component with Icon+Title on same line
+4. Fixed VideoModal with correct aspect ratio
+5. "Coming Soon" cards for future services
+
+---
+
+## TASK 1: Create Service Configuration File
+
+### File: `client/src/config/homePageServices.ts`
+
+```typescript
+export interface ServiceConfig {
+  id: string;
+  icon: string;
+  title: string;
+  description: string;
+  buttonText: string;
+  route?: string;
+  videoUrl?: string;
+  videoTitle?: string;
+  isComingSoon: boolean;
+}
+
+export interface SectionConfig {
+  id: string;
+  title: string;
+  subtitle: string;
+  services: ServiceConfig[];
+}
+
+// Section A: CV Preparation
+export const SECTION_A: SectionConfig = {
+  id: 'cv-preparation',
+  title: 'Perfect Your CV',
+  subtitle: 'Make your CV stand out before you start applying',
+  services: [
+    {
+      id: 'cv-optimizer',
+      icon: '📄',
+      title: 'Perfect Your CV',
+      description: 'Discover what\'s holding your CV back. Get personalized suggestions to make your CV clearer, stronger, and more compelling to recruiters.',
+      buttonText: 'Get Started',
+      route: '/service/cv-optimizer',
+      videoUrl: 'https://www.youtube.com/embed/Tt08KmFfIYQ',
+      videoTitle: 'How CV Optimizer Works',
+      isComingSoon: false
+    },
+    {
+      id: 'ats-optimizer',
+      icon: '🎯',
+      title: 'Tailor for This Job',
+      description: 'Match your CV to specific job requirements. Beat the ATS filters and get your CV seen by real humans.',
+      buttonText: 'Coming Soon',
+      isComingSoon: true
+    }
+  ]
+};
+
+// Section B: Interview Preparation
+export const SECTION_B: SectionConfig = {
+  id: 'interview-preparation',
+  title: 'Ace Your Interview',
+  subtitle: 'Prepare thoroughly for the job you want',
+  services: [
+    {
+      id: 'xray-analyzer',
+      icon: '🔍',
+      title: 'Decode the Job Post',
+      description: 'Understand what they REALLY want. Uncover hidden requirements, company insights, and exactly what to emphasize in your interview.',
+      buttonText: 'Get Started',
+      route: '/service/xray-analyzer',
+      videoUrl: 'https://www.youtube.com/embed/Tt08KmFfIYQ',
+      videoTitle: 'How X-Ray Analyzer Works',
+      isComingSoon: false
+    },
+    {
+      id: 'interview-questions',
+      icon: '🧠',
+      title: 'Predict the Questions',
+      description: 'Know what they\'ll ask before you walk in. Get a complete list of likely questions with tips on how to answer each one brilliantly.',
+      buttonText: 'Get Started',
+      route: '/service/interview-questions',
+      videoUrl: 'https://www.youtube.com/embed/Tt08KmFfIYQ',
+      videoTitle: 'How Interview Questions Works',
+      isComingSoon: false
+    },
+    {
+      id: 'answer-builder',
+      icon: '💬',
+      title: 'Craft Your Answers',
+      description: 'Build compelling answers that showcase your experience. Turn your stories into interview gold using proven frameworks.',
+      buttonText: 'Coming Soon',
+      isComingSoon: true
+    }
+  ]
+};
+```
+
+---
+
+## TASK 2: Create VideoModal Component (FIXED)
+
+### File: `client/src/components/common/VideoModal.tsx`
+
+```tsx
+import { useState, useEffect } from 'react';
+import { X, Maximize2, Minimize2 } from 'lucide-react';
+
+interface VideoModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  videoUrl: string;
+  title?: string;
+}
+
+export default function VideoModal({ 
+  isOpen, 
+  onClose, 
+  videoUrl, 
+  title = 'How it works' 
+}: VideoModalProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // Handle ESC key and body scroll
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (isExpanded) {
+          setIsExpanded(false);
+        } else {
+          onClose();
+        }
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEsc);
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEsc);
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen, isExpanded, onClose]);
+
+  // Reset expanded state when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setIsExpanded(false);
+    }
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      {/* Dark Overlay */}
+      <div className="absolute inset-0 bg-black bg-opacity-90" />
+
+      {/* Modal Container */}
+      <div
+        className={`relative z-10 w-full transition-all duration-300 ${
+          isExpanded ? 'max-w-[90vw]' : 'max-w-4xl'
+        }`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 bg-gray-900 rounded-t-lg">
+          <h3 className="text-white font-medium text-lg">{title}</h3>
+          <div className="flex items-center gap-2">
+            {/* Expand/Minimize Button */}
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="p-2 text-white hover:bg-gray-700 rounded transition-colors"
+              title={isExpanded ? 'Minimize (ESC)' : 'Expand for better viewing'}
+            >
+              {isExpanded ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
+            </button>
+            {/* Close Button */}
+            <button
+              onClick={onClose}
+              className="p-2 text-white hover:bg-gray-700 rounded transition-colors"
+              title="Close"
+            >
+              <X size={20} />
+            </button>
+          </div>
+        </div>
+
+        {/* Video Container - CRITICAL: Maintains 16:9 aspect ratio */}
+        <div className="relative bg-black rounded-b-lg overflow-hidden"
+             style={{ paddingBottom: '56.25%' }}> {/* 16:9 = 9/16 = 0.5625 */}
+          <iframe
+            className="absolute inset-0 w-full h-full"
+            src={`${videoUrl}?rel=0&modestbranding=1&autoplay=1`}
+            title={title}
+            frameBorder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+            allowFullScreen
+          />
+        </div>
+
+        {/* Hint text */}
+        <div className="text-center py-2 text-gray-400 text-sm">
+          Press ESC to {isExpanded ? 'minimize' : 'close'} • Click outside to close
+        </div>
+      </div>
+    </div>
+  );
+}
+```
+
+---
+
+## TASK 3: Create ServiceCard Component
+
+### File: `client/src/components/common/ServiceCard.tsx`
+
+```tsx
+import { useState } from 'react';
+import { Play } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import VideoModal from './VideoModal';
+import { ServiceConfig } from '../../config/homePageServices';
+
+interface ServiceCardProps {
+  service: ServiceConfig;
+}
+
+export default function ServiceCard({ service }: ServiceCardProps) {
+  const [showVideo, setShowVideo] = useState(false);
+
+  const {
+    icon,
+    title,
+    description,
+    buttonText,
+    route,
+    videoUrl,
+    videoTitle,
+    isComingSoon
+  } = service;
+
+  return (
+    <>
+      <div
+        className={`
+          rounded-xl p-6 transition-all duration-300
+          ${isComingSoon
+            ? 'bg-gray-50 border-2 border-dashed border-gray-300 opacity-70'
+            : 'bg-white border border-gray-200 shadow-md hover:shadow-lg'
+          }
+        `}
+      >
+        {/* Coming Soon Badge */}
+        {isComingSoon && (
+          <div className="mb-3">
+            <span className="inline-block px-3 py-1 text-xs font-medium text-orange-700 bg-orange-100 rounded-full">
+              Coming Soon
+            </span>
+          </div>
+        )}
+
+        {/* Icon + Title (Same Line) */}
+        <div className="flex items-center gap-3 mb-4">
+          <span className="text-3xl">{icon}</span>
+          <h3 className={`text-xl font-bold ${isComingSoon ? 'text-gray-500' : 'text-gray-900'}`}>
+            {title}
+          </h3>
+        </div>
+
+        {/* Description */}
+        <p className={`mb-6 leading-relaxed ${isComingSoon ? 'text-gray-400' : 'text-gray-600'}`}>
+          {description}
+        </p>
+
+        {/* Button */}
+        {isComingSoon ? (
+          <button
+            disabled
+            className="w-full py-3 px-4 rounded-lg bg-gray-200 text-gray-500 font-medium cursor-not-allowed"
+          >
+            {buttonText}
+          </button>
+        ) : (
+          <Link
+            to={route || '#'}
+            className="block w-full py-3 px-4 rounded-lg bg-blue-600 text-white font-medium text-center hover:bg-blue-700 transition-colors"
+          >
+            {buttonText}
+          </Link>
+        )}
+
+        {/* Video Link (only for active services) */}
+        {!isComingSoon && videoUrl && (
+          <button
+            onClick={() => setShowVideo(true)}
+            className="w-full mt-4 flex items-center justify-center gap-2 text-sm text-gray-500 hover:text-blue-600 transition-colors"
+          >
+            <Play size={16} className="fill-current" />
+            Watch how it works
+          </button>
+        )}
+      </div>
+
+      {/* Video Modal */}
+      {videoUrl && (
+        <VideoModal
+          isOpen={showVideo}
+          onClose={() => setShowVideo(false)}
+          videoUrl={videoUrl}
+          title={videoTitle || `How ${title} Works`}
+        />
+      )}
+    </>
+  );
+}
+```
+
+---
+
+## TASK 4: Create Section Separator Component
+
+### File: `client/src/components/common/SectionSeparator.tsx`
+
+```tsx
+export default function SectionSeparator() {
+  return (
+    <div className="my-12 flex justify-center">
+      <div 
+        className="w-4/5 h-0.5"
+        style={{
+          background: 'linear-gradient(90deg, transparent 0%, #1E3A5F 20%, #1E3A5F 80%, transparent 100%)'
+        }}
+      />
+    </div>
+  );
+}
+```
+
+---
+
+## TASK 5: Create Home Section Component
+
+### File: `client/src/components/home/HomeSection.tsx`
+
+```tsx
+import ServiceCard from '../common/ServiceCard';
+import { SectionConfig } from '../../config/homePageServices';
+
+interface HomeSectionProps {
+  section: SectionConfig;
+}
+
+export default function HomeSection({ section }: HomeSectionProps) {
+  return (
+    <section className="mb-8">
+      {/* Section Header */}
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-gray-900 mb-2" style={{ color: '#1E3A5F' }}>
+          {section.title}
+        </h2>
+        <p className="text-gray-600">
+          {section.subtitle}
+        </p>
+      </div>
+
+      {/* Service Cards Grid */}
+      <div className={`grid gap-6 ${
+        section.services.length === 2 
+          ? 'grid-cols-1 md:grid-cols-2' 
+          : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+      }`}>
+        {section.services.map((service) => (
+          <ServiceCard key={service.id} service={service} />
+        ))}
+      </div>
+    </section>
+  );
+}
+```
+
+---
+
+## TASK 6: Update Common Components Index
+
+### File: `client/src/components/common/index.ts`
+
+```typescript
+export { default as StandardToolbar } from './StandardToolbar';
+export { default as VideoModal } from './VideoModal';
+export { default as ServiceCard } from './ServiceCard';
+export { default as SectionSeparator } from './SectionSeparator';
+```
+
+---
+
+## TASK 7: Update Home Page
+
+### File: Update `client/src/pages/HomePage.tsx` (or Dashboard)
+
+Replace the current service cards section with:
+
+```tsx
+import { SECTION_A, SECTION_B } from '../config/homePageServices';
+import HomeSection from '../components/home/HomeSection';
+import { SectionSeparator } from '../components/common';
+
+export default function HomePage() {
+  return (
+    <div className="min-h-screen" style={{ backgroundColor: '#FAF9F7' }}>
+      {/* Header/Navbar - keep existing */}
+      
+      {/* Main Content */}
+      <main className="max-w-6xl mx-auto px-4 py-8">
+        
+        {/* Welcome Message (optional - keep if exists) */}
+        <div className="text-center mb-12">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Welcome to GetHiredAlly
+          </h1>
+          <p className="text-gray-600">
+            Your AI-powered job search companion
+          </p>
+        </div>
+
+        {/* Section A: CV Preparation */}
+        <HomeSection section={SECTION_A} />
+
+        {/* Separator Line */}
+        <SectionSeparator />
+
+        {/* Section B: Interview Preparation */}
+        <HomeSection section={SECTION_B} />
+
+      </main>
+
+      {/* Footer - keep existing */}
+    </div>
+  );
+}
+```
+
+---
+
+## TASK 8: Remove Old Card Code
+
+Search for and remove any old/duplicate service card implementations:
+
+1. Delete old card components that are no longer needed
+2. Remove inline card JSX from HomePage
+3. Ensure all cards now use the ServiceCard component
+
+---
+
+## VERIFICATION CHECKLIST
+
+### Page Structure
+- [ ] Two distinct sections visible
+- [ ] Section A title: "Perfect Your CV"
+- [ ] Section B title: "Ace Your Interview"
+- [ ] Gradient separator line between sections
+- [ ] Sections have proper spacing
+
+### Service Cards
+- [ ] Icon and Title on SAME LINE
+- [ ] Description is readable (2-3 sentences)
+- [ ] "Get Started" button works for active services
+- [ ] "Coming Soon" button is disabled and grayed out
+- [ ] Coming Soon cards have orange badge
+- [ ] Coming Soon cards have dashed border and lower opacity
+
+### Video Modal
+- [ ] "Watch how it works" link visible on active cards
+- [ ] Clicking link opens modal
+- [ ] Video maintains 16:9 ratio (NOT distorted)
+- [ ] Expand button enlarges video (keeps ratio)
+- [ ] Minimize button shrinks video back
+- [ ] ESC key works (minimize if expanded, close if normal)
+- [ ] Clicking dark overlay closes modal
+- [ ] X button closes modal
+
+### Responsive Design
+- [ ] Desktop: Cards in proper grid (2 cols Section A, 3 cols Section B)
+- [ ] Tablet: Cards wrap to 2 per row
+- [ ] Mobile: Cards stack vertically (1 per row)
+
+### Cards Content
+- [ ] CV Optimizer: "Perfect Your CV" title
+- [ ] ATS Optimizer: "Tailor for This Job" (Coming Soon)
+- [ ] X-Ray Analyzer: "Decode the Job Post"
+- [ ] Interview Questions: "Predict the Questions" with 🧠 icon
+- [ ] Answer Builder: "Craft Your Answers" (Coming Soon)
+
+---
+
+## FILE STRUCTURE
+
+After implementation:
+
+```
+client/src/
+  config/
+    homePageServices.ts (NEW)
+  
+  components/
+    common/
+      StandardToolbar.tsx (existing)
+      VideoModal.tsx (NEW or UPDATED)
+      ServiceCard.tsx (NEW)
+      SectionSeparator.tsx (NEW)
+      index.ts (UPDATED)
+    
+    home/
+      HomeSection.tsx (NEW)
+  
+  pages/
+    HomePage.tsx (UPDATED)
+```
+
+---
+
+## DESIGN SPECIFICATIONS
+
+### Colors
+
+| Element | Color |
+|---------|-------|
+| Page Background | #FAF9F7 (warm beige) |
+| Section Title | #1E3A5F (navy) |
+| Card Background (active) | White |
+| Card Background (coming soon) | #F9FAFB (light gray) |
+| Button (active) | #2563EB (blue) |
+| Button (coming soon) | #E5E7EB (gray) |
+| Separator Line | #1E3A5F gradient |
+
+### Typography
+
+| Element | Style |
+|---------|-------|
+| Section Title | 24px, Bold |
+| Section Subtitle | 16px, Regular, Gray |
+| Card Title | 20px, Bold |
+| Card Description | 16px, Regular, Line-height 1.6 |
+| Button | 16px, Medium |
+| Video Link | 14px, Regular |
+
+### Spacing
+
+| Element | Value |
+|---------|-------|
+| Section padding | 32px |
+| Card padding | 24px |
+| Gap between cards | 24px |
+| Separator margin | 48px top/bottom |
+
+---
+
+**END OF PROMPT**
