@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useMemo } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { isAuthenticated } from '@/lib/auth'
 import { Loader2, Sparkles, CheckCircle, X, Users, Code, Briefcase, HelpCircle, Zap, ClipboardList } from 'lucide-react'
@@ -95,18 +95,14 @@ export function UnderstandJobPage() {
   const resultsRef = useRef<HTMLDivElement>(null)
   const [selectedProvider, setSelectedProvider] = useState<Provider>('claude')
 
-  const tocItems = useMemo(() => {
-    if (!analysis) return []
-    const headingRegex = /^##\s+(.+)$/gm
-    const headings: { text: string; id: string }[] = []
-    let match
-    while ((match = headingRegex.exec(analysis)) !== null) {
-      const text = match[1].trim()
-      const id = `section-${text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')}`
-      headings.push({ text, id })
-    }
-    return headings
-  }, [analysis])
+  const defaultTocItems = [
+    { text: 'Summary', id: 'section-summary' },
+    { text: 'Requirements', id: 'section-requirements' },
+    { text: 'Skills', id: 'section-skills' },
+    { text: 'Red Flags', id: 'section-red-flags' },
+    { text: 'Questions', id: 'section-questions' },
+    { text: 'Prep Tips', id: 'section-prep-tips' }
+  ]
 
   const handleExportPDF = async () => {
     if (!analysis) return
@@ -613,7 +609,7 @@ export function UnderstandJobPage() {
               serviceName="X-Ray Analysis Report"
             />
 
-            {tocItems.length > 0 && (
+            {analysis && (
               <div style={{
                 background: 'rgba(255,255,255,0.95)',
                 backdropFilter: 'blur(8px)',
@@ -627,7 +623,7 @@ export function UnderstandJobPage() {
                   Jump to Section
                 </h4>
                 <nav style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                  {tocItems.map((item) => (
+                  {defaultTocItems.map((item) => (
                     <button
                       key={item.id}
                       type="button"
@@ -679,23 +675,6 @@ export function UnderstandJobPage() {
                 .prose th { padding: 10px 12px; text-align: left; font-weight: 600; color: #1E3A5F; border-bottom: 2px solid #E5E7EB; }
                 .prose td { padding: 10px 12px; border-bottom: 1px solid #E5E7EB; }
                 .prose tr:hover { background: #F9FAFB; }
-                
-                /* Callout boxes */
-                .callout-red { background: #FEF2F2; border-left: 4px solid #EF4444; padding: 16px; border-radius: 0 8px 8px 0; margin: 16px 0; }
-                .callout-red .callout-title { color: #DC2626; font-weight: 600; margin-bottom: 4px; }
-                .callout-red p { color: #7F1D1D; margin: 0; }
-                
-                .callout-blue { background: #EFF6FF; border-left: 4px solid #3B82F6; padding: 16px; border-radius: 0 8px 8px 0; margin: 16px 0; }
-                .callout-blue .callout-title { color: #2563EB; font-weight: 600; margin-bottom: 4px; }
-                .callout-blue p { color: #1E40AF; margin: 0; }
-                
-                .callout-green { background: #F0FDF4; border-left: 4px solid #22C55E; padding: 16px; border-radius: 0 8px 8px 0; margin: 16px 0; }
-                .callout-green .callout-title { color: #16A34A; font-weight: 600; margin-bottom: 4px; }
-                .callout-green p { color: #166534; margin: 0; }
-                
-                .callout-yellow { background: #FFFBEB; border-left: 4px solid #F59E0B; padding: 16px; border-radius: 0 8px 8px 0; margin: 16px 0; }
-                .callout-yellow .callout-title { color: #D97706; font-weight: 600; margin-bottom: 4px; }
-                .callout-yellow p { color: #92400E; margin: 0; }
               `}</style>
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
@@ -704,42 +683,6 @@ export function UnderstandJobPage() {
                     const text = String(children).toLowerCase();
                     const id = `section-${text.replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')}`;
                     return <h2 id={id}>{children}</h2>;
-                  },
-                  p: ({ children }) => {
-                    const text = String(children);
-                    if (text.toLowerCase().includes('red flag') || text.toLowerCase().includes('warning') || text.includes('⚠️')) {
-                      return (
-                        <div className="callout-red">
-                          <div className="callout-title">⚠️ Red Flag</div>
-                          <p>{children}</p>
-                        </div>
-                      );
-                    }
-                    if (text.toLowerCase().includes('key insight') || text.toLowerCase().includes('note:') || text.includes('💡')) {
-                      return (
-                        <div className="callout-blue">
-                          <div className="callout-title">💡 Key Insight</div>
-                          <p>{children}</p>
-                        </div>
-                      );
-                    }
-                    if (text.toLowerCase().includes('strength') || text.toLowerCase().includes('positive') || text.includes('✅')) {
-                      return (
-                        <div className="callout-green">
-                          <div className="callout-title">✅ Strength</div>
-                          <p>{children}</p>
-                        </div>
-                      );
-                    }
-                    if (text.toLowerCase().includes('tip:') || text.toLowerCase().includes('recommendation')) {
-                      return (
-                        <div className="callout-yellow">
-                          <div className="callout-title">💡 Tip</div>
-                          <p>{children}</p>
-                        </div>
-                      );
-                    }
-                    return <p>{children}</p>;
                   }
                 }}
               >
