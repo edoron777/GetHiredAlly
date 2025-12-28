@@ -157,6 +157,10 @@ GetHiredAlly is an interview preparation application with job description analys
 - **Password Security**: bcrypt hashing, passwords never logged
 
 ## Recent Changes
+- December 28, 2025: Added CV Optimizer UX Phase 1 - Category transparency panel with 9 analysis categories
+- December 28, 2025: Added CategoryInfoModal with research-backed explanations for each category
+- December 28, 2025: Added CategoryFilterPanel for filtering suggestions by category with counts
+- December 28, 2025: Updated language to positive framing (Issues → Suggestions, Critical → Quick Wins)
 - December 27, 2025: Added CV Auto-Fix feature with AI-powered correction and side-by-side comparison
 - December 27, 2025: Added fixed CV download in PDF, DOCX, TXT formats
 - December 27, 2025: Built CV scanning animation page with grid visualization, progress bar, and issue counters
