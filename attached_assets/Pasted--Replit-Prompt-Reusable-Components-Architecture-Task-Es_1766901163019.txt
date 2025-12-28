@@ -1,0 +1,415 @@
+# Replit Prompt: Reusable Components Architecture
+
+**Task:** Establish reusable component architecture and rules for GetHiredAlly
+**Priority:** 🔴 Critical - Foundation for all future development
+**Type:** Architecture & Rules Definition
+
+---
+
+## ⚠️ THIS IS A RULES DOCUMENT - READ CAREFULLY
+
+This prompt establishes **permanent rules** for how components should be built and used across the GetHiredAlly application. These rules must be followed in ALL future development.
+
+---
+
+## CORE PRINCIPLE: DON'T REPEAT YOURSELF (DRY)
+
+**The Problem:**
+When the same code is copied into multiple files:
+- Changes require updating multiple files
+- Easy to miss a file → inconsistency
+- More code = more bugs
+- Harder to maintain
+
+**The Solution:**
+- Create ONE component in ONE place
+- Import and use it everywhere needed
+- Change once → updates everywhere automatically
+
+---
+
+## REUSABLE COMPONENTS FOLDER STRUCTURE
+
+Create this folder structure for all shared/reusable components:
+
+```
+client/src/
+  components/
+    common/                     ← ALL REUSABLE COMPONENTS GO HERE
+      StandardToolbar.tsx       ← Toolbar component
+      StandardModal.tsx         ← Modal/popup component (future)
+      StandardCard.tsx          ← Card component (future)
+      LoadingSpinner.tsx        ← Loading indicator (future)
+      EmptyState.tsx            ← Empty state message (future)
+      ErrorMessage.tsx          ← Error display (future)
+      index.ts                  ← Exports all common components
+    
+    cv-optimizer/               ← CV Optimizer specific components
+    xray-analyzer/              ← X-Ray Analyzer specific components
+    interview-questions/        ← Interview Questions specific components
+```
+
+---
+
+## TASK 1: Create Common Components Index
+
+### File: `client/src/components/common/index.ts`
+
+```typescript
+// ===========================================
+// COMMON REUSABLE COMPONENTS
+// ===========================================
+// 
+// This file exports all reusable components.
+// Import from here instead of individual files.
+//
+// Usage: import { StandardToolbar, LoadingSpinner } from '../components/common'
+//
+// ===========================================
+
+export { default as StandardToolbar } from './StandardToolbar';
+
+// Future components (uncomment when created):
+// export { default as StandardModal } from './StandardModal';
+// export { default as StandardCard } from './StandardCard';
+// export { default as LoadingSpinner } from './LoadingSpinner';
+// export { default as EmptyState } from './EmptyState';
+// export { default as ErrorMessage } from './ErrorMessage';
+```
+
+---
+
+## TASK 2: Create StandardToolbar Component
+
+### File: `client/src/components/common/StandardToolbar.tsx`
+
+```tsx
+// ===========================================
+// STANDARD TOOLBAR COMPONENT
+// ===========================================
+//
+// USAGE: Import and use in any page that needs toolbar functionality
+// 
+// import { StandardToolbar } from '../components/common';
+//
+// <StandardToolbar
+//   onExpandAll={handleExpandAll}
+//   onCollapseAll={handleCollapseAll}
+//   onEmail={handleEmail}
+//   onWhatsApp={handleWhatsApp}
+//   onExportPDF={handleExportPDF}
+//   onExportWord={handleExportWord}
+// />
+//
+// DO NOT copy this code into other files!
+// DO NOT create alternative toolbar components!
+// If you need changes, modify THIS file only.
+//
+// ===========================================
+
+interface StandardToolbarProps {
+  // Required: Expand/Collapse
+  onExpandAll: () => void;
+  onCollapseAll: () => void;
+  
+  // Optional: Share
+  onEmail?: () => void;
+  onWhatsApp?: () => void;
+  
+  // Optional: Export
+  onExportPDF?: () => void;
+  onExportWord?: () => void;
+  onExportMarkdown?: () => void;
+  
+  // Optional: Show/Hide buttons
+  showEmail?: boolean;
+  showWhatsApp?: boolean;
+  showPDF?: boolean;
+  showWord?: boolean;
+  showMarkdown?: boolean;
+}
+
+export default function StandardToolbar({
+  onExpandAll,
+  onCollapseAll,
+  onEmail,
+  onWhatsApp,
+  onExportPDF,
+  onExportWord,
+  onExportMarkdown,
+  showEmail = true,
+  showWhatsApp = true,
+  showPDF = true,
+  showWord = true,
+  showMarkdown = true
+}: StandardToolbarProps) {
+  
+  // Check if share section should show
+  const hasShareButtons = (showEmail && onEmail) || (showWhatsApp && onWhatsApp);
+  
+  // Check if export section should show
+  const hasExportButtons = (showPDF && onExportPDF) || (showWord && onExportWord) || (showMarkdown && onExportMarkdown);
+
+  return (
+    <div 
+      className="flex items-center justify-between px-4 py-2 rounded-lg mb-4"
+      style={{ backgroundColor: '#1E3A5F' }}
+    >
+      {/* LEFT: Expand/Collapse */}
+      <div className="flex items-center gap-1">
+        <button
+          onClick={onExpandAll}
+          title="Expand All"
+          className="text-white text-2xl font-bold px-3 py-1 hover:bg-white/20 rounded transition-colors"
+        >
+          +
+        </button>
+        <button
+          onClick={onCollapseAll}
+          title="Collapse All"
+          className="text-white text-2xl font-bold px-3 py-1 hover:bg-white/20 rounded transition-colors"
+        >
+          −
+        </button>
+      </div>
+
+      {/* Separator */}
+      <div className="text-white/50 mx-2">│</div>
+
+      {/* MIDDLE: Flexible space */}
+      <div className="flex-grow"></div>
+
+      {/* Separator before share (if share exists) */}
+      {hasShareButtons && (
+        <div className="text-white/50 mx-2">│</div>
+      )}
+
+      {/* RIGHT: Share options */}
+      {hasShareButtons && (
+        <div className="flex items-center gap-3">
+          {showEmail && onEmail && (
+            <button
+              onClick={onEmail}
+              className="text-white hover:bg-white/20 px-3 py-1 rounded transition-colors text-sm font-medium"
+            >
+              Email
+            </button>
+          )}
+          {showWhatsApp && onWhatsApp && (
+            <button
+              onClick={onWhatsApp}
+              className="text-white hover:bg-white/20 px-3 py-1 rounded transition-colors text-sm font-medium"
+            >
+              WhatsApp
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Separator before export (if both share and export exist) */}
+      {hasShareButtons && hasExportButtons && (
+        <div className="text-white/50 mx-2">│</div>
+      )}
+      
+      {/* Separator before export (if only export exists) */}
+      {!hasShareButtons && hasExportButtons && (
+        <div className="text-white/50 mx-2">│</div>
+      )}
+
+      {/* FAR RIGHT: Document downloads */}
+      {hasExportButtons && (
+        <div className="flex items-center gap-2">
+          {showPDF && onExportPDF && (
+            <button
+              onClick={onExportPDF}
+              className="text-white bg-white/10 hover:bg-white/20 px-3 py-1 rounded transition-colors text-sm font-medium"
+            >
+              PDF
+            </button>
+          )}
+          {showWord && onExportWord && (
+            <button
+              onClick={onExportWord}
+              className="text-white bg-white/10 hover:bg-white/20 px-3 py-1 rounded transition-colors text-sm font-medium"
+            >
+              WORD
+            </button>
+          )}
+          {showMarkdown && onExportMarkdown && (
+            <button
+              onClick={onExportMarkdown}
+              title="Download as Markdown"
+              className="text-white bg-white/10 hover:bg-white/20 px-3 py-1 rounded transition-colors text-sm font-medium"
+            >
+              MD
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+---
+
+## TASK 3: Update All Existing Pages to Use StandardToolbar
+
+### Search and Replace
+
+Search the entire codebase for any pages that have toolbar-like code and replace with the standard component.
+
+**Files to check:**
+- `CVReportPage.tsx`
+- `XRayReportPage.tsx` 
+- `InterviewQuestionsPage.tsx`
+- Any page with PDF/Word/Email export buttons
+
+**For each file:**
+
+1. **Remove** any existing toolbar JSX code
+2. **Add import:** `import { StandardToolbar } from '../components/common';`
+3. **Add handlers** for expand/collapse/email/export
+4. **Add component** where toolbar should appear
+
+**Example conversion:**
+
+```tsx
+// BEFORE (bad - duplicated code):
+<div className="flex items-center bg-blue-900 p-2">
+  <button onClick={expandAll}>+</button>
+  <button onClick={collapseAll}>-</button>
+  <button onClick={exportPDF}>PDF</button>
+</div>
+
+// AFTER (good - using reusable component):
+import { StandardToolbar } from '../components/common';
+
+<StandardToolbar
+  onExpandAll={handleExpandAll}
+  onCollapseAll={handleCollapseAll}
+  onExportPDF={handleExportPDF}
+  onExportWord={handleExportWord}
+  showEmail={false}
+  showWhatsApp={false}
+  showMarkdown={false}
+/>
+```
+
+---
+
+## 🚨 PERMANENT RULES FOR ALL FUTURE DEVELOPMENT 🚨
+
+### Rule 1: StandardToolbar
+
+**ALWAYS** use `StandardToolbar` from `components/common/` when a page needs:
+- Expand/Collapse functionality
+- Email sharing
+- WhatsApp sharing  
+- PDF export
+- Word export
+- Markdown export
+
+**NEVER** create new toolbar code in individual pages.
+
+### Rule 2: Common Components Location
+
+**ALWAYS** put reusable components in `components/common/`
+
+**NEVER** duplicate component code across multiple files.
+
+### Rule 3: How to Add New Reusable Components
+
+When creating a new component that will be used in multiple places:
+
+1. Create it in `components/common/NewComponent.tsx`
+2. Add export to `components/common/index.ts`
+3. Import and use: `import { NewComponent } from '../components/common'`
+
+### Rule 4: When to Create a Reusable Component
+
+Create a reusable component when:
+- Same UI element appears in 2+ places
+- Same functionality is needed in 2+ places
+- Component is generic (not service-specific)
+
+### Rule 5: Service-Specific vs Common
+
+| Component Type | Location | Example |
+|---------------|----------|---------|
+| Used in multiple services | `components/common/` | StandardToolbar, LoadingSpinner |
+| Used only in one service | `components/[service-name]/` | CVIssueCard, XRayCategory |
+
+---
+
+## EXISTING REUSABLE COMPONENTS
+
+| Component | Location | Purpose | Used By |
+|-----------|----------|---------|---------|
+| StandardToolbar | `components/common/StandardToolbar.tsx` | Expand/Collapse + Share + Export toolbar | CV Optimizer, X-Ray Analyzer, Interview Questions |
+
+---
+
+## FUTURE REUSABLE COMPONENTS (Create When Needed)
+
+| Component | Purpose | When to Create |
+|-----------|---------|----------------|
+| LoadingSpinner | Show loading state | When 2+ pages need loading indicator |
+| EmptyState | Show "no data" message | When 2+ pages need empty state |
+| ErrorMessage | Show error with retry | When 2+ pages need error display |
+| StandardModal | Popup/dialog | When 2+ pages need modals |
+| StandardCard | Content card | When 2+ pages need similar cards |
+| ConfirmDialog | Yes/No confirmation | When 2+ pages need confirmation |
+
+---
+
+## VERIFICATION CHECKLIST
+
+After implementing this prompt:
+
+- [ ] `components/common/` folder exists
+- [ ] `StandardToolbar.tsx` is in `components/common/`
+- [ ] `index.ts` exports StandardToolbar
+- [ ] CV Optimizer Report uses StandardToolbar (not custom code)
+- [ ] X-Ray Analyzer Report uses StandardToolbar (if exists)
+- [ ] No duplicate toolbar code exists in individual pages
+- [ ] Toolbar looks identical across all services
+
+---
+
+## HOW TO VERIFY NO DUPLICATE CODE
+
+Run this search in the codebase:
+
+**Search for:** `bg-white/20` or `#1E3A5F` or `onExportPDF`
+
+**Should only appear in:**
+- `components/common/StandardToolbar.tsx`
+- Files that IMPORT StandardToolbar
+
+**Should NOT appear in:**
+- Individual page files with duplicated toolbar JSX
+
+---
+
+## REMINDER FOR ALL FUTURE PROMPTS
+
+When giving Replit any prompt that involves:
+- Adding a toolbar to a page
+- Export functionality (PDF, Word)
+- Share functionality (Email, WhatsApp)
+- Expand/Collapse all
+
+**Always include this reminder:**
+
+```
+IMPORTANT: Use the existing StandardToolbar component.
+- Import: import { StandardToolbar } from '../components/common'
+- Do NOT create new toolbar code
+- Do NOT copy toolbar JSX into this page
+- If StandardToolbar needs changes, modify components/common/StandardToolbar.tsx
+```
+
+---
+
+**END OF PROMPT**

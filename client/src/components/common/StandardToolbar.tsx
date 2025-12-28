@@ -1,3 +1,33 @@
+// ===========================================
+// STANDARD TOOLBAR COMPONENT
+// ===========================================
+//
+// USAGE: Import and use in any page that needs toolbar functionality
+//
+// import { StandardToolbar } from '../components/common';
+//
+// <StandardToolbar
+//   onExpandAll={handleExpandAll}
+//   onCollapseAll={handleCollapseAll}
+//   onPDF={handleExportPDF}
+//   onWord={handleExportWord}
+//   onMarkdown={handleExportMarkdown}
+//   serviceName="CV Analysis Report"
+// />
+//
+// DO NOT copy this code into other files!
+// DO NOT create alternative toolbar components!
+// If you need changes, modify THIS file only.
+//
+// FEATURES:
+// - Expand/Collapse all buttons
+// - Email sharing with pre-filled message
+// - WhatsApp sharing
+// - PDF/Word/Markdown export with loading states
+// - Navy blue (#1E3A5F) background
+//
+// ===========================================
+
 import { useState } from 'react'
 import { Loader2, Mail, MessageCircle, FileDown } from 'lucide-react'
 
