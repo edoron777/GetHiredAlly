@@ -94,7 +94,6 @@ export function UnderstandJobPage() {
   const [showHighlight, setShowHighlight] = useState(false)
   const resultsRef = useRef<HTMLDivElement>(null)
   const [selectedProvider, setSelectedProvider] = useState<Provider>('claude')
-  const [, setCollapsedSections] = useState<Set<string>>(new Set())
 
   const tocItems = useMemo(() => {
     if (!analysis) return []
@@ -109,60 +108,69 @@ export function UnderstandJobPage() {
     return headings
   }, [analysis])
 
-  const handleExpandAll = () => setCollapsedSections(new Set())
-  const handleCollapseAll = () => setCollapsedSections(new Set(tocItems.map(t => t.id)))
-
   const handleExportPDF = async () => {
     if (!analysis) return
-    const response = await fetch('/api/xray/download/pdf', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        report_content: analysis, 
-        job_title: 'Job Analysis Report',
-        company_name: ''
+    try {
+      const response = await fetch('/api/xray/download/pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          report_content: analysis, 
+          job_title: 'Job Analysis Report',
+          company_name: ''
+        })
       })
-    })
-    if (!response.ok) throw new Error('PDF generation failed')
-    const blob = await response.blob()
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'XRay_Analysis.pdf'
-    a.click()
-    window.URL.revokeObjectURL(url)
+      if (!response.ok) return
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'XRay_Analysis.pdf'
+      a.click()
+      window.URL.revokeObjectURL(url)
+    } catch {
+      return
+    }
   }
 
   const handleExportWord = async () => {
     if (!analysis) return
-    const response = await fetch('/api/xray/download/docx', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        report_content: analysis, 
-        job_title: 'Job Analysis Report',
-        company_name: ''
+    try {
+      const response = await fetch('/api/xray/download/docx', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          report_content: analysis, 
+          job_title: 'Job Analysis Report',
+          company_name: ''
+        })
       })
-    })
-    if (!response.ok) throw new Error('Word generation failed')
-    const blob = await response.blob()
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'XRay_Analysis.docx'
-    a.click()
-    window.URL.revokeObjectURL(url)
+      if (!response.ok) return
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'XRay_Analysis.docx'
+      a.click()
+      window.URL.revokeObjectURL(url)
+    } catch {
+      return
+    }
   }
 
   const handleExportMarkdown = async () => {
     if (!analysis) return
-    const blob = new Blob([analysis], { type: 'text/markdown' })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'XRay_Analysis.md'
-    a.click()
-    window.URL.revokeObjectURL(url)
+    try {
+      const blob = new Blob([analysis], { type: 'text/markdown' })
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'XRay_Analysis.md'
+      a.click()
+      window.URL.revokeObjectURL(url)
+    } catch {
+      return
+    }
   }
 
   const scrollToSection = (id: string) => {
@@ -597,8 +605,8 @@ export function UnderstandJobPage() {
             </h2>
 
             <StandardToolbar
-              onExpandAll={handleExpandAll}
-              onCollapseAll={handleCollapseAll}
+              onExpandAll={() => {}}
+              onCollapseAll={() => {}}
               onPDF={handleExportPDF}
               onWord={handleExportWord}
               onMarkdown={handleExportMarkdown}
