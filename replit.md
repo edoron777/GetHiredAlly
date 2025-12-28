@@ -6,17 +6,95 @@ GetHiredAlly is an interview preparation application designed to empower job see
 ## User Preferences
 I prefer iterative development, with a focus on delivering small, functional increments. Please provide detailed explanations for any complex architectural decisions or significant code changes. I like clean, readable code with a strong emphasis on maintainability. When suggesting changes, please offer multiple options with their respective pros and cons. I want to be asked before any major changes are made to the core logic or database schema.
 
+---
+
 ## PERMANENT DEVELOPMENT RULES
 
-### Reusable Components (MUST FOLLOW)
-All reusable components are located in `client/src/components/common/`. Before creating any new component:
+These rules must be followed in ALL development work. They ensure code consistency, maintainability, and prevent duplicate code.
 
-1. **ALWAYS check `components/common/` first** - If a component exists there, import and use it
-2. **NEVER duplicate component code** - Do not copy component code into individual pages
-3. **Import from centralized location** - Use `import { ComponentName } from '../components/common'`
-4. **Modify source, not copies** - If changes are needed, modify the component in `common/` only
+---
 
-### Available Reusable Components
+### 1. FOLDER STRUCTURE
+
+```
+client/src/
+│
+├── components/
+│   │
+│   ├── common/                    # REUSABLE (All services use these)
+│   │   ├── StandardToolbar.tsx    # Export toolbar (PDF, Word, Email, etc.)
+│   │   ├── VideoModal.tsx         # Video lightbox modal
+│   │   ├── ServiceCard.tsx        # Home page service cards
+│   │   ├── SectionSeparator.tsx   # Visual separator line
+│   │   └── index.ts               # Exports all common components
+│   │
+│   ├── cv-optimizer/              # CV Optimizer specific
+│   │   ├── CategoryFilterPanel.tsx
+│   │   ├── StrengthsSection.tsx
+│   │   ├── EffortGroupView.tsx
+│   │   ├── WorkTypeGroupView.tsx
+│   │   └── index.ts
+│   │
+│   ├── home/                      # Home page specific
+│   │   ├── HomeSection.tsx
+│   │   └── index.ts
+│   │
+│   └── ui/                        # shadcn/ui components
+│
+├── config/                        # Configuration files
+│   ├── homePageServices.ts        # Home page card content
+│   ├── cvCategories.ts            # CV analysis categories
+│   └── workTypeCategories.ts      # Work type definitions
+│
+├── lib/                           # Core utilities
+│   ├── auth.ts                    # Authentication
+│   └── utils.ts                   # General utilities
+│
+└── utils/                         # Helper functions
+    └── strengthsDetector.ts       # CV strengths detection
+```
+
+---
+
+### 2. REUSABLE COMPONENTS RULES
+
+#### Rule 2.1: Single Source of Truth
+**NEVER duplicate component code.** If a component is used in 2+ places, it belongs in `components/common/`.
+
+#### Rule 2.2: StandardToolbar
+**ALWAYS** use `StandardToolbar` from `components/common/` when a page needs:
+- Expand/Collapse all functionality
+- Email sharing
+- WhatsApp sharing
+- PDF/Word/Markdown export
+
+```tsx
+// CORRECT
+import { StandardToolbar } from '../components/common';
+
+// WRONG - Never create new toolbar code
+<div className="toolbar">...</div>
+```
+
+#### Rule 2.3: VideoModal
+**ALWAYS** use `VideoModal` from `components/common/` for tutorial videos.
+
+#### Rule 2.4: ServiceCard
+**ALWAYS** use `ServiceCard` from `components/common/` for home page service cards.
+
+#### Rule 2.5: How to Import Common Components
+```tsx
+// CORRECT - Import from index
+import { StandardToolbar, VideoModal, ServiceCard } from '../components/common';
+
+// WRONG - Don't import from individual files
+import StandardToolbar from '../components/common/StandardToolbar';
+```
+
+---
+
+### 3. AVAILABLE REUSABLE COMPONENTS
+
 | Component | Purpose | Used By |
 |-----------|---------|---------|
 | StandardToolbar | Expand/Collapse + Email/WhatsApp sharing + PDF/Word/MD export | CV Optimizer, X-Ray, Interview Questions |
@@ -24,18 +102,136 @@ All reusable components are located in `client/src/components/common/`. Before c
 | ServiceCard | Service cards with icon+title, description, Coming Soon support | Dashboard HomeSection |
 | SectionSeparator | Navy gradient horizontal separator line | Dashboard between sections |
 
-### When to Create New Reusable Components
-- Create in `components/common/` when same UI appears in 2+ places
-- Export from `components/common/index.ts`
-- Add documentation header to the component file
+---
 
-### Service-Specific vs Common Components
-| Type | Location |
-|------|----------|
-| Used in multiple services | `components/common/` |
-| Used only in one service | `components/[service-name]/` |
+### 4. COMPONENT CREATION RULES
+
+#### Rule 4.1: One Component = One File
+Each component should be in its own file. Max 150 lines per component.
+
+#### Rule 4.2: One Responsibility
+Each file should do ONE thing. If a component does multiple things, split it.
+
+#### Rule 4.3: Naming Conventions
+| Type | Convention | Example |
+|------|------------|---------|
+| Components | PascalCase | `StandardToolbar.tsx`, `IssueCard.tsx` |
+| Services | camelCase | `exportService.ts`, `emailService.ts` |
+| Config | camelCase | `cvCategories.ts`, `homePageServices.ts` |
+| Utils | camelCase | `formatters.ts`, `validators.ts` |
+| Hooks | camelCase with "use" | `useAuth.ts`, `useLocalStorage.ts` |
+| Folders | kebab-case | `cv-optimizer/`, `xray-analyzer/` |
+
+#### Rule 4.4: Where to Put New Components
+| If component is... | Put it in... |
+|--------------------|--------------|
+| Used by multiple services | `components/common/` |
+| Used only by CV Optimizer | `components/cv-optimizer/` |
+| Used only by X-Ray Analyzer | `components/xray-analyzer/` |
+| Used only by Interview Questions | `components/interview-questions/` |
+| A full page | Root of `components/` |
+
+---
+
+### 5. DESIGN SYSTEM
+
+#### Colors
+| Name | Hex | Usage |
+|------|-----|-------|
+| Navy Blue | `#1E3A5F` | Primary, headers, toolbar |
+| Warm Beige | `#FAF9F7` | Page backgrounds |
+| White | `#FFFFFF` | Cards, content areas |
+| Blue | `#2563EB` | Buttons, links |
+| Gray 50 | `#F9FAFB` | Disabled states |
+| Gray 200 | `#E5E7EB` | Borders |
+| Gray 500 | `#6B7280` | Secondary text |
+| Gray 900 | `#111827` | Primary text |
+
+#### Typography
+| Element | Size | Weight |
+|---------|------|--------|
+| Page Title | 32px | Bold |
+| Section Title | 24px | Bold |
+| Card Title | 20px | Bold |
+| Body Text | 16px | Regular |
+| Small Text | 14px | Regular |
+| Button Text | 16px | Medium |
+
+#### Spacing
+| Size | Value | Usage |
+|------|-------|-------|
+| xs | 4px | Tight spacing |
+| sm | 8px | Small gaps |
+| md | 16px | Default gaps |
+| lg | 24px | Card padding |
+| xl | 32px | Section padding |
+| 2xl | 48px | Large separations |
+
+---
+
+### 6. STANDARD TOOLBAR SPECIFICATION
+
+The StandardToolbar is a navy blue bar with white text/icons.
+
+**Layout:**
+```
+┌────────────────────────────────────────────────────────────────────────────┐
+│ [+] [−]  │  [         SPACE         ]  │  Email  WhatsApp  │  PDF  WORD  MD │
+└────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Styling:**
+- Background: Navy Blue (#1E3A5F)
+- Text: White
+- Height: One line only
+- Separators: White with 30% opacity (`│`)
+
+---
+
+### 7. DOCUMENT EXPORT STANDARDS
+
+All exported documents (PDF, Word, MD) must include:
+
+| Position | Content |
+|----------|---------|
+| Left | Page X of Y |
+| Center | Service name (e.g., "CV Optimizer Report") |
+| Right | https://gethiredally.com |
+
+---
+
+### 8. CODE QUALITY RULES
+
+- **No Console Logs in Production** - Remove all `console.log` statements before committing
+- **Error Handling** - Always handle errors gracefully with user-friendly messages
+- **Loading States** - Always show loading indicators during async operations
+- **TypeScript** - Use TypeScript interfaces for all props and data structures
+
+---
+
+### 9. BEFORE CREATING ANY COMPONENT
+
+**ALWAYS check first:**
+1. Does it already exist in `components/common/`?
+2. Can an existing component be extended?
+3. Will this be used in multiple places? → Put in `common/`
+
+**If unsure, ASK before creating new components.**
+
+---
+
+### 10. THE 5 GOLDEN RULES
+
+1. **Check `common/` first** - Before creating any component
+2. **Never duplicate** - If it exists, import it
+3. **One file, one job** - Keep components focused
+4. **Use StandardToolbar** - For all export/share functionality
+5. **Follow naming conventions** - PascalCase for components, camelCase for others
+
+---
 
 ## System Architecture
+
 The application features a modern web architecture with a React 19 frontend utilizing Vite, Tailwind CSS, and shadcn/ui for a consistent and responsive user experience. The backend is built with FastAPI (Python), providing robust API endpoints and serving the static frontend assets in production. Supabase, a PostgreSQL-based platform, handles data persistence, authentication, and real-time capabilities.
 
 **UI/UX Design:**
