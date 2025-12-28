@@ -6,6 +6,8 @@ interface HomeSectionProps {
 }
 
 export function HomeSection({ section }: HomeSectionProps) {
+  const cardCount = section.services.length;
+
   return (
     <section className="mb-8">
       <div className="mb-8">
@@ -17,13 +19,17 @@ export function HomeSection({ section }: HomeSectionProps) {
         </p>
       </div>
 
-      <div className={`grid gap-6 ${
-        section.services.length === 2 
-          ? 'grid-cols-1 md:grid-cols-2' 
+      <div className={`
+        grid gap-6 justify-center
+        ${cardCount === 2 
+          ? 'grid-cols-1 md:grid-cols-2 max-w-3xl mx-auto' 
           : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
-      }`}>
+        }
+      `}>
         {section.services.map((service) => (
-          <ServiceCard key={service.id} service={service} />
+          <div key={service.id} className="w-full max-w-sm mx-auto">
+            <ServiceCard service={service} />
+          </div>
         ))}
       </div>
     </section>

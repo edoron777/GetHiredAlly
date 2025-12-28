@@ -1,0 +1,321 @@
+# Replit Prompt: Fix Home Page Card Sizing & Alignment
+
+**Task:** Fix Service Card sizing and alignment issues on Home Page
+**Priority:** 🔴 Critical - Visual bug fix
+**Estimated Effort:** 1-2 hours
+
+---
+
+## ⚠️ PROBLEMS TO FIX
+
+### Problem 1: Cards are Different Sizes
+- Section A cards (Perfect Your CV, Tailor for This Job) are stretched too wide
+- Section B cards are smaller
+- **All cards must be the SAME size**
+
+### Problem 2: Elements Not Aligned
+- Buttons are at different vertical positions
+- Titles not aligned
+- "Watch how it works" links at different heights
+- **All elements must align horizontally across cards**
+
+---
+
+## SOLUTION
+
+### Fix 1: Same Card Size for All Sections
+
+Change the grid layout so ALL cards have the same maximum width, regardless of how many cards are in the section.
+
+**Current (Wrong):**
+```
+Section A: 2 cards → each takes 50% width (too wide)
+Section B: 3 cards → each takes 33% width (correct)
+```
+
+**New (Correct):**
+```
+Section A: 2 cards → same size as Section B cards
+Section B: 3 cards → standard size
+All cards: max-width 360px
+```
+
+### Fix 2: Fixed Height Sections Inside Cards
+
+Use flexbox with fixed positioning to ensure:
+- All card heights are equal
+- Buttons are always at the same position
+- Descriptions expand to fill space
+- Video links always at bottom
+
+---
+
+## UPDATED CODE
+
+### Update `ServiceCard.tsx`
+
+```tsx
+import { useState } from 'react';
+import { Play } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import VideoModal from './VideoModal';
+import { ServiceConfig } from '../../config/homePageServices';
+
+interface ServiceCardProps {
+  service: ServiceConfig;
+}
+
+export default function ServiceCard({ service }: ServiceCardProps) {
+  const [showVideo, setShowVideo] = useState(false);
+
+  const {
+    icon,
+    title,
+    description,
+    buttonText,
+    route,
+    videoUrl,
+    videoTitle,
+    isComingSoon
+  } = service;
+
+  return (
+    <>
+      {/* FIXED: Use h-full and flex to ensure consistent sizing */}
+      <div
+        className={`
+          h-full flex flex-col
+          rounded-xl p-6 transition-all duration-300
+          ${isComingSoon
+            ? 'bg-gray-50 border-2 border-dashed border-gray-300 opacity-70'
+            : 'bg-white border border-gray-200 shadow-md hover:shadow-lg'
+          }
+        `}
+      >
+        {/* Coming Soon Badge - Fixed Height */}
+        <div className="h-8 mb-2">
+          {isComingSoon && (
+            <span className="inline-block px-3 py-1 text-xs font-medium text-orange-700 bg-orange-100 rounded-full">
+              Coming Soon
+            </span>
+          )}
+        </div>
+
+        {/* Icon + Title (Same Line) - Fixed Height */}
+        <div className="flex items-center gap-3 mb-4 h-10">
+          <span className="text-3xl">{icon}</span>
+          <h3 className={`text-xl font-bold ${isComingSoon ? 'text-gray-500' : 'text-gray-900'}`}>
+            {title}
+          </h3>
+        </div>
+
+        {/* Description - FLEX GROW to fill available space */}
+        <p className={`flex-grow mb-6 leading-relaxed ${isComingSoon ? 'text-gray-400' : 'text-gray-600'}`}>
+          {description}
+        </p>
+
+        {/* Button - Always at same position */}
+        <div className="mt-auto">
+          {isComingSoon ? (
+            <button
+              disabled
+              className="w-full py-3 px-4 rounded-lg bg-gray-200 text-gray-500 font-medium cursor-not-allowed"
+            >
+              {buttonText}
+            </button>
+          ) : (
+            <Link
+              to={route || '#'}
+              className="block w-full py-3 px-4 rounded-lg bg-blue-600 text-white font-medium text-center hover:bg-blue-700 transition-colors"
+            >
+              {buttonText}
+            </Link>
+          )}
+
+          {/* Video Link - Fixed Height Container */}
+          <div className="h-12 flex items-center justify-center">
+            {!isComingSoon && videoUrl ? (
+              <button
+                onClick={() => setShowVideo(true)}
+                className="flex items-center justify-center gap-2 text-sm text-gray-500 hover:text-blue-600 transition-colors"
+              >
+                <Play size={16} className="fill-current" />
+                Watch how it works
+              </button>
+            ) : (
+              <span></span> {/* Empty spacer to maintain height */}
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Video Modal */}
+      {videoUrl && (
+        <VideoModal
+          isOpen={showVideo}
+          onClose={() => setShowVideo(false)}
+          videoUrl={videoUrl}
+          title={videoTitle || `How ${title} Works`}
+        />
+      )}
+    </>
+  );
+}
+```
+
+---
+
+### Update `HomeSection.tsx`
+
+```tsx
+import ServiceCard from '../common/ServiceCard';
+import { SectionConfig } from '../../config/homePageServices';
+
+interface HomeSectionProps {
+  section: SectionConfig;
+}
+
+export default function HomeSection({ section }: HomeSectionProps) {
+  return (
+    <section className="mb-8">
+      {/* Section Header */}
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-gray-900 mb-2" style={{ color: '#1E3A5F' }}>
+          {section.title}
+        </h2>
+        <p className="text-gray-600">
+          {section.subtitle}
+        </p>
+      </div>
+
+      {/* 
+        FIXED: Always use 3-column grid with consistent card sizes
+        Cards will be centered if there are fewer than 3
+      */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
+        {section.services.map((service) => (
+          <div key={service.id} className="w-full max-w-sm">
+            <ServiceCard service={service} />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+```
+
+---
+
+### Alternative: Center 2 Cards in Section A
+
+If you want Section A (2 cards) to be centered nicely:
+
+```tsx
+export default function HomeSection({ section }: HomeSectionProps) {
+  const cardCount = section.services.length;
+  
+  return (
+    <section className="mb-8">
+      {/* Section Header */}
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-gray-900 mb-2" style={{ color: '#1E3A5F' }}>
+          {section.title}
+        </h2>
+        <p className="text-gray-600">
+          {section.subtitle}
+        </p>
+      </div>
+
+      {/* Grid - Centers cards and maintains consistent size */}
+      <div className={`
+        grid gap-6 justify-center
+        ${cardCount === 2 
+          ? 'grid-cols-1 md:grid-cols-2 max-w-3xl mx-auto' 
+          : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+        }
+      `}>
+        {section.services.map((service) => (
+          <div key={service.id} className="w-full max-w-sm mx-auto">
+            <ServiceCard service={service} />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+```
+
+---
+
+## VISUAL RESULT
+
+### Before (Wrong):
+```
+Section A:
+┌──────────────────────────┐  ┌──────────────────────────┐
+│      TOO WIDE            │  │      TOO WIDE            │
+│                          │  │                          │
+│                          │  │                          │
+│      [Get Started]       │  │      [Coming Soon]       │
+│      ▶ Watch...          │  │                          │
+└──────────────────────────┘  └──────────────────────────┘
+
+Section B:
+┌────────────┐  ┌────────────┐  ┌────────────┐
+│  Correct   │  │  Correct   │  │  Correct   │
+│   size     │  │   size     │  │   size     │
+│ [Button]   │  │  [Button]  │  │ [Button]   │  ← Different heights!
+│ ▶ Watch    │  │            │  │ ▶ Watch    │
+└────────────┘  └────────────┘  └────────────┘
+```
+
+### After (Correct):
+```
+Section A (centered):
+        ┌────────────┐  ┌────────────┐
+        │  Same size │  │  Same size │
+        │            │  │            │
+        │ [Button]   │  │ [Button]   │  ← Same height!
+        │ ▶ Watch    │  │            │
+        └────────────┘  └────────────┘
+
+Section B:
+┌────────────┐  ┌────────────┐  ┌────────────┐
+│  Same size │  │  Same size │  │  Same size │
+│            │  │            │  │            │
+│ [Button]   │  │ [Button]   │  │ [Button]   │  ← Same height!
+│ ▶ Watch    │  │ ▶ Watch    │  │            │
+└────────────┘  └────────────┘  └────────────┘
+```
+
+---
+
+## KEY CSS FIXES
+
+| Fix | CSS Class | Purpose |
+|-----|-----------|---------|
+| Same card height | `h-full` | Card fills container height |
+| Content layout | `flex flex-col` | Stack content vertically |
+| Description expands | `flex-grow` | Takes available space |
+| Button at bottom | `mt-auto` | Pushes to bottom |
+| Fixed badge height | `h-8` | Consistent top spacing |
+| Fixed video area | `h-12` | Consistent bottom spacing |
+| Max card width | `max-w-sm` (384px) | Prevents stretching |
+| Center cards | `justify-items-center` | Centers in grid |
+
+---
+
+## VERIFICATION CHECKLIST
+
+- [ ] All 5 cards are the SAME width
+- [ ] All cards are the SAME height (within each row)
+- [ ] All "Get Started" buttons are on the same horizontal line
+- [ ] All "Watch how it works" links are on the same horizontal line
+- [ ] Coming Soon badge doesn't affect card height
+- [ ] Section A cards (2 cards) are centered
+- [ ] Section B cards (3 cards) are evenly spaced
+- [ ] Responsive: Cards stack properly on mobile
+
+---
+
+**END OF PROMPT**
