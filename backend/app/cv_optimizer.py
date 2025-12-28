@@ -109,10 +109,6 @@ async def analyze_cv_with_ai(cv_content: str, user_id: str) -> dict:
 
         response_text = ai_response.content.strip()
 
-        print("=== RAW AI RESPONSE START ===")
-        print(response_text)
-        print("=== RAW AI RESPONSE END ===")
-
         if response_text.startswith('```json'):
             response_text = response_text[7:]
         if response_text.startswith('```'):
@@ -120,10 +116,6 @@ async def analyze_cv_with_ai(cv_content: str, user_id: str) -> dict:
         if response_text.endswith('```'):
             response_text = response_text[:-3]
         response_text = response_text.strip()
-
-        print("=== CLEANED RESPONSE FOR PARSING ===")
-        print(response_text[:500])
-        print("=== END CLEANED (first 500 chars) ===")
 
         issues = json.loads(response_text)
 
