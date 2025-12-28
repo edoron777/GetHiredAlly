@@ -157,14 +157,16 @@ export function Navbar() {
                       </p>
                       <p className="text-xs text-gray-500">{user.email}</p>
                     </div>
-                    <Link
-                      to="/dashboard"
-                      className="block px-4 py-2 text-sm hover:bg-gray-100"
+                    <button
+                      className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
                       style={{ color: '#333333' }}
-                      onClick={() => setDropdownOpen(false)}
+                      onClick={() => {
+                        setDropdownOpen(false)
+                        navigate('/dashboard')
+                      }}
                     >
                       Dashboard
-                    </Link>
+                    </button>
                     <Link
                       to="/settings"
                       className="block px-4 py-2 text-sm hover:bg-gray-100"
