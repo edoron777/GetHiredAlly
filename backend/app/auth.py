@@ -163,13 +163,13 @@ def send_verification_email(email: str, code: str, name: str | None = None, base
 
 @router.post("/register", response_model=RegisterResponse)
 @limiter.limit("10/hour")
-async def register_user(http_request: Request, request: RegisterRequest):
+async def register_user(request: Request, data: RegisterRequest):
     client = get_supabase_client()
     if not client:
         raise HTTPException(status_code=500, detail="Database connection not available")
     
     try:
-        existing = client.table("users").select("id").eq("email", request.email.lower()).execute()
+        existing = client.table("users").select("id").eq("email", data.email.lower()).execute()
         if existing.data and len(existing.data) > 0:
             raise HTTPException(status_code=400, detail="An account with this email already exists")
         
@@ -179,12 +179,12 @@ async def register_user(http_request: Request, request: RegisterRequest):
         
         default_profile_id = profile_result.data[0]["id"]
         
-        password_hash = hash_password(request.password)
+        password_hash = hash_password(data.password)
         
         user_data = {
-            "email": request.email.lower(),
+            "email": data.email.lower(),
             "password_hash": password_hash,
-            "name": request.name,
+            "name": data.name,
             "profile_id": default_profile_id,
             "is_verified": False,
             "is_admin": False
@@ -205,13 +205,13 @@ async def register_user(http_request: Request, request: RegisterRequest):
                 "used": False
             }).execute()
             
-            send_verification_email(request.email.lower(), code, request.name, get_base_url())
+            send_verification_email(data.email.lower(), code, data.name, get_base_url())
             
             return RegisterResponse(
                 success=True,
                 message="Registration successful! Please check your email for a verification code.",
                 user_id=user_id,
-                email=request.email.lower()
+                email=data.email.lower()
             )
         else:
             raise HTTPException(status_code=500, detail="Failed to create user account")
@@ -223,13 +223,13 @@ async def register_user(http_request: Request, request: RegisterRequest):
 
 @router.post("/send-verification", response_model=SendVerificationResponse)
 @limiter.limit("5/hour")
-async def send_verification_code(http_request: Request, request: SendVerificationRequest):
+async def send_verification_code(request: Request, data: SendVerificationRequest):
     client = get_supabase_client()
     if not client:
         raise HTTPException(status_code=500, detail="Database connection not available")
     
     try:
-        user_result = client.table("users").select("id, name, is_verified").eq("email", request.email.lower()).execute()
+        user_result = client.table("users").select("id, name, is_verified").eq("email", data.email.lower()).execute()
         
         if not user_result.data or len(user_result.data) == 0:
             raise HTTPException(status_code=404, detail="No account found with this email")
@@ -252,7 +252,7 @@ async def send_verification_code(http_request: Request, request: SendVerificatio
             "used": False
         }).execute()
         
-        email_sent = send_verification_email(request.email.lower(), code, user.get("name"), get_base_url())
+        email_sent = send_verification_email(data.email.lower(), code, user.get("name"), get_base_url())
         
         if email_sent:
             return SendVerificationResponse(
@@ -269,13 +269,13 @@ async def send_verification_code(http_request: Request, request: SendVerificatio
 
 @router.post("/verify-email", response_model=VerifyEmailResponse)
 @limiter.limit("10/hour")
-async def verify_email(http_request: Request, request: VerifyEmailRequest):
+async def verify_email(request: Request, data: VerifyEmailRequest):
     client = get_supabase_client()
     if not client:
         raise HTTPException(status_code=500, detail="Database connection not available")
     
     try:
-        user_result = client.table("users").select("id, is_verified").eq("email", request.email.lower()).execute()
+        user_result = client.table("users").select("id, is_verified").eq("email", data.email.lower()).execute()
         
         if not user_result.data or len(user_result.data) == 0:
             raise HTTPException(status_code=404, detail="No account found with this email")
@@ -290,7 +290,7 @@ async def verify_email(http_request: Request, request: VerifyEmailRequest):
         
         code_result = client.table("email_verification_codes").select(
             "id, code, expires_at, used"
-        ).eq("user_id", user["id"]).eq("code", request.code).eq("used", False).execute()
+        ).eq("user_id", user["id"]).eq("code", data.code).eq("used", False).execute()
         
         if not code_result.data or len(code_result.data) == 0:
             raise HTTPException(status_code=400, detail="Invalid verification code")
@@ -317,21 +317,21 @@ async def verify_email(http_request: Request, request: VerifyEmailRequest):
 
 @router.post("/login", response_model=LoginResponse)
 @limiter.limit("5/minute")
-async def login_user(http_request: Request, request: LoginRequest):
+async def login_user(request: Request, data: LoginRequest):
     client = get_supabase_client()
     if not client:
         raise HTTPException(status_code=500, detail="Database connection not available")
     
-    ip_address = http_request.client.host if http_request.client else "unknown"
+    ip_address = request.client.host if request.client else "unknown"
     
     try:
         user_result = client.table("users").select(
             "id, email, name, password_hash, profile_id, is_verified, is_admin"
-        ).eq("email", request.email.lower()).execute()
+        ).eq("email", data.email.lower()).execute()
         
         if not user_result.data or len(user_result.data) == 0:
             AuditLogger.log_login_attempt(
-                email=request.email,
+                email=data.email,
                 success=False,
                 ip_address=ip_address,
                 reason="User not found"
@@ -340,9 +340,9 @@ async def login_user(http_request: Request, request: LoginRequest):
         
         user = user_result.data[0]
         
-        if not verify_password(request.password, user["password_hash"]):
+        if not verify_password(data.password, user["password_hash"]):
             AuditLogger.log_login_attempt(
-                email=request.email,
+                email=data.email,
                 success=False,
                 ip_address=ip_address,
                 reason="Invalid password"
@@ -369,7 +369,7 @@ async def login_user(http_request: Request, request: LoginRequest):
         client.table("users").update({"last_login": datetime.utcnow().isoformat()}).eq("id", user["id"]).execute()
         
         AuditLogger.log_login_attempt(
-            email=request.email,
+            email=data.email,
             success=True,
             ip_address=ip_address
         )
