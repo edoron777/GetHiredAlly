@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { getUser, isAuthenticated, logout, type User } from '@/lib/auth'
+import { ExternalLink } from 'lucide-react'
 
 export function Navbar() {
   const navigate = useNavigate()
@@ -53,22 +54,8 @@ export function Navbar() {
 
   const isAdminPage = location.pathname.startsWith('/admin')
 
-  const navLinks = [
-    { label: 'Home', path: '/dashboard' },
-    { label: 'Decode Any Job Description', path: '/service/understand-job' },
-    { label: 'Prepare for Questions', path: '/service/predict-questions' },
-    { label: 'Craft Your Answers', path: '/service/answer-builder' }
-  ]
-
-  const isActiveLink = (path: string) => {
-    if (path === '/dashboard') {
-      return location.pathname === '/dashboard' || location.pathname === '/'
-    }
-    return location.pathname.startsWith(path)
-  }
-
   return (
-    <nav className="bg-white shadow-sm border-b" style={{ borderColor: '#e5e5e5' }}>
+    <nav className="bg-white shadow-sm border-b sticky top-0 z-50" style={{ borderColor: '#e5e5e5' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           <Link to="/" className="flex items-center">
@@ -78,30 +65,41 @@ export function Navbar() {
           </Link>
 
           {isLoggedIn && user && (
-            <div className="hidden lg:flex items-center gap-2">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  className="px-3 py-2 text-sm font-medium rounded transition-colors"
-                  style={{
-                    backgroundColor: isActiveLink(link.path) ? '#1E3A5F' : '#3B82F6',
-                    color: 'white'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isActiveLink(link.path)) {
-                      e.currentTarget.style.backgroundColor = '#2563EB'
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActiveLink(link.path)) {
-                      e.currentTarget.style.backgroundColor = '#3B82F6'
-                    }
-                  }}
-                >
-                  {link.label}
-                </Link>
-              ))}
+            <div className="hidden md:flex items-center gap-2">
+              <Link
+                to="/dashboard"
+                className="px-3 py-2 text-sm font-medium rounded transition-colors"
+                style={{
+                  backgroundColor: location.pathname === '/dashboard' ? '#1E3A5F' : 'transparent',
+                  color: location.pathname === '/dashboard' ? 'white' : '#374151'
+                }}
+                onMouseEnter={(e) => {
+                  if (location.pathname !== '/dashboard') {
+                    e.currentTarget.style.backgroundColor = '#f3f4f6'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (location.pathname !== '/dashboard') {
+                    e.currentTarget.style.backgroundColor = 'transparent'
+                  }
+                }}
+              >
+                Home
+              </Link>
+              
+              <a 
+                href="https://gethiredally.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3 py-2 text-sm font-medium rounded transition-colors flex items-center gap-1"
+                style={{ color: '#374151' }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                Blog
+                <ExternalLink size={14} />
+              </a>
+
               {user.is_admin && (
                 <Link
                   to="/admin/ai-usage"

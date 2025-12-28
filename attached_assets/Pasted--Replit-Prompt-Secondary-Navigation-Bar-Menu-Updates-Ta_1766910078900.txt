@@ -1,0 +1,469 @@
+# Replit Prompt: Secondary Navigation Bar & Menu Updates
+
+**Task:** Add Secondary Navigation Bar, update Top Menu, and enhance Footer
+**Priority:** 🟡 Enhancement
+**Estimated Effort:** 3-4 hours
+
+---
+
+## ⚠️ CRITICAL INSTRUCTIONS
+
+- Create reusable components in `components/common/`
+- Follow existing code organization rules
+- Make Secondary Nav responsive (horizontal scroll on mobile)
+- Test all navigation links work correctly
+
+---
+
+## OVERVIEW
+
+### Changes to Make:
+
+1. **Top Menu (#1):** Remove service buttons, add Blog link
+2. **Secondary Menu (#2):** NEW - Service navigation bar
+3. **Footer:** Add Contact Us, Report Bug links
+
+---
+
+## VISUAL DESIGN
+
+### Desktop Layout:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ GetHiredAlly       [Home] [Blog↗]                 [Admin]  [Eyal Doron ▼]  │  ← Top Menu
+├─────────────────────────────────────────────────────────────────────────────┤
+│    [Perfect Your CV] [Tailor for This Job] [Decode the Job Post] [Predict the Questions] [Craft Your Answers]    │  ← Secondary Nav
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│                              Page Content                                   │
+│                                                                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  © 2025 GetHiredAlly   |   Blog   |   Contact Us   |   Report Bug          │  ← Footer
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Mobile Layout:
+
+```
+┌─────────────────────────────────┐
+│ GetHiredAlly    [☰]            │  ← Top Menu (hamburger)
+├─────────────────────────────────┤
+│ ← [Perfect CV] [Tailor] [Decode] [Predict] [Craft] →  │  ← Horizontal scroll
+├─────────────────────────────────┤
+│                                 │
+│       Page Content              │
+│                                 │
+├─────────────────────────────────┤
+│  © 2025 GetHiredAlly            │
+│  Blog | Contact | Report Bug    │
+└─────────────────────────────────┘
+```
+
+---
+
+## TASK 1: Update Top Menu
+
+### Remove These Buttons:
+- ❌ "Decode Any Job Description"
+- ❌ "Prepare for Questions"  
+- ❌ "Craft Your Answers"
+
+### Add This Button:
+- ✅ "Blog" → Links to https://gethiredally.com (opens in new tab)
+
+### Keep These:
+- ✅ "Home"
+- ✅ "Admin" (if admin user)
+- ✅ User dropdown
+
+### Updated Top Menu Code:
+
+Find the Header/Navbar component and update:
+
+```tsx
+// In the navigation links section:
+
+<nav className="flex items-center gap-4">
+  {/* Home - always visible */}
+  <Link 
+    to="/" 
+    className="text-white hover:bg-white/20 px-3 py-2 rounded transition-colors"
+  >
+    Home
+  </Link>
+  
+  {/* Blog - external link, opens in new tab */}
+  <a 
+    href="https://gethiredally.com" 
+    target="_blank" 
+    rel="noopener noreferrer"
+    className="text-white hover:bg-white/20 px-3 py-2 rounded transition-colors flex items-center gap-1"
+  >
+    Blog
+    <ExternalLink size={14} />
+  </a>
+  
+  {/* Admin - only for admin users */}
+  {isAdmin && (
+    <Link 
+      to="/admin" 
+      className="bg-red-500 text-white px-3 py-2 rounded hover:bg-red-600 transition-colors"
+    >
+      Admin
+    </Link>
+  )}
+</nav>
+```
+
+---
+
+## TASK 2: Create Secondary Navigation Component
+
+### File: `client/src/components/common/SecondaryNav.tsx`
+
+```tsx
+import { Link, useLocation } from 'react-router-dom';
+
+interface NavItem {
+  id: string;
+  label: string;
+  route: string;
+  isComingSoon: boolean;
+}
+
+const NAV_ITEMS: NavItem[] = [
+  {
+    id: 'cv-optimizer',
+    label: 'Perfect Your CV',
+    route: '/service/cv-optimizer',
+    isComingSoon: false
+  },
+  {
+    id: 'ats-optimizer',
+    label: 'Tailor for This Job',
+    route: '/service/ats-optimizer',
+    isComingSoon: true
+  },
+  {
+    id: 'xray-analyzer',
+    label: 'Decode the Job Post',
+    route: '/service/xray-analyzer',
+    isComingSoon: false
+  },
+  {
+    id: 'interview-questions',
+    label: 'Predict the Questions',
+    route: '/service/interview-questions',
+    isComingSoon: false
+  },
+  {
+    id: 'answer-builder',
+    label: 'Craft Your Answers',
+    route: '/service/answer-builder',
+    isComingSoon: true
+  }
+];
+
+export default function SecondaryNav() {
+  const location = useLocation();
+  
+  const isActive = (route: string) => {
+    return location.pathname.startsWith(route);
+  };
+
+  return (
+    <nav 
+      className="bg-white border-b border-gray-200 sticky top-0 z-40"
+      style={{ top: '64px' }} // Adjust based on your top menu height
+    >
+      {/* Horizontal scroll container for mobile */}
+      <div className="overflow-x-auto scrollbar-hide">
+        <div className="flex items-center justify-center gap-2 px-4 py-2 min-w-max">
+          {NAV_ITEMS.map((item) => (
+            item.isComingSoon ? (
+              // Coming Soon - disabled button
+              <span
+                key={item.id}
+                className="px-4 py-2 text-sm text-gray-400 cursor-not-allowed whitespace-nowrap"
+                title="Coming Soon"
+              >
+                {item.label}
+              </span>
+            ) : (
+              // Active service - clickable link
+              <Link
+                key={item.id}
+                to={item.route}
+                className={`
+                  px-4 py-2 text-sm font-medium rounded-full whitespace-nowrap transition-all
+                  ${isActive(item.route)
+                    ? 'bg-blue-600 text-white'
+                    : 'text-gray-700 hover:bg-gray-100'
+                  }
+                `}
+              >
+                {item.label}
+              </Link>
+            )
+          ))}
+        </div>
+      </div>
+    </nav>
+  );
+}
+```
+
+---
+
+## TASK 3: Add CSS for Horizontal Scroll (Hide Scrollbar)
+
+### Add to your global CSS file (e.g., `index.css` or `globals.css`):
+
+```css
+/* Hide scrollbar but allow scrolling */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari, Opera */
+}
+```
+
+---
+
+## TASK 4: Update Common Components Index
+
+### File: `client/src/components/common/index.ts`
+
+Add export:
+
+```typescript
+export { default as SecondaryNav } from './SecondaryNav';
+```
+
+---
+
+## TASK 5: Add Secondary Nav to Layout
+
+### Find your main layout component and add SecondaryNav after the header:
+
+```tsx
+import { SecondaryNav } from './components/common';
+
+function App() {
+  return (
+    <div>
+      {/* Top Menu / Header */}
+      <Header />
+      
+      {/* NEW: Secondary Navigation */}
+      <SecondaryNav />
+      
+      {/* Page Content */}
+      <main>
+        <Routes>
+          {/* ... your routes ... */}
+        </Routes>
+      </main>
+      
+      {/* Footer */}
+      <Footer />
+    </div>
+  );
+}
+```
+
+---
+
+## TASK 6: Create/Update Footer Component
+
+### File: `client/src/components/common/Footer.tsx`
+
+```tsx
+import { ExternalLink } from 'lucide-react';
+
+export default function Footer() {
+  const currentYear = new Date().getFullYear();
+  
+  return (
+    <footer className="bg-gray-100 border-t border-gray-200 mt-auto">
+      <div className="max-w-6xl mx-auto px-4 py-6">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+          
+          {/* Copyright */}
+          <div className="text-gray-600 text-sm">
+            © {currentYear} GetHiredAlly. All rights reserved.
+          </div>
+          
+          {/* Links */}
+          <div className="flex items-center gap-6 text-sm">
+            {/* Blog */}
+            <a 
+              href="https://gethiredally.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-600 hover:text-blue-600 transition-colors flex items-center gap-1"
+            >
+              Blog
+              <ExternalLink size={12} />
+            </a>
+            
+            {/* Contact Us */}
+            <a 
+              href="mailto:contact@gethiredally.com"
+              className="text-gray-600 hover:text-blue-600 transition-colors"
+            >
+              Contact Us
+            </a>
+            
+            {/* Report Bug */}
+            <a 
+              href="mailto:bugs@gethiredally.com?subject=Bug Report"
+              className="text-gray-600 hover:text-blue-600 transition-colors"
+            >
+              Report Bug
+            </a>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+}
+```
+
+---
+
+## TASK 7: Update Footer Export
+
+### File: `client/src/components/common/index.ts`
+
+```typescript
+export { default as StandardToolbar } from './StandardToolbar';
+export { default as VideoModal } from './VideoModal';
+export { default as ServiceCard } from './ServiceCard';
+export { default as SectionSeparator } from './SectionSeparator';
+export { default as SecondaryNav } from './SecondaryNav';
+export { default as Footer } from './Footer';
+```
+
+---
+
+## STYLING SPECIFICATIONS
+
+### Secondary Nav Bar
+
+| Property | Value |
+|----------|-------|
+| Background | White |
+| Border | Bottom border, gray-200 |
+| Position | Sticky (below top menu) |
+| Padding | py-2, px-4 |
+| Button padding | px-4, py-2 |
+| Active state | Blue background (#2563EB), white text |
+| Inactive state | Gray text, hover gray background |
+| Coming Soon | Gray-400 text, no hover, cursor not-allowed |
+
+### Active Page Indicator
+
+```
+Inactive:  [Decode the Job Post]     → Gray text, transparent bg
+Active:    [Decode the Job Post]     → White text, blue bg (#2563EB), rounded-full
+Coming:    [Tailor for This Job]     → Light gray text, no interaction
+```
+
+### Footer
+
+| Property | Value |
+|----------|-------|
+| Background | Gray-100 |
+| Border | Top border, gray-200 |
+| Text | Gray-600, text-sm |
+| Link hover | Blue-600 |
+| Padding | py-6 |
+
+---
+
+## RESPONSIVE BEHAVIOR
+
+### Desktop (1024px+)
+- Secondary nav items centered
+- Footer items in single row
+
+### Tablet (768px - 1023px)
+- Secondary nav items may wrap or scroll
+- Footer items in single row
+
+### Mobile (< 768px)
+- Secondary nav: horizontal scroll (touch-friendly)
+- Footer items stack vertically
+- Show scroll hint (subtle shadow on edges)
+
+---
+
+## VERIFICATION CHECKLIST
+
+### Top Menu
+- [ ] "Decode Any Job Description" button REMOVED
+- [ ] "Prepare for Questions" button REMOVED
+- [ ] "Craft Your Answers" button REMOVED
+- [ ] "Blog" link ADDED (opens https://gethiredally.com in new tab)
+- [ ] "Home" link still works
+- [ ] "Admin" button still works (for admin users)
+- [ ] User dropdown still works
+
+### Secondary Navigation
+- [ ] All 5 service buttons visible
+- [ ] Active page has blue highlight
+- [ ] Coming Soon items are grayed out and not clickable
+- [ ] Clicking active service navigates correctly
+- [ ] Horizontal scroll works on mobile
+- [ ] Scrollbar is hidden but scrolling works
+- [ ] Sticky positioning works (stays below top menu)
+
+### Footer
+- [ ] Copyright shows current year
+- [ ] "Blog" link opens external site in new tab
+- [ ] "Contact Us" opens email
+- [ ] "Report Bug" opens email with subject
+- [ ] Footer appears at bottom of all pages
+- [ ] Responsive layout works
+
+### General
+- [ ] No console errors
+- [ ] All pages still accessible
+- [ ] Navigation feels smooth
+
+---
+
+## FILE STRUCTURE AFTER IMPLEMENTATION
+
+```
+client/src/
+  components/
+    common/
+      StandardToolbar.tsx
+      VideoModal.tsx
+      ServiceCard.tsx
+      SectionSeparator.tsx
+      SecondaryNav.tsx      ← NEW
+      Footer.tsx            ← NEW or UPDATED
+      index.ts              ← UPDATED
+```
+
+---
+
+## EMAIL ADDRESSES TO CONFIGURE
+
+Update these email addresses to your actual emails:
+
+| Purpose | Placeholder | Replace With |
+|---------|-------------|--------------|
+| Contact Us | contact@gethiredally.com | Your actual email |
+| Report Bug | bugs@gethiredally.com | Your actual email |
+
+---
+
+**END OF PROMPT**

@@ -18,3 +18,5 @@ export { StandardToolbar } from './StandardToolbar';
 export { VideoModal } from './VideoModal';
 export { ServiceCard } from './ServiceCard';
 export { SectionSeparator } from './SectionSeparator';
+export { SecondaryNav } from './SecondaryNav';
+export { Footer } from './Footer';
