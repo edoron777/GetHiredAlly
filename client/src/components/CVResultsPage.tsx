@@ -96,7 +96,7 @@ export function CVResultsPage() {
           Back to CV Optimizer
         </Link>
 
-        <div className="text-center mb-8">
+        <div className="text-center mb-6">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
             <CheckCircle size={32} className="text-green-600" />
           </div>
@@ -106,6 +106,23 @@ export function CVResultsPage() {
           <p className="text-gray-500">
             Scanned: {formatDate(scanData.scan_date)}
           </p>
+        </div>
+
+        <div className="flex justify-center gap-4 mb-8">
+          <button
+            onClick={() => navigate(`/service/cv-optimizer/report/${scanId}`)}
+            className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <FileText size={20} />
+            Yes, Show Report
+          </button>
+
+          <Link
+            to="/dashboard"
+            className="flex items-center gap-2 bg-gray-100 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-200 transition-colors"
+          >
+            No, Go Back
+          </Link>
         </div>
 
         <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-8 mb-8">
@@ -153,28 +170,6 @@ export function CVResultsPage() {
           </div>
         </div>
 
-        <div className="text-center">
-          <p className="text-gray-700 text-lg mb-6">
-            Would you like a detailed report?
-          </p>
-
-          <div className="flex justify-center gap-4">
-            <button
-              onClick={() => navigate(`/service/cv-optimizer/report/${scanId}`)}
-              className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <FileText size={20} />
-              Yes, Show Report
-            </button>
-
-            <Link
-              to="/dashboard"
-              className="flex items-center gap-2 bg-gray-100 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-200 transition-colors"
-            >
-              No, Go Back
-            </Link>
-          </div>
-        </div>
       </div>
     </div>
   )

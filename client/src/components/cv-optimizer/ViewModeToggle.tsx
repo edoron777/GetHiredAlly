@@ -1,6 +1,6 @@
 interface ViewModeToggleProps {
-  currentMode: 'severity' | 'effort';
-  onModeChange: (mode: 'severity' | 'effort') => void;
+  currentMode: 'severity' | 'effort' | 'worktype';
+  onModeChange: (mode: 'severity' | 'effort' | 'worktype') => void;
 }
 
 export default function ViewModeToggle({ 
@@ -34,6 +34,18 @@ export default function ViewModeToggle({
           `}
         >
           ⏱️ By Effort
+        </button>
+        <button
+          onClick={() => onModeChange('worktype')}
+          className={`
+            px-4 py-2 text-sm font-medium rounded-md transition-all
+            ${currentMode === 'worktype'
+              ? 'bg-white text-blue-600 shadow-sm'
+              : 'text-gray-600 hover:text-gray-800'
+            }
+          `}
+        >
+          🛠️ By Work Type
         </button>
       </div>
     </div>

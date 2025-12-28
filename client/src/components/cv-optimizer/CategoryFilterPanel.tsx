@@ -50,10 +50,12 @@ export default function CategoryFilterPanel({
     <div className="bg-white border border-gray-200 rounded-xl p-4 mb-6">
       <div className="mb-4">
         <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-          Analysis Categories
+          🎛️ Filter Results by Category
         </h3>
-        <p className="text-sm text-gray-500 mt-1">
-          Click <Info size={14} className="inline" /> to learn why this matters. Uncheck to hide from results
+        <p className="text-sm text-gray-600 mt-2">
+          Below are the criteria we used to analyze your CV. 
+          <strong> You can uncheck any category to hide those suggestions from your results.</strong>
+          {' '}Click <Info size={14} className="inline" /> to learn why each category matters to recruiters.
         </p>
       </div>
 
@@ -67,12 +69,13 @@ export default function CategoryFilterPanel({
             <div
               key={category.id}
               className={`
-                border rounded-lg p-3 transition-all
+                border rounded-lg p-3 transition-all cursor-pointer
                 ${isEnabled 
-                  ? 'border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50' 
+                  ? 'border-gray-200 bg-white hover:border-blue-400 hover:shadow-md' 
                   : 'border-gray-100 bg-gray-50 opacity-60'
                 }
               `}
+              onClick={() => onCategoryToggle(category.id, !isEnabled)}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">

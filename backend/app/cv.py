@@ -67,12 +67,29 @@ def extract_text_from_file(file_content: bytes, filename: str) -> str:
     elif extension in ['docx', 'doc']:
         try:
             from docx import Document
+            from docx.opc.constants import RELATIONSHIP_TYPE as RT
             doc = Document(io.BytesIO(file_content))
             text_parts = []
             for para in doc.paragraphs:
                 if para.text.strip():
                     text_parts.append(para.text)
-            return '\n'.join(text_parts)
+            
+            relevant_domains = ['linkedin.com', 'github.com', 'gitlab.com', 'bitbucket.org', 'portfolio', 'behance.net', 'dribbble.com']
+            hyperlinks = set()
+            for rel in doc.part.rels.values():
+                if rel.reltype == RT.HYPERLINK and rel.target_ref:
+                    link = str(rel.target_ref).lower()
+                    if any(domain in link for domain in relevant_domains):
+                        hyperlinks.add(rel.target_ref)
+            
+            text = '\n'.join(text_parts)
+            
+            if hyperlinks:
+                text += "\n\n[HYPERLINKS FOUND IN DOCUMENT:]\n"
+                for link in sorted(hyperlinks):
+                    text += f"- {link}\n"
+            
+            return text
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Failed to parse DOCX: {str(e)}")
     

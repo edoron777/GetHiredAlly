@@ -61,10 +61,24 @@ For each issue found, return a JSON object with:
 - fix_difficulty: "quick" | "medium" | "complex"
 
 SEVERITY GUIDE:
-- critical: Will cause immediate rejection (spelling errors, missing contact info, unprofessional email)
+- critical: Will cause immediate rejection (spelling errors, missing contact info)
 - high: Major competitive disadvantage (passive language, no metrics, unexplained gaps)
 - medium: Optimization opportunity (formatting issues, weak summary, outdated skills)
 - low: Minor polish (small improvements, nice-to-haves)
+
+EMAIL ADDRESS RULES:
+- Do NOT flag standard email providers (Gmail, Outlook, Yahoo, Hotmail) as unprofessional
+- Gmail addresses like "firstname.lastname@gmail.com" or "firstnamelastname@gmail.com" are ACCEPTABLE
+- ONLY flag email addresses that contain:
+  * Nicknames or inappropriate words (e.g., coolDude@, partyGirl@, gamerBoy@)
+  * Numbers that look like birth years (e.g., john1985@, mike1990@)
+  * Very long or confusing combinations
+  * Unprofessional language
+
+LINKEDIN/GITHUB URL RULES:
+- If you see text like "LinkedIn" or "GitHub" but no visible URL, check the HYPERLINKS section at the end
+- If a linkedin.com or github.com URL exists in HYPERLINKS, do NOT flag as "Missing LinkedIn/GitHub URL"
+- Only flag missing links if no URL is found anywhere in the document
 
 CATEGORIES:
 1. Spelling & Grammar

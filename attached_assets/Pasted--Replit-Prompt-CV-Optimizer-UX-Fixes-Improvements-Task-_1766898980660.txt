@@ -1,0 +1,811 @@
+# Replit Prompt: CV Optimizer UX Fixes & Improvements
+
+**Task:** Fix UX issues and add improvements to CV Optimizer
+**Priority:** 🔴 Critical
+**Estimated Effort:** 4-6 hours
+
+---
+
+## ⚠️ CRITICAL INSTRUCTIONS
+
+- Follow these instructions EXACTLY in order
+- Test each change before moving to the next
+- Do NOT break existing functionality
+
+---
+
+## CHANGE 1: Move Buttons Up on Results Page
+
+### File: Update the CV Results/Summary page (after scan completes)
+
+**Problem:** The "Yes, Show Report" and "No, Go Back" buttons are at the bottom. Users don't see them.
+
+**Current Order:**
+1. CV Scan Complete ✓
+2. Scan date
+3. SCAN SUMMARY (big box with numbers)
+4. "Would you like a detailed report?"
+5. Buttons
+
+**New Order:**
+1. CV Scan Complete ✓
+2. Scan date
+3. **Buttons (Yes, Show Report / No, Go Back)** ← MOVE UP HERE
+4. SCAN SUMMARY (big box with numbers)
+
+**Implementation:**
+Move the button section to appear immediately after the "CV Scan Complete" header and date, BEFORE the SCAN SUMMARY box.
+
+```tsx
+{/* Header */}
+<div className="text-center mb-6">
+  <CheckCircle className="text-green-500 w-16 h-16 mx-auto mb-4" />
+  <h1 className="text-2xl font-bold text-green-700">CV Scan Complete</h1>
+  <p className="text-gray-500">Scanned: {scanDate}</p>
+</div>
+
+{/* BUTTONS - MOVED UP */}
+<div className="flex justify-center gap-4 mb-8">
+  <button 
+    onClick={showReport}
+    className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 flex items-center gap-2"
+  >
+    <FileText size={20} />
+    Yes, Show Report
+  </button>
+  <button 
+    onClick={goBack}
+    className="bg-gray-200 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-300"
+  >
+    No, Go Back
+  </button>
+</div>
+
+{/* SCAN SUMMARY - Now below buttons */}
+<div className="border rounded-xl p-6 mb-6">
+  <h2 className="text-center font-semibold mb-4">SCAN SUMMARY</h2>
+  {/* ... rest of summary ... */}
+</div>
+```
+
+---
+
+## CHANGE 2: Clarify Analysis Categories Filter
+
+### File: Update CategoryFilterPanel component
+
+**Problem:** Users don't understand:
+- This is an interactive filter
+- They can check/uncheck categories
+- What happens when they uncheck
+
+**Current Text:**
+> "Analysis Categories"
+> "Click ⓘ to learn why this matters. Uncheck to hide from results"
+
+**New Text:**
+```tsx
+<div className="mb-4">
+  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+    🎛️ Filter Results by Category
+  </h3>
+  <p className="text-sm text-gray-600 mt-2">
+    Below are the criteria we used to analyze your CV. 
+    <strong> You can uncheck any category to hide those suggestions from your results.</strong>
+    {' '}Click <Info size={14} className="inline" /> to learn why each category matters to recruiters.
+  </p>
+</div>
+```
+
+**Also add visual hint that checkboxes are interactive:**
+```tsx
+{/* Add a subtle animation or border highlight on hover */}
+<div
+  className={`
+    border rounded-lg p-3 transition-all cursor-pointer
+    ${isEnabled 
+      ? 'border-gray-200 bg-white hover:border-blue-400 hover:shadow-md' 
+      : 'border-gray-100 bg-gray-50 opacity-60'
+    }
+  `}
+>
+```
+
+---
+
+## CHANGE 3: Clarify "How much detail do you need?"
+
+### File: Update the detail level selector component
+
+**Problem:** Users don't understand what "detail" means or what each level shows.
+
+**Current:** Just buttons with names (Quick Review, Standard, With Fix, Complete)
+
+**New Design:** Add descriptions under each button
+
+```tsx
+<div className="mb-6">
+  <div className="flex items-center gap-2 mb-3">
+    <Filter size={18} className="text-gray-500" />
+    <span className="font-medium text-gray-700">How much information do you want to see?</span>
+  </div>
+  
+  <div className="flex flex-wrap gap-2">
+    <button
+      onClick={() => setDisplayLevel(1)}
+      className={`flex flex-col items-center px-4 py-2 rounded-lg border ${
+        displayLevel === 1 ? 'bg-blue-50 border-blue-500 text-blue-700' : 'border-gray-200 hover:bg-gray-50'
+      }`}
+    >
+      <span className="font-medium">Quick Review</span>
+      <span className="text-xs text-gray-500">Just titles</span>
+    </button>
+    
+    <button
+      onClick={() => setDisplayLevel(2)}
+      className={`flex flex-col items-center px-4 py-2 rounded-lg border ${
+        displayLevel === 2 ? 'bg-blue-50 border-blue-500 text-blue-700' : 'border-gray-200 hover:bg-gray-50'
+      }`}
+    >
+      <span className="font-medium">Standard</span>
+      <span className="text-xs text-gray-500">+ Category & location</span>
+    </button>
+    
+    <button
+      onClick={() => setDisplayLevel(3)}
+      className={`flex flex-col items-center px-4 py-2 rounded-lg border ${
+        displayLevel === 3 ? 'bg-blue-50 border-blue-500 text-blue-700' : 'border-gray-200 hover:bg-gray-50'
+      }`}
+    >
+      <span className="font-medium">With Fix</span>
+      <span className="text-xs text-gray-500">+ How to fix it</span>
+    </button>
+    
+    <button
+      onClick={() => setDisplayLevel(4)}
+      className={`flex flex-col items-center px-4 py-2 rounded-lg border ${
+        displayLevel === 4 ? 'bg-blue-50 border-blue-500 text-blue-700' : 'border-gray-200 hover:bg-gray-50'
+      }`}
+    >
+      <span className="font-medium">Complete</span>
+      <span className="text-xs text-gray-500">Full details</span>
+    </button>
+  </div>
+</div>
+```
+
+---
+
+## CHANGE 4: Remove/Modify Gmail Email Rule
+
+### File: Update the AI prompt for CV analysis (backend)
+
+**Problem:** The current rule flags Gmail addresses as "unprofessional". This is wrong because:
+- Most job seekers use Gmail
+- Gmail is perfectly acceptable
+- This makes users feel bad for no reason
+
+**Solution:** Modify the rule to ONLY flag truly unprofessional emails.
+
+**Find the CV analysis prompt and update the email checking rule:**
+
+**Old rule (REMOVE):**
+```
+- Flag Gmail or generic email addresses as unprofessional
+```
+
+**New rule (REPLACE WITH):**
+```
+- For email addresses: ONLY flag if the email contains unprofessional elements like:
+  - Nicknames (e.g., coolDude@, partyGirl@, gamerBoy@)
+  - Numbers that look like birth years (e.g., john1985@, mike1990@)
+  - Inappropriate words
+  - Very long or confusing addresses
+- Do NOT flag standard Gmail, Outlook, Yahoo, or other common email providers
+- Gmail addresses like "firstname.lastname@gmail.com" or "firstnamelastname@gmail.com" are ACCEPTABLE and should NOT be flagged
+```
+
+---
+
+## CHANGE 5: Fix LinkedIn URL Detection
+
+### File: Update the text extraction logic for DOCX/Word files (backend)
+
+**Problem:** When extracting text from Word documents, hyperlinks are lost. The scanner sees "LinkedIn" text but not the actual URL.
+
+**Solution:** Update the DOCX text extraction to also capture hyperlink URLs.
+
+**If using python-docx:**
+
+```python
+from docx import Document
+from docx.opc.constants import RELATIONSHIP_TYPE as RT
+
+def extract_text_with_links(docx_path):
+    doc = Document(docx_path)
+    full_text = []
+    
+    for paragraph in doc.paragraphs:
+        para_text = paragraph.text
+        
+        # Extract hyperlinks from paragraph
+        for run in paragraph.runs:
+            # Check if run has a hyperlink
+            if run._element.xml.find('w:hyperlink') != -1:
+                # Get the hyperlink relationship
+                for rel in paragraph.part.rels.values():
+                    if rel.reltype == RT.HYPERLINK:
+                        para_text += f" [URL: {rel.target_ref}]"
+        
+        full_text.append(para_text)
+    
+    # Also extract hyperlinks from relationships
+    hyperlinks = []
+    for rel in doc.part.rels.values():
+        if rel.reltype == RT.HYPERLINK:
+            hyperlinks.append(rel.target_ref)
+    
+    text = '\n'.join(full_text)
+    
+    # Append all found URLs at the end for the AI to see
+    if hyperlinks:
+        text += "\n\n[HYPERLINKS FOUND IN DOCUMENT:]\n"
+        for link in hyperlinks:
+            text += f"- {link}\n"
+    
+    return text
+```
+
+**Alternative simpler approach - Add to the AI prompt:**
+
+```
+When analyzing the CV:
+- If you see text like "LinkedIn" or "GitHub" without a URL, check if there are hyperlinks listed at the end of the document
+- If the word "LinkedIn" appears and there's a linkedin.com URL in the hyperlinks section, do NOT flag "Missing LinkedIn URL"
+- Only flag missing LinkedIn if there is NO linkedin.com URL anywhere in the document
+```
+
+---
+
+## CHANGE 6: Add "By Work Type" View Option
+
+### Step 6.1: Define Work Type Categories
+
+**File: Create `client/src/config/workTypeCategories.ts`**
+
+```typescript
+export interface WorkTypeCategory {
+  id: string;
+  name: string;
+  icon: string;
+  emoji: string;
+  description: string;
+  whyMatters: string;
+  color: {
+    bg: string;
+    border: string;
+    text: string;
+  };
+  avgTimePerItem: number; // in minutes
+  matchingCategories: string[]; // Maps to issue categories
+}
+
+export const WORK_TYPE_CATEGORIES: WorkTypeCategory[] = [
+  {
+    id: 'quick_fixes',
+    name: 'Quick Fixes',
+    icon: 'Wrench',
+    emoji: '🔧',
+    description: 'Simple corrections you can do right now',
+    whyMatters: 'These take just minutes but make your CV look more polished',
+    color: {
+      bg: 'bg-green-50',
+      border: 'border-green-200',
+      text: 'text-green-800'
+    },
+    avgTimePerItem: 2,
+    matchingCategories: ['Spelling & Grammar', 'Formatting & Structure']
+  },
+  {
+    id: 'add_metrics',
+    name: 'Add Metrics',
+    icon: 'BarChart2',
+    emoji: '📊',
+    description: 'Quantify your achievements with numbers and results',
+    whyMatters: 'CVs with metrics get 40% more interview callbacks',
+    color: {
+      bg: 'bg-blue-50',
+      border: 'border-blue-200',
+      text: 'text-blue-800'
+    },
+    avgTimePerItem: 20,
+    matchingCategories: ['Lack of Quantification']
+  },
+  {
+    id: 'improve_language',
+    name: 'Improve Language',
+    icon: 'PenTool',
+    emoji: '✍️',
+    description: 'Make your descriptions more powerful and impactful',
+    whyMatters: 'Strong action verbs show initiative and leadership',
+    color: {
+      bg: 'bg-purple-50',
+      border: 'border-purple-200',
+      text: 'text-purple-800'
+    },
+    avgTimePerItem: 10,
+    matchingCategories: ['Weak Presentation', 'Action Verbs']
+  },
+  {
+    id: 'add_missing',
+    name: 'Add Missing Info',
+    icon: 'Plus',
+    emoji: '📝',
+    description: 'Information that should be in your CV but is missing',
+    whyMatters: 'Complete information helps recruiters contact and evaluate you',
+    color: {
+      bg: 'bg-yellow-50',
+      border: 'border-yellow-200',
+      text: 'text-yellow-800'
+    },
+    avgTimePerItem: 5,
+    matchingCategories: ['Missing Information', 'Personal Information']
+  },
+  {
+    id: 'structural',
+    name: 'Structural Changes',
+    icon: 'Layout',
+    emoji: '🏗️',
+    description: 'Reorganize or restructure parts of your CV',
+    whyMatters: 'Good structure helps recruiters find key information quickly',
+    color: {
+      bg: 'bg-orange-50',
+      border: 'border-orange-200',
+      text: 'text-orange-800'
+    },
+    avgTimePerItem: 30,
+    matchingCategories: ['CV Length', 'Employment Gaps', 'Career Narrative', 'Tailoring']
+  }
+];
+
+// Helper function to get work type for an issue
+export function getWorkTypeForIssue(issueCategory: string): string {
+  for (const workType of WORK_TYPE_CATEGORIES) {
+    if (workType.matchingCategories.some(cat => 
+      issueCategory.toLowerCase().includes(cat.toLowerCase()) ||
+      cat.toLowerCase().includes(issueCategory.toLowerCase())
+    )) {
+      return workType.id;
+    }
+  }
+  return 'quick_fixes'; // Default
+}
+```
+
+### Step 6.2: Create Work Type View Component
+
+**File: Create `client/src/components/cv-optimizer/WorkTypeGroupView.tsx`**
+
+```tsx
+import { useState, useMemo } from 'react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
+import * as Icons from 'lucide-react';
+import { WORK_TYPE_CATEGORIES, getWorkTypeForIssue } from '../../config/workTypeCategories';
+
+interface Issue {
+  id: number;
+  issue: string;
+  severity: string;
+  category: string;
+  location: string;
+  current_text: string;
+  suggested_fix: string;
+  fix_difficulty: string;
+}
+
+interface WorkTypeGroupViewProps {
+  issues: Issue[];
+  displayLevel: number;
+  expandedIssues: Set<number>;
+  onToggleIssue: (id: number) => void;
+}
+
+export default function WorkTypeGroupView({
+  issues,
+  displayLevel,
+  expandedIssues,
+  onToggleIssue
+}: WorkTypeGroupViewProps) {
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+
+  const toggleGroup = (groupId: string) => {
+    setCollapsedGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(groupId)) {
+        next.delete(groupId);
+      } else {
+        next.add(groupId);
+      }
+      return next;
+    });
+  };
+
+  // Group issues by work type
+  const groupedIssues = useMemo(() => {
+    return WORK_TYPE_CATEGORIES.map(workType => ({
+      ...workType,
+      issues: issues.filter(issue => getWorkTypeForIssue(issue.category) === workType.id)
+    })).filter(group => group.issues.length > 0);
+  }, [issues]);
+
+  // Calculate total time
+  const totalMinutes = useMemo(() => {
+    return groupedIssues.reduce((acc, group) => {
+      return acc + (group.issues.length * group.avgTimePerItem);
+    }, 0);
+  }, [groupedIssues]);
+
+  const formatTime = (minutes: number) => {
+    if (minutes < 60) return `${minutes} min`;
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Total Time Estimate */}
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 mb-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-blue-600 font-medium">Estimated total time:</p>
+            <p className="text-3xl font-bold text-blue-800">{formatTime(totalMinutes)}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-sm text-blue-600">💡 Tip:</p>
+            <p className="text-blue-700 font-medium">Start with Quick Fixes for instant wins!</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Work Type Groups */}
+      {groupedIssues.map(group => {
+        const IconComponent = (Icons as any)[group.icon] || Icons.Circle;
+        const isCollapsed = collapsedGroups.has(group.id);
+        const groupTime = group.issues.length * group.avgTimePerItem;
+
+        return (
+          <div 
+            key={group.id}
+            className={`border ${group.color.border} rounded-xl overflow-hidden`}
+          >
+            {/* Group Header */}
+            <button
+              onClick={() => toggleGroup(group.id)}
+              className={`w-full flex items-center justify-between p-4 ${group.color.bg} hover:opacity-90 transition-opacity`}
+            >
+              <div className="flex items-center gap-3">
+                {isCollapsed ? (
+                  <ChevronRight size={20} className={group.color.text} />
+                ) : (
+                  <ChevronDown size={20} className={group.color.text} />
+                )}
+                <span className="text-2xl">{group.emoji}</span>
+                <div className="text-left">
+                  <div className="flex items-center gap-2">
+                    <span className={`font-semibold ${group.color.text}`}>
+                      {group.name}
+                    </span>
+                    <span className={`text-sm px-2 py-0.5 rounded-full ${group.color.bg} ${group.color.text} border ${group.color.border}`}>
+                      {group.issues.length} item{group.issues.length !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                  <p className={`text-sm ${group.color.text} opacity-75`}>
+                    {group.description}
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className={`text-sm font-medium ${group.color.text}`}>
+                  ~{formatTime(groupTime)}
+                </span>
+              </div>
+            </button>
+
+            {/* Why This Matters */}
+            {!isCollapsed && (
+              <div className={`px-4 py-2 ${group.color.bg} border-t ${group.color.border}`}>
+                <p className={`text-sm ${group.color.text}`}>
+                  <strong>Why it matters:</strong> {group.whyMatters}
+                </p>
+              </div>
+            )}
+
+            {/* Group Issues */}
+            {!isCollapsed && (
+              <div className="p-4 space-y-3 bg-white">
+                {group.issues.map(issue => (
+                  <IssueCard
+                    key={issue.id}
+                    issue={issue}
+                    displayLevel={displayLevel}
+                    isExpanded={expandedIssues.has(issue.id)}
+                    onToggle={() => onToggleIssue(issue.id)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// Issue Card Component
+interface IssueCardProps {
+  issue: Issue;
+  displayLevel: number;
+  isExpanded: boolean;
+  onToggle: () => void;
+}
+
+function IssueCard({ issue, displayLevel, isExpanded, onToggle }: IssueCardProps) {
+  const severityColors: Record<string, string> = {
+    critical: 'bg-red-100 text-red-700',
+    high: 'bg-orange-100 text-orange-700',
+    medium: 'bg-yellow-100 text-yellow-700',
+    low: 'bg-green-100 text-green-700'
+  };
+
+  const effortLabels: Record<string, { label: string; color: string }> = {
+    quick: { label: 'Quick fix', color: 'text-green-600' },
+    medium: { label: 'Medium effort', color: 'text-yellow-600' },
+    complex: { label: 'Takes time', color: 'text-orange-600' }
+  };
+
+  const effort = effortLabels[issue.fix_difficulty] || effortLabels.medium;
+
+  return (
+    <div className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-sm transition-shadow">
+      {/* Card Header */}
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center justify-between p-3 hover:bg-gray-50 text-left"
+      >
+        <div className="flex items-center gap-3">
+          {isExpanded ? (
+            <ChevronDown size={18} className="text-gray-400" />
+          ) : (
+            <ChevronRight size={18} className="text-gray-400" />
+          )}
+          <span className="font-medium text-gray-900">{issue.issue}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className={`text-xs ${effort.color}`}>
+            {effort.label}
+          </span>
+          <span className={`text-xs px-2 py-1 rounded-full ${severityColors[issue.severity]}`}>
+            {issue.severity}
+          </span>
+        </div>
+      </button>
+
+      {/* Expanded Content */}
+      {isExpanded && displayLevel >= 2 && (
+        <div className="p-3 bg-gray-50 border-t border-gray-100">
+          {/* Category & Location */}
+          <div className="grid grid-cols-2 gap-4 mb-3">
+            <div>
+              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Category</p>
+              <p className="text-sm text-gray-700">{issue.category}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Location</p>
+              <p className="text-sm text-gray-700">{issue.location}</p>
+            </div>
+          </div>
+
+          {/* Current Text & Fix (Level 3+) */}
+          {displayLevel >= 3 && issue.current_text && (
+            <div className="mb-3">
+              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Found</p>
+              <div className="bg-red-50 border border-red-200 rounded p-2">
+                <p className="text-red-800 font-mono text-sm">"{issue.current_text}"</p>
+              </div>
+            </div>
+          )}
+          
+          {displayLevel >= 3 && issue.suggested_fix && (
+            <div>
+              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Suggested Fix</p>
+              <div className="bg-green-50 border border-green-200 rounded p-2">
+                <p className="text-green-800 text-sm">{issue.suggested_fix}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+### Step 6.3: Update View Mode Toggle
+
+**File: Update `client/src/components/cv-optimizer/ViewModeToggle.tsx`**
+
+```tsx
+interface ViewModeToggleProps {
+  currentMode: 'severity' | 'effort' | 'worktype';
+  onModeChange: (mode: 'severity' | 'effort' | 'worktype') => void;
+}
+
+export default function ViewModeToggle({ 
+  currentMode, 
+  onModeChange 
+}: ViewModeToggleProps) {
+  return (
+    <div className="flex items-center gap-2 mb-4">
+      <span className="text-sm text-gray-500">View by:</span>
+      <div className="inline-flex rounded-lg border border-gray-200 p-1 bg-gray-50">
+        <button
+          onClick={() => onModeChange('severity')}
+          className={`
+            px-3 py-2 text-sm font-medium rounded-md transition-all
+            ${currentMode === 'severity'
+              ? 'bg-white text-blue-600 shadow-sm'
+              : 'text-gray-600 hover:text-gray-800'
+            }
+          `}
+        >
+          📊 Priority
+        </button>
+        <button
+          onClick={() => onModeChange('effort')}
+          className={`
+            px-3 py-2 text-sm font-medium rounded-md transition-all
+            ${currentMode === 'effort'
+              ? 'bg-white text-blue-600 shadow-sm'
+              : 'text-gray-600 hover:text-gray-800'
+            }
+          `}
+        >
+          ⏱️ Effort
+        </button>
+        <button
+          onClick={() => onModeChange('worktype')}
+          className={`
+            px-3 py-2 text-sm font-medium rounded-md transition-all
+            ${currentMode === 'worktype'
+              ? 'bg-white text-blue-600 shadow-sm'
+              : 'text-gray-600 hover:text-gray-800'
+            }
+          `}
+        >
+          🎯 Work Type
+        </button>
+      </div>
+    </div>
+  );
+}
+```
+
+### Step 6.4: Update Report Page to Use All Three Views
+
+**File: Update `client/src/pages/CVReportPage.tsx`**
+
+Add import:
+```tsx
+import WorkTypeGroupView from '../components/cv-optimizer/WorkTypeGroupView';
+```
+
+Update state:
+```tsx
+const [viewMode, setViewMode] = useState<'severity' | 'effort' | 'worktype'>('worktype'); // Default to worktype
+```
+
+Update JSX:
+```tsx
+{/* View Mode Toggle */}
+<ViewModeToggle
+  currentMode={viewMode}
+  onModeChange={setViewMode}
+/>
+
+{/* Issues Display */}
+{viewMode === 'severity' && (
+  // Existing severity-based view
+  <div className="space-y-6">
+    {/* Critical/High/Medium/Low sections */}
+  </div>
+)}
+
+{viewMode === 'effort' && (
+  <EffortGroupView
+    issues={filteredIssues}
+    displayLevel={displayLevel}
+    expandedIssues={expandedIssues}
+    onToggleIssue={toggleIssue}
+  />
+)}
+
+{viewMode === 'worktype' && (
+  <WorkTypeGroupView
+    issues={filteredIssues}
+    displayLevel={displayLevel}
+    expandedIssues={expandedIssues}
+    onToggleIssue={toggleIssue}
+  />
+)}
+```
+
+---
+
+## VERIFICATION CHECKLIST
+
+After implementing all changes, verify:
+
+### Change 1: Buttons Position
+- [ ] Buttons appear right after "CV Scan Complete" header
+- [ ] Buttons appear BEFORE the SCAN SUMMARY box
+- [ ] Both buttons work correctly
+
+### Change 2: Category Filter Clarity
+- [ ] New header says "Filter Results by Category"
+- [ ] Description explains users can uncheck categories
+- [ ] Hover effect shows boxes are clickable
+
+### Change 3: Detail Level Clarity
+- [ ] Each button shows its name AND a description
+- [ ] Descriptions: "Just titles", "+ Category & location", "+ How to fix it", "Full details"
+- [ ] Selected button is clearly highlighted
+
+### Change 4: Gmail Email Rule
+- [ ] Gmail addresses are NOT flagged as unprofessional
+- [ ] Only truly unprofessional emails (coolDude@, etc.) are flagged
+- [ ] Test with a normal Gmail address
+
+### Change 5: LinkedIn URL Detection
+- [ ] Upload a Word doc with LinkedIn hyperlink
+- [ ] Verify the URL is extracted
+- [ ] Verify "Missing LinkedIn URL" is NOT shown if link exists
+
+### Change 6: Work Type View
+- [ ] Three toggle options: Priority / Effort / Work Type
+- [ ] Work Type is the default view
+- [ ] 5 work type groups display correctly
+- [ ] Each group shows: emoji, name, count, time estimate, description
+- [ ] "Why it matters" shows for each group
+- [ ] Total time estimate shows at top
+- [ ] Issues can be expanded within groups
+- [ ] Category filters still work with this view
+
+---
+
+## FILE STRUCTURE
+
+After this prompt, you should have:
+
+```
+client/src/
+  config/
+    cvCategories.ts (existing)
+    workTypeCategories.ts (NEW)
+  components/
+    cv-optimizer/
+      CategoryFilterPanel.tsx (UPDATED)
+      ViewModeToggle.tsx (UPDATED)
+      WorkTypeGroupView.tsx (NEW)
+      EffortGroupView.tsx (existing)
+  pages/
+    CVResultsPage.tsx (UPDATED - button position)
+    CVReportPage.tsx (UPDATED - view modes)
+
+server/
+  (backend files for email rule and LinkedIn detection)
+```
+
+---
+
+**END OF PROMPT**

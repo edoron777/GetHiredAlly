@@ -10,6 +10,7 @@ import StrengthsSection from './cv-optimizer/StrengthsSection'
 import EncouragementMessage from './cv-optimizer/EncouragementMessage'
 import ViewModeToggle from './cv-optimizer/ViewModeToggle'
 import EffortGroupView from './cv-optimizer/EffortGroupView'
+import WorkTypeGroupView from './cv-optimizer/WorkTypeGroupView'
 import { mapIssueCategoryToId } from '../config/cvCategories'
 import { detectStrengths } from '../utils/strengthsDetector'
 import type { Strength } from '../utils/strengthsDetector'
@@ -40,10 +41,10 @@ interface ReportData {
 }
 
 const DISPLAY_LEVELS = [
-  { id: 1, name: 'Quick Review', description: 'Suggestion titles only' },
-  { id: 2, name: 'Standard', description: 'With category and location' },
-  { id: 3, name: 'With Fix', description: 'Including suggested fixes' },
-  { id: 4, name: 'Complete', description: 'Full details' }
+  { id: 1, name: 'Quick Review', description: 'Suggestion titles only', shortDesc: 'Just titles' },
+  { id: 2, name: 'Standard', description: 'With category and location', shortDesc: '+ Category & location' },
+  { id: 3, name: 'With Fix', description: 'Including suggested fixes', shortDesc: '+ How to fix it' },
+  { id: 4, name: 'Complete', description: 'Full details', shortDesc: 'Full details' }
 ]
 
 const SEVERITY_FILTERS = [
@@ -74,7 +75,7 @@ export function CVReportPage() {
   const [expandedIssues, setExpandedIssues] = useState<Set<number>>(new Set())
   const [textSize, setTextSize] = useState(16)
   const [isGeneratingFix, setIsGeneratingFix] = useState(false)
-  const [viewMode, setViewMode] = useState<'severity' | 'effort'>('severity')
+  const [viewMode, setViewMode] = useState<'severity' | 'effort' | 'worktype'>('severity')
 
   const [enabledCategories, setEnabledCategories] = useState<Record<string, boolean>>({
     spelling_grammar: true,
@@ -253,23 +254,23 @@ export function CVReportPage() {
         />
 
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
-          <p className="text-sm text-gray-600 mb-3 flex items-center">
-            <Filter size={16} className="mr-2" />
-            How much detail do you need?
-          </p>
+          <div className="flex items-center gap-2 mb-3">
+            <Filter size={18} className="text-gray-500" />
+            <span className="font-medium text-gray-700">How much information do you want to see?</span>
+          </div>
           <div className="flex flex-wrap gap-2">
             {DISPLAY_LEVELS.map(level => (
               <button
                 key={level.id}
                 onClick={() => setDisplayLevel(level.id)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`flex flex-col items-center px-4 py-2 rounded-lg border transition-colors ${
                   displayLevel === level.id
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                    ? 'bg-blue-50 border-blue-500 text-blue-700'
+                    : 'border-gray-200 hover:bg-gray-50'
                 }`}
-                title={level.description}
               >
-                {level.name}
+                <span className="font-medium">{level.name}</span>
+                <span className="text-xs text-gray-500">{level.shortDesc}</span>
               </button>
             ))}
           </div>
@@ -453,8 +454,15 @@ export function CVReportPage() {
               )
             })}
           </div>
-        ) : (
+        ) : viewMode === 'effort' ? (
           <EffortGroupView
+            issues={categoryFilteredIssues}
+            displayLevel={displayLevel}
+            expandedIssues={expandedIssues}
+            onToggleIssue={toggleIssue}
+          />
+        ) : (
+          <WorkTypeGroupView
             issues={categoryFilteredIssues}
             displayLevel={displayLevel}
             expandedIssues={expandedIssues}
