@@ -73,6 +73,66 @@ async def require_admin(authorization: Optional[str] = Header(None)):
         raise HTTPException(status_code=500, detail=f"Authentication failed: {str(e)}")
 
 
+@router.get("/stats")
+async def get_admin_stats(admin_user: dict = Depends(require_admin)):
+    """Get admin dashboard statistics"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        
+        cursor.execute("SELECT COUNT(*) as count FROM users")
+        total_users = cursor.fetchone()['count']
+        
+        one_week_ago = (datetime.utcnow() - timedelta(days=7)).isoformat()
+        cursor.execute("SELECT COUNT(*) as count FROM users WHERE created_at >= %s", (one_week_ago,))
+        new_users_this_week = cursor.fetchone()['count']
+        
+        cursor.execute("SELECT COUNT(*) as count FROM users WHERE is_verified = true")
+        verified_users = cursor.fetchone()['count']
+        
+        cursor.execute("SELECT COUNT(*) as count FROM users WHERE is_admin = true")
+        admin_users = cursor.fetchone()['count']
+        
+        cursor.execute("SELECT COUNT(*) as count FROM ai_usage_logs")
+        total_ai_calls = cursor.fetchone()['count']
+        
+        cursor.execute("SELECT COALESCE(SUM(cost_usd), 0) as total FROM ai_usage_logs")
+        total_ai_cost = float(cursor.fetchone()['total'])
+        
+        cursor.execute("""
+            SELECT id, email, name, created_at, is_verified 
+            FROM users 
+            ORDER BY created_at DESC 
+            LIMIT 10
+        """)
+        recent_signups = []
+        for row in cursor.fetchall():
+            recent_signups.append({
+                "id": str(row['id']),
+                "email": row['email'],
+                "name": row['name'],
+                "created_at": row['created_at'].isoformat() if row['created_at'] else None,
+                "is_verified": row['is_verified']
+            })
+        
+        cursor.close()
+        conn.close()
+        
+        return {
+            "total_users": total_users,
+            "new_users_this_week": new_users_this_week,
+            "verified_users": verified_users,
+            "admin_users": admin_users,
+            "total_ai_calls": total_ai_calls,
+            "total_ai_cost": round(total_ai_cost, 4),
+            "recent_signups": recent_signups
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch stats: {str(e)}")
+
+
 @router.get("/ai-usage/summary")
 async def get_ai_usage_summary(days: int = Query(default=30, ge=1, le=365), admin_user: dict = Depends(require_admin)):
     """Get summary statistics for AI usage"""
