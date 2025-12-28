@@ -361,7 +361,7 @@ async def get_all_users(
             total = cursor.fetchone()['count']
             
             cursor.execute(
-                """SELECT id, email, name, role, profile_id, is_admin, is_verified, google_id, created_at
+                """SELECT id, email, name, admin_role, profile_id, is_admin, is_verified, google_id, created_at
                    FROM users 
                    WHERE email ILIKE %s OR name ILIKE %s
                    ORDER BY created_at DESC
@@ -373,7 +373,7 @@ async def get_all_users(
             total = cursor.fetchone()['count']
             
             cursor.execute(
-                """SELECT id, email, name, role, profile_id, is_admin, is_verified, google_id, created_at
+                """SELECT id, email, name, admin_role, profile_id, is_admin, is_verified, google_id, created_at
                    FROM users 
                    ORDER BY created_at DESC
                    LIMIT %s OFFSET %s""",
