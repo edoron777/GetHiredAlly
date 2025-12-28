@@ -1,0 +1,550 @@
+# GetHiredAlly - Home Page Design Document
+
+**Document Type:** UI/UX Design Specification  
+**Version:** 1.0  
+**Date:** December 28, 2025  
+**Purpose:** Define the redesigned Home Page structure and Service Cards
+
+---
+
+## Table of Contents
+
+1. [Overview](#1-overview)
+2. [User Journey Concept](#2-user-journey-concept)
+3. [Page Layout Structure](#3-page-layout-structure)
+4. [Service Card Component](#4-service-card-component)
+5. [Section A: CV Preparation](#5-section-a-cv-preparation)
+6. [Section B: Interview Preparation](#6-section-b-interview-preparation)
+7. [Video Modal Component](#7-video-modal-component)
+8. [Responsive Design](#8-responsive-design)
+9. [Implementation Notes](#9-implementation-notes)
+
+---
+
+## 1. Overview
+
+### Purpose
+
+The Home Page is the main dashboard where users see all available services. It should:
+- Clearly show the user journey (lifecycle of job search)
+- Make each service's purpose immediately clear
+- Invite users to start using services
+- Provide quick access to tutorial videos
+
+### Key Design Principles
+
+| Principle | Implementation |
+|-----------|----------------|
+| **Clear Journey** | Two distinct sections representing job search phases |
+| **Inviting Language** | Titles and descriptions that speak to user benefits |
+| **Visual Hierarchy** | Important services prominent, coming soon services subtle |
+| **Consistency** | All cards follow same layout structure |
+| **Accessibility** | Video tutorials for each service |
+
+---
+
+## 2. User Journey Concept
+
+### The Job Search Lifecycle
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         USER JOURNEY LIFECYCLE                              │
+│                                                                             │
+│   ┌─────────────────────────────────────────────────────────────────────┐  │
+│   │                    PART A: CV PREPARATION                           │  │
+│   │                    "Before You Apply"                               │  │
+│   │                                                                     │  │
+│   │   User prepares their CV before/during job search                   │  │
+│   │                                                                     │  │
+│   │   ┌─────────────┐         ┌─────────────┐                          │  │
+│   │   │   A.1       │         │   A.2       │                          │  │
+│   │   │  Perfect    │   ───►  │  Tailor CV  │                          │  │
+│   │   │  Your CV    │         │  for Job    │                          │  │
+│   │   │  (General)  │         │  (ATS)      │                          │  │
+│   │   └─────────────┘         └─────────────┘                          │  │
+│   │      ✅ ACTIVE              ⏳ COMING SOON                          │  │
+│   └─────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+│   ════════════════════════════════════════════════════════════════════════ │
+│                          VISUAL SEPARATOR LINE                              │
+│   ════════════════════════════════════════════════════════════════════════ │
+│                                                                             │
+│   ┌─────────────────────────────────────────────────────────────────────┐  │
+│   │                  PART B: INTERVIEW PREPARATION                      │  │
+│   │                  "After You Find a Job to Apply"                    │  │
+│   │                                                                     │  │
+│   │   User found a job posting and needs to prepare                     │  │
+│   │                                                                     │  │
+│   │   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐              │  │
+│   │   │   B.1       │   │   B.2       │   │   B.3       │              │  │
+│   │   │  Decode     │──►│  Prepare    │──►│  Craft      │              │  │
+│   │   │  Job Post   │   │  Questions  │   │  Answers    │              │  │
+│   │   └─────────────┘   └─────────────┘   └─────────────┘              │  │
+│   │      ✅ ACTIVE        ✅ ACTIVE        ⏳ COMING SOON               │  │
+│   └─────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 3. Page Layout Structure
+
+### Desktop Layout (1200px+)
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              HEADER / NAVBAR                                │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌───────────────────────────────────────────────────────────────────────┐ │
+│  │  SECTION A: PERFECT YOUR CV                                           │ │
+│  │  Subtitle: "Make your CV stand out before you start applying"         │ │
+│  │                                                                        │ │
+│  │    ┌─────────────────────┐      ┌─────────────────────┐               │ │
+│  │    │                     │      │                     │               │ │
+│  │    │   📄 Perfect Your   │      │   🎯 Tailor for     │               │ │
+│  │    │      CV             │      │      This Job       │               │ │
+│  │    │                     │      │                     │               │ │
+│  │    │   [Active Card]     │      │   [Coming Soon]     │               │ │
+│  │    │                     │      │                     │               │ │
+│  │    └─────────────────────┘      └─────────────────────┘               │ │
+│  │                                                                        │ │
+│  └───────────────────────────────────────────────────────────────────────┘ │
+│                                                                             │
+│  ════════════════════════════════════════════════════════════════════════  │
+│                                                                             │
+│  ┌───────────────────────────────────────────────────────────────────────┐ │
+│  │  SECTION B: ACE YOUR INTERVIEW                                        │ │
+│  │  Subtitle: "Prepare thoroughly for the job you want"                  │ │
+│  │                                                                        │ │
+│  │   ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐   │ │
+│  │   │                  │  │                  │  │                  │   │ │
+│  │   │  🔍 Decode the   │  │  ❓ Predict the  │  │  💬 Craft Your   │   │ │
+│  │   │     Job Post     │  │     Questions    │  │     Answers      │   │ │
+│  │   │                  │  │                  │  │                  │   │ │
+│  │   │  [Active Card]   │  │  [Active Card]   │  │  [Coming Soon]   │   │ │
+│  │   │                  │  │                  │  │                  │   │ │
+│  │   └──────────────────┘  └──────────────────┘  └──────────────────┘   │ │
+│  │                                                                        │ │
+│  └───────────────────────────────────────────────────────────────────────┘ │
+│                                                                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                              FOOTER                                         │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Section Header Styling
+
+| Element | Style |
+|---------|-------|
+| Section Title | 24px, Bold, Navy (#1E3A5F) |
+| Section Subtitle | 16px, Regular, Gray (#6B7280) |
+| Section Background | Light beige (#FAF9F7) or white |
+| Section Padding | 32px top/bottom, 24px left/right |
+| Section Border Radius | 12px |
+
+### Separator Line Styling
+
+| Element | Style |
+|---------|-------|
+| Type | Horizontal rule with gradient |
+| Color | Navy to transparent gradient |
+| Height | 2px |
+| Width | 80% of container, centered |
+| Margin | 40px top, 40px bottom |
+
+```css
+/* Separator CSS */
+.section-separator {
+  width: 80%;
+  height: 2px;
+  margin: 40px auto;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    #1E3A5F 20%, 
+    #1E3A5F 80%, 
+    transparent 100%
+  );
+}
+```
+
+---
+
+## 4. Service Card Component
+
+### Card Layout Structure
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                                                             │
+│  ┌──────┐                                                   │
+│  │ ICON │  Title Text Here                          ← (1)   │
+│  └──────┘                                                   │
+│                                                             │
+│  Description text that explains what this service           │
+│  does and why the user would want to use it.        ← (2)   │
+│  Focus on the BENEFIT to the user.                          │
+│                                                             │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │              Get Started                            │ ← (3)   │
+│  └─────────────────────────────────────────────────────┘   │
+│                                                             │
+│                    ▶ Watch how it works              ← (4)   │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Card Elements
+
+| # | Element | Description |
+|---|---------|-------------|
+| 1 | **Icon + Title** | Icon and title on SAME LINE |
+| 2 | **Description** | 2-3 sentences explaining the benefit |
+| 3 | **CTA Button** | Primary action button |
+| 4 | **Video Link** | Opens tutorial video modal |
+
+### Card Styling Specifications
+
+| Property | Active Card | Coming Soon Card |
+|----------|-------------|------------------|
+| Background | White | Light gray (#F9FAFB) |
+| Border | 1px solid #E5E7EB | 1px dashed #D1D5DB |
+| Shadow | `shadow-md`, hover: `shadow-lg` | None |
+| Opacity | 100% | 70% |
+| Button | Blue (#2563EB) | Gray, disabled |
+| Video Link | Visible | Hidden |
+
+### Card Dimensions
+
+| Property | Value |
+|----------|-------|
+| Min Width | 280px |
+| Max Width | 360px |
+| Padding | 24px |
+| Border Radius | 12px |
+| Gap between cards | 24px |
+
+---
+
+## 5. Section A: CV Preparation
+
+### Section Title
+
+```
+PERFECT YOUR CV
+Make your CV stand out before you start applying
+```
+
+### Card A.1: CV Optimizer (ACTIVE)
+
+| Element | Content |
+|---------|---------|
+| **Icon** | 📄 or FileText icon |
+| **Title** | "Perfect Your CV" |
+| **Description** | "Discover what's holding your CV back. Get personalized suggestions to make your CV clearer, stronger, and more compelling to recruiters." |
+| **Button** | "Get Started" |
+| **Video** | "▶ Watch how it works" |
+| **Route** | `/service/cv-optimizer` |
+
+### Card A.2: ATS Optimizer (COMING SOON)
+
+| Element | Content |
+|---------|---------|
+| **Icon** | 🎯 or Target icon |
+| **Title** | "Tailor for This Job" |
+| **Description** | "Match your CV to specific job requirements. Beat the ATS filters and get your CV seen by real humans." |
+| **Button** | "Coming Soon" (disabled) |
+| **Video** | Hidden |
+| **Badge** | "Coming Soon" ribbon |
+
+---
+
+## 6. Section B: Interview Preparation
+
+### Section Title
+
+```
+ACE YOUR INTERVIEW
+Prepare thoroughly for the job you want
+```
+
+### Card B.1: X-Ray Analyzer (ACTIVE)
+
+| Element | Content |
+|---------|---------|
+| **Icon** | 🔍 or Search icon |
+| **Title** | "Decode the Job Post" |
+| **Description** | "Understand what they REALLY want. Uncover hidden requirements, company insights, and exactly what to emphasize in your interview." |
+| **Button** | "Get Started" |
+| **Video** | "▶ Watch how it works" |
+| **Route** | `/service/xray-analyzer` |
+
+**Alternative Titles Considered:**
+- "What Do They Really Want?" (more emotional)
+- "Understand Any Job Posting" (more descriptive)
+- "X-Ray the Job Post" (more branded)
+
+### Card B.2: Interview Questions (ACTIVE)
+
+| Element | Content |
+|---------|---------|
+| **Icon** | ❓ or HelpCircle icon |
+| **Title** | "Predict the Questions" |
+| **Description** | "Know what they'll ask before you walk in. Get a complete list of likely questions with tips on how to answer each one brilliantly." |
+| **Button** | "Get Started" |
+| **Video** | "▶ Watch how it works" |
+| **Route** | `/service/interview-questions` |
+
+**Alternative Titles Considered:**
+- "Know What They'll Ask" (more direct)
+- "Prepare for Questions" (original - too vague)
+- "Question Bank" (too technical)
+
+### Card B.3: Answer Builder (COMING SOON)
+
+| Element | Content |
+|---------|---------|
+| **Icon** | 💬 or MessageSquare icon |
+| **Title** | "Craft Your Answers" |
+| **Description** | "Build compelling answers that showcase your experience. Turn your stories into interview gold using proven frameworks." |
+| **Button** | "Coming Soon" (disabled) |
+| **Video** | Hidden |
+| **Badge** | "Coming Soon" ribbon |
+
+---
+
+## 7. Video Modal Component
+
+### The Problem to Fix
+
+**Current Issue:** When user expands video to fullscreen, the video dimensions become distorted.
+
+**Desired Behavior:** Video should:
+1. Open in a modal (lightbox) centered on screen
+2. Cover the existing content (dark overlay)
+3. Maintain 16:9 aspect ratio at ALL sizes
+4. Expand to larger size while keeping correct proportions
+
+### Video Modal Design
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│█████████████████████████████████████████████████████████████████████████████│
+│█████████████████████████████████████████████████████████████████████████████│
+│██████┌─────────────────────────────────────────────────────────────┐████████│
+│██████│ How CV Optimizer Works                        [⛶]    [✕]   │████████│
+│██████├─────────────────────────────────────────────────────────────┤████████│
+│██████│                                                             │████████│
+│██████│                                                             │████████│
+│██████│                                                             │████████│
+│██████│                    ▶ YOUTUBE VIDEO                         │████████│
+│██████│                      (16:9 ratio)                           │████████│
+│██████│                                                             │████████│
+│██████│                                                             │████████│
+│██████│                                                             │████████│
+│██████└─────────────────────────────────────────────────────────────┘████████│
+│█████████████████████████████████████████████████████████████████████████████│
+│█████████████████████████████████████████████████████████████████████████████│
+└─────────────────────────────────────────────────────────────────────────────┘
+
+█ = Dark overlay (90% opacity black)
+Click overlay or press ESC to close
+```
+
+### Video Size Modes
+
+| Mode | Width | Height | Use Case |
+|------|-------|--------|----------|
+| **Normal** | 800px max | Auto (16:9) | Quick viewing |
+| **Expanded** | 90vw max | Auto (16:9) | Detailed viewing |
+
+### Critical: Maintain Aspect Ratio
+
+```css
+/* Video container - ALWAYS maintains 16:9 */
+.video-container {
+  position: relative;
+  width: 100%;
+  padding-bottom: 56.25%; /* 16:9 aspect ratio */
+  height: 0;
+  overflow: hidden;
+}
+
+.video-container iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+```
+
+### Modal Behavior
+
+| Action | Result |
+|--------|--------|
+| Click video link on card | Open modal (normal size) |
+| Click expand button [⛶] | Enlarge to 90vw (keep ratio) |
+| Click minimize button | Return to normal size |
+| Click [✕] | Close modal |
+| Click dark overlay | Close modal |
+| Press ESC | Close modal (or minimize if expanded) |
+
+---
+
+## 8. Responsive Design
+
+### Breakpoints
+
+| Breakpoint | Cards Per Row | Layout |
+|------------|---------------|--------|
+| Desktop (1200px+) | 3 in Section B, 2 in Section A | Side by side |
+| Tablet (768px - 1199px) | 2 per row | Wrap to next line |
+| Mobile (< 768px) | 1 per row | Stack vertically |
+
+### Mobile Layout
+
+```
+┌─────────────────────────┐
+│  PERFECT YOUR CV        │
+│                         │
+│  ┌───────────────────┐  │
+│  │  📄 Perfect Your  │  │
+│  │     CV            │  │
+│  │                   │  │
+│  │  Description...   │  │
+│  │                   │  │
+│  │  [Get Started]    │  │
+│  │  ▶ Watch how...   │  │
+│  └───────────────────┘  │
+│                         │
+│  ┌───────────────────┐  │
+│  │  🎯 Tailor for    │  │
+│  │     This Job      │  │
+│  │  Coming Soon      │  │
+│  └───────────────────┘  │
+│                         │
+│  ═══════════════════    │
+│                         │
+│  ACE YOUR INTERVIEW     │
+│                         │
+│  ┌───────────────────┐  │
+│  │  🔍 Decode the    │  │
+│  │     Job Post      │  │
+│  │  ...              │  │
+│  └───────────────────┘  │
+│                         │
+│  ┌───────────────────┐  │
+│  │  ❓ Predict the   │  │
+│  │     Questions     │  │
+│  │  ...              │  │
+│  └───────────────────┘  │
+│                         │
+│  ┌───────────────────┐  │
+│  │  💬 Craft Your    │  │
+│  │     Answers       │  │
+│  │  Coming Soon      │  │
+│  └───────────────────┘  │
+│                         │
+└─────────────────────────┘
+```
+
+---
+
+## 9. Implementation Notes
+
+### Reusable Component: ServiceCard
+
+Create a single `ServiceCard` component that handles both active and coming soon states:
+
+```tsx
+interface ServiceCardProps {
+  icon: string;           // Emoji or Lucide icon name
+  title: string;
+  description: string;
+  buttonText: string;
+  route?: string;         // If provided, card is active
+  videoUrl?: string;      // YouTube embed URL
+  videoTitle?: string;
+  isComingSoon?: boolean;
+}
+```
+
+### File Structure
+
+```
+components/
+  common/
+    ServiceCard.tsx       ← Reusable card component
+    VideoModal.tsx        ← Video lightbox modal
+  
+  home/
+    SectionA.tsx          ← CV Preparation section
+    SectionB.tsx          ← Interview Preparation section
+    SectionSeparator.tsx  ← Gradient line separator
+
+pages/
+  HomePage.tsx            ← Combines all sections
+```
+
+### Service Configuration
+
+Store card content in a config file for easy updates:
+
+```tsx
+// config/homePageServices.ts
+
+export const SECTION_A_SERVICES = [
+  {
+    id: 'cv-optimizer',
+    icon: '📄',
+    title: 'Perfect Your CV',
+    description: 'Discover what\'s holding your CV back...',
+    buttonText: 'Get Started',
+    route: '/service/cv-optimizer',
+    videoUrl: 'https://www.youtube.com/embed/VIDEO_ID',
+    videoTitle: 'How CV Optimizer Works',
+    isComingSoon: false
+  },
+  {
+    id: 'ats-optimizer',
+    icon: '🎯',
+    title: 'Tailor for This Job',
+    description: 'Match your CV to specific job requirements...',
+    buttonText: 'Coming Soon',
+    isComingSoon: true
+  }
+];
+
+export const SECTION_B_SERVICES = [
+  // ... similar structure
+];
+```
+
+---
+
+## Summary: What Changes
+
+| Element | Current | New |
+|---------|---------|-----|
+| Layout | All cards in one group | Two sections with separator |
+| Card Title | Title below icon | Icon + Title on same line |
+| Card Description | Short/vague | Longer, benefit-focused |
+| Card Video | Buggy fullscreen | Fixed aspect ratio modal |
+| Coming Soon | Not visible | Shown with disabled state |
+| Section Headers | None | Clear section titles |
+
+---
+
+## Next Steps
+
+1. ✅ Home Page Design Document (this document)
+2. ⏳ Create Replit Prompt for implementation
+3. ⏳ Update APP_Architecture.md with new structure
+4. ⏳ Test and verify video modal fix
+
+---
+
+**END OF DOCUMENT v1.0**
