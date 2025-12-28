@@ -18,6 +18,8 @@ import { CVResultsPage } from '@/components/CVResultsPage'
 import { CVReportPage } from '@/components/CVReportPage'
 import { CVFixedPage } from '@/components/CVFixedPage'
 import { UserSettingsPage } from '@/components/UserSettingsPage'
+import { AdminLayout } from '@/layouts/AdminLayout'
+import { AdminOverview, AdminUsers, AdminSettings } from '@/pages/admin'
 import { isAuthenticated } from '@/lib/auth'
 
 function Layout({ children }: { children: React.ReactNode }) {

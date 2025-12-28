@@ -1,0 +1,360 @@
+# Replit Prompt: Build Complete Admin Dashboard
+
+**Priority:** High  
+**Estimated Time:** 2-3 hours  
+**Date:** December 28, 2025
+
+---
+
+## Context
+
+We have a GetHiredAlly application with:
+- FastAPI backend
+- React frontend with Vite
+- Supabase database
+- shadcn/ui components
+- Tailwind CSS styling
+
+The database now has:
+- `users` table with `is_admin` and `role` columns
+- `ai_usage_logs` table (newly created) for tracking AI API usage
+- Admin user configured: `edoron777+admin@gmail.com` with `is_admin = TRUE`
+
+---
+
+## Task: Build Complete Admin Dashboard
+
+### PART 1: Fix Dashboard Navigation (if not working)
+
+Check if clicking "Dashboard" in the user dropdown navigates to admin page.
+
+1. Find the Header component that shows the user dropdown menu
+2. Verify the "Dashboard" link points to `/admin` or `/admin/dashboard`
+3. Ensure the route exists in the React Router configuration
+4. The Dashboard link should ONLY appear for users where `is_admin = TRUE`
+
+If the route doesn't exist, create it.
+
+---
+
+### PART 2: Create Admin Layout Component
+
+Create a new layout for admin pages with sidebar navigation.
+
+**File:** `client/src/layouts/AdminLayout.jsx`
+
+```jsx
+// Admin layout with sidebar navigation
+// Include tabs/links for:
+// - Overview (dashboard home)
+// - Users (user management)
+// - AI Usage (token tracking)
+// - Settings (future)
+```
+
+**Design Requirements:**
+- Match existing app design (warm beige background #FAF9F7, navy blue #1E3A5F)
+- Left sidebar with navigation links
+- Main content area on right
+- Responsive design
+- Show admin user name at top
+
+---
+
+### PART 3: Create Admin Routes
+
+**File:** Update `client/src/App.jsx` or routes file
+
+Add protected admin routes:
+- `/admin` → Overview dashboard
+- `/admin/users` → User management
+- `/admin/usage` → AI usage tracking
+- `/admin/settings` → Settings (placeholder)
+
+**Protection:**
+- Only accessible if user's `is_admin === true`
+- Redirect to home page if not admin
+- Show "Access Denied" message if unauthorized
+
+---
+
+### PART 4: Create Backend Admin API Endpoints
+
+**File:** `server/routes/admin.py` (create new file)
+
+#### 4.1 Get Admin Dashboard Stats
+
+```python
+@router.get("/api/admin/stats")
+async def get_admin_stats(current_user: User = Depends(require_admin)):
+    """Get overview statistics for admin dashboard"""
+    # Return:
+    # - total_users: count of all users
+    # - new_users_this_week: users created in last 7 days
+    # - total_ai_calls: count from ai_usage_logs
+    # - total_ai_cost: sum of cost_usd from ai_usage_logs
+    # - recent_signups: last 5 users
+```
+
+#### 4.2 Get All Users (paginated)
+
+```python
+@router.get("/api/admin/users")
+async def get_all_users(
+    page: int = 1,
+    limit: int = 20,
+    search: str = None,
+    current_user: User = Depends(require_admin)
+):
+    """Get paginated list of all users"""
+    # Return list with: id, email, name, role, is_admin, is_verified, created_at
+    # Support search by email/name
+    # Include pagination info
+```
+
+#### 4.3 Update User
+
+```python
+@router.put("/api/admin/users/{user_id}")
+async def update_user(
+    user_id: str,
+    update_data: UserUpdateAdmin,
+    current_user: User = Depends(require_admin)
+):
+    """Update user role, is_admin, profile_id"""
+    # Allow updating: role, is_admin, profile_id, is_verified
+    # Cannot update own is_admin to false (safety)
+```
+
+#### 4.4 Delete User
+
+```python
+@router.delete("/api/admin/users/{user_id}")
+async def delete_user(
+    user_id: str,
+    current_user: User = Depends(require_admin)
+):
+    """Delete a user account"""
+    # Cannot delete self
+    # Delete user and cascade to related data
+```
+
+#### 4.5 Get AI Usage Stats
+
+```python
+@router.get("/api/admin/ai-usage")
+async def get_ai_usage(
+    days: int = 7,
+    current_user: User = Depends(require_admin)
+):
+    """Get AI usage statistics"""
+    # Return:
+    # - total_tokens
+    # - total_cost
+    # - calls_count
+    # - by_service: breakdown by service_name
+    # - by_model: breakdown by model
+    # - recent_calls: last 20 API calls with user info
+```
+
+#### 4.6 Admin Middleware
+
+```python
+async def require_admin(current_user: User = Depends(get_current_user)):
+    """Dependency to require admin access"""
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return current_user
+```
+
+---
+
+### PART 5: Create Frontend Admin Pages
+
+#### 5.1 Overview Dashboard Page
+
+**File:** `client/src/pages/admin/AdminOverview.jsx`
+
+Display cards showing:
+- Total Users (with icon)
+- New Users This Week
+- Total AI Calls
+- Total AI Cost (formatted as $X.XX)
+
+Below cards, show:
+- Recent Signups table (last 5 users)
+
+#### 5.2 Users Management Page
+
+**File:** `client/src/pages/admin/AdminUsers.jsx`
+
+Features:
+- Search input (filter by email/name)
+- Table with columns:
+  - Email
+  - Name
+  - Role (dropdown to change)
+  - Admin (toggle switch)
+  - Verified (badge)
+  - Created (formatted date)
+  - Actions (Edit, Delete buttons)
+- Pagination controls
+- Edit modal for changing user details
+- Delete confirmation dialog
+
+#### 5.3 AI Usage Page
+
+**File:** `client/src/pages/admin/AdminUsage.jsx`
+
+Display:
+- Summary cards:
+  - Total Tokens Used
+  - Total Cost
+  - Total API Calls
+- Date range selector (Last 7 days, 30 days, All time)
+- Table of recent API calls:
+  - User Email
+  - Service
+  - Model
+  - Tokens
+  - Cost
+  - Date
+- Optional: Simple bar chart showing usage by service
+
+---
+
+### PART 6: API Integration in Frontend
+
+Create API hooks/functions:
+
+**File:** `client/src/api/admin.js`
+
+```javascript
+export const adminApi = {
+  getStats: () => fetch('/api/admin/stats'),
+  getUsers: (page, limit, search) => fetch(`/api/admin/users?page=${page}&limit=${limit}&search=${search}`),
+  updateUser: (userId, data) => fetch(`/api/admin/users/${userId}`, { method: 'PUT', body: data }),
+  deleteUser: (userId) => fetch(`/api/admin/users/${userId}`, { method: 'DELETE' }),
+  getAiUsage: (days) => fetch(`/api/admin/ai-usage?days=${days}`)
+};
+```
+
+---
+
+### PART 7: UI Components to Use
+
+Use existing shadcn/ui components:
+- `Card` for stat displays
+- `Table` for data tables
+- `Button` for actions
+- `Input` for search
+- `Select` for dropdowns
+- `Dialog` for modals
+- `Badge` for status indicators
+- `Switch` for toggles
+
+---
+
+### PART 8: Security Requirements
+
+1. All admin endpoints must check `is_admin === true`
+2. Frontend routes should redirect non-admins
+3. Cannot delete or demote yourself
+4. Log admin actions (optional, for audit trail)
+
+---
+
+### Expected File Structure
+
+```
+client/src/
+├── layouts/
+│   └── AdminLayout.jsx
+├── pages/
+│   └── admin/
+│       ├── AdminOverview.jsx
+│       ├── AdminUsers.jsx
+│       └── AdminUsage.jsx
+├── api/
+│   └── admin.js
+
+server/
+├── routes/
+│   └── admin.py
+├── middleware/
+│   └── admin_auth.py (or add to existing auth)
+```
+
+---
+
+### Design Specifications
+
+| Element | Value |
+|---------|-------|
+| Background | #FAF9F7 (warm beige) |
+| Primary Color | #1E3A5F (navy blue) |
+| Sidebar Width | 240px |
+| Card Border Radius | 8px |
+| Font Family | Inter |
+| Table Row Height | 48px |
+
+---
+
+### Testing Checklist
+
+After implementation, verify:
+
+- [ ] Only admin users see Dashboard link in header
+- [ ] Non-admin users get redirected from /admin routes
+- [ ] Admin overview shows correct stats
+- [ ] User list loads with pagination
+- [ ] Can search users by email
+- [ ] Can change user role
+- [ ] Can toggle admin status (except self)
+- [ ] Can delete users (except self)
+- [ ] AI usage data displays correctly
+- [ ] All error states handled gracefully
+
+---
+
+### Sample Data Verification Queries
+
+Run these in Supabase to verify data is available:
+
+```sql
+-- Check user count
+SELECT COUNT(*) as total_users FROM users;
+
+-- Check users this week
+SELECT COUNT(*) as new_this_week FROM users 
+WHERE created_at > NOW() - INTERVAL '7 days';
+
+-- Check AI usage (should be empty initially)
+SELECT COUNT(*) as ai_calls FROM ai_usage_logs;
+```
+
+---
+
+## Priority Order
+
+1. **First:** Fix Dashboard navigation if not working
+2. **Second:** Create backend API endpoints
+3. **Third:** Create admin layout and routing
+4. **Fourth:** Build Overview page
+5. **Fifth:** Build Users management page
+6. **Sixth:** Build AI Usage page
+
+---
+
+## Notes for Replit Agent
+
+- Keep the existing app design aesthetic
+- Use existing authentication system
+- The `ai_usage_logs` table was just created and may be empty
+- The app uses FastAPI backend (not Flask)
+- React frontend uses Vite
+- Follow existing code patterns in the project
+
+---
+
+**END OF PROMPT**

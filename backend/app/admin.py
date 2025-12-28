@@ -8,6 +8,15 @@ from psycopg2.extras import RealDictCursor
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
+PROTECTED_ADMIN_EMAIL = "edoron777+admin@gmail.com"
+
+
+class UserUpdate(BaseModel):
+    role: Optional[str] = None
+    is_admin: Optional[bool] = None
+    is_verified: Optional[bool] = None
+    profile_id: Optional[str] = None
+
 def get_db_connection():
     database_url = os.environ.get("DATABASE_URL")
     if not database_url:
@@ -163,3 +172,214 @@ async def get_usage_by_user(days: int = Query(default=30, ge=1, le=365), limit: 
         return {"users": users}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch user usage: {str(e)}")
+
+
+@router.get("/stats")
+async def get_admin_stats():
+    """Get overview statistics for admin dashboard"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        
+        cursor.execute("SELECT COUNT(*) as count FROM users")
+        total_users = cursor.fetchone()['count']
+        
+        week_ago = (datetime.utcnow() - timedelta(days=7)).isoformat()
+        cursor.execute("SELECT COUNT(*) as count FROM users WHERE created_at >= %s", (week_ago,))
+        new_users_this_week = cursor.fetchone()['count']
+        
+        cursor.execute("SELECT COUNT(*) as count FROM users WHERE is_verified = TRUE")
+        verified_users = cursor.fetchone()['count']
+        
+        cursor.execute("SELECT COUNT(*) as count FROM users WHERE is_admin = TRUE")
+        admin_users = cursor.fetchone()['count']
+        
+        cursor.execute("SELECT COUNT(*) as count FROM ai_usage_logs")
+        total_ai_calls = cursor.fetchone()['count']
+        
+        cursor.execute("SELECT COALESCE(SUM(cost_usd), 0) as total FROM ai_usage_logs")
+        total_ai_cost = float(cursor.fetchone()['total'] or 0)
+        
+        cursor.execute(
+            """SELECT id, email, name, is_verified, created_at 
+               FROM users ORDER BY created_at DESC LIMIT 10"""
+        )
+        recent_signups = cursor.fetchall()
+        
+        for user in recent_signups:
+            if user.get('id'):
+                user['id'] = str(user['id'])
+            if user.get('created_at'):
+                user['created_at'] = user['created_at'].isoformat()
+        
+        cursor.close()
+        conn.close()
+        
+        return {
+            "total_users": total_users,
+            "new_users_this_week": new_users_this_week,
+            "verified_users": verified_users,
+            "admin_users": admin_users,
+            "total_ai_calls": total_ai_calls,
+            "total_ai_cost": round(total_ai_cost, 4),
+            "recent_signups": recent_signups
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch admin stats: {str(e)}")
+
+
+@router.get("/users")
+async def get_all_users(
+    page: int = Query(default=1, ge=1),
+    limit: int = Query(default=20, ge=1, le=100),
+    search: Optional[str] = Query(default=None)
+):
+    """Get paginated list of all users"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        
+        offset = (page - 1) * limit
+        
+        if search:
+            search_pattern = f"%{search}%"
+            cursor.execute(
+                """SELECT COUNT(*) as count FROM users 
+                   WHERE email ILIKE %s OR name ILIKE %s""",
+                (search_pattern, search_pattern)
+            )
+            total = cursor.fetchone()['count']
+            
+            cursor.execute(
+                """SELECT id, email, name, role, profile_id, is_admin, is_verified, google_id, created_at
+                   FROM users 
+                   WHERE email ILIKE %s OR name ILIKE %s
+                   ORDER BY created_at DESC
+                   LIMIT %s OFFSET %s""",
+                (search_pattern, search_pattern, limit, offset)
+            )
+        else:
+            cursor.execute("SELECT COUNT(*) as count FROM users")
+            total = cursor.fetchone()['count']
+            
+            cursor.execute(
+                """SELECT id, email, name, role, profile_id, is_admin, is_verified, google_id, created_at
+                   FROM users 
+                   ORDER BY created_at DESC
+                   LIMIT %s OFFSET %s""",
+                (limit, offset)
+            )
+        
+        users = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        
+        for user in users:
+            if user.get('id'):
+                user['id'] = str(user['id'])
+            if user.get('created_at'):
+                user['created_at'] = user['created_at'].isoformat()
+        
+        total_pages = (total + limit - 1) // limit
+        
+        return {
+            "users": users,
+            "total": total,
+            "page": page,
+            "limit": limit,
+            "total_pages": total_pages
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch users: {str(e)}")
+
+
+@router.put("/users/{user_id}")
+async def update_user(user_id: str, data: UserUpdate):
+    """Update user role, is_admin, is_verified, profile_id"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        
+        cursor.execute("SELECT email, is_admin FROM users WHERE id = %s", (user_id,))
+        user = cursor.fetchone()
+        
+        if not user:
+            cursor.close()
+            conn.close()
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        if user['email'] == PROTECTED_ADMIN_EMAIL:
+            cursor.close()
+            conn.close()
+            raise HTTPException(status_code=403, detail="Cannot modify protected admin account")
+        
+        updates = []
+        values = []
+        
+        if data.role is not None:
+            updates.append("role = %s")
+            values.append(data.role)
+        
+        if data.is_admin is not None:
+            updates.append("is_admin = %s")
+            values.append(data.is_admin)
+        
+        if data.is_verified is not None:
+            updates.append("is_verified = %s")
+            values.append(data.is_verified)
+        
+        if data.profile_id is not None:
+            updates.append("profile_id = %s")
+            values.append(data.profile_id)
+        
+        if updates:
+            values.append(user_id)
+            query = f"UPDATE users SET {', '.join(updates)} WHERE id = %s"
+            cursor.execute(query, tuple(values))
+            conn.commit()
+        
+        cursor.close()
+        conn.close()
+        
+        return {"message": "User updated successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to update user: {str(e)}")
+
+
+@router.delete("/users/{user_id}")
+async def delete_user(user_id: str):
+    """Delete a user account"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        
+        cursor.execute("SELECT email FROM users WHERE id = %s", (user_id,))
+        user = cursor.fetchone()
+        
+        if not user:
+            cursor.close()
+            conn.close()
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        if user['email'] == PROTECTED_ADMIN_EMAIL:
+            cursor.close()
+            conn.close()
+            raise HTTPException(status_code=403, detail="Cannot delete protected admin account")
+        
+        cursor.execute("DELETE FROM cv_scans WHERE user_id = %s", (user_id,))
+        cursor.execute("DELETE FROM ai_usage_logs WHERE user_id = %s", (user_id,))
+        cursor.execute("DELETE FROM audit_logs WHERE user_id = %s", (user_id,))
+        cursor.execute("DELETE FROM sessions WHERE user_id = %s", (user_id,))
+        cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return {"message": "User deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete user: {str(e)}")
