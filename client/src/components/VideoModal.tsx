@@ -99,15 +99,19 @@ export function VideoModal({ isOpen, onClose, videoUrl, title }: VideoModalProps
           </div>
         </div>
 
+        {/* Video Container */}
         <div
-          className={`relative bg-black overflow-hidden ${
+          className={`bg-black overflow-visible ${
             isExpanded 
-              ? 'w-full h-[80vh]' 
-              : 'w-full h-0 pb-[56.25%] rounded-b-lg'
+              ? 'fixed inset-0 z-[100] flex items-center justify-center'
+              : 'relative w-full h-0 pb-[56.25%] rounded-b-lg'
           }`}
         >
           <iframe
-            className="absolute top-0 left-0 w-full h-full"
+            className={isExpanded 
+              ? 'w-[90vw] h-[80vh]' 
+              : 'absolute top-0 left-0 w-full h-full'
+            }
             src={isOpen ? `${videoUrl}?rel=0&modestbranding=1` : ''}
             title={title || 'Tutorial video'}
             frameBorder="0"
