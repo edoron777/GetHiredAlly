@@ -1,206 +1,42 @@
 # GetHiredAlly - Interview Preparation Application
 
 ## Overview
-GetHiredAlly is an interview preparation application with job description analysis ("X-Ray"), interview question preparation, and answer crafting features. Built with React frontend and FastAPI backend, connected to Supabase for data persistence.
+GetHiredAlly is an interview preparation application designed to empower job seekers. It offers advanced job description analysis ("X-Ray"), personalized interview question preparation, and AI-powered answer crafting. The application aims to provide a comprehensive toolkit for users to confidently approach their job interviews, increasing their chances of success.
 
-## Tech Stack
-- **Frontend**: React 19 with Vite, Tailwind CSS, shadcn/ui, React Router v7
-- **Backend**: FastAPI (Python) with bcrypt for password hashing
-- **Database**: Supabase (PostgreSQL)
+## User Preferences
+I prefer iterative development, with a focus on delivering small, functional increments. Please provide detailed explanations for any complex architectural decisions or significant code changes. I like clean, readable code with a strong emphasis on maintainability. When suggesting changes, please offer multiple options with their respective pros and cons. I want to be asked before any major changes are made to the core logic or database schema.
 
-## Brand Colors
-- Background: #FAF9F7 (warm beige)
-- Primary: #1E3A5F (navy blue)
-- Text: #333333
+## System Architecture
+The application features a modern web architecture with a React 19 frontend utilizing Vite, Tailwind CSS, and shadcn/ui for a consistent and responsive user experience. The backend is built with FastAPI (Python), providing robust API endpoints and serving the static frontend assets in production. Supabase, a PostgreSQL-based platform, handles data persistence, authentication, and real-time capabilities.
 
-## Project Structure
-```
-/
-├── client/               # React frontend
-│   ├── src/
-│   │   ├── components/   # React components
-│   │   │   ├── ui/       # shadcn/ui components (Button, Input, Label)
-│   │   │   ├── LandingPage.tsx
-│   │   │   ├── RegisterPage.tsx
-│   │   │   └── LoginPage.tsx
-│   │   ├── lib/          # Utility functions (utils.ts, auth.ts)
-│   │   ├── App.tsx       # Main app with routing
-│   │   └── main.tsx      # Entry point
-│   ├── dist/             # Built frontend (production)
-│   └── vite.config.ts    # Vite configuration
-├── backend/              # FastAPI backend
-│   └── app/
-│       ├── main.py       # API endpoints + static file serving
-│       └── auth.py       # Authentication endpoints
-├── supabase_schema.sql   # Database schema for Supabase
-└── replit.md             # This file
-```
+**UI/UX Design:**
+- **Color Scheme:** Warm beige (#FAF9F7) background, navy blue (#1E3A5F) primary accents, and dark gray (#333333) text for high readability.
+- **Component Library:** Leverages shadcn/ui for consistent, accessible, and themeable UI components.
+- **Workflow:** Emphasizes a coaching-style language, especially in AI interactions, focusing on "Focus Areas" instead of "weaknesses" to foster a positive user experience.
 
-## Development
-- Frontend dev server runs on port 5000 (Vite with HMR)
-- Backend runs on port 8000 (with auto-reload)
-- Frontend proxies `/api/*` requests to the backend
+**Technical Implementations:**
+- **Authentication:** User registration and login utilize bcrypt for password hashing and Supabase for session management. Email verification is implemented via the Resend API.
+- **AI Integration:** A unified AI service routes requests to Claude or Gemini models via LiteLLM, allowing users to select their preferred provider. All AI interactions are logged for usage tracking, cost analysis, and auditing.
+- **Interview Questions:** A comprehensive database of 54 static interview questions categorized into Universal, Behavioral, Situational, Self-Assessment, and Cultural Fit, each with detailed preparation guidance. Dynamic, AI-generated questions are personalized based on user input.
+- **CV Optimization:** An AI-powered CV optimizer scans resumes (PDF, DOCX, TXT), identifies issues, suggests improvements, and can even generate a fixed version with side-by-side comparison. CV content is encrypted at rest using Fernet.
 
-## Production/Deployment
-- Build: `cd client && npm run build` (creates dist/ folder)
-- Run: FastAPI serves both API and static frontend on port 5000
-- The backend serves the built React app and handles SPA routing
+**Feature Specifications:**
+- **Job Description X-Ray:** Analyzes job descriptions using AI to extract key requirements and suggest relevant interview preparation.
+- **Interview Question Predictor:** Provides access to static questions with varying levels of detail (questions only, with tips, full prep) and generates smart, personalized questions.
+- **CV Optimizer:** Scans CVs, identifies strengths and areas for improvement, and offers AI-generated fixes.
+- **User Tiers:** Differentiated access and usage limits based on user profiles (Standard, Special, VIP) for various services.
 
-## Environment Variables
-- `SUPABASE_URL`: Supabase project URL
-- `SUPABASE_ANON_KEY`: Supabase anonymous key
-- `SUPABASE_SERVICE_ROLE_KEY`: Supabase service role key
+**System Design Choices:**
+- **Security:** Implements security headers, rate limiting on sensitive endpoints, audit logging for security events, input validation with Pydantic, and secure password handling.
+- **Scalability:** Utilizes Supabase for a managed and scalable database solution, and FastAPI for an asynchronous and high-performance backend.
+- **Environment Variables:** Critical configurations are managed via environment variables for secure deployment.
 
-## API Endpoints
-- `GET /api/health` - Health check endpoint
-- `GET /api/config` - Get configuration info
-- `GET /api/supabase-test` - Test Supabase connection
-- `POST /api/auth/register` - User registration (name, email, password)
-- `POST /api/auth/login` - User login (email, password) - returns token and user data
-- `POST /api/auth/logout` - Logout (token) - invalidates session
-- `GET /api/auth/me?token=...` - Get current user from session token
-- `POST /api/auth/send-verification` - Send verification code email
-- `POST /api/auth/verify-email` - Verify email with 6-digit code
-- `POST /api/analyze-job` - Analyze job description with Claude AI (job_description, mode)
-- `GET /api/questions/static` - Get 54 interview questions (filterable by category)
-- `GET /api/questions/categories` - Get available question categories
-- `POST /api/questions/seed?force=true` - Seed interview questions to database (force replaces all)
-- `GET /api/xray/analyses?token=...` - List user's X-Ray analyses for dropdown
-- `GET /api/smart-questions/check-eligibility?token=...` - Check if user can use Smart Questions
-- `POST /api/smart-questions/generate` - Generate personalized questions with Gemini AI
-- `GET /api/smart-questions/{id}?token=...` - Get a specific smart questions result
-- `GET /api/smart-questions/?token=...` - List user's smart question results
-- `POST /api/cv/upload-for-scan` - Upload CV file for scanning (PDF, DOCX, TXT)
-- `GET /api/cv/list?token=...` - List user's uploaded CVs
-- `POST /api/cv-optimizer/scan` - Scan CV with AI (returns scan_id)
-- `GET /api/cv-optimizer/results/{scan_id}?token=...` - Get scan results summary
-- `GET /api/cv-optimizer/report/{scan_id}?token=...` - Get detailed report with all issues
-- `POST /api/cv-optimizer/fix/{scan_id}?token=...` - Generate fixed CV with AI
-- `GET /api/cv-optimizer/fixed/{scan_id}?token=...` - Get fixed CV comparison data
-- `GET /api/cv-optimizer/download/{scan_id}?format=...&token=...` - Download fixed CV (pdf, docx, txt)
-
-## Frontend Routes
-- `/` - Landing page
-- `/register` - User registration
-- `/login` - User login
-- `/verify-email` - Email verification page
-- `/dashboard` - Main dashboard with service cards (protected)
-- `/service/understand-job` - X-Ray analyzer input form (protected)
-- `/service/predict-questions` - Questions service home with 2 cards (protected)
-- `/service/predict-questions/common` - 54 common interview questions (protected)
-- `/service/predict-questions/smart` - Smart Questions AI input page (protected)
-- `/service/predict-questions/smart/results/:id` - Smart Questions results page (protected)
-- `/service/cv-optimizer` - CV Optimizer upload page (protected)
-- `/service/cv-optimizer/scanning` - CV scanning animation page (protected)
-- `/service/cv-optimizer/results/:scanId` - CV scan results summary (protected)
-- `/service/cv-optimizer/report/:scanId` - CV detailed report with filters (protected)
-- `/service/cv-optimizer/fixed/:scanId` - Fixed CV comparison and download page (protected)
-
-## Database Tables
-- `user_profiles` - User tier definitions (standard, special, vip)
-- `profile_limits` - Usage limits per profile and service
-- `users` - User accounts with password hashes (includes smart_questions_free_used flag)
-- `services` - Available services (xray, questions, playbook)
-- `usage_tracking` - Track user usage per service
-- `smart_question_results` - AI-generated personalized interview questions (stores weak_areas and personalized_questions as JSONB)
-- `ai_usage_logs` - Tracks every AI API call (provider, tokens, cost, duration)
-- `user_ai_preferences` - User preferences for AI providers per service
-- See `supabase_schema.sql` for complete schema
-
-## User Profiles
-- **Standard**: 1 xray/week, 5 static questions total, 1 dynamic question/week
-- **Special**: 3 xray/week, 5 static questions total, 3 dynamic questions/week
-- **VIP**: 20 xray/week, unlimited static questions, 20 dynamic questions/week
-
-## Session Management
-- Sessions stored in `user_sessions` table with hashed tokens
-- Tokens expire after 7 days
-- Client stores token in localStorage via `lib/auth.ts` utilities
-
-## Email Verification
-- Uses Resend API for sending verification emails
-- 6-digit verification codes with 15-minute expiry
-- Codes stored in `email_verification_codes` table
-- **Note**: Resend free tier only sends to owner email (edoron777@gmail.com). Verify a domain at resend.com/domains to send to other addresses.
-
-## Interview Questions Structure
-- 54 questions organized into 5 categories: Universal (12), Behavioral (18), Situational (8), Self-Assessment (8), Cultural Fit (8)
-- Each question has: question_text, why_they_ask, framework, good_answer_example, what_to_avoid
-- 11 "Questions to Ask the Interviewer" with: why_ask, what_to_listen_for, warning_signs
-- Depth levels control display only: questions_only (just questions), with_tips (+ why + framework), full_prep (+ good example + what to avoid)
-
-## AI Service Architecture
-- Unified AI service (`backend/services/ai_service.py`) routes to Claude or Gemini via LiteLLM
-- AIProviderSelector component allows users to choose Claude (~$0.02) or Gemini (~$0.01)
-- **Automatic Usage Logging**: Every AI call logs to `ai_usage_logs` table with:
-  - user_id, service_name (xray/smart_questions), provider, model
-  - input_tokens, output_tokens, total_tokens
-  - cost_usd (calculated by LiteLLM's built-in cost tracking)
-  - duration_ms, success/failure, error_message
-
-## Smart Questions UX Design
-- Uses supportive coaching-style language instead of warning-style
-- Focus Areas (not "weak areas") with priority levels:
-  - KEY_FOCUS (blue) - Most important areas to prepare
-  - WORTH_PREPARING (purple) - Helpful to practice
-  - GOOD_TO_KNOW (gray) - Nice to have
-- Each focus area includes coaching tips and winning approaches
-- Introduction section with encouraging preparation message
-- Backward compatible with legacy data (weak_areas → focus_areas mapping)
-
-## Security Implementation
-- **Security Headers Middleware**: X-Frame-Options, X-Content-Type-Options, X-XSS-Protection, HSTS, Referrer-Policy, Permissions-Policy
-- **Rate Limiting**: Login 5/min, Register 10/hr, AI calls 10-20/hr
-- **Audit Logging**: Login attempts, security events logged to `backend/logs/audit.log`
-- **CV Encryption**: CV text encrypted at rest using Fernet (ENCRYPTION_KEY secret required)
-- **Input Validation**: Pydantic models for all API inputs with sanitization
-- **Password Security**: bcrypt hashing, passwords never logged
-
-## Recent Changes
-- December 28, 2025: Added CV Optimizer UX Phase 3 - ViewModeToggle for switching between Priority and Effort views
-- December 28, 2025: Added EffortGroupView component with Quick Wins, Worth the Effort, Deep Improvements groupings
-- December 28, 2025: Time estimates for effort groups (~5 min, ~15 min, ~30+ min) with total time calculation
-- December 28, 2025: Added CV Optimizer UX Phase 2 - StrengthsSection with 10 detection heuristics and green styling
-- December 28, 2025: Added EncouragementMessage component with intro/effort/completion messaging
-- December 28, 2025: Updated report endpoint to return cv_content for frontend strengths detection
-- December 28, 2025: Strengths-first design showing what's working well before suggestions
-- December 28, 2025: Added CV Optimizer UX Phase 1 - Category transparency panel with 9 analysis categories
-- December 28, 2025: Added CategoryInfoModal with research-backed explanations for each category
-- December 28, 2025: Added CategoryFilterPanel for filtering suggestions by category with counts
-- December 28, 2025: Updated language to positive framing (Issues → Suggestions, Critical → Quick Wins)
-- December 27, 2025: Added CV Auto-Fix feature with AI-powered correction and side-by-side comparison
-- December 27, 2025: Added fixed CV download in PDF, DOCX, TXT formats
-- December 27, 2025: Built CV scanning animation page with grid visualization, progress bar, and issue counters
-- December 27, 2025: Added AI-powered CV analysis using Gemini with detailed issue detection (severity, category, suggestions)
-- December 27, 2025: Created CV results page showing all issues with severity badges and fix suggestions
-- December 27, 2025: Built CV upload page with drag & drop, file validation, and backend API for text extraction
-- December 27, 2025: Added user_cvs table and CV management endpoints (/api/cv/list, /api/cv/upload-for-scan)
-- December 27, 2025: Added CV Optimizer service card to dashboard and cv_scan_results database table
-- December 27, 2025: Added security headers middleware and audit logging for login/security events
-- December 27, 2025: Implemented CV encryption at rest with Fernet cryptography
-- December 27, 2025: Added rate limiting to sensitive API endpoints
-- December 27, 2025: Display level buttons now one-line horizontal with colored icons (blue List, yellow Lightbulb, purple BookOpen, gold Star)
-- December 27, 2025: Added Filter icon on title line, removed sublabels for cleaner compact design
-- December 27, 2025: Navy blue StandardToolbar with Expand/Collapse, Email, WhatsApp, PDF, Word, and Markdown buttons
-- December 27, 2025: Unified layout across Static and Smart Questionnaire pages with identical toolbar and section headers
-- December 27, 2025: Added document footer with branding (GetHiredAlly | service_name | gethiredally.com) to PDF/Word downloads
-- December 27, 2025: Updated Smart Questions UX with coaching-style language and supportive design (focus_areas, priority_levels, blue/purple colors)
-- December 27, 2025: Changed Gemini model to gemini-2.0-flash (1.5 models retired)
-- December 27, 2025: Added automatic AI usage logging with LiteLLM cost tracking to ai_usage_logs table
-- December 27, 2025: Added AIProviderSelector component to X-Ray and Smart Questions pages
-- December 27, 2025: Expanded to 54 interview questions with new structure (good_answer_example, what_to_avoid fields)
-- December 27, 2025: Removed interviewer type filter, simplified to category-only filtering
-- December 27, 2025: Added question_categories table with category descriptions and answer methods
-- December 26, 2025: Built Interview Questions Predictor UI page with depth level selectors (Questions Only, With Tips, Full Prep), expandable question cards, and PDF/Word download
-- December 26, 2025: Added Interview Questions Predictor backend - API endpoints with filtering
-- December 26, 2025: Enhanced X-Ray analysis with structured JSON output, table of contents, callout boxes (red flags, insights, strengths, tips), and Next Step CTA
-- December 26, 2025: Added job_descriptions and xray_analyses tables for storing analysis results
-- December 26, 2025: Added Claude API integration for job description analysis with 3 modes (quick, deep, max)
-- December 26, 2025: Built X-Ray Analyzer input page with job description textarea, character count, 3 analysis mode cards, and form validation
-- December 26, 2025: Added dashboard with 3 service cards, protected routes
-- December 26, 2025: Added email verification with Resend API, 6-digit codes, and verification page
-- December 26, 2025: Added user login/logout with session management, bcrypt password verification
-- December 26, 2025: Added user registration with bcrypt password hashing, email validation, React form
-- December 26, 2025: Created Supabase schema with 13 tables for user management and services
-- December 25, 2025: Fixed deployment config - FastAPI now serves built frontend in production
-- December 25, 2025: Transformed project to React+Vite+Tailwind+shadcn/ui frontend with FastAPI backend
+## External Dependencies
+- **Supabase:** Database (PostgreSQL), Authentication, Storage.
+- **Vite:** Frontend build tool.
+- **Tailwind CSS:** Utility-first CSS framework.
+- **React Router:** Frontend routing.
+- **Resend API:** Email sending for verification.
+- **Claude AI (Anthropic):** Job description analysis.
+- **Gemini AI (Google):** Personalized interview question generation, CV analysis.
+- **LiteLLM:** Unified interface for various LLM providers, including cost tracking.
