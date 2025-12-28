@@ -1,0 +1,69 @@
+## FIX ADMIN PANEL - FINAL
+
+Database is now correct. Fix these code issues:
+
+### Issue 1: Admin Stats API Error
+
+Overview shows "Failed to fetch admin stats"
+
+Create/fix /api/admin/stats endpoint to return data even if ai_usage_logs is empty:
+```python
+@router.get("/stats")
+async def get_admin_stats(current_user = Depends(get_current_user)):
+    if not current_user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    try:
+        users_result = supabase.table("users").select("*", count="exact").execute()
+        total_users = users_result.count or len(users_result.data) or 0
+        
+        try:
+            ai_result = supabase.table("ai_usage_logs").select("*").execute()
+            total_ai_calls = len(ai_result.data) if ai_result.data else 0
+            total_cost = sum(float(row.get("cost_usd") or 0) for row in (ai_result.data or []))
+        except:
+            total_ai_calls = 0
+            total_cost = 0
+        
+        return {
+            "total_users": total_users,
+            "total_ai_calls": total_ai_calls,
+            "total_cost": round(total_cost, 4),
+            "new_users_this_week": 0
+        }
+    except Exception as e:
+        print(f"Error: {e}")
+        return {"total_users": 0, "total_ai_calls": 0, "total_cost": 0, "new_users_this_week": 0}
+```
+
+### Issue 2: Menu Items Don't Navigate
+
+Create these pages if they don't exist:
+
+1. client/src/pages/admin/AdminUsers.tsx
+2. client/src/pages/admin/AdminAIUsage.tsx  
+3. client/src/pages/admin/AdminSettings.tsx
+
+Each page should have basic content like:
+```tsx
+export default function AdminUsers() {
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold">User Management</h1>
+      <p className="mt-4">Coming soon...</p>
+    </div>
+  );
+}
+```
+
+### Issue 3: Make sure routes exist in App.tsx
+```tsx
+<Route path="/admin" element={<AdminLayout />}>
+  <Route index element={<AdminOverview />} />
+  <Route path="users" element={<AdminUsers />} />
+  <Route path="ai-usage" element={<AdminAIUsage />} />
+  <Route path="settings" element={<AdminSettings />} />
+</Route>
+```
+
+### After fixing, I will logout and login with Google to test.
