@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Lock, Settings, LogOut, Trash2, Check, X } from 'lucide-react';
+import { User, Lock, Settings, LogOut, Trash2, Check, X, Shield } from 'lucide-react';
 import { getAuthToken, getUser, logout, setAuth } from '@/lib/auth';
 
 export function UserSettingsPage() {
@@ -10,6 +10,7 @@ export function UserSettingsPage() {
   const [email, setEmail] = useState('');
   const [originalName, setOriginalName] = useState('');
   const [originalEmail, setOriginalEmail] = useState('');
+  const [isProtected, setIsProtected] = useState(false);
   
   const [loading, setLoading] = useState(true);
   const [savingName, setSavingName] = useState(false);
@@ -35,6 +36,7 @@ export function UserSettingsPage() {
         setEmail(data.email || '');
         setOriginalName(data.name || '');
         setOriginalEmail(data.email || '');
+        setIsProtected(data.is_protected || false);
       }
     } catch (error) {
       showMessage('error', 'Failed to load user data');
@@ -133,6 +135,15 @@ export function UserSettingsPage() {
           <Settings size={28} />
           User Settings
         </h1>
+
+        {isProtected && (
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-2">
+            <Shield size={20} className="text-blue-600" />
+            <span className="text-blue-700 text-sm font-medium">
+              Protected Account - This account has elevated privileges and cannot be deleted.
+            </span>
+          </div>
+        )}
 
         {message && (
           <div className={`mb-6 p-4 rounded-lg flex items-center gap-2 ${
@@ -240,18 +251,27 @@ export function UserSettingsPage() {
           
           <hr className="my-4" />
           
-          <div>
-            <p className="text-sm text-gray-500 mb-2">
-              Permanently delete your account and all associated data. This action cannot be undone.
-            </p>
-            <button
-              onClick={() => setShowDeleteModal(true)}
-              className="w-full px-4 py-3 bg-red-50 border border-red-300 rounded-lg text-red-700 hover:bg-red-100 transition-colors flex items-center justify-center gap-2"
-            >
-              <Trash2 size={20} />
-              Delete Account
-            </button>
-          </div>
+          {isProtected ? (
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-700 flex items-center gap-2">
+                <Shield size={16} />
+                This is a protected account and cannot be deleted.
+              </p>
+            </div>
+          ) : (
+            <div>
+              <p className="text-sm text-gray-500 mb-2">
+                Permanently delete your account and all associated data. This action cannot be undone.
+              </p>
+              <button
+                onClick={() => setShowDeleteModal(true)}
+                className="w-full px-4 py-3 bg-red-50 border border-red-300 rounded-lg text-red-700 hover:bg-red-100 transition-colors flex items-center justify-center gap-2"
+              >
+                <Trash2 size={20} />
+                Delete Account
+              </button>
+            </div>
+          )}
         </div>
 
       </div>

@@ -1,0 +1,260 @@
+# Replit Prompt: Protected Admin Account
+
+**Task:** Add protected admin account feature
+**Priority:** 🔴 Important - Security
+**Estimated Effort:** 1-2 hours
+
+---
+
+## OVERVIEW
+
+Create a "protected" admin account that:
+1. Cannot be deleted (even by the user themselves)
+2. Cannot have admin privileges removed
+3. Serves as emergency access for the owner
+
+---
+
+## TASK 1: Add `is_protected` Field to Users Table
+
+Add a new boolean field to the `users` table:
+
+| Field | Type | Default | Nullable |
+|-------|------|---------|----------|
+| `is_protected` | boolean | false | Yes |
+
+**SQL to run in Supabase:**
+
+```sql
+ALTER TABLE users ADD COLUMN is_protected BOOLEAN DEFAULT false;
+```
+
+---
+
+## TASK 2: Create Protected Admin Account
+
+Create a new admin user with these details:
+
+| Field | Value |
+|-------|-------|
+| email | `edoron777+admin@gmail.com` |
+| name | `Super Admin` |
+| password | (User will set manually) |
+| is_admin | `true` |
+| is_protected | `true` |
+| is_verified | `true` |
+
+**Option A: SQL Insert (Run in Supabase)**
+
+```sql
+-- First, hash the password using your backend's hash function
+-- Then insert the user
+
+INSERT INTO users (
+  email, 
+  name, 
+  password_hash, 
+  is_admin, 
+  is_protected, 
+  is_verified,
+  created_at
+) VALUES (
+  'edoron777+admin@gmail.com',
+  'Super Admin',
+  '[HASHED_PASSWORD_HERE]',
+  true,
+  true,
+  true,
+  NOW()
+);
+```
+
+**Option B: Create via API endpoint (Recommended)**
+
+Create a one-time setup endpoint or use existing registration and then update via SQL.
+
+---
+
+## TASK 3: Update Delete Account Logic
+
+### Backend: Prevent deletion of protected accounts
+
+Find the delete account endpoint and add protection check:
+
+```python
+@app.route('/api/user/delete-account', methods=['DELETE'])
+@require_auth
+def delete_account():
+    data = request.json
+    user = get_current_user()
+    
+    # NEW: Check if account is protected
+    if user.is_protected:
+        return jsonify({
+            'message': 'This account is protected and cannot be deleted.'
+        }), 403
+    
+    # Verify password
+    if not check_password(user.password_hash, data['password']):
+        return jsonify({'message': 'Password is incorrect'}), 400
+    
+    # Delete user and all associated data
+    db.session.delete(user)
+    db.session.commit()
+    return jsonify({'success': True})
+```
+
+---
+
+## TASK 4: Update Admin Panel (Optional)
+
+If you have an admin panel that can delete users, add protection there too:
+
+```python
+@app.route('/api/admin/delete-user/<user_id>', methods=['DELETE'])
+@require_admin
+def admin_delete_user(user_id):
+    user = User.query.get(user_id)
+    
+    if not user:
+        return jsonify({'message': 'User not found'}), 404
+    
+    # NEW: Check if account is protected
+    if user.is_protected:
+        return jsonify({
+            'message': 'This account is protected and cannot be deleted.'
+        }), 403
+    
+    db.session.delete(user)
+    db.session.commit()
+    return jsonify({'success': True})
+```
+
+---
+
+## TASK 5: Update Admin Removal Logic
+
+Prevent removing admin privileges from protected accounts:
+
+```python
+@app.route('/api/admin/update-user/<user_id>', methods=['PUT'])
+@require_admin
+def admin_update_user(user_id):
+    data = request.json
+    user = User.query.get(user_id)
+    
+    if not user:
+        return jsonify({'message': 'User not found'}), 404
+    
+    # NEW: Prevent removing admin from protected accounts
+    if user.is_protected and data.get('is_admin') == False:
+        return jsonify({
+            'message': 'Cannot remove admin privileges from a protected account.'
+        }), 403
+    
+    # Update other fields...
+    user.is_admin = data.get('is_admin', user.is_admin)
+    db.session.commit()
+    return jsonify({'success': True})
+```
+
+---
+
+## TASK 6: Show Protected Badge in UI (Optional)
+
+### In User Settings Page:
+
+If user is protected, show a badge:
+
+```tsx
+{user.is_protected && (
+  <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-2">
+    <Shield size={20} className="text-blue-600" />
+    <span className="text-blue-700 text-sm">
+      This is a protected account and cannot be deleted.
+    </span>
+  </div>
+)}
+```
+
+### In Admin Panel (Users List):
+
+```tsx
+{user.is_protected && (
+  <span className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full">
+    Protected
+  </span>
+)}
+```
+
+---
+
+## TASK 7: Hide Delete Button for Protected Accounts
+
+In User Settings page, hide or disable the delete button:
+
+```tsx
+{/* Delete Account - Only show if NOT protected */}
+{!user.is_protected && (
+  <div>
+    <p className="text-sm text-gray-500 mb-2">
+      Permanently delete your account and all associated data.
+    </p>
+    <button
+      onClick={() => setShowDeleteModal(true)}
+      className="w-full px-4 py-3 bg-red-50 border border-red-300 rounded-lg text-red-700"
+    >
+      <Trash2 size={20} />
+      Delete Account
+    </button>
+  </div>
+)}
+
+{/* Show message for protected accounts */}
+{user.is_protected && (
+  <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+    <p className="text-sm text-gray-500 flex items-center gap-2">
+      <Shield size={16} />
+      This is a protected account and cannot be deleted.
+    </p>
+  </div>
+)}
+```
+
+---
+
+## VERIFICATION CHECKLIST
+
+### Database
+- [ ] `is_protected` column added to users table
+- [ ] Protected admin account created
+- [ ] Admin account has `is_protected = true`
+
+### Backend Protection
+- [ ] Delete account API checks `is_protected`
+- [ ] Protected account cannot delete itself
+- [ ] Admin panel cannot delete protected accounts
+- [ ] Admin privileges cannot be removed from protected accounts
+
+### Frontend
+- [ ] Protected accounts see "Protected Account" message
+- [ ] Delete button is hidden for protected accounts
+- [ ] Admin panel shows "Protected" badge
+
+### Testing
+- [ ] Try to delete protected account → Should fail
+- [ ] Try to remove admin from protected account → Should fail
+- [ ] Regular accounts can still be deleted → Should work
+
+---
+
+## SECURITY NOTES
+
+1. **Password:** Use a strong, unique password for the admin account
+2. **Email:** The `+admin` email trick sends to your regular inbox
+3. **Backup:** Consider noting the admin credentials in a secure place
+4. **Never share:** Do not share admin credentials with anyone
+
+---
+
+**END OF PROMPT**

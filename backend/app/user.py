@@ -79,7 +79,8 @@ async def get_profile(authorization: Optional[str] = Header(None)):
         "name": user.get("name"),
         "profile_name": profile_name,
         "is_verified": user.get("is_verified", False),
-        "is_admin": user.get("is_admin", False)
+        "is_admin": user.get("is_admin", False),
+        "is_protected": user.get("is_protected", False)
     }
 
 @router.put("/update-name")
