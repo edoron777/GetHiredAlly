@@ -28,7 +28,9 @@ async def log_ai_usage(
     cost_usd: Optional[float],
     duration_ms: int,
     success: bool,
-    error_message: Optional[str] = None
+    error_message: Optional[str] = None,
+    user_email: Optional[str] = None,
+    service_action: Optional[str] = None
 ):
     """Log AI usage to the database for tracking and billing."""
     try:
@@ -41,11 +43,11 @@ async def log_ai_usage(
         cursor.execute(
             """INSERT INTO ai_usage_logs 
                (user_id, service_name, provider, model, input_tokens, output_tokens, 
-                total_tokens, cost_usd, duration_ms, success, error_message)
-               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                total_tokens, cost_usd, duration_ms, success, error_message, user_email, service_action)
+               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
             (user_id, service_name, provider, model, input_tokens, output_tokens,
              total_tokens, float(cost_usd) if cost_usd else None, duration_ms, 
-             success, error_message)
+             success, error_message, user_email, service_action)
         )
         conn.commit()
         cursor.close()
@@ -77,7 +79,9 @@ async def generate_completion(
     max_tokens: int = 4096,
     temperature: float = 0.7,
     user_id: Optional[str] = None,
-    service_name: str = "unknown"
+    user_email: Optional[str] = None,
+    service_name: str = "unknown",
+    service_action: str = "generate"
 ) -> AIResponse:
     """
     Unified AI completion function that routes to any provider via LiteLLM.
@@ -143,7 +147,9 @@ async def generate_completion(
             total_tokens=total_tokens,
             cost_usd=cost,
             duration_ms=duration_ms,
-            success=True
+            success=True,
+            user_email=user_email,
+            service_action=service_action
         )
         
         return AIResponse(
@@ -171,7 +177,9 @@ async def generate_completion(
             cost_usd=None,
             duration_ms=duration_ms,
             success=False,
-            error_message=str(e)
+            error_message=str(e),
+            user_email=user_email,
+            service_action=service_action
         )
         
         raise
