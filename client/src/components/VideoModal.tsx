@@ -57,8 +57,8 @@ export function VideoModal({ isOpen, onClose, videoUrl, title }: VideoModalProps
       <div
         className={`relative z-10 mx-4 transition-all duration-300 ease-out ${
           isExpanded 
-            ? 'w-[95vw] max-w-none' 
-            : 'w-full max-w-4xl'
+            ? 'w-[90vw] h-[80vh]' 
+            : 'w-full max-w-3xl'
         }`}
         onClick={(e) => e.stopPropagation()}
       >
@@ -96,11 +96,9 @@ export function VideoModal({ isOpen, onClose, videoUrl, title }: VideoModalProps
 
         <div
           className={`relative bg-black overflow-hidden transition-all duration-300 ${
-            isExpanded ? 'rounded-b-none' : 'rounded-b-lg'
+            isExpanded ? 'rounded-b-none h-[calc(100%-100px)]' : 'rounded-b-lg'
           }`}
-          style={{
-            paddingBottom: '56.25%'
-          }}
+          style={isExpanded ? {} : { paddingBottom: '56.25%' }}
         >
           <iframe
             className="absolute inset-0 w-full h-full"
