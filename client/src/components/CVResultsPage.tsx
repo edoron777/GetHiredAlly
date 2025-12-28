@@ -114,7 +114,7 @@ export function CVResultsPage() {
           </h2>
 
           <div className="text-center mb-8">
-            <p className="text-gray-600 mb-2">Total Issues Found</p>
+            <p className="text-gray-600 mb-2">Improvement Opportunities</p>
             <p className="text-5xl font-bold" style={{ color: '#1E3A5F' }}>{scanData.total_issues}</p>
           </div>
 
@@ -122,7 +122,7 @@ export function CVResultsPage() {
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
               <div className="flex items-center justify-center gap-2 mb-2">
                 <span className="w-3 h-3 rounded-full bg-red-500"></span>
-                <span className="text-red-700 font-medium text-sm">Critical</span>
+                <span className="text-red-700 font-medium text-sm">Quick Wins</span>
               </div>
               <p className="text-3xl font-bold text-red-600">{scanData.critical_count}</p>
             </div>
@@ -130,7 +130,7 @@ export function CVResultsPage() {
             <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 text-center">
               <div className="flex items-center justify-center gap-2 mb-2">
                 <span className="w-3 h-3 rounded-full bg-orange-500"></span>
-                <span className="text-orange-700 font-medium text-sm">High</span>
+                <span className="text-orange-700 font-medium text-sm">Important</span>
               </div>
               <p className="text-3xl font-bold text-orange-600">{scanData.high_count}</p>
             </div>
@@ -138,7 +138,7 @@ export function CVResultsPage() {
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
               <div className="flex items-center justify-center gap-2 mb-2">
                 <span className="w-3 h-3 rounded-full bg-yellow-500"></span>
-                <span className="text-yellow-700 font-medium text-sm">Medium</span>
+                <span className="text-yellow-700 font-medium text-sm">Consider</span>
               </div>
               <p className="text-3xl font-bold text-yellow-600">{scanData.medium_count}</p>
             </div>
@@ -147,7 +147,7 @@ export function CVResultsPage() {
           <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
             <div className="flex items-center justify-center gap-2 mb-2">
               <span className="w-3 h-3 rounded-full bg-green-500"></span>
-              <span className="text-green-700 font-medium">Low</span>
+              <span className="text-green-700 font-medium">Polish</span>
             </div>
             <p className="text-3xl font-bold text-green-600">{scanData.low_count}</p>
           </div>

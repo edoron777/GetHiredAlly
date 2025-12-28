@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import { 
   ArrowLeft, ChevronDown, ChevronRight, Filter,
   Mail, MessageCircle, Zap, Wrench, HardHat
 } from 'lucide-react'
 import { isAuthenticated, getAuthToken } from '@/lib/auth'
+import CategoryFilterPanel from './cv-optimizer/CategoryFilterPanel'
+import { mapIssueCategoryToId } from '../config/cvCategories'
 
 interface Issue {
   id: number
@@ -31,7 +33,7 @@ interface ReportData {
 }
 
 const DISPLAY_LEVELS = [
-  { id: 1, name: 'Quick Review', description: 'Issue titles only' },
+  { id: 1, name: 'Quick Review', description: 'Suggestion titles only' },
   { id: 2, name: 'Standard', description: 'With category and location' },
   { id: 3, name: 'With Fix', description: 'Including suggested fixes' },
   { id: 4, name: 'Complete', description: 'Full details' }
@@ -39,17 +41,17 @@ const DISPLAY_LEVELS = [
 
 const SEVERITY_FILTERS = [
   { id: 'all', label: 'All', icon: '' },
-  { id: 'critical', label: 'Critical', icon: '🔴' },
-  { id: 'high', label: 'High', icon: '🟠' },
-  { id: 'medium', label: 'Medium', icon: '🟡' },
-  { id: 'low', label: 'Low', icon: '🟢' }
+  { id: 'critical', label: 'Quick Wins', icon: '🔴' },
+  { id: 'high', label: 'Important', icon: '🟠' },
+  { id: 'medium', label: 'Consider', icon: '🟡' },
+  { id: 'low', label: 'Polish', icon: '🟢' }
 ]
 
 const SEVERITY_SECTIONS = [
-  { key: 'critical', label: 'CRITICAL ISSUES', icon: '🔴', bgColor: 'bg-red-50', borderColor: 'border-red-200', textColor: 'text-red-700' },
-  { key: 'high', label: 'HIGH PRIORITY ISSUES', icon: '🟠', bgColor: 'bg-orange-50', borderColor: 'border-orange-200', textColor: 'text-orange-700' },
-  { key: 'medium', label: 'MEDIUM PRIORITY ISSUES', icon: '🟡', bgColor: 'bg-yellow-50', borderColor: 'border-yellow-200', textColor: 'text-yellow-700' },
-  { key: 'low', label: 'MINOR IMPROVEMENTS', icon: '🟢', bgColor: 'bg-green-50', borderColor: 'border-green-200', textColor: 'text-green-700' }
+  { key: 'critical', label: 'HIGH-IMPACT QUICK FIXES', icon: '🔴', bgColor: 'bg-red-50', borderColor: 'border-red-200', textColor: 'text-red-700' },
+  { key: 'high', label: 'IMPORTANT IMPROVEMENTS', icon: '🟠', bgColor: 'bg-orange-50', borderColor: 'border-orange-200', textColor: 'text-orange-700' },
+  { key: 'medium', label: 'WORTH CONSIDERING', icon: '🟡', bgColor: 'bg-yellow-50', borderColor: 'border-yellow-200', textColor: 'text-yellow-700' },
+  { key: 'low', label: 'OPTIONAL POLISH', icon: '🟢', bgColor: 'bg-green-50', borderColor: 'border-green-200', textColor: 'text-green-700' }
 ]
 
 export function CVReportPage() {
@@ -65,6 +67,25 @@ export function CVReportPage() {
   const [expandedIssues, setExpandedIssues] = useState<Set<number>>(new Set())
   const [textSize, setTextSize] = useState(16)
   const [isGeneratingFix, setIsGeneratingFix] = useState(false)
+
+  const [enabledCategories, setEnabledCategories] = useState<Record<string, boolean>>({
+    spelling_grammar: true,
+    quantified_achievements: true,
+    action_verbs: true,
+    contact_info: true,
+    career_gaps: true,
+    cv_length: true,
+    formatting: true,
+    keywords_skills: true,
+    career_narrative: true
+  })
+
+  const handleCategoryToggle = (categoryId: string, enabled: boolean) => {
+    setEnabledCategories(prev => ({
+      ...prev,
+      [categoryId]: enabled
+    }))
+  }
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -94,9 +115,25 @@ export function CVReportPage() {
     fetchReport()
   }, [scanId, navigate])
 
-  const filteredIssues = reportData?.issues.filter(issue =>
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
+    reportData?.issues.forEach(issue => {
+      const categoryId = mapIssueCategoryToId(issue.category)
+      counts[categoryId] = (counts[categoryId] || 0) + 1
+    })
+    return counts
+  }, [reportData?.issues])
+
+  const categoryFilteredIssues = useMemo(() => {
+    return reportData?.issues.filter(issue => {
+      const categoryId = mapIssueCategoryToId(issue.category)
+      return enabledCategories[categoryId] !== false
+    }) || []
+  }, [reportData?.issues, enabledCategories])
+
+  const filteredIssues = categoryFilteredIssues.filter(issue =>
     severityFilter === 'all' || issue.severity === severityFilter
-  ) || []
+  )
 
   const groupedIssues: Record<string, Issue[]> = {
     critical: filteredIssues.filter(i => i.severity === 'critical'),
@@ -182,9 +219,17 @@ export function CVReportPage() {
             CV Analysis Report
           </h1>
           <p className="text-gray-600">
-            {reportData.total_issues} issues found across {uniqueCategories.size} categories
+            {reportData.total_issues} improvement opportunities found across {uniqueCategories.size} categories
           </p>
         </div>
+
+        <CategoryFilterPanel
+          categoryCounts={categoryCounts}
+          enabledCategories={enabledCategories}
+          onCategoryToggle={handleCategoryToggle}
+          totalSuggestions={reportData.issues.length}
+          visibleSuggestions={categoryFilteredIssues.length}
+        />
 
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
           <p className="text-sm text-gray-600 mb-3 flex items-center">
@@ -212,7 +257,7 @@ export function CVReportPage() {
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
           <p className="text-sm text-gray-600 mb-3 flex items-center">
             <Filter size={16} className="mr-2" />
-            Filter by severity
+            Filter by priority
           </p>
           <div className="flex flex-wrap gap-2">
             {SEVERITY_FILTERS.map(filter => (
@@ -304,7 +349,7 @@ export function CVReportPage() {
                   <h2 className={`font-bold ${section.textColor}`}>
                     {section.label}
                   </h2>
-                  <span className="text-gray-500">• {sectionIssues.length} issue{sectionIssues.length !== 1 ? 's' : ''}</span>
+                  <span className="text-gray-500">({sectionIssues.length} suggestion{sectionIssues.length !== 1 ? 's' : ''})</span>
                 </div>
 
                 <div className="space-y-3">
@@ -378,12 +423,12 @@ export function CVReportPage() {
 
         {filteredIssues.length === 0 && (
           <div className="text-center py-12 bg-gray-50 rounded-lg">
-            <p className="text-gray-500">No issues found matching your filter.</p>
+            <p className="text-gray-500">No suggestions found matching your filter.</p>
             <button
               onClick={() => setSeverityFilter('all')}
               className="mt-4 text-blue-600 hover:underline"
             >
-              Show all issues
+              Show all suggestions
             </button>
           </div>
         )}
