@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { isAuthenticated } from '@/lib/auth'
 import { Loader2, List, Lightbulb, BookOpen, ChevronDown, ChevronUp, ChevronRight, Star, Filter } from 'lucide-react'
-import { StandardToolbar } from './StandardToolbar'
+import { StandardToolbar } from './common'
 
 type DepthLevel = 'quick_review' | 'with_example' | 'with_insights' | 'complete_guide'
 

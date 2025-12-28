@@ -1,0 +1,374 @@
+# Replit Prompt: Create Standard Toolbar as Reusable Component
+
+**Task:** Create a single, reusable Standard Toolbar component and use it across all services
+**Priority:** 🔴 Critical
+**Estimated Effort:** 2-3 hours
+
+---
+
+## ⚠️ CRITICAL PRINCIPLE
+
+**Single Source of Truth:** The toolbar code must exist in ONE place only. Every service imports and uses the same component. Changes to the toolbar automatically apply everywhere.
+
+---
+
+## OVERVIEW
+
+### Current Problem:
+- Each service creates its own toolbar
+- Toolbars look different across services
+- Changes require updating multiple files
+- Inconsistent user experience
+
+### Solution:
+- Create ONE `StandardToolbar` component
+- Import it into every service that needs it
+- Pass service-specific handlers as props
+
+---
+
+## TASK 1: Create the Standard Toolbar Component
+
+### File: Create `client/src/components/common/StandardToolbar.tsx`
+
+```tsx
+import { useState } from 'react';
+
+interface StandardToolbarProps {
+  // Expand/Collapse handlers
+  onExpandAll: () => void;
+  onCollapseAll: () => void;
+  
+  // Share handlers
+  onEmail?: () => void;
+  onWhatsApp?: () => void;
+  
+  // Export handlers
+  onExportPDF?: () => void;
+  onExportWord?: () => void;
+  onExportMarkdown?: () => void;
+  
+  // Optional: hide certain buttons
+  showEmail?: boolean;
+  showWhatsApp?: boolean;
+  showPDF?: boolean;
+  showWord?: boolean;
+  showMarkdown?: boolean;
+}
+
+export default function StandardToolbar({
+  onExpandAll,
+  onCollapseAll,
+  onEmail,
+  onWhatsApp,
+  onExportPDF,
+  onExportWord,
+  onExportMarkdown,
+  showEmail = true,
+  showWhatsApp = true,
+  showPDF = true,
+  showWord = true,
+  showMarkdown = true
+}: StandardToolbarProps) {
+  return (
+    <div 
+      className="flex items-center justify-between px-4 py-2 rounded-lg"
+      style={{ backgroundColor: '#1E3A5F' }}
+    >
+      {/* LEFT: Expand/Collapse */}
+      <div className="flex items-center gap-1">
+        <button
+          onClick={onExpandAll}
+          title="Expand All"
+          className="text-white text-2xl font-bold px-3 py-1 hover:bg-white/20 rounded transition-colors"
+        >
+          +
+        </button>
+        <button
+          onClick={onCollapseAll}
+          title="Collapse All"
+          className="text-white text-2xl font-bold px-3 py-1 hover:bg-white/20 rounded transition-colors"
+        >
+          −
+        </button>
+      </div>
+
+      {/* Separator */}
+      <div className="text-white/50 mx-2">│</div>
+
+      {/* MIDDLE: Flexible space */}
+      <div className="flex-grow"></div>
+
+      {/* Separator */}
+      <div className="text-white/50 mx-2">│</div>
+
+      {/* RIGHT: Share options */}
+      <div className="flex items-center gap-3">
+        {showEmail && onEmail && (
+          <button
+            onClick={onEmail}
+            className="text-white hover:bg-white/20 px-3 py-1 rounded transition-colors text-sm font-medium"
+          >
+            Email
+          </button>
+        )}
+        {showWhatsApp && onWhatsApp && (
+          <button
+            onClick={onWhatsApp}
+            className="text-white hover:bg-white/20 px-3 py-1 rounded transition-colors text-sm font-medium"
+          >
+            WhatsApp
+          </button>
+        )}
+      </div>
+
+      {/* Separator (only if share options exist) */}
+      {(showEmail || showWhatsApp) && (showPDF || showWord || showMarkdown) && (
+        <div className="text-white/50 mx-2">│</div>
+      )}
+
+      {/* FAR RIGHT: Document downloads */}
+      <div className="flex items-center gap-2">
+        {showPDF && onExportPDF && (
+          <button
+            onClick={onExportPDF}
+            className="text-white bg-white/10 hover:bg-white/20 px-3 py-1 rounded transition-colors text-sm font-medium"
+          >
+            PDF
+          </button>
+        )}
+        {showWord && onExportWord && (
+          <button
+            onClick={onExportWord}
+            className="text-white bg-white/10 hover:bg-white/20 px-3 py-1 rounded transition-colors text-sm font-medium"
+          >
+            WORD
+          </button>
+        )}
+        {showMarkdown && onExportMarkdown && (
+          <button
+            onClick={onExportMarkdown}
+            title="Download as Markdown"
+            className="text-white bg-white/10 hover:bg-white/20 px-3 py-1 rounded transition-colors text-sm font-medium"
+          >
+            MD
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+```
+
+---
+
+## TASK 2: Create Export Index for Common Components
+
+### File: Create or update `client/src/components/common/index.ts`
+
+```typescript
+export { default as StandardToolbar } from './StandardToolbar';
+
+// Future common components will be added here:
+// export { default as StandardModal } from './StandardModal';
+// export { default as StandardCard } from './StandardCard';
+```
+
+---
+
+## TASK 3: Update CV Optimizer Report Page
+
+### File: Update `client/src/pages/CVReportPage.tsx`
+
+**1. Add import:**
+
+```tsx
+import { StandardToolbar } from '../components/common';
+```
+
+**2. Add handlers:**
+
+```tsx
+// Expand/Collapse handlers
+const handleExpandAll = () => {
+  // Expand all issue cards
+  const allIssueIds = new Set(filteredIssues.map(i => i.id));
+  setExpandedIssues(allIssueIds);
+};
+
+const handleCollapseAll = () => {
+  // Collapse all issue cards
+  setExpandedIssues(new Set());
+};
+
+// Email handler
+const handleEmail = () => {
+  // TODO: Implement email share modal
+  console.log('Email share');
+};
+
+// WhatsApp handler
+const handleWhatsApp = () => {
+  const message = encodeURIComponent(
+    `Check out my CV analysis from GetHiredAlly!\n${window.location.href}`
+  );
+  window.open(`https://wa.me/?text=${message}`, '_blank');
+};
+
+// PDF export handler
+const handleExportPDF = async () => {
+  // TODO: Implement PDF generation
+  console.log('Export PDF');
+};
+
+// Word export handler
+const handleExportWord = async () => {
+  // TODO: Implement Word generation
+  console.log('Export Word');
+};
+```
+
+**3. Add toolbar to JSX (before the report content):**
+
+```tsx
+{/* Standard Toolbar */}
+<StandardToolbar
+  onExpandAll={handleExpandAll}
+  onCollapseAll={handleCollapseAll}
+  onEmail={handleEmail}
+  onWhatsApp={handleWhatsApp}
+  onExportPDF={handleExportPDF}
+  onExportWord={handleExportWord}
+  showMarkdown={false}  // Hide MD for CV Optimizer
+/>
+```
+
+**4. Remove any old/duplicate toolbar code.**
+
+---
+
+## TASK 4: Update Other Services to Use Standard Toolbar
+
+### For each service that has a toolbar:
+
+1. **X-Ray Analyzer Report** - Import and use StandardToolbar
+2. **Interview Questions Results** - Import and use StandardToolbar
+3. **Any other service with export functionality**
+
+**Example for X-Ray Analyzer:**
+
+```tsx
+import { StandardToolbar } from '../components/common';
+
+// In the component:
+<StandardToolbar
+  onExpandAll={() => setAllExpanded(true)}
+  onCollapseAll={() => setAllExpanded(false)}
+  onEmail={handleEmail}
+  onWhatsApp={handleWhatsApp}
+  onExportPDF={handleExportPDF}
+  onExportWord={handleExportWord}
+  onExportMarkdown={handleExportMarkdown}
+/>
+```
+
+---
+
+## TASK 5: Remove Old Toolbar Code
+
+Search the codebase for any duplicate toolbar implementations and remove them:
+
+1. Search for files containing toolbar-like code
+2. Replace with StandardToolbar import
+3. Delete old toolbar components
+
+**Files to check:**
+- `CVReportPage.tsx`
+- `XRayAnalyzerReport.tsx`
+- `InterviewQuestionsResults.tsx`
+- Any component with PDF/Word/Email buttons
+
+---
+
+## TOOLBAR SPECIFICATIONS (Reference)
+
+### Visual Layout
+
+```
+┌────────────────────────────────────────────────────────────────────────────┐
+│ [+] [−]  │  [         SPACE         ]  │  Email  WhatsApp  │  PDF  WORD  MD │
+└────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Styling
+
+| Property | Value |
+|----------|-------|
+| Background | Navy Blue (#1E3A5F) |
+| Text/Icons | White |
+| Height | ONE line only |
+| Separators | White with 50% opacity (`│`) |
+| Button Hover | `bg-white/20` |
+| Export Buttons | Slight background (`bg-white/10`) |
+
+### Button Functions
+
+| Button | Action |
+|--------|--------|
+| **+** | Expand all collapsible sections |
+| **−** | Collapse all collapsible sections |
+| **Email** | Open email share modal |
+| **WhatsApp** | Open WhatsApp with pre-filled message |
+| **PDF** | Download report as PDF |
+| **WORD** | Download report as DOCX |
+| **MD** | Download report as Markdown |
+
+---
+
+## VERIFICATION CHECKLIST
+
+- [ ] StandardToolbar component created in `components/common/`
+- [ ] Component exported from `components/common/index.ts`
+- [ ] Navy blue background (#1E3A5F) with white text
+- [ ] +/− buttons are large (text-2xl, font-bold)
+- [ ] Separators visible between sections
+- [ ] Export buttons have slight background
+- [ ] CV Optimizer uses StandardToolbar
+- [ ] Old toolbar code removed from CV Optimizer
+- [ ] X-Ray Analyzer uses StandardToolbar (if applicable)
+- [ ] All toolbars now look identical across services
+
+---
+
+## FILE STRUCTURE
+
+After implementation:
+
+```
+client/src/
+  components/
+    common/
+      StandardToolbar.tsx (NEW - single source of truth)
+      index.ts (NEW or UPDATED)
+    cv-optimizer/
+      (no toolbar code here anymore)
+    xray-analyzer/
+      (no toolbar code here anymore)
+  pages/
+    CVReportPage.tsx (UPDATED - imports StandardToolbar)
+    XRayReport.tsx (UPDATED - imports StandardToolbar)
+```
+
+---
+
+## BENEFITS
+
+1. **Consistency** - All services have identical toolbar
+2. **Maintainability** - Change once, update everywhere
+3. **Less Code** - No duplicate toolbar implementations
+4. **Easier Updates** - Add new button = appears in all services
+5. **Professional** - Consistent UX across the application
+
+---
+
+**END OF PROMPT**

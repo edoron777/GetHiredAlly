@@ -2,9 +2,10 @@ import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import { 
   ArrowLeft, ChevronDown, ChevronRight, Filter,
-  Mail, MessageCircle, Zap, Wrench, HardHat
+  Zap, Wrench, HardHat
 } from 'lucide-react'
 import { isAuthenticated, getAuthToken } from '@/lib/auth'
+import { StandardToolbar } from './common'
 import CategoryFilterPanel from './cv-optimizer/CategoryFilterPanel'
 import StrengthsSection from './cv-optimizer/StrengthsSection'
 import EncouragementMessage from './cv-optimizer/EncouragementMessage'
@@ -175,6 +176,18 @@ export function CVReportPage() {
   const expandAll = () => setExpandedIssues(new Set(reportData?.issues.map(i => i.id) || []))
   const collapseAll = () => setExpandedIssues(new Set())
 
+  const handleExportPDF = async () => {
+    console.log('Export PDF - TODO')
+  }
+
+  const handleExportWord = async () => {
+    console.log('Export Word - TODO')
+  }
+
+  const handleExportMarkdown = async () => {
+    console.log('Export Markdown - TODO')
+  }
+
   const getFixDifficultyIcon = (difficulty: string) => {
     switch (difficulty) {
       case 'quick': return <Zap size={16} className="text-green-500" />
@@ -240,6 +253,15 @@ export function CVReportPage() {
             {reportData.total_issues} improvement opportunities found across {uniqueCategories.size} categories
           </p>
         </div>
+
+        <StandardToolbar
+          onExpandAll={expandAll}
+          onCollapseAll={collapseAll}
+          onPDF={handleExportPDF}
+          onWord={handleExportWord}
+          onMarkdown={handleExportMarkdown}
+          serviceName="CV Analysis Report"
+        />
 
         <StrengthsSection strengths={strengths} />
 
@@ -313,57 +335,22 @@ export function CVReportPage() {
           </div>
         )}
 
-        <div className="bg-white border border-gray-200 rounded-lg p-3 mb-6 flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setTextSize(prev => Math.max(prev - 2, 12))}
-              className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-lg hover:bg-gray-200 text-xl font-bold"
-              title="Decrease text size"
-            >
-              −
-            </button>
-            <button
-              onClick={() => setTextSize(prev => Math.min(prev + 2, 24))}
-              className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-lg hover:bg-gray-200 text-xl font-bold"
-              title="Increase text size"
-            >
-              +
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={expandAll}
-              className="px-3 py-2 text-sm text-gray-600 hover:text-gray-800"
-            >
-              Expand All
-            </button>
-            <span className="text-gray-300">|</span>
-            <button
-              onClick={collapseAll}
-              className="px-3 py-2 text-sm text-gray-600 hover:text-gray-800"
-            >
-              Collapse All
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button className="p-2 text-gray-500 hover:text-gray-700" title="Share via Email">
-              <Mail size={20} />
-            </button>
-            <button className="p-2 text-gray-500 hover:text-gray-700" title="Share via WhatsApp">
-              <MessageCircle size={20} />
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button className="px-3 py-1.5 text-sm bg-gray-100 rounded hover:bg-gray-200">
-              PDF
-            </button>
-            <button className="px-3 py-1.5 text-sm bg-gray-100 rounded hover:bg-gray-200">
-              DOCX
-            </button>
-          </div>
+        <div className="bg-white border border-gray-200 rounded-lg p-3 mb-6 flex items-center justify-center gap-3">
+          <span className="text-sm text-gray-500">Text Size:</span>
+          <button
+            onClick={() => setTextSize(prev => Math.max(prev - 2, 12))}
+            className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-lg hover:bg-gray-200 text-lg font-bold"
+            title="Decrease text size"
+          >
+            −
+          </button>
+          <button
+            onClick={() => setTextSize(prev => Math.min(prev + 2, 24))}
+            className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-lg hover:bg-gray-200 text-lg font-bold"
+            title="Increase text size"
+          >
+            +
+          </button>
         </div>
 
         {quickWinsCount > 0 && (
