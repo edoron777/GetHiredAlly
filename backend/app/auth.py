@@ -6,6 +6,7 @@ import hashlib
 from datetime import datetime, timedelta
 import bcrypt
 import resend
+import httpx
 from pydantic import BaseModel, EmailStr, field_validator
 from fastapi import APIRouter, HTTPException, Request
 from supabase import create_client, Client
@@ -101,6 +102,15 @@ class VerifyEmailRequest(BaseModel):
 class VerifyEmailResponse(BaseModel):
     success: bool
     message: str
+
+class GoogleAuthRequest(BaseModel):
+    access_token: str
+
+class GoogleAuthResponse(BaseModel):
+    success: bool
+    message: str
+    token: str | None = None
+    user: dict | None = None
 
 def hash_password(password: str) -> str:
     salt = bcrypt.gensalt()
@@ -392,6 +402,129 @@ async def login_user(request: Request, data: LoginRequest):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Login failed: {str(e)}")
+
+@router.post("/google", response_model=GoogleAuthResponse)
+async def google_auth(request: Request, data: GoogleAuthRequest):
+    client = get_supabase_client()
+    if not client:
+        raise HTTPException(status_code=500, detail="Database connection not available")
+    
+    ip_address = request.client.host if request.client else "unknown"
+    
+    try:
+        async with httpx.AsyncClient() as http_client:
+            google_response = await http_client.get(
+                'https://www.googleapis.com/oauth2/v2/userinfo',
+                headers={'Authorization': f'Bearer {data.access_token}'}
+            )
+        
+        if google_response.status_code != 200:
+            raise HTTPException(status_code=401, detail="Invalid Google token")
+        
+        google_user = google_response.json()
+        google_id = google_user.get('id')
+        email = google_user.get('email')
+        name = google_user.get('name')
+        picture = google_user.get('picture')
+        
+        if not email or not google_id:
+            raise HTTPException(status_code=400, detail="Could not get user info from Google")
+        
+        user = None
+        user_result = client.table("users").select("*").eq("google_id", google_id).execute()
+        
+        if user_result.data and len(user_result.data) > 0:
+            user = user_result.data[0]
+        else:
+            email_result = client.table("users").select("*").eq("email", email.lower()).execute()
+            
+            if email_result.data and len(email_result.data) > 0:
+                user = email_result.data[0]
+                update_data = {
+                    "google_id": google_id,
+                    "is_verified": True
+                }
+                if picture and not user.get("profile_picture_url"):
+                    update_data["profile_picture_url"] = picture
+                if not user.get("auth_provider"):
+                    update_data["auth_provider"] = "google"
+                
+                client.table("users").update(update_data).eq("id", user["id"]).execute()
+                user.update(update_data)
+            else:
+                profile_result = client.table("user_profiles").select("id").eq("profile_name", "standard").execute()
+                if not profile_result.data or len(profile_result.data) == 0:
+                    raise HTTPException(status_code=500, detail="Default user profile not found")
+                
+                default_profile_id = profile_result.data[0]["id"]
+                
+                new_user_data = {
+                    "email": email.lower(),
+                    "name": name,
+                    "google_id": google_id,
+                    "auth_provider": "google",
+                    "profile_picture_url": picture,
+                    "is_verified": True,
+                    "is_admin": False,
+                    "profile_id": default_profile_id
+                }
+                
+                result = client.table("users").insert(new_user_data).execute()
+                if result.data and len(result.data) > 0:
+                    user = result.data[0]
+                else:
+                    raise HTTPException(status_code=500, detail="Failed to create user account")
+        
+        session_token = generate_session_token()
+        token_hash = hash_token(session_token)
+        expires_at = datetime.utcnow() + timedelta(days=SESSION_EXPIRY_DAYS)
+        
+        session_data = {
+            "user_id": user["id"],
+            "token_hash": token_hash,
+            "expires_at": expires_at.isoformat()
+        }
+        client.table("user_sessions").insert(session_data).execute()
+        
+        client.table("users").update({"last_login": datetime.utcnow().isoformat()}).eq("id", user["id"]).execute()
+        
+        profile_name = None
+        if user.get("profile_id"):
+            profile_result = client.table("user_profiles").select("profile_name").eq("id", user["profile_id"]).execute()
+            if profile_result.data and len(profile_result.data) > 0:
+                profile_name = profile_result.data[0]["profile_name"]
+        
+        AuditLogger.log_login_attempt(
+            email=email,
+            success=True,
+            ip_address=ip_address
+        )
+        
+        return GoogleAuthResponse(
+            success=True,
+            message="Google sign-in successful!",
+            token=session_token,
+            user={
+                "id": user["id"],
+                "email": user["email"],
+                "name": user.get("name"),
+                "profile_name": profile_name,
+                "profile_picture_url": user.get("profile_picture_url"),
+                "is_verified": True,
+                "is_admin": user.get("is_admin", False)
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        AuditLogger.log_login_attempt(
+            email="google_auth",
+            success=False,
+            ip_address=ip_address,
+            reason=str(e)
+        )
+        raise HTTPException(status_code=500, detail=f"Google authentication failed: {str(e)}")
 
 @router.post("/logout", response_model=LogoutResponse)
 async def logout_user(request: LogoutRequest):

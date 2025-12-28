@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { GoogleSignInButton, OrDivider } from './common'
 
 interface FormErrors {
   email?: string
@@ -85,6 +86,23 @@ export function LoginPage() {
     }
   }
 
+  const handleGoogleSuccess = async (token: string, user: { id: string; email: string; name: string; profile_picture_url?: string }) => {
+    const { setAuth } = await import('@/lib/auth')
+    setAuth(token, {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      profile_name: 'standard',
+      is_verified: true,
+      is_admin: false
+    })
+    navigate('/')
+  }
+
+  const handleGoogleError = (error: string) => {
+    setErrors({ general: error })
+  }
+
   const isFormValid = formData.email.trim() && formData.password
 
   return (
@@ -105,6 +123,13 @@ export function LoginPage() {
               <p className="text-red-800 text-sm text-center">{errors.general}</p>
             </div>
           )}
+
+          <GoogleSignInButton 
+            onSuccess={handleGoogleSuccess}
+            onError={handleGoogleError}
+          />
+
+          <OrDivider />
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
