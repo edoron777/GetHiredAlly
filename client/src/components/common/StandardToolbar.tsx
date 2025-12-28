@@ -15,16 +15,14 @@
 //   serviceName="CV Analysis Report"
 // />
 //
+// FLEXIBLE OPTIONS:
+// - showEmail, showWhatsApp, showPDF, showWord, showMarkdown (default: true)
+// - Set to false to hide specific buttons
+// - onEmail, onWhatsApp for custom handlers (optional)
+//
 // DO NOT copy this code into other files!
 // DO NOT create alternative toolbar components!
 // If you need changes, modify THIS file only.
-//
-// FEATURES:
-// - Expand/Collapse all buttons
-// - Email sharing with pre-filled message
-// - WhatsApp sharing
-// - PDF/Word/Markdown export with loading states
-// - Navy blue (#1E3A5F) background
 //
 // ===========================================
 
@@ -34,27 +32,44 @@ import { Loader2, Mail, MessageCircle, FileDown } from 'lucide-react'
 interface StandardToolbarProps {
   onExpandAll: () => void
   onCollapseAll: () => void
-  onPDF: () => Promise<void>
-  onWord: () => Promise<void>
-  onMarkdown: () => Promise<void>
   serviceName: string
   shareUrl?: string
+
+  onEmail?: () => void
+  onWhatsApp?: () => void
+  onPDF?: () => Promise<void>
+  onWord?: () => Promise<void>
+  onMarkdown?: () => Promise<void>
+
+  showEmail?: boolean
+  showWhatsApp?: boolean
+  showPDF?: boolean
+  showWord?: boolean
+  showMarkdown?: boolean
 }
 
 export function StandardToolbar({
   onExpandAll,
   onCollapseAll,
+  serviceName,
+  shareUrl,
+  onEmail,
+  onWhatsApp,
   onPDF,
   onWord,
   onMarkdown,
-  serviceName,
-  shareUrl
+  showEmail = true,
+  showWhatsApp = true,
+  showPDF = true,
+  showWord = true,
+  showMarkdown = true
 }: StandardToolbarProps) {
   const [downloadingPdf, setDownloadingPdf] = useState(false)
   const [downloadingDocx, setDownloadingDocx] = useState(false)
   const [downloadingMd, setDownloadingMd] = useState(false)
 
   const handlePDF = async () => {
+    if (!onPDF) return
     setDownloadingPdf(true)
     try {
       await onPDF()
@@ -64,6 +79,7 @@ export function StandardToolbar({
   }
 
   const handleWord = async () => {
+    if (!onWord) return
     setDownloadingDocx(true)
     try {
       await onWord()
@@ -73,6 +89,7 @@ export function StandardToolbar({
   }
 
   const handleMarkdown = async () => {
+    if (!onMarkdown) return
     setDownloadingMd(true)
     try {
       await onMarkdown()
@@ -81,7 +98,7 @@ export function StandardToolbar({
     }
   }
 
-  const handleEmail = () => {
+  const defaultEmailHandler = () => {
     const subject = encodeURIComponent(`${serviceName} - GetHiredAlly`)
     const body = encodeURIComponent(
       `Check out my interview preparation from GetHiredAlly!\n\n${shareUrl || window.location.href}\n\nPrepare for your interview: https://gethiredally.com/`
@@ -89,12 +106,24 @@ export function StandardToolbar({
     window.open(`mailto:?subject=${subject}&body=${body}`, '_blank')
   }
 
-  const handleWhatsApp = () => {
+  const defaultWhatsAppHandler = () => {
     const message = encodeURIComponent(
       `Check out my interview preparation from GetHiredAlly! ${shareUrl || window.location.href}`
     )
     window.open(`https://wa.me/?text=${message}`, '_blank')
   }
+
+  const handleEmail = onEmail || defaultEmailHandler
+  const handleWhatsApp = onWhatsApp || defaultWhatsAppHandler
+
+  const shouldShowEmail = showEmail
+  const shouldShowWhatsApp = showWhatsApp
+  const shouldShowPDF = showPDF && onPDF
+  const shouldShowWord = showWord && onWord
+  const shouldShowMarkdown = showMarkdown && onMarkdown
+
+  const hasShareButtons = shouldShowEmail || shouldShowWhatsApp
+  const hasExportButtons = shouldShowPDF || shouldShowWord || shouldShowMarkdown
 
   const buttonStyle = {
     color: 'white',
@@ -168,81 +197,97 @@ export function StandardToolbar({
 
       <div style={{ flexGrow: 1 }}></div>
 
-      <span style={separatorStyle}>│</span>
+      {hasShareButtons && (
+        <>
+          <span style={separatorStyle}>│</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            {shouldShowEmail && (
+              <button
+                type="button"
+                onClick={handleEmail}
+                style={buttonStyle}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                <Mail className="h-4 w-4" />
+                Email
+              </button>
+            )}
+            {shouldShowWhatsApp && (
+              <button
+                type="button"
+                onClick={handleWhatsApp}
+                style={buttonStyle}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                <MessageCircle className="h-4 w-4" />
+                WhatsApp
+              </button>
+            )}
+          </div>
+        </>
+      )}
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-        <button
-          type="button"
-          onClick={handleEmail}
-          style={buttonStyle}
-          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)'}
-          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-        >
-          <Mail className="h-4 w-4" />
-          Email
-        </button>
-        <button
-          type="button"
-          onClick={handleWhatsApp}
-          style={buttonStyle}
-          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)'}
-          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-        >
-          <MessageCircle className="h-4 w-4" />
-          WhatsApp
-        </button>
-      </div>
-
-      <span style={separatorStyle}>│</span>
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-        <button
-          type="button"
-          disabled={downloadingPdf}
-          onClick={handlePDF}
-          style={{
-            ...buttonStyle,
-            opacity: downloadingPdf ? 0.6 : 1,
-            cursor: downloadingPdf ? 'not-allowed' : 'pointer'
-          }}
-          onMouseEnter={(e) => !downloadingPdf && (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)')}
-          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-        >
-          {downloadingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
-          PDF
-        </button>
-        <button
-          type="button"
-          disabled={downloadingDocx}
-          onClick={handleWord}
-          style={{
-            ...buttonStyle,
-            opacity: downloadingDocx ? 0.6 : 1,
-            cursor: downloadingDocx ? 'not-allowed' : 'pointer'
-          }}
-          onMouseEnter={(e) => !downloadingDocx && (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)')}
-          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-        >
-          {downloadingDocx ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
-          WORD
-        </button>
-        <button
-          type="button"
-          title="Download as Markdown"
-          disabled={downloadingMd}
-          onClick={handleMarkdown}
-          style={{
-            ...buttonStyle,
-            opacity: downloadingMd ? 0.6 : 1,
-            cursor: downloadingMd ? 'not-allowed' : 'pointer'
-          }}
-          onMouseEnter={(e) => !downloadingMd && (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)')}
-          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-        >
-          {downloadingMd ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
-          MD
-        </button>
-      </div>
+      {hasExportButtons && (
+        <>
+          <span style={separatorStyle}>│</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            {shouldShowPDF && (
+              <button
+                type="button"
+                disabled={downloadingPdf}
+                onClick={handlePDF}
+                style={{
+                  ...buttonStyle,
+                  opacity: downloadingPdf ? 0.6 : 1,
+                  cursor: downloadingPdf ? 'not-allowed' : 'pointer'
+                }}
+                onMouseEnter={(e) => !downloadingPdf && (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)')}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                {downloadingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
+                PDF
+              </button>
+            )}
+            {shouldShowWord && (
+              <button
+                type="button"
+                disabled={downloadingDocx}
+                onClick={handleWord}
+                style={{
+                  ...buttonStyle,
+                  opacity: downloadingDocx ? 0.6 : 1,
+                  cursor: downloadingDocx ? 'not-allowed' : 'pointer'
+                }}
+                onMouseEnter={(e) => !downloadingDocx && (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)')}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                {downloadingDocx ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
+                WORD
+              </button>
+            )}
+            {shouldShowMarkdown && (
+              <button
+                type="button"
+                title="Download as Markdown"
+                disabled={downloadingMd}
+                onClick={handleMarkdown}
+                style={{
+                  ...buttonStyle,
+                  opacity: downloadingMd ? 0.6 : 1,
+                  cursor: downloadingMd ? 'not-allowed' : 'pointer'
+                }}
+                onMouseEnter={(e) => !downloadingMd && (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)')}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                {downloadingMd ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
+                MD
+              </button>
+            )}
+          </div>
+        </>
+      )}
     </div>
   )
 }
