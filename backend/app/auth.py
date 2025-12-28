@@ -33,7 +33,7 @@ def get_base_url() -> str:
 
 def get_supabase_client() -> Client | None:
     url = os.environ.get("SUPABASE_URL")
-    key = os.environ.get("SUPABASE_ANON_KEY")
+    key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
     if url and key:
         return create_client(url, key)
     return None

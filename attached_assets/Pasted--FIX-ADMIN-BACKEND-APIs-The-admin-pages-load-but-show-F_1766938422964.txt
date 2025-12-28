@@ -1,0 +1,80 @@
+## FIX ADMIN BACKEND APIs
+
+The admin pages load but show "Failed to fetch" errors.
+The problem is in the BACKEND, not frontend.
+
+### Step 1: Show me the admin routes file
+
+Find and show me the complete admin.py or admin routes file.
+Where are these endpoints defined?
+- /api/admin/stats
+- /api/admin/users
+
+### Step 2: Check if endpoints exist
+
+If they DON'T exist, create them:
+```python
+# server/routes/admin.py
+
+from fastapi import APIRouter, Depends, HTTPException
+from server.utils.supabase_client import get_supabase_client
+from server.routes.auth import get_current_user
+
+router = APIRouter(prefix="/api/admin", tags=["admin"])
+
+def require_admin(current_user: dict = Depends(get_current_user)):
+    if not current_user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return current_user
+
+@router.get("/stats")
+async def get_admin_stats(current_user: dict = Depends(require_admin)):
+    client = get_supabase_client()
+    try:
+        # Count users
+        users_result = client.table("users").select("id", count="exact").execute()
+        total_users = users_result.count if users_result.count else len(users_result.data or [])
+        
+        # AI usage (may not exist yet)
+        try:
+            ai_result = client.table("ai_usage_logs").select("cost_usd").execute()
+            total_ai_calls = len(ai_result.data or [])
+            total_cost = sum(float(r.get("cost_usd") or 0) for r in (ai_result.data or []))
+        except:
+            total_ai_calls = 0
+            total_cost = 0
+        
+        return {
+            "total_users": total_users,
+            "total_ai_calls": total_ai_calls,
+            "total_cost": round(total_cost, 4),
+            "new_users_this_week": 0
+        }
+    except Exception as e:
+        print(f"Stats error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/users")
+async def get_admin_users(current_user: dict = Depends(require_admin)):
+    client = get_supabase_client()
+    try:
+        result = client.table("users").select("id, email, name, is_admin, role, is_verified, created_at").order("created_at", desc=True).execute()
+        return {"users": result.data or []}
+    except Exception as e:
+        print(f"Users error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+```
+
+### Step 3: Make sure router is registered
+
+In server/main.py or __init__.py, check that admin router is included:
+```python
+from server.routes.admin import router as admin_router
+app.include_router(admin_router)
+```
+
+### Step 4: Check backend logs
+
+After making changes, look at the Console tab for any errors when accessing /admin/users
+
+### Show me what you find and fix!
