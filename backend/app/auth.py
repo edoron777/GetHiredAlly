@@ -7,6 +7,8 @@ from datetime import datetime, timedelta
 import bcrypt
 import resend
 import httpx
+import psycopg2
+from psycopg2.extras import RealDictCursor
 from pydantic import BaseModel, EmailStr, field_validator
 from fastapi import APIRouter, HTTPException, Request
 from supabase import create_client, Client
@@ -37,6 +39,30 @@ def get_supabase_client() -> Client | None:
     if url and key:
         return create_client(url, key)
     return None
+
+def get_db_connection():
+    database_url = os.environ.get("DATABASE_URL")
+    if not database_url:
+        raise HTTPException(status_code=500, detail="Database not configured")
+    return psycopg2.connect(database_url)
+
+def save_session_to_db(user_id: str, token_hash: str, expires_at: datetime) -> bool:
+    """Save session using direct database connection (more reliable than Supabase client)"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            """INSERT INTO user_sessions (user_id, token_hash, expires_at) 
+               VALUES (%s, %s, %s)""",
+            (user_id, token_hash, expires_at)
+        )
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return True
+    except Exception as e:
+        print(f"Session save error: {e}")
+        return False
 
 class RegisterRequest(BaseModel):
     name: str
@@ -369,12 +395,8 @@ async def login_user(request: Request, data: LoginRequest):
         token_hash = hash_token(session_token)
         expires_at = datetime.utcnow() + timedelta(days=SESSION_EXPIRY_DAYS)
         
-        session_data = {
-            "user_id": user["id"],
-            "token_hash": token_hash,
-            "expires_at": expires_at.isoformat()
-        }
-        client.table("user_sessions").insert(session_data).execute()
+        if not save_session_to_db(user["id"], token_hash, expires_at):
+            raise HTTPException(status_code=500, detail="Failed to create session")
         
         client.table("users").update({"last_login": datetime.utcnow().isoformat()}).eq("id", user["id"]).execute()
         
@@ -479,12 +501,8 @@ async def google_auth(request: Request, data: GoogleAuthRequest):
         token_hash = hash_token(session_token)
         expires_at = datetime.utcnow() + timedelta(days=SESSION_EXPIRY_DAYS)
         
-        session_data = {
-            "user_id": user["id"],
-            "token_hash": token_hash,
-            "expires_at": expires_at.isoformat()
-        }
-        client.table("user_sessions").insert(session_data).execute()
+        if not save_session_to_db(user["id"], token_hash, expires_at):
+            raise HTTPException(status_code=500, detail="Failed to create session")
         
         client.table("users").update({"last_login": datetime.utcnow().isoformat()}).eq("id", user["id"]).execute()
         
