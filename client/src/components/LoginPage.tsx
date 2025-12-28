@@ -86,7 +86,7 @@ export function LoginPage() {
     }
   }
 
-  const handleGoogleSuccess = async (token: string, user: { id: string; email: string; name: string; profile_picture_url?: string }) => {
+  const handleGoogleSuccess = async (token: string, user: { id: string; email: string; name: string; profile_picture_url?: string; is_admin?: boolean }) => {
     const { setAuth } = await import('@/lib/auth')
     setAuth(token, {
       id: user.id,
@@ -94,7 +94,7 @@ export function LoginPage() {
       name: user.name,
       profile_name: 'standard',
       is_verified: true,
-      is_admin: false
+      is_admin: user.is_admin || false
     })
     navigate('/')
   }
