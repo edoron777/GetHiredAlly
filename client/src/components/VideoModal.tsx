@@ -55,11 +55,14 @@ export function VideoModal({ isOpen, onClose, videoUrl, title }: VideoModalProps
       />
 
       <div
-        className={`relative z-10 mx-4 transition-all duration-300 ease-out ${
-          isExpanded 
-            ? 'w-[90vw] h-[80vh]' 
-            : 'w-full max-w-3xl'
-        }`}
+        className="relative z-10 mx-4 transition-all duration-300 ease-out"
+        style={isExpanded ? {
+          width: '90vw',
+          maxWidth: 'none'
+        } : {
+          width: '100%',
+          maxWidth: '896px'
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className={`flex items-center justify-between px-4 py-3 rounded-t-lg transition-colors ${
@@ -95,13 +98,18 @@ export function VideoModal({ isOpen, onClose, videoUrl, title }: VideoModalProps
         </div>
 
         <div
-          className={`relative bg-black overflow-hidden transition-all duration-300 ${
-            isExpanded ? 'rounded-b-none h-[calc(100%-100px)]' : 'rounded-b-lg'
-          }`}
-          style={isExpanded ? {} : { paddingBottom: '56.25%' }}
+          className="relative bg-black overflow-hidden rounded-b-lg"
+          style={isExpanded ? {
+            width: '100%',
+            height: '80vh',
+          } : {
+            width: '100%',
+            paddingBottom: '56.25%',
+            height: 0,
+          }}
         >
           <iframe
-            className="absolute inset-0 w-full h-full"
+            className="absolute top-0 left-0 w-full h-full"
             src={isOpen ? `${videoUrl}?rel=0&modestbranding=1` : ''}
             title={title || 'Tutorial video'}
             frameBorder="0"
