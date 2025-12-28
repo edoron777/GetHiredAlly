@@ -1,11 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 const GRID_ROWS = 12
 const GRID_COLS = 40
 
+type CellStatus = 'waiting' | 'scanning' | 'green' | 'yellow' | 'orange' | 'red' | 'fixing' | 'fixed'
+
 interface GridCell {
-  scanned: boolean
-  color: string
+  status: CellStatus
+  originalIssue?: 'yellow' | 'orange' | 'red'
 }
 
 interface Issues {
@@ -20,36 +22,38 @@ interface ScannerGridProps {
   issues: Issues
 }
 
-export function ScannerGrid({ scanProgress, issues }: ScannerGridProps) {
+export function ScannerGrid({ scanProgress }: ScannerGridProps) {
   const [grid, setGrid] = useState<GridCell[][]>([])
+  const [scanLineRow, setScanLineRow] = useState(-1)
+  const fixTimeouts = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
 
   useEffect(() => {
     const initialGrid: GridCell[][] = []
     for (let row = 0; row < GRID_ROWS; row++) {
       const rowData: GridCell[] = []
       for (let col = 0; col < GRID_COLS; col++) {
-        rowData.push({
-          scanned: false,
-          color: 'gray'
-        })
+        rowData.push({ status: 'waiting' })
       }
       initialGrid.push(rowData)
     }
     setGrid(initialGrid)
+
+    return () => {
+      fixTimeouts.current.forEach(timeout => clearTimeout(timeout))
+    }
   }, [])
 
   useEffect(() => {
     const totalCells = GRID_ROWS * GRID_COLS
     const scannedCells = Math.floor((scanProgress / 100) * totalCells)
+    const currentRow = Math.floor(scannedCells / GRID_COLS)
+    setScanLineRow(currentRow)
 
-    const getRandomColor = (): string => {
+    const getRandomStatus = (): CellStatus => {
       const random = Math.random()
-      const issueRatio = (issues.critical + issues.high + issues.medium + issues.low) / 50
-
-      if (random > 0.97 && issues.critical > 0) return 'red'
-      if (random > 0.94 && issues.high > 0) return 'orange'
-      if (random > 0.91 && issues.medium > 0) return 'yellow'
-      if (random > 0.88 && issues.low > 0) return 'lime'
+      if (random < 0.02) return 'red'
+      if (random < 0.07) return 'orange'
+      if (random < 0.15) return 'yellow'
       return 'green'
     }
 
@@ -61,10 +65,50 @@ export function ScannerGrid({ scanProgress, issues }: ScannerGridProps) {
       let cellCount = 0
       for (let row = 0; row < GRID_ROWS; row++) {
         for (let col = 0; col < GRID_COLS; col++) {
+          const cellKey = `${row}-${col}`
+          
           if (cellCount < scannedCells) {
-            if (!newGrid[row][col].scanned) {
-              newGrid[row][col].scanned = true
-              newGrid[row][col].color = getRandomColor()
+            if (newGrid[row][col].status === 'waiting') {
+              const isCurrentlyScanning = cellCount >= scannedCells - GRID_COLS
+              
+              if (isCurrentlyScanning && Math.random() > 0.7) {
+                newGrid[row][col].status = 'scanning'
+              } else {
+                const newStatus = getRandomStatus()
+                newGrid[row][col].status = newStatus
+                
+                if (newStatus === 'red' || newStatus === 'orange' || newStatus === 'yellow') {
+                  newGrid[row][col].originalIssue = newStatus
+                  
+                  if (!fixTimeouts.current.has(cellKey)) {
+                    const delay = 500 + Math.random() * 1000
+                    const timeout = setTimeout(() => {
+                      setGrid(g => {
+                        const updated = g.map(r => r.map(c => ({ ...c })))
+                        if (updated[row] && updated[row][col]) {
+                          updated[row][col].status = 'fixing'
+                          
+                          setTimeout(() => {
+                            setGrid(g2 => {
+                              const fixed = g2.map(r => r.map(c => ({ ...c })))
+                              if (fixed[row] && fixed[row][col]) {
+                                fixed[row][col].status = 'fixed'
+                              }
+                              return fixed
+                            })
+                          }, 200)
+                        }
+                        return updated
+                      })
+                      fixTimeouts.current.delete(cellKey)
+                    }, delay)
+                    fixTimeouts.current.set(cellKey, timeout)
+                  }
+                }
+              }
+            } else if (newGrid[row][col].status === 'scanning') {
+              const newStatus = getRandomStatus()
+              newGrid[row][col].status = newStatus
             }
           }
           cellCount++
@@ -73,34 +117,72 @@ export function ScannerGrid({ scanProgress, issues }: ScannerGridProps) {
 
       return newGrid
     })
-  }, [scanProgress, issues])
+  }, [scanProgress])
+
+  const getCellStyle = (_cell: GridCell, rowIndex: number): React.CSSProperties => {
+    const baseStyle: React.CSSProperties = {
+      transition: 'all 0.15s ease-out'
+    }
+
+    if (rowIndex === scanLineRow) {
+      baseStyle.boxShadow = '0 0 4px rgba(59, 130, 246, 0.8)'
+    }
+
+    return baseStyle
+  }
 
   const getCellColorClass = (cell: GridCell): string => {
-    if (!cell.scanned) return 'bg-gray-700'
-
-    switch (cell.color) {
-      case 'red': return 'bg-red-500'
-      case 'orange': return 'bg-orange-500'
-      case 'yellow': return 'bg-yellow-400'
-      case 'lime': return 'bg-lime-400'
-      case 'green': return 'bg-green-500'
-      default: return 'bg-gray-700'
+    switch (cell.status) {
+      case 'waiting':
+        return 'bg-gray-700'
+      case 'scanning':
+        return 'bg-blue-400 animate-pulse'
+      case 'green':
+        return 'bg-green-500'
+      case 'yellow':
+        return 'bg-yellow-400'
+      case 'orange':
+        return 'bg-orange-500'
+      case 'red':
+        return 'bg-red-500'
+      case 'fixing':
+        return 'bg-white animate-pulse'
+      case 'fixed':
+        return 'bg-green-400'
+      default:
+        return 'bg-gray-700'
     }
   }
 
   return (
-    <div className="bg-gray-900 p-4 rounded-lg">
+    <div className="bg-gray-900 p-4 rounded-lg relative overflow-hidden">
       <div 
         className="grid gap-[2px]" 
         style={{ gridTemplateColumns: `repeat(${GRID_COLS}, 1fr)` }}
       >
-        {grid.flat().map((cell, index) => (
-          <div
-            key={index}
-            className={`h-3 rounded-sm transition-colors duration-150 ${getCellColorClass(cell)}`}
-          />
-        ))}
+        {grid.flat().map((cell, index) => {
+          const rowIndex = Math.floor(index / GRID_COLS)
+          return (
+            <div
+              key={index}
+              className={`h-3 rounded-sm ${getCellColorClass(cell)}`}
+              style={getCellStyle(cell, rowIndex)}
+            />
+          )
+        })}
       </div>
+
+      {scanLineRow >= 0 && scanLineRow < GRID_ROWS && (
+        <div
+          className="absolute left-4 right-4 h-[2px] pointer-events-none"
+          style={{
+            top: `${16 + (scanLineRow * (12 + 2)) + 6}px`,
+            background: 'linear-gradient(90deg, transparent, #60a5fa, #3b82f6, #60a5fa, transparent)',
+            boxShadow: '0 0 8px #60a5fa, 0 0 16px #3b82f6',
+            animation: 'pulse 1s ease-in-out infinite'
+          }}
+        />
+      )}
 
       <div
         className="h-1 bg-blue-400 rounded mt-3 transition-all duration-300"
@@ -109,6 +191,37 @@ export function ScannerGrid({ scanProgress, issues }: ScannerGridProps) {
           boxShadow: '0 0 10px #60a5fa, 0 0 20px #60a5fa'
         }}
       />
+
+      <div className="flex justify-between mt-3 text-xs">
+        <div className="flex gap-3">
+          <span className="flex items-center gap-1">
+            <span className="w-3 h-3 rounded-sm bg-green-500"></span>
+            <span className="text-gray-400">OK</span>
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-3 h-3 rounded-sm bg-yellow-400"></span>
+            <span className="text-gray-400">Minor</span>
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-3 h-3 rounded-sm bg-orange-500"></span>
+            <span className="text-gray-400">Medium</span>
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-3 h-3 rounded-sm bg-red-500"></span>
+            <span className="text-gray-400">Critical</span>
+          </span>
+        </div>
+        <div className="flex gap-3">
+          <span className="flex items-center gap-1">
+            <span className="w-3 h-3 rounded-sm bg-blue-400 animate-pulse"></span>
+            <span className="text-gray-400">Scanning</span>
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-3 h-3 rounded-sm bg-gray-700"></span>
+            <span className="text-gray-400">Waiting</span>
+          </span>
+        </div>
+      </div>
     </div>
   )
 }

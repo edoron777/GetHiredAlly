@@ -10,8 +10,6 @@ interface VideoModalProps {
 
 export function VideoModal({ isOpen, onClose, videoUrl, title }: VideoModalProps) {
   const [isExpanded, setIsExpanded] = useState(false)
-  
-  console.log('VideoModal - isExpanded:', isExpanded, 'height should be:', isExpanded ? '80vh' : '0')
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
