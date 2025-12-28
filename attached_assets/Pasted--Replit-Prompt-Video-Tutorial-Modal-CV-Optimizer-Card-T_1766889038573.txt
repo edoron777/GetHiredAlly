@@ -1,0 +1,444 @@
+# Replit Prompt: Video Tutorial Modal - CV Optimizer Card
+
+**Task:** Add "Watch how it works" video link to CV Optimizer card with Lightbox modal
+**Priority:** 🟡 Enhancement
+**Estimated Effort:** 2-3 hours
+**Scope:** CV Optimizer card ONLY (trial run)
+
+---
+
+## ⚠️ CRITICAL INSTRUCTIONS
+
+- Add video link to **CV Optimizer card ONLY**
+- Do NOT add to other cards yet (this is a trial)
+- Create reusable VideoModal component for future use
+- **IMPORTANT:** Video must be clear enough for screenshots and tutorials
+
+---
+
+## SAMPLE VIDEO URL FOR TESTING
+
+Use this placeholder video for testing (professional CV tips video):
+
+```
+YouTube Video ID: Tt08KmFfIYQ
+Embed URL: https://www.youtube.com/embed/Tt08KmFfIYQ
+```
+
+**Note:** Replace with your own video later. This is just for testing the modal functionality.
+
+---
+
+## OVERVIEW
+
+Add a small "▶ Watch how it works" link below the CV Optimizer card button. When clicked, a Lightbox modal appears with an embedded YouTube video. User can toggle between normal and fullscreen (expanded) view.
+
+---
+
+## VISUAL DESIGN
+
+### Card with Video Link:
+
+```
+┌─────────────────────────────┐
+│           🔍               │
+│    Optimize Your CV         │
+│    CV Scanner               │
+│                             │
+│  Find hidden issues that    │
+│  hurt your chances          │
+│                             │
+│      [Get Started]          │
+│                             │
+│    ▶ Watch how it works     │  ← NEW: clickable link
+└─────────────────────────────┘
+```
+
+### Modal - Normal Size:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░│
+│░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░│
+│░░░░┌───────────────────────────────────────────────────┐░░░░│
+│░░░░│ How CV Optimizer Works              [⛶]      ✕  │░░░░│
+│░░░░├───────────────────────────────────────────────────┤░░░░│
+│░░░░│                                                   │░░░░│
+│░░░░│                                                   │░░░░│
+│░░░░│              ▶ YOUTUBE VIDEO                     │░░░░│
+│░░░░│                 (16:9 ratio)                      │░░░░│
+│░░░░│                                                   │░░░░│
+│░░░░│                                                   │░░░░│
+│░░░░└───────────────────────────────────────────────────┘░░░░│
+│░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░│
+│░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░│
+└─────────────────────────────────────────────────────────────┘
+  ░ = Dark overlay (click to close)
+  [⛶] = Expand button
+```
+
+### Modal - Fullscreen (Expanded):
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ How CV Optimizer Works                         [⛶]     ✕  │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│                                                             │
+│                                                             │
+│                                                             │
+│                    ▶ YOUTUBE VIDEO                         │
+│                      (FULLSCREEN)                           │
+│                                                             │
+│               Clear enough for screenshots!                 │
+│                                                             │
+│                                                             │
+│                                                             │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+  Video fills 95% of screen width
+  Perfect for tutorials and screen recordings
+```
+
+---
+
+## TASK 1: Create VideoModal Component
+
+### File: `components/VideoModal.jsx`
+
+```jsx
+import { useState, useEffect } from 'react';
+import { X, Maximize2, Minimize2 } from 'lucide-react';
+
+export default function VideoModal({ isOpen, onClose, videoUrl, title }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  
+  // Close on ESC key
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === 'Escape') {
+        if (isExpanded) {
+          setIsExpanded(false);
+        } else {
+          onClose();
+        }
+      }
+    };
+    
+    if (isOpen) {
+      document.addEventListener('keydown', handleEsc);
+      // Prevent body scroll when modal is open
+      document.body.style.overflow = 'hidden';
+    }
+    
+    return () => {
+      document.removeEventListener('keydown', handleEsc);
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen, isExpanded, onClose]);
+  
+  // Reset expanded state when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setIsExpanded(false);
+    }
+  }, [isOpen]);
+  
+  if (!isOpen) return null;
+  
+  return (
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      onClick={onClose}
+    >
+      {/* Dark Overlay - Lightbox Effect */}
+      <div 
+        className={`absolute inset-0 transition-all duration-300 ${
+          isExpanded 
+            ? 'bg-black bg-opacity-95' 
+            : 'bg-black bg-opacity-80'
+        }`} 
+      />
+      
+      {/* Modal Content */}
+      <div 
+        className={`relative z-10 mx-4 transition-all duration-300 ease-out ${
+          isExpanded 
+            ? 'w-[95vw] max-w-none' 
+            : 'w-full max-w-4xl'
+        }`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className={`flex items-center justify-between px-4 py-3 rounded-t-lg transition-colors ${
+          isExpanded 
+            ? 'bg-black text-white' 
+            : 'bg-gray-900 text-white'
+        }`}>
+          <h3 className="font-medium text-lg">{title || 'How it works'}</h3>
+          
+          <div className="flex items-center gap-2">
+            {/* Expand/Minimize Button */}
+            <button 
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="p-2 hover:bg-gray-700 rounded transition-colors"
+              aria-label={isExpanded ? 'Minimize video' : 'Expand video'}
+              title={isExpanded ? 'Minimize (ESC)' : 'Expand for better viewing'}
+            >
+              {isExpanded ? (
+                <Minimize2 size={20} />
+              ) : (
+                <Maximize2 size={20} />
+              )}
+            </button>
+            
+            {/* Close Button */}
+            <button 
+              onClick={onClose}
+              className="p-2 hover:bg-gray-700 rounded transition-colors"
+              aria-label="Close video"
+              title="Close"
+            >
+              <X size={20} />
+            </button>
+          </div>
+        </div>
+        
+        {/* Video Container (16:9 aspect ratio - ALWAYS maintained) */}
+        <div 
+          className={`relative bg-black overflow-hidden transition-all duration-300 ${
+            isExpanded ? 'rounded-b-none' : 'rounded-b-lg'
+          }`}
+          style={{ 
+            paddingBottom: '56.25%'  /* Always 16:9 ratio (9/16 = 0.5625) */
+          }}
+        >
+          <iframe
+            className="absolute inset-0 w-full h-full"
+            src={`${videoUrl}?rel=0&modestbranding=1`}
+            title={title || 'Tutorial video'}
+            frameBorder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+            allowFullScreen
+          />
+        </div>
+        
+        {/* Hint text in expanded mode */}
+        {isExpanded && (
+          <div className="text-center py-3 bg-black text-gray-400 text-sm rounded-b-lg">
+            Press ESC to minimize • Click outside to close
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+```
+
+---
+
+## SIZE COMPARISON
+
+| Mode | Width | Use Case |
+|------|-------|----------|
+| **Normal** | max-width: 896px | Quick viewing |
+| **Expanded** | 95% of viewport | Screenshots, tutorials, detailed viewing |
+
+---
+
+## EXPAND BUTTON BEHAVIOR
+
+| State | Icon | Action | Keyboard |
+|-------|------|--------|----------|
+| Normal | ⛶ (Maximize2) | Click → Expand | - |
+| Expanded | ⛶ (Minimize2) | Click → Minimize | ESC |
+
+---
+
+## TASK 2: Update CV Optimizer Card
+
+### Add to the CV Optimizer card only:
+
+```jsx
+import { useState } from 'react';
+import { Play } from 'lucide-react';
+import VideoModal from '../components/VideoModal';
+
+// Inside the Dashboard/Home component:
+
+const [showCvOptimizerVideo, setShowCvOptimizerVideo] = useState(false);
+
+// Sample video URL (replace with your own later)
+const CV_OPTIMIZER_VIDEO_URL = "https://www.youtube.com/embed/Tt08KmFfIYQ";
+```
+
+### Card JSX Update:
+
+Find the CV Optimizer card and add the video link after the button:
+
+```jsx
+{/* CV Optimizer Card */}
+<div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+  <div className="flex flex-col items-center text-center">
+    {/* Icon */}
+    <div className="text-4xl mb-4">🔍</div>
+    
+    {/* Title */}
+    <h3 className="text-xl font-bold text-gray-900 mb-1">
+      Optimize Your CV
+    </h3>
+    
+    {/* Subtitle */}
+    <p className="text-sm text-gray-500 mb-2">
+      CV Scanner
+    </p>
+    
+    {/* Description */}
+    <p className="text-gray-600 mb-4">
+      What's wrong with my CV?
+    </p>
+    
+    {/* Button */}
+    <a 
+      href="/service/cv-optimizer"
+      className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors text-center"
+    >
+      Get Started
+    </a>
+    
+    {/* NEW: Video Link */}
+    <button
+      onClick={() => setShowCvOptimizerVideo(true)}
+      className="mt-4 flex items-center gap-2 text-sm text-gray-500 hover:text-blue-600 transition-colors"
+    >
+      <Play size={16} className="fill-current" />
+      Watch how it works
+    </button>
+  </div>
+</div>
+
+{/* Video Modal - place outside the card, but inside the component */}
+<VideoModal
+  isOpen={showCvOptimizerVideo}
+  onClose={() => setShowCvOptimizerVideo(false)}
+  videoUrl={CV_OPTIMIZER_VIDEO_URL}
+  title="How CV Optimizer Works"
+/>
+```
+
+---
+
+## STYLING DETAILS
+
+### Video Link Styling:
+
+```css
+/* Default state */
+color: #6b7280 (gray-500)
+font-size: 14px (text-sm)
+
+/* Hover state */
+color: #2563eb (blue-600)
+
+/* Icon */
+Play icon with fill
+Size: 16px
+```
+
+### Modal Styling:
+
+| Element | Style |
+|---------|-------|
+| Overlay | Black, 75% opacity |
+| Modal width | max-width: 896px (max-w-4xl) |
+| Header | Dark gray (#111827), white text |
+| Close button | X icon, hover shows gray background |
+| Video ratio | 16:9 (padding-bottom: 56.25%) |
+| Border radius | Rounded corners (rounded-lg) |
+
+---
+
+## CLOSE BEHAVIORS
+
+The modal should close when:
+
+| Action | Result |
+|--------|--------|
+| Click X button | ✅ Closes |
+| Click dark overlay | ✅ Closes |
+| Press ESC key | ✅ Closes |
+| Click inside video | ❌ Does NOT close (video plays) |
+
+---
+
+## VERIFICATION CHECKLIST
+
+### Basic Functionality
+- [ ] VideoModal component created
+- [ ] "Watch how it works" link appears under CV Optimizer card ONLY
+- [ ] Link shows Play icon (▶)
+- [ ] Clicking link opens modal
+- [ ] Modal has dark overlay background (Lightbox effect)
+- [ ] Video plays correctly in modal
+
+### Expand/Fullscreen Feature
+- [ ] Expand button (⛶) visible in header
+- [ ] Clicking expand button enlarges video to 95% width
+- [ ] Video is CLEAR enough for screenshots
+- [ ] Minimize button appears when expanded
+- [ ] Clicking minimize returns to normal size
+- [ ] ESC key minimizes when expanded
+- [ ] Hint text shows in expanded mode
+
+### Close Behaviors
+- [ ] X button closes modal
+- [ ] Clicking dark overlay closes modal
+- [ ] ESC key closes modal (when not expanded)
+- [ ] Body scroll is disabled when modal is open
+- [ ] Video stops when modal closes
+
+### Other
+- [ ] Other cards do NOT have video link
+- [ ] Smooth transitions between states
+
+---
+
+## FUTURE EXPANSION
+
+Once tested and approved, you can easily add to other cards:
+
+```jsx
+// Add state for each card
+const [showXRayVideo, setShowXRayVideo] = useState(false);
+const [showQuestionsVideo, setShowQuestionsVideo] = useState(false);
+
+// Define video URLs
+const XRAY_VIDEO_URL = "https://www.youtube.com/embed/YOUR_VIDEO_ID";
+const QUESTIONS_VIDEO_URL = "https://www.youtube.com/embed/YOUR_VIDEO_ID";
+
+// Add VideoModal for each card
+<VideoModal
+  isOpen={showXRayVideo}
+  onClose={() => setShowXRayVideo(false)}
+  videoUrl={XRAY_VIDEO_URL}
+  title="How X-Ray Analyzer Works"
+/>
+```
+
+---
+
+## VIDEO URL FORMAT
+
+When you create your own videos, use this format:
+
+| Platform | Format |
+|----------|--------|
+| YouTube | `https://www.youtube.com/embed/VIDEO_ID` |
+| Vimeo | `https://player.vimeo.com/video/VIDEO_ID` |
+| Loom | `https://www.loom.com/embed/VIDEO_ID` |
+
+**Important:** Use the EMBED format, not the regular watch URL.
+
+---
+
+**END OF PROMPT**

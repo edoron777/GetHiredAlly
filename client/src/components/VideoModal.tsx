@@ -99,8 +99,7 @@ export function VideoModal({ isOpen, onClose, videoUrl, title }: VideoModalProps
             isExpanded ? 'rounded-b-none' : 'rounded-b-lg'
           }`}
           style={{
-            paddingBottom: isExpanded ? '50vh' : '56.25%',
-            minHeight: isExpanded ? '70vh' : 'auto'
+            paddingBottom: '56.25%'
           }}
         >
           <iframe
