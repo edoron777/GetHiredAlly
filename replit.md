@@ -6,6 +6,32 @@ GetHiredAlly is an interview preparation application designed to empower job see
 ## User Preferences
 I prefer iterative development, with a focus on delivering small, functional increments. Please provide detailed explanations for any complex architectural decisions or significant code changes. I like clean, readable code with a strong emphasis on maintainability. When suggesting changes, please offer multiple options with their respective pros and cons. I want to be asked before any major changes are made to the core logic or database schema.
 
+## PERMANENT DEVELOPMENT RULES
+
+### Reusable Components (MUST FOLLOW)
+All reusable components are located in `client/src/components/common/`. Before creating any new component:
+
+1. **ALWAYS check `components/common/` first** - If a component exists there, import and use it
+2. **NEVER duplicate component code** - Do not copy component code into individual pages
+3. **Import from centralized location** - Use `import { ComponentName } from '../components/common'`
+4. **Modify source, not copies** - If changes are needed, modify the component in `common/` only
+
+### Available Reusable Components
+| Component | Purpose | Used By |
+|-----------|---------|---------|
+| StandardToolbar | Expand/Collapse + Email/WhatsApp sharing + PDF/Word/MD export | CV Optimizer, X-Ray, Interview Questions |
+
+### When to Create New Reusable Components
+- Create in `components/common/` when same UI appears in 2+ places
+- Export from `components/common/index.ts`
+- Add documentation header to the component file
+
+### Service-Specific vs Common Components
+| Type | Location |
+|------|----------|
+| Used in multiple services | `components/common/` |
+| Used only in one service | `components/[service-name]/` |
+
 ## System Architecture
 The application features a modern web architecture with a React 19 frontend utilizing Vite, Tailwind CSS, and shadcn/ui for a consistent and responsive user experience. The backend is built with FastAPI (Python), providing robust API endpoints and serving the static frontend assets in production. Supabase, a PostgreSQL-based platform, handles data persistence, authentication, and real-time capabilities.
 
