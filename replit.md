@@ -26,6 +26,8 @@ client/src/
 │   │   ├── VideoModal.tsx         # Video lightbox modal
 │   │   ├── ServiceCard.tsx        # Home page service cards
 │   │   ├── SectionSeparator.tsx   # Visual separator line
+│   │   ├── GoogleSignInButton.tsx # Google OAuth sign-in button
+│   │   ├── OrDivider.tsx          # "or" divider between auth options
 │   │   └── index.ts               # Exports all common components
 │   │
 │   ├── cv-optimizer/              # CV Optimizer specific
@@ -101,6 +103,8 @@ import StandardToolbar from '../components/common/StandardToolbar';
 | VideoModal | YouTube video player with 16:9 aspect ratio, expand/minimize | Dashboard ServiceCards |
 | ServiceCard | Service cards with icon+title, description, Coming Soon support | Dashboard HomeSection |
 | SectionSeparator | Navy gradient horizontal separator line | Dashboard between sections |
+| GoogleSignInButton | Google OAuth sign-in with loading state and error handling | LoginPage, RegisterPage |
+| OrDivider | "or" text divider between auth methods | LoginPage, RegisterPage |
 
 ---
 
@@ -240,7 +244,7 @@ The application features a modern web architecture with a React 19 frontend util
 - **Workflow:** Emphasizes a coaching-style language, especially in AI interactions, focusing on "Focus Areas" instead of "weaknesses" to foster a positive user experience.
 
 **Technical Implementations:**
-- **Authentication:** User registration and login utilize bcrypt for password hashing and Supabase for session management. Email verification is implemented via the Resend API.
+- **Authentication:** User registration and login utilize bcrypt for password hashing and Supabase for session management. Email verification is implemented via the Resend API. Google OAuth Sign-In is supported via @react-oauth/google library, allowing one-click registration/login with automatic account linking.
 - **AI Integration:** A unified AI service routes requests to Claude or Gemini models via LiteLLM, allowing users to select their preferred provider. All AI interactions are logged for usage tracking, cost analysis, and auditing.
 - **Interview Questions:** A comprehensive database of 54 static interview questions categorized into Universal, Behavioral, Situational, Self-Assessment, and Cultural Fit, each with detailed preparation guidance. Dynamic, AI-generated questions are personalized based on user input.
 - **CV Optimization:** An AI-powered CV optimizer scans resumes (PDF, DOCX, TXT), identifies issues, suggests improvements, and can even generate a fixed version with side-by-side comparison. CV content is encrypted at rest using Fernet.
