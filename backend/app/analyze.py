@@ -346,22 +346,22 @@ async def list_xray_analyses(token: str):
 
 @router.post("/analyze-job", response_model=AnalyzeJobResponse)
 @limiter.limit("20/hour")
-async def analyze_job(http_request: Request, request: AnalyzeJobRequest):
-    if len(request.job_description) < 100:
+async def analyze_job(request: Request, data: AnalyzeJobRequest):
+    if len(data.job_description) < 100:
         raise HTTPException(status_code=400, detail="Job description must be at least 100 characters")
     
-    depth_level = "ready" if request.mode == "quick" else "full"
-    interviewer_type = request.interviewer_type if request.interviewer_type in ["hr", "technical", "manager", "general"] else "general"
+    depth_level = "ready" if data.mode == "quick" else "full"
+    interviewer_type = data.interviewer_type if data.interviewer_type in ["hr", "technical", "manager", "general"] else "general"
     
     try:
         system_prompt = await get_combined_prompt(interviewer_type, depth_level)
         
         max_tokens = 2500 if depth_level == "ready" else 5000
         
-        provider = request.provider if request.provider in ['claude', 'gemini'] else 'claude'
+        provider = data.provider if data.provider in ['claude', 'gemini'] else 'claude'
         
         ai_response = await generate_completion(
-            prompt=f"Analyze this job description:\n\n{request.job_description}",
+            prompt=f"Analyze this job description:\n\n{data.job_description}",
             system_prompt=system_prompt,
             provider=provider,
             max_tokens=max_tokens,
@@ -376,7 +376,7 @@ async def analyze_job(http_request: Request, request: AnalyzeJobRequest):
         
         await save_analysis_to_db(
             user_id=None,
-            job_description=request.job_description,
+            job_description=data.job_description,
             depth_level=depth_level,
             interviewer_type=interviewer_type,
             markdown=markdown,
@@ -385,7 +385,7 @@ async def analyze_job(http_request: Request, request: AnalyzeJobRequest):
         
         return AnalyzeJobResponse(
             analysis=markdown,
-            mode=request.mode
+            mode=data.mode
         )
         
     except HTTPException:
