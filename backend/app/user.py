@@ -160,8 +160,8 @@ async def delete_account(request: DeleteAccountRequest, authorization: Optional[
         client.table("user_sessions").delete().eq("user_id", user["id"]).execute()
         client.table("email_verification_codes").delete().eq("user_id", user["id"]).execute()
         client.table("ai_usage_logs").delete().eq("user_id", user["id"]).execute()
-        client.table("cv_scans").delete().eq("user_id", user["id"]).execute()
-        client.table("smart_questions").delete().eq("user_id", user["id"]).execute()
+        client.table("cv_scan_results").delete().eq("user_id", user["id"]).execute()
+        client.table("smart_question_results").delete().eq("user_id", user["id"]).execute()
         client.table("users").delete().eq("id", user["id"]).execute()
         
         return {"success": True, "message": "Account deleted successfully"}
