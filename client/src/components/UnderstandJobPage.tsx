@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { isAuthenticated } from '@/lib/auth'
 import { Loader2, Sparkles, CheckCircle, X, Users, Code, Briefcase, HelpCircle, Zap, ClipboardList } from 'lucide-react'
@@ -95,14 +95,18 @@ export function UnderstandJobPage() {
   const resultsRef = useRef<HTMLDivElement>(null)
   const [selectedProvider, setSelectedProvider] = useState<Provider>('claude')
 
-  const defaultTocItems = [
-    { text: 'Summary', id: 'section-summary' },
-    { text: 'Requirements', id: 'section-requirements' },
-    { text: 'Skills', id: 'section-skills' },
-    { text: 'Red Flags', id: 'section-red-flags' },
-    { text: 'Questions', id: 'section-questions' },
-    { text: 'Prep Tips', id: 'section-prep-tips' }
-  ]
+  const tocItems = useMemo(() => {
+    if (!analysis) return []
+    const headingRegex = /^##\s+(.+)$/gm
+    const headings: { text: string; id: string }[] = []
+    let match
+    while ((match = headingRegex.exec(analysis)) !== null) {
+      const text = match[1].trim()
+      const id = `section-${text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')}`
+      headings.push({ text, id })
+    }
+    return headings
+  }, [analysis])
 
   const handleExportPDF = async () => {
     if (!analysis) return
@@ -601,15 +605,14 @@ export function UnderstandJobPage() {
             </h2>
 
             <StandardToolbar
-              onExpandAll={() => {}}
-              onCollapseAll={() => {}}
+              showExpandCollapse={false}
               onPDF={handleExportPDF}
               onWord={handleExportWord}
               onMarkdown={handleExportMarkdown}
               serviceName="X-Ray Analysis Report"
             />
 
-            {analysis && (
+            {tocItems.length > 0 && (
               <div style={{
                 background: 'rgba(255,255,255,0.95)',
                 backdropFilter: 'blur(8px)',
@@ -623,7 +626,7 @@ export function UnderstandJobPage() {
                   Jump to Section
                 </h4>
                 <nav style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                  {defaultTocItems.map((item) => (
+                  {tocItems.map((item) => (
                     <button
                       key={item.id}
                       type="button"

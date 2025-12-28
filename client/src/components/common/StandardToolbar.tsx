@@ -30,8 +30,8 @@ import { useState } from 'react'
 import { Loader2, Mail, MessageCircle, FileDown } from 'lucide-react'
 
 interface StandardToolbarProps {
-  onExpandAll: () => void
-  onCollapseAll: () => void
+  onExpandAll?: () => void
+  onCollapseAll?: () => void
   serviceName: string
   shareUrl?: string
 
@@ -41,6 +41,7 @@ interface StandardToolbarProps {
   onWord?: () => Promise<void>
   onMarkdown?: () => Promise<void>
 
+  showExpandCollapse?: boolean
   showEmail?: boolean
   showWhatsApp?: boolean
   showPDF?: boolean
@@ -58,6 +59,7 @@ export function StandardToolbar({
   onPDF,
   onWord,
   onMarkdown,
+  showExpandCollapse = true,
   showEmail = true,
   showWhatsApp = true,
   showPDF = true,
@@ -160,40 +162,43 @@ export function StandardToolbar({
         gap: '8px'
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center' }}>
-        <button
-          type="button"
-          title="Expand All"
-          onClick={onExpandAll}
-          style={{
-            ...buttonStyle,
-            fontSize: '20px',
-            fontWeight: 700,
-            padding: '4px 12px'
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)'}
-          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-        >
-          +
-        </button>
-        <button
-          type="button"
-          title="Collapse All"
-          onClick={onCollapseAll}
-          style={{
-            ...buttonStyle,
-            fontSize: '20px',
-            fontWeight: 700,
-            padding: '4px 12px'
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)'}
-          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-        >
-          −
-        </button>
-      </div>
-
-      <span style={separatorStyle}>│</span>
+      {showExpandCollapse && onExpandAll && onCollapseAll && (
+        <>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <button
+              type="button"
+              title="Expand All"
+              onClick={onExpandAll}
+              style={{
+                ...buttonStyle,
+                fontSize: '20px',
+                fontWeight: 700,
+                padding: '4px 12px'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+            >
+              +
+            </button>
+            <button
+              type="button"
+              title="Collapse All"
+              onClick={onCollapseAll}
+              style={{
+                ...buttonStyle,
+                fontSize: '20px',
+                fontWeight: 700,
+                padding: '4px 12px'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+            >
+              −
+            </button>
+          </div>
+          <span style={separatorStyle}>│</span>
+        </>
+      )}
 
       <div style={{ flexGrow: 1 }}></div>
 
