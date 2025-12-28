@@ -5,7 +5,7 @@
 // This file exports all reusable components.
 // Import from here instead of individual files.
 //
-// Usage: import { StandardToolbar } from '../components/common'
+// Usage: import { StandardToolbar, VideoModal, ServiceCard } from '../components/common'
 //
 // RULES:
 // 1. ALWAYS use components from this folder when available
@@ -15,11 +15,6 @@
 // ===========================================
 
 export { StandardToolbar } from './StandardToolbar';
-
-// Future components (uncomment when created):
-// export { default as StandardModal } from './StandardModal';
-// export { default as StandardCard } from './StandardCard';
-// export { default as LoadingSpinner } from './LoadingSpinner';
-// export { default as EmptyState } from './EmptyState';
-// export { default as ErrorMessage } from './ErrorMessage';
-// export { default as ConfirmDialog } from './ConfirmDialog';
+export { VideoModal } from './VideoModal';
+export { ServiceCard } from './ServiceCard';
+export { SectionSeparator } from './SectionSeparator';

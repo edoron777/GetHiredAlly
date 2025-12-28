@@ -1,5 +1,5 @@
 import { ServiceCard } from '../common/ServiceCard';
-import { SectionConfig } from '../../config/homePageServices';
+import type { SectionConfig } from '../../config/homePageServices';
 
 interface HomeSectionProps {
   section: SectionConfig;

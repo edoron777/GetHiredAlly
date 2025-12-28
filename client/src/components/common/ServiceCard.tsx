@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Play } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { VideoModal } from './VideoModal';
-import { ServiceConfig } from '../../config/homePageServices';
+import type { ServiceConfig } from '../../config/homePageServices';
 
 interface ServiceCardProps {
   service: ServiceConfig;
