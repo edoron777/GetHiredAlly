@@ -74,3 +74,8 @@ externalPort = 3002
 [[ports]]
 localPort = 8000
 externalPort = 8000
+
+[userenv]
+
+[userenv.shared]
+VITE_GOOGLE_CLIENT_ID = "405217818612-ookhd5s7cemp0advrqltajv2l45v8pjb.apps.googleusercontent.com"

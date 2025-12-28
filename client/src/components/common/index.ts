@@ -20,3 +20,5 @@ export { ServiceCard } from './ServiceCard';
 export { SectionSeparator } from './SectionSeparator';
 export { SecondaryNav } from './SecondaryNav';
 export { Footer } from './Footer';
+export { GoogleSignInButton } from './GoogleSignInButton';
+export { OrDivider } from './OrDivider';
