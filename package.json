@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "@react-oauth/google": "^0.13.4",
+    "@tailwindcss/typography": "^0.5.19",
     "@types/node": "^22.13.11",
     "express": "^5.2.1",
     "react-markdown": "^10.1.0",
