@@ -157,6 +157,10 @@ GetHiredAlly is an interview preparation application with job description analys
 - **Password Security**: bcrypt hashing, passwords never logged
 
 ## Recent Changes
+- December 28, 2025: Added CV Optimizer UX Phase 2 - StrengthsSection with 10 detection heuristics and green styling
+- December 28, 2025: Added EncouragementMessage component with intro/effort/completion messaging
+- December 28, 2025: Updated report endpoint to return cv_content for frontend strengths detection
+- December 28, 2025: Strengths-first design showing what's working well before suggestions
 - December 28, 2025: Added CV Optimizer UX Phase 1 - Category transparency panel with 9 analysis categories
 - December 28, 2025: Added CategoryInfoModal with research-backed explanations for each category
 - December 28, 2025: Added CategoryFilterPanel for filtering suggestions by category with counts
