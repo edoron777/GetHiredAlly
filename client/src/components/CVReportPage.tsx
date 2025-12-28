@@ -6,7 +6,11 @@ import {
 } from 'lucide-react'
 import { isAuthenticated, getAuthToken } from '@/lib/auth'
 import CategoryFilterPanel from './cv-optimizer/CategoryFilterPanel'
+import StrengthsSection from './cv-optimizer/StrengthsSection'
+import EncouragementMessage from './cv-optimizer/EncouragementMessage'
 import { mapIssueCategoryToId } from '../config/cvCategories'
+import { detectStrengths } from '../utils/strengthsDetector'
+import type { Strength } from '../utils/strengthsDetector'
 
 interface Issue {
   id: number
@@ -23,6 +27,7 @@ interface Issue {
 interface ReportData {
   scan_id: string
   scan_date: string
+  cv_content?: string
   total_issues: number
   critical_count: number
   high_count: number
@@ -86,6 +91,15 @@ export function CVReportPage() {
       [categoryId]: enabled
     }))
   }
+
+  const strengths = useMemo<Strength[]>(() => {
+    if (!reportData?.cv_content || !reportData?.issues) return []
+    return detectStrengths(reportData.cv_content, reportData.issues)
+  }, [reportData?.cv_content, reportData?.issues])
+
+  const quickWinsCount = useMemo(() => {
+    return reportData?.issues.filter(issue => issue.fix_difficulty === 'quick').length || 0
+  }, [reportData?.issues])
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -223,6 +237,10 @@ export function CVReportPage() {
           </p>
         </div>
 
+        <StrengthsSection strengths={strengths} />
+
+        <EncouragementMessage type="intro" />
+
         <CategoryFilterPanel
           categoryCounts={categoryCounts}
           enabledCategories={enabledCategories}
@@ -337,6 +355,10 @@ export function CVReportPage() {
           </div>
         </div>
 
+        {quickWinsCount > 0 && (
+          <EncouragementMessage type="effort" quickWinsCount={quickWinsCount} />
+        )}
+
         <div className="space-y-8">
           {SEVERITY_SECTIONS.map(section => {
             const sectionIssues = groupedIssues[section.key]
@@ -432,6 +454,8 @@ export function CVReportPage() {
             </button>
           </div>
         )}
+
+        <EncouragementMessage type="completion" />
 
         <div className="mt-12 pt-8 border-t border-gray-200 text-center">
           <p className="text-gray-700 text-lg mb-4">

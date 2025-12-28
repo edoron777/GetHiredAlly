@@ -284,6 +284,7 @@ async def get_detailed_report(scan_id: str, token: str):
         return {
             'scan_id': scan['id'],
             'scan_date': scan['scan_date'],
+            'cv_content': scan.get('original_cv_content', ''),
             'total_issues': scan['total_issues'],
             'critical_count': scan['critical_count'],
             'high_count': scan['high_count'],
