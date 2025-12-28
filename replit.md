@@ -20,6 +20,9 @@ All reusable components are located in `client/src/components/common/`. Before c
 | Component | Purpose | Used By |
 |-----------|---------|---------|
 | StandardToolbar | Expand/Collapse + Email/WhatsApp sharing + PDF/Word/MD export | CV Optimizer, X-Ray, Interview Questions |
+| VideoModal | YouTube video player with 16:9 aspect ratio, expand/minimize | Dashboard ServiceCards |
+| ServiceCard | Service cards with icon+title, description, Coming Soon support | Dashboard HomeSection |
+| SectionSeparator | Navy gradient horizontal separator line | Dashboard between sections |
 
 ### When to Create New Reusable Components
 - Create in `components/common/` when same UI appears in 2+ places
