@@ -102,7 +102,7 @@ export function Navbar() {
 
               {user.is_admin && (
                 <Link
-                  to="/admin/ai-usage"
+                  to="/admin"
                   className="flex items-center gap-1 px-3 py-2 text-sm font-medium rounded transition-colors"
                   style={{
                     backgroundColor: isAdminPage ? '#991B1B' : '#DC2626',
@@ -175,7 +175,7 @@ export function Navbar() {
                     </Link>
                     {user.is_admin && (
                       <Link
-                        to="/admin/ai-usage"
+                        to="/admin"
                         className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100"
                         style={{ color: '#DC2626' }}
                         onClick={() => setDropdownOpen(false)}

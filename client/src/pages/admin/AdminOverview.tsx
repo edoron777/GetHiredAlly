@@ -28,7 +28,12 @@ export function AdminOverview() {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch('/api/admin/stats')
+      const token = localStorage.getItem('session_token')
+      const response = await fetch('/api/admin/stats', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
       if (!response.ok) {
         throw new Error('Failed to fetch admin stats')
       }

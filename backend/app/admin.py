@@ -1,10 +1,11 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Header, Depends
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime, timedelta
 import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
+import hashlib
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -17,6 +18,11 @@ class UserUpdate(BaseModel):
     is_verified: Optional[bool] = None
     profile_id: Optional[str] = None
 
+
+def hash_token(token: str) -> str:
+    return hashlib.sha256(token.encode()).hexdigest()
+
+
 def get_db_connection():
     database_url = os.environ.get("DATABASE_URL")
     if not database_url:
@@ -24,8 +30,51 @@ def get_db_connection():
     return psycopg2.connect(database_url)
 
 
+async def require_admin(authorization: Optional[str] = Header(None)):
+    """Verify that the request is from an authenticated admin user"""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Authentication required")
+    
+    token = authorization.replace("Bearer ", "")
+    token_hash = hash_token(token)
+    
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        
+        cursor.execute(
+            """SELECT s.user_id, s.expires_at, u.is_admin, u.email
+               FROM user_sessions s
+               JOIN users u ON s.user_id = u.id
+               WHERE s.token_hash = %s""",
+            (token_hash,)
+        )
+        result = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if not result:
+            raise HTTPException(status_code=401, detail="Invalid or expired session")
+        
+        if result['expires_at'] < datetime.utcnow():
+            raise HTTPException(status_code=401, detail="Session expired")
+        
+        if not result['is_admin']:
+            raise HTTPException(status_code=403, detail="Admin access required")
+        
+        return {
+            "user_id": str(result['user_id']),
+            "email": result['email'],
+            "is_admin": result['is_admin']
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Authentication failed: {str(e)}")
+
+
 @router.get("/ai-usage/summary")
-async def get_ai_usage_summary(days: int = Query(default=30, ge=1, le=365)):
+async def get_ai_usage_summary(days: int = Query(default=30, ge=1, le=365), admin_user: dict = Depends(require_admin)):
     """Get summary statistics for AI usage"""
     cutoff_date = (datetime.utcnow() - timedelta(days=days)).isoformat()
     
@@ -98,7 +147,7 @@ async def get_ai_usage_summary(days: int = Query(default=30, ge=1, le=365)):
 
 
 @router.get("/ai-usage/recent")
-async def get_recent_ai_calls(limit: int = Query(default=50, ge=1, le=200)):
+async def get_recent_ai_calls(limit: int = Query(default=50, ge=1, le=200), admin_user: dict = Depends(require_admin)):
     """Get recent AI API calls"""
     try:
         conn = get_db_connection()
@@ -129,7 +178,7 @@ async def get_recent_ai_calls(limit: int = Query(default=50, ge=1, le=200)):
 
 
 @router.get("/ai-usage/by-user")
-async def get_usage_by_user(days: int = Query(default=30, ge=1, le=365), limit: int = Query(default=20, ge=1, le=100)):
+async def get_usage_by_user(days: int = Query(default=30, ge=1, le=365), limit: int = Query(default=20, ge=1, le=100), admin_user: dict = Depends(require_admin)):
     """Get AI usage breakdown by user"""
     cutoff_date = (datetime.utcnow() - timedelta(days=days)).isoformat()
     
@@ -175,7 +224,7 @@ async def get_usage_by_user(days: int = Query(default=30, ge=1, le=365), limit: 
 
 
 @router.get("/stats")
-async def get_admin_stats():
+async def get_admin_stats(admin_user: dict = Depends(require_admin)):
     """Get overview statistics for admin dashboard"""
     try:
         conn = get_db_connection()
@@ -232,7 +281,8 @@ async def get_admin_stats():
 async def get_all_users(
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=20, ge=1, le=100),
-    search: Optional[str] = Query(default=None)
+    search: Optional[str] = Query(default=None),
+    admin_user: dict = Depends(require_admin)
 ):
     """Get paginated list of all users"""
     try:
@@ -294,7 +344,7 @@ async def get_all_users(
 
 
 @router.put("/users/{user_id}")
-async def update_user(user_id: str, data: UserUpdate):
+async def update_user(user_id: str, data: UserUpdate, admin_user: dict = Depends(require_admin)):
     """Update user role, is_admin, is_verified, profile_id"""
     try:
         conn = get_db_connection()
@@ -349,7 +399,7 @@ async def update_user(user_id: str, data: UserUpdate):
 
 
 @router.delete("/users/{user_id}")
-async def delete_user(user_id: str):
+async def delete_user(user_id: str, admin_user: dict = Depends(require_admin)):
     """Delete a user account"""
     try:
         conn = get_db_connection()
@@ -368,10 +418,10 @@ async def delete_user(user_id: str):
             conn.close()
             raise HTTPException(status_code=403, detail="Cannot delete protected admin account")
         
-        cursor.execute("DELETE FROM cv_scans WHERE user_id = %s", (user_id,))
+        cursor.execute("DELETE FROM cv_scan_results WHERE user_id = %s", (user_id,))
+        cursor.execute("DELETE FROM smart_question_results WHERE user_id = %s", (user_id,))
         cursor.execute("DELETE FROM ai_usage_logs WHERE user_id = %s", (user_id,))
-        cursor.execute("DELETE FROM audit_logs WHERE user_id = %s", (user_id,))
-        cursor.execute("DELETE FROM sessions WHERE user_id = %s", (user_id,))
+        cursor.execute("DELETE FROM user_sessions WHERE user_id = %s", (user_id,))
         cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
         
         conn.commit()

@@ -43,13 +43,18 @@ export function AdminUsers() {
   const fetchUsers = async () => {
     setLoading(true)
     try {
+      const token = localStorage.getItem('session_token')
       const params = new URLSearchParams({
         page: page.toString(),
         limit: LIMIT.toString(),
       })
       if (search) params.append('search', search)
       
-      const response = await fetch(`/api/admin/users?${params}`)
+      const response = await fetch(`/api/admin/users?${params}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
       if (!response.ok) throw new Error('Failed to fetch users')
       
       const data: UsersResponse = await response.json()
@@ -74,9 +79,13 @@ export function AdminUsers() {
     
     setActionLoading(user.id)
     try {
+      const token = localStorage.getItem('session_token')
       const response = await fetch(`/api/admin/users/${user.id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ is_admin: !user.is_admin })
       })
       if (!response.ok) throw new Error('Failed to update user')
@@ -96,8 +105,12 @@ export function AdminUsers() {
     
     setActionLoading(deleteModal.id)
     try {
+      const token = localStorage.getItem('session_token')
       const response = await fetch(`/api/admin/users/${deleteModal.id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       })
       if (!response.ok) {
         const data = await response.json()

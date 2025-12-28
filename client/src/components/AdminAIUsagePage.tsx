@@ -84,10 +84,13 @@ export function AdminAIUsagePage() {
     setError(null)
     
     try {
+      const token = localStorage.getItem('session_token')
+      const headers = { 'Authorization': `Bearer ${token}` }
+      
       const [summaryRes, recentRes, userRes] = await Promise.all([
-        fetch(`/api/admin/ai-usage/summary?days=${periodDays}`),
-        fetch('/api/admin/ai-usage/recent?limit=50'),
-        fetch(`/api/admin/ai-usage/by-user?days=${periodDays}&limit=20`)
+        fetch(`/api/admin/ai-usage/summary?days=${periodDays}`, { headers }),
+        fetch('/api/admin/ai-usage/recent?limit=50', { headers }),
+        fetch(`/api/admin/ai-usage/by-user?days=${periodDays}&limit=20`, { headers })
       ])
       
       if (!summaryRes.ok || !recentRes.ok) {

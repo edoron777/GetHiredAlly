@@ -26,7 +26,7 @@ function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation()
   const loggedIn = isAuthenticated()
   
-  const showSecondaryNav = loggedIn && !['/login', '/register', '/verify-email', '/'].includes(location.pathname)
+  const showSecondaryNav = loggedIn && !['/login', '/register', '/verify-email', '/'].includes(location.pathname) && !location.pathname.startsWith('/admin')
   
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#FAF9F7' }}>
@@ -57,7 +57,10 @@ function App() {
               <Route path="/service/predict-questions/common" element={<PredictQuestionsPage />} />
               <Route path="/service/predict-questions/smart" element={<SmartQuestionsPage />} />
               <Route path="/service/predict-questions/smart/results/:id" element={<SmartQuestionsResultsPage />} />
-              <Route path="/admin/ai-usage" element={<AdminAIUsagePage />} />
+              <Route path="/admin" element={<AdminLayout><AdminOverview /></AdminLayout>} />
+              <Route path="/admin/users" element={<AdminLayout><AdminUsers /></AdminLayout>} />
+              <Route path="/admin/ai-usage" element={<AdminLayout><AdminAIUsagePage /></AdminLayout>} />
+              <Route path="/admin/settings" element={<AdminLayout><AdminSettings /></AdminLayout>} />
               <Route path="/service/cv-optimizer" element={<CVOptimizerPage />} />
               <Route path="/service/cv-optimizer/scanning" element={<CVScanningPage />} />
               <Route path="/service/cv-optimizer/results/:scanId" element={<CVResultsPage />} />
