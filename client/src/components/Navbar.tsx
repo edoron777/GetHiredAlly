@@ -22,13 +22,6 @@ export function Navbar() {
   }, [location.pathname, checkAuth])
 
   useEffect(() => {
-    console.log('=== ADMIN DEBUG ===')
-    console.log('Full user object:', user)
-    console.log('is_admin:', user?.is_admin)
-    console.log('typeof is_admin:', typeof user?.is_admin)
-  }, [user])
-
-  useEffect(() => {
     const handleStorageChange = () => checkAuth()
     window.addEventListener('storage', handleStorageChange)
     return () => window.removeEventListener('storage', handleStorageChange)
