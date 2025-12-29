@@ -523,6 +523,21 @@ export function UnderstandJobPage() {
             </button>
           </div>
 
+          {!jobDescription.trim() && (
+            <p style={{
+              color: '#F59E0B',
+              fontSize: '14px',
+              marginTop: '8px',
+              textAlign: 'center',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px'
+            }}>
+              ⚠️ Please paste a Job Description above to generate your report
+            </p>
+          )}
+
           {isLoading && (
             <div style={{
               ...containerStyle,
