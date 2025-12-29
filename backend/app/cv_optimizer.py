@@ -549,13 +549,17 @@ async def get_fixed_cv(scan_id: str, token: str):
 @router.get("/download/{scan_id}")
 async def download_fixed_cv(scan_id: str, format: str = 'txt', token: str = ''):
     """Download the fixed CV in specified format."""
+    logger.info(f"[CV_DOWNLOAD] Request - scan_id: {scan_id}, format: {format}")
+    
     user = get_user_from_token(token)
     if not user:
+        logger.error("[CV_DOWNLOAD] Authentication failed")
         raise HTTPException(status_code=401, detail="Not authenticated")
 
     try:
         conn = get_db_connection()
         if not conn:
+            logger.error("[CV_DOWNLOAD] Database connection failed")
             raise HTTPException(status_code=500, detail="Database not available")
 
         cursor = conn.cursor(cursor_factory=RealDictCursor)
@@ -568,11 +572,14 @@ async def download_fixed_cv(scan_id: str, format: str = 'txt', token: str = ''):
         conn.close()
 
         if not result or not result.get('fixed_cv_content'):
+            logger.error(f"[CV_DOWNLOAD] Fixed CV not found for scan_id: {scan_id}")
             raise HTTPException(status_code=404, detail="Fixed CV not found")
 
         content = result['fixed_cv_content']
+        logger.info(f"[CV_DOWNLOAD] Content length: {len(content)} chars")
 
         if format == 'txt':
+            logger.info("[CV_DOWNLOAD] Generating TXT file")
             return StreamingResponse(
                 BytesIO(content.encode('utf-8')),
                 media_type='text/plain',
@@ -580,7 +587,16 @@ async def download_fixed_cv(scan_id: str, format: str = 'txt', token: str = ''):
             )
 
         elif format == 'pdf':
-            pdf_bytes = generate_pdf(content)
+            logger.info("[CV_DOWNLOAD] Generating PDF file")
+            try:
+                pdf_bytes = generate_pdf(content)
+                logger.info(f"[CV_DOWNLOAD] PDF generated, size: {len(pdf_bytes)} bytes")
+            except Exception as pdf_error:
+                logger.error(f"[CV_DOWNLOAD] PDF generation failed: {type(pdf_error).__name__}: {str(pdf_error)}")
+                import traceback
+                logger.error(f"[CV_DOWNLOAD] PDF traceback: {traceback.format_exc()}")
+                raise HTTPException(status_code=500, detail=f"PDF generation failed: {str(pdf_error)}")
+            
             return StreamingResponse(
                 BytesIO(pdf_bytes),
                 media_type='application/pdf',
@@ -588,7 +604,14 @@ async def download_fixed_cv(scan_id: str, format: str = 'txt', token: str = ''):
             )
 
         elif format == 'docx':
-            docx_bytes = generate_docx(content)
+            logger.info("[CV_DOWNLOAD] Generating DOCX file")
+            try:
+                docx_bytes = generate_docx(content)
+                logger.info(f"[CV_DOWNLOAD] DOCX generated, size: {len(docx_bytes)} bytes")
+            except Exception as docx_error:
+                logger.error(f"[CV_DOWNLOAD] DOCX generation failed: {type(docx_error).__name__}: {str(docx_error)}")
+                raise HTTPException(status_code=500, detail=f"DOCX generation failed: {str(docx_error)}")
+            
             return StreamingResponse(
                 BytesIO(docx_bytes),
                 media_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
