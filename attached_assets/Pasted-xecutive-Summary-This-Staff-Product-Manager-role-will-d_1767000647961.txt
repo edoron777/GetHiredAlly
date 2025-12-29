@@ -1,0 +1,80 @@
+xecutive Summary
+This Staff Product Manager role will drive the product strategy and execution for SentinelOne's security solution for agentic AI systems.
+The role sits within the Prompt Security team, recently acquired by SentinelOne, and reports to the Head of Product.
+Key responsibility: Define and drive KPIs for product success, aligned with company objectives.
+Seniority level: Staff (Senior)
+Top 3 priorities: 1) Develop and launch the agentic AI security product. 2) Collaborate with cross-functional teams. 3) Stay ahead of market trends in AI agent security.
+2. What They Really Want
+Hidden requirements: Deep understanding of the AI threat landscape and how it impacts enterprise security.
+Priority signals: Emphasis on "urgent market need," "rapidly evolving field," and "stay abreast of market trends" signals the need for adaptability and continuous learning.
+Culture clues: "High-performing, high velocity team" suggests a results-oriented, demanding environment where quick execution is valued.
+Common phrases decoded:
+
+"Cutting-edge company" = Expect to be constantly learning new technologies.
+"Tackling extraordinary challenges" = Complex problems, high expectations.
+3. Requirements Breakdown
+Must-Have Requirements:
+
+5+ years of product management for B2B SaaS security products (Positioning tip: Quantify impact of past product successes).
+Proven track record of launching enterprise security products (Positioning tip: Highlight experience with emerging technology risks).
+Strong understanding of enterprise security systems (Positioning tip: Showcase knowledge of compliance frameworks).
+Nice-to-Have Requirements:
+
+Familiarity with AI-specific threats (prompt injection, jailbreaking, etc.).
+Experience with agentic AI systems (e.g., Microsoft Copilot Studio).
+How we determined the classification: "Significant advantage" explicitly marks the AI experience as nice-to-have. Years of experience are must-have.
+
+4. Soft Skills & STAR Prep
+Soft Skills:
+
+Stakeholder Management: "Exceptional stakeholder management skills with ability to collaborate with R&D, marketing, sales, and executive leadership."
+Communication: "Excellent verbal and written communication skills with experience explaining complex security concepts to technical and non-technical audiences."
+Strategic Thinking: "Drive the direction and daily execution of our security for agentic AI product line."
+STAR Method - How to Answer Behavioral Questions
+When interviewers ask "Tell me about a time when...", use STAR:
+
+S - SITUATION: Set the scene. Where were you? What was the context? T - TASK: What was your responsibility? What needed to be done? A - ACTION: What did YOU specifically do? (Use "I", not "we") R - RESULT: What happened? Quantify if possible (%, $, time saved)
+
+Example Structure: "In my previous role at [Company], we faced [Situation]. My task was to [Task]. I decided to [Action], specifically by [details]. As a result, [Result with numbers if possible]."
+
+Tip: Prepare 3-5 STAR stories that can be adapted to different questions.
+
+Story Prompts:
+
+Stakeholder Management: Tell me about a time you had to manage conflicting priorities between different teams (e.g., R&D vs. Sales).
+Communication: Describe a situation where you had to explain a complex technical concept to a non-technical audience.
+Strategic Thinking: Tell me about a time you identified a new market opportunity and developed a product strategy to capitalize on it.
+5. Challenges & How to Address
+Potential concerns:
+
+Lack of specific experience with agentic AI systems (address by highlighting transferable skills and eagerness to learn).
+Ability to thrive in a "high-velocity" environment (address by providing examples of working effectively under pressure).
+How to address each concern:
+
+Acknowledge: "I understand that experience with agentic AI is a plus."
+Reframe: "My strong foundation in B2B SaaS security and enterprise systems allows me to quickly grasp new technologies."
+Evidence: "In my previous role, I rapidly learned [new technology] and successfully launched [product]."
+Redirect: "I'm excited about the opportunity to dive into agentic AI security."
+Smart questions to ask them:
+
+What are the biggest challenges facing the Prompt Security team in the next 6-12 months?
+How does SentinelOne support professional development and learning for its product managers?
+Can you describe the team culture and how it fosters innovation?
+6. Is This Job Right for Me?
+Red Flags (Concerns to Consider)
+High: Requirement for in-office presence in Tel-Aviv if you are not local.
+Medium: "High-velocity team" could mean potential for burnout.
+Green Flags (Positive Signals)
+Opportunity to work on a cutting-edge AI security product.
+Chance to shape the direction of a product line within a growing company.
+Comprehensive benefits package.
+Culture Fit Assessment
+Work pace: Fast-paced, demanding.
+Collaboration style: Highly collaborative, cross-functional.
+Management approach: Results-oriented, data-driven.
+Self-Reflection Questions
+Does this role align with my career goals for the next 2-3 years?
+Am I excited about the core responsibilities, or just the title/salary?
+Does the company culture (based on JD signals) match how I work best?
+Are there any red flags I am ignoring because I need a job?
+Would I recommend this job to a friend in my situation?
