@@ -2,10 +2,11 @@ import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import { 
   ArrowLeft, ChevronDown, ChevronRight, Filter,
-  Zap, Wrench, HardHat
+  Zap, Wrench, HardHat, AlertCircle, AlertTriangle, Info, Sparkles, Wand2
 } from 'lucide-react'
 import { isAuthenticated, getAuthToken } from '@/lib/auth'
 import { StandardToolbar } from './common'
+import { ScannerGrid } from './ScannerGrid'
 import CategoryFilterPanel from './cv-optimizer/CategoryFilterPanel'
 import StrengthsSection from './cv-optimizer/StrengthsSection'
 import EncouragementMessage from './cv-optimizer/EncouragementMessage'
@@ -63,6 +64,17 @@ const SEVERITY_SECTIONS = [
   { key: 'low', label: 'OPTIONAL POLISH', icon: '🟢', bgColor: 'bg-green-50', borderColor: 'border-green-200', textColor: 'text-green-700' }
 ]
 
+const FIX_STATUS_MESSAGES = [
+  "Reading your CV...",
+  "Analyzing identified issues...",
+  "Fixing spelling and grammar...",
+  "Strengthening action verbs...",
+  "Adding quantified achievements...",
+  "Polishing professional language...",
+  "Improving formatting consistency...",
+  "Finalizing your improved CV..."
+]
+
 export function CVReportPage() {
   const navigate = useNavigate()
   const { scanId } = useParams()
@@ -76,6 +88,8 @@ export function CVReportPage() {
   const [expandedIssues, setExpandedIssues] = useState<Set<number>>(new Set())
   const [textSize, setTextSize] = useState(16)
   const [isGeneratingFix, setIsGeneratingFix] = useState(false)
+  const [fixProgress, setFixProgress] = useState(0)
+  const [fixMessageIndex, setFixMessageIndex] = useState(0)
   const [viewMode, setViewMode] = useState<'severity' | 'effort' | 'worktype'>('severity')
 
   const [enabledCategories, setEnabledCategories] = useState<Record<string, boolean>>({
@@ -133,6 +147,27 @@ export function CVReportPage() {
 
     fetchReport()
   }, [scanId, navigate])
+
+  useEffect(() => {
+    if (!isGeneratingFix) {
+      setFixProgress(0)
+      setFixMessageIndex(0)
+      return
+    }
+
+    const progressInterval = setInterval(() => {
+      setFixProgress(prev => Math.min(prev + Math.random() * 2, 95))
+    }, 200)
+
+    const messageInterval = setInterval(() => {
+      setFixMessageIndex(prev => (prev + 1) % FIX_STATUS_MESSAGES.length)
+    }, 2500)
+
+    return () => {
+      clearInterval(progressInterval)
+      clearInterval(messageInterval)
+    }
+  }, [isGeneratingFix])
 
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {}
@@ -206,6 +241,16 @@ export function CVReportPage() {
     }
   }
 
+  const getSeverityIcon = (severity: string, size: number = 16) => {
+    switch (severity) {
+      case 'critical': return <AlertCircle size={size} className="text-red-500" />
+      case 'high': return <AlertTriangle size={size} className="text-orange-500" />
+      case 'medium': return <Info size={size} className="text-yellow-600" />
+      case 'low': return <Sparkles size={size} className="text-green-500" />
+      default: return null
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-[calc(100vh-64px)] p-8 flex items-center justify-center" style={{ backgroundColor: '#FAF9F7' }}>
@@ -233,6 +278,46 @@ export function CVReportPage() {
   }
 
   const uniqueCategories = new Set(reportData.issues.map(i => i.category))
+
+  if (isGeneratingFix) {
+    return (
+      <div className="min-h-[calc(100vh-64px)] p-8 flex items-center justify-center" style={{ backgroundColor: '#FAF9F7' }}>
+        <div className="max-w-2xl w-full">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
+              <Wand2 size={32} className="text-blue-600 animate-pulse" />
+            </div>
+            <h1 className="text-2xl font-bold" style={{ color: '#1E3A5F' }}>
+              Fixing Your CV...
+            </h1>
+          </div>
+
+          <div className="mb-8">
+            <ScannerGrid 
+              scanProgress={fixProgress} 
+              issues={{ critical: 0, high: 0, medium: 0, low: 0, total: 0 }} 
+            />
+          </div>
+
+          <div className="text-center mb-6">
+            <p className="text-gray-600 text-lg transition-opacity duration-300">
+              {FIX_STATUS_MESSAGES[fixMessageIndex]}
+            </p>
+          </div>
+
+          <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
+            <div 
+              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${fixProgress}%` }}
+            />
+          </div>
+          <p className="text-center text-sm text-gray-500">
+            This may take 15-30 seconds
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-[calc(100vh-64px)] p-8" style={{ backgroundColor: '#FAF9F7', fontSize: `${textSize}px` }}>
@@ -320,7 +405,7 @@ export function CVReportPage() {
                       : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
                   }`}
                 >
-                  {filter.icon && <span>{filter.icon}</span>}
+                  {filter.id !== 'all' && getSeverityIcon(filter.id)}
                   {filter.label}
                   {filter.id !== 'all' && (
                     <span className={`ml-1 px-1.5 py-0.5 rounded text-xs ${
@@ -366,7 +451,7 @@ export function CVReportPage() {
               return (
                 <div key={section.key}>
                   <div className={`flex items-center gap-2 mb-4 pb-2 border-b-2 ${section.borderColor}`}>
-                    <span className="text-xl">{section.icon}</span>
+                    {getSeverityIcon(section.key, 20)}
                     <h2 className={`font-bold ${section.textColor}`}>
                       {section.label}
                     </h2>

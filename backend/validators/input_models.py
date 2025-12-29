@@ -200,7 +200,7 @@ class XRayInput(BaseModel):
 class FileUploadValidation:
     """File upload validation utilities."""
     MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
-    ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx', 'txt'}
+    ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx', 'txt', 'md', 'rtf', 'odt'}
     
     @classmethod
     def validate_extension(cls, filename: str) -> str:

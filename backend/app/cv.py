@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/cv", tags=["cv"])
 
 MAX_FILE_SIZE = 10 * 1024 * 1024
-ALLOWED_EXTENSIONS = ['pdf', 'docx', 'doc', 'txt']
+ALLOWED_EXTENSIONS = ['pdf', 'docx', 'doc', 'txt', 'md', 'rtf', 'odt']
 
 
 def get_db_connection():
@@ -120,8 +120,48 @@ def extract_text_from_file(file_content: bytes, filename: str) -> str:
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Failed to parse DOCX: {str(e)}")
     
+    elif extension == 'md':
+        return file_content.decode('utf-8', errors='ignore')
+    
+    elif extension == 'rtf':
+        try:
+            from striprtf.striprtf import rtf_to_text
+            rtf_content = file_content.decode('utf-8', errors='ignore')
+            return rtf_to_text(rtf_content)
+        except ImportError:
+            text = file_content.decode('utf-8', errors='ignore')
+            import re
+            text = re.sub(r'\\[a-z]+\d*\s?', '', text)
+            text = re.sub(r'[{}]', '', text)
+            return text
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Failed to parse RTF: {str(e)}")
+    
+    elif extension == 'odt':
+        try:
+            import zipfile
+            import xml.etree.ElementTree as ET
+            
+            with zipfile.ZipFile(io.BytesIO(file_content)) as odt:
+                content = odt.read('content.xml')
+                root = ET.fromstring(content)
+                
+                text_parts = []
+                for elem in root.iter():
+                    if elem.text:
+                        text_parts.append(elem.text)
+                    if elem.tail:
+                        text_parts.append(elem.tail)
+                
+                return ' '.join(text_parts)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Failed to parse ODT: {str(e)}")
+    
     else:
-        raise HTTPException(status_code=400, detail="Unsupported file type")
+        try:
+            return file_content.decode('utf-8', errors='ignore')
+        except Exception:
+            raise HTTPException(status_code=400, detail="Unsupported file type")
 
 
 @router.get("/list")
@@ -168,7 +208,7 @@ async def upload_cv_for_scan(
     
     extension = file.filename.split('.')[-1].lower()
     if extension not in ALLOWED_EXTENSIONS:
-        raise HTTPException(status_code=400, detail="Invalid file type. Allowed: PDF, DOCX, TXT")
+        raise HTTPException(status_code=400, detail="Invalid file type. Allowed: PDF, DOCX, DOC, TXT, MD, RTF, ODT")
     
     file_content = await file.read()
     

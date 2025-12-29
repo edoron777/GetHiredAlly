@@ -4,7 +4,7 @@ import { ArrowLeft, Upload, FileText, Search } from 'lucide-react'
 import { isAuthenticated, getAuthToken } from '@/lib/auth'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024
-const ALLOWED_EXTENSIONS = ['pdf', 'docx', 'doc', 'txt']
+const ALLOWED_EXTENSIONS = ['pdf', 'docx', 'doc', 'txt', 'md', 'rtf', 'odt']
 
 interface UserCV {
   id: string
@@ -62,7 +62,7 @@ export function CVOptimizerPage() {
 
     const extension = file.name.split('.').pop()?.toLowerCase()
     if (!extension || !ALLOWED_EXTENSIONS.includes(extension)) {
-      setError('Invalid file type. Please upload PDF, DOCX, or TXT.')
+      setError('Invalid file type. Please upload PDF, DOCX, DOC, TXT, MD, RTF, or ODT.')
       return
     }
 
@@ -156,12 +156,26 @@ export function CVOptimizerPage() {
           Back to Dashboard
         </Link>
 
-        <h1 className="text-3xl font-bold mb-2" style={{ color: '#1E3A5F' }}>
-          CV Optimizer
+        <h1 className="text-3xl font-bold mb-3" style={{ color: '#1E3A5F' }}>
+          Perfect Your CV
         </h1>
-        <p className="text-gray-600 mb-8">
-          Find hidden issues that hurt your chances
+        <p className="text-gray-600 mb-4">
+          Get an expert AI review of your CV in seconds. Discover what recruiters really see - and how to improve it.
         </p>
+        <ul className="text-gray-600 mb-8 space-y-1 text-sm">
+          <li className="flex items-center gap-2">
+            <span className="text-green-500">&#10003;</span>
+            Find hidden issues before recruiters do
+          </li>
+          <li className="flex items-center gap-2">
+            <span className="text-green-500">&#10003;</span>
+            Get actionable suggestions ranked by impact
+          </li>
+          <li className="flex items-center gap-2">
+            <span className="text-green-500">&#10003;</span>
+            Optional: Let AI fix your CV automatically
+          </li>
+        </ul>
 
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
@@ -209,12 +223,12 @@ export function CVOptimizerPage() {
                 <input
                   type="file"
                   className="hidden"
-                  accept=".pdf,.docx,.doc,.txt"
+                  accept=".pdf,.docx,.doc,.txt,.md,.rtf,.odt"
                   onChange={handleFileSelect}
                 />
               </label>
               <p className="text-sm text-gray-400 mt-4">
-                Supported: PDF, DOCX, TXT (Max 10MB)
+                Supported: PDF, DOCX, DOC, TXT, MD, RTF, ODT (Max 10MB)
               </p>
             </div>
           )}
