@@ -675,7 +675,9 @@ export function UnderstandJobPage() {
                 .prose li { margin-bottom: 0.25em; }
                 .prose strong { color: #1E3A5F; font-weight: 600; }
                 .prose blockquote { border-left: 4px solid #1E3A5F; padding-left: 1em; margin-left: 0; color: #555; font-style: italic; }
-                .prose code { background: #F3F4F6; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+                .prose code { background: #F3F4F6; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; color: #333; }
+                .prose pre { background: #F3F4F6 !important; color: #333 !important; padding: 16px; border-radius: 8px; overflow-x: auto; }
+                .prose pre code { background: transparent; padding: 0; }
                 .prose hr { border-color: #E5E7EB; margin: 1.5em 0; }
                 
                 /* Callout boxes */
