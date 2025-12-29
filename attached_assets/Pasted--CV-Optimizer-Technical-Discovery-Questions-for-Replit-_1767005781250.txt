@@ -1,0 +1,148 @@
+# CV Optimizer - Technical Discovery Questions for Replit Agent
+
+## PURPOSE
+I need to document the CV Optimizer service completely. Please answer ALL questions below to help create comprehensive documentation.
+
+---
+
+## SECTION 1: FILE ARCHITECTURE
+
+### Frontend Files
+
+1. **Main Page Component:**
+   - What is the main file for CV Optimizer page?
+   - What is the file path? (e.g., `client/src/components/CVOptimizerPage.tsx`)
+
+2. **Related Components:**
+   - List ALL frontend files related to CV Optimizer
+   - Include file paths and brief purpose of each
+
+3. **Routes:**
+   - What is the URL route for CV Optimizer? (e.g., `/service/cv-optimizer`)
+   - Are there sub-routes? (e.g., `/scanning`, `/results`)
+
+### Backend Files
+
+4. **API Files:**
+   - What backend files handle CV Optimizer?
+   - File paths and purposes
+
+5. **Endpoints:**
+   - List ALL API endpoints for CV Optimizer
+   - Include: HTTP method, path, request body, response format
+
+---
+
+## SECTION 2: DATABASE
+
+6. **Tables Used:**
+   - What database tables does CV Optimizer use?
+   - For each table, provide the schema (columns, types)
+
+7. **Prompt Templates:**
+   - Are there entries in `prompt_templates` table for CV Optimizer?
+   - If yes, what are the `template_type` values?
+   - Please show the actual content of each prompt
+
+8. **Data Storage:**
+   - Where is the CV content stored?
+   - Where is the analysis report stored?
+   - Where are scan results stored?
+
+---
+
+## SECTION 3: CURRENT FUNCTIONALITY
+
+9. **What Works:**
+   - What features are currently implemented and working?
+
+10. **What Doesn't Work:**
+    - What is the specific error or issue?
+    - When did it stop working?
+    - Are there error messages in console or logs?
+
+11. **User Flow:**
+    - Walk through the current user flow step by step
+    - Where does it break?
+
+---
+
+## SECTION 4: AI INTEGRATION
+
+12. **AI Provider:**
+    - Which AI provider(s) does CV Optimizer use? (Claude, Gemini, both?)
+    - What model is used?
+
+13. **Prompt Assembly:**
+    - How are prompts assembled?
+    - Are prompts from database or hardcoded?
+
+14. **Response Processing:**
+    - How is the AI response processed?
+    - Is JSON extracted? Markdown rendered?
+
+---
+
+## SECTION 5: UI COMPONENTS
+
+15. **Upload Component:**
+    - How does CV upload work?
+    - Drag & drop? File selector? Both?
+    - What file formats are supported?
+
+16. **Results Display:**
+    - How are scan results displayed?
+    - Is there a scanning animation?
+    - What does the report look like?
+
+17. **Export:**
+    - What export options exist? (PDF, Word, Email)
+    - How are exports generated?
+
+---
+
+## SECTION 6: CODE SAMPLES
+
+Please provide actual code snippets for:
+
+18. **Main Page Component Structure:**
+```tsx
+// Show the main component structure
+```
+
+19. **API Endpoint Handler:**
+```python
+// Show the main analyze endpoint
+```
+
+20. **Database Query:**
+```sql
+// Show how data is saved/retrieved
+```
+
+---
+
+## SECTION 7: DEPENDENCIES
+
+21. **Frontend Dependencies:**
+    - What npm packages are used specifically for CV Optimizer?
+
+22. **Backend Dependencies:**
+    - What Python packages are used?
+
+---
+
+## HOW TO RESPOND
+
+Please respond in this format for each section:
+
+```
+## SECTION X: [NAME]
+
+### Question [Number]
+[Your detailed answer]
+
+[Code block if applicable]
+```
+
+Thank you for providing complete and detailed answers!
