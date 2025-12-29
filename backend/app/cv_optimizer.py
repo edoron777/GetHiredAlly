@@ -3,6 +3,9 @@ import os
 import sys
 import json
 import hashlib
+import logging
+import psycopg2
+from psycopg2.extras import RealDictCursor
 from datetime import datetime
 from io import BytesIO
 from fastapi import APIRouter, HTTPException, Request
@@ -16,7 +19,16 @@ from utils.encryption import decrypt_text
 from utils.file_generators import generate_pdf, generate_docx
 from config.rate_limiter import limiter
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/cv-optimizer", tags=["cv-optimizer"])
+
+
+def get_db_connection():
+    """Get direct PostgreSQL connection."""
+    database_url = os.environ.get("DATABASE_URL")
+    if not database_url:
+        return None
+    return psycopg2.connect(database_url)
 
 
 def get_supabase_client() -> Client | None:
@@ -28,23 +40,38 @@ def get_supabase_client() -> Client | None:
 
 
 def get_user_from_token(token: str) -> dict | None:
-    client = get_supabase_client()
-    if not client or not token:
+    """Get user from session token using direct database connection."""
+    if not token:
         return None
-
-    token_hash = hashlib.sha256(token.encode()).hexdigest()
-    session_result = client.table("user_sessions").select("user_id, expires_at").eq("token_hash", token_hash).execute()
-
-    if not session_result.data:
+    
+    try:
+        conn = get_db_connection()
+        if not conn:
+            logger.error("Failed to get database connection")
+            return None
+        
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        token_hash = hashlib.sha256(token.encode()).hexdigest()
+        
+        cursor.execute(
+            """SELECT s.user_id, s.expires_at, u.id, u.email, u.name, u.profile_id, u.is_verified, u.is_admin
+               FROM user_sessions s
+               JOIN users u ON s.user_id = u.id
+               WHERE s.token_hash = %s""",
+            (token_hash,)
+        )
+        result = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if not result:
+            return None
+        
+        return dict(result)
+        
+    except Exception as e:
+        logger.error(f"Database error: {str(e)}")
         return None
-
-    session = session_result.data[0]
-    user_result = client.table("users").select("*").eq("id", session["user_id"]).execute()
-
-    if not user_result.data:
-        return None
-
-    return user_result.data[0]
 
 
 CV_ANALYSIS_PROMPT = """You are a CV/Resume expert with 20 years of experience in HR and recruitment.
@@ -168,17 +195,23 @@ async def scan_cv(request: Request, scan_request: ScanRequest):
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
 
-    client = get_supabase_client()
-    if not client:
-        raise HTTPException(status_code=500, detail="Database not available")
-
     try:
-        cv_result = client.table("user_cvs").select("*").eq("id", scan_request.cv_id).eq("user_id", user["id"]).execute()
+        conn = get_db_connection()
+        if not conn:
+            raise HTTPException(status_code=500, detail="Database not available")
 
-        if not cv_result.data:
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute(
+            """SELECT * FROM user_cvs WHERE id = %s AND user_id = %s""",
+            (scan_request.cv_id, str(user["id"]))
+        )
+        cv = cursor.fetchone()
+
+        if not cv:
+            cursor.close()
+            conn.close()
             raise HTTPException(status_code=404, detail="CV not found")
 
-        cv = cv_result.data[0]
         cv_content = cv.get("content", "")
 
         if cv_content:
@@ -188,6 +221,8 @@ async def scan_cv(request: Request, scan_request: ScanRequest):
                 pass
 
         if not cv_content or len(cv_content.strip()) < 50:
+            cursor.close()
+            conn.close()
             raise HTTPException(status_code=400, detail="CV content is too short or empty")
 
         analysis_result = await analyze_cv_with_ai(cv_content, str(user["id"]))
@@ -201,25 +236,22 @@ async def scan_cv(request: Request, scan_request: ScanRequest):
             'total': len(issues)
         }
 
-        scan_record = {
-            'user_id': str(user["id"]),
-            'cv_id': scan_request.cv_id,
-            'total_issues': summary['total'],
-            'critical_count': summary['critical'],
-            'high_count': summary['high'],
-            'medium_count': summary['medium'],
-            'low_count': summary['low'],
-            'original_cv_content': cv_content,
-            'issues_json': issues,
-            'status': 'completed'
-        }
+        cursor.execute(
+            """INSERT INTO cv_scan_results 
+               (user_id, cv_id, total_issues, critical_count, high_count, medium_count, low_count, original_cv_content, issues_json, status)
+               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""",
+            (str(user["id"]), scan_request.cv_id, summary['total'], summary['critical'], 
+             summary['high'], summary['medium'], summary['low'], cv_content, json.dumps(issues), 'completed')
+        )
+        result = cursor.fetchone()
+        conn.commit()
+        cursor.close()
+        conn.close()
 
-        save_result = client.table("cv_scan_results").insert(scan_record).execute()
-
-        if not save_result.data:
+        if not result:
             raise HTTPException(status_code=500, detail="Failed to save scan results")
 
-        scan_id = save_result.data[0]["id"]
+        scan_id = result["id"]
 
         return {
             'scan_id': scan_id,
@@ -240,19 +272,23 @@ async def get_scan_results(scan_id: str, token: str):
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
 
-    client = get_supabase_client()
-    if not client:
-        raise HTTPException(status_code=500, detail="Database not available")
-
     try:
-        result = client.table("cv_scan_results").select(
-            "id, user_id, cv_id, scan_date, total_issues, critical_count, high_count, medium_count, low_count, status"
-        ).eq("id", scan_id).eq("user_id", user["id"]).execute()
+        conn = get_db_connection()
+        if not conn:
+            raise HTTPException(status_code=500, detail="Database not available")
 
-        if not result.data:
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute(
+            """SELECT id, user_id, cv_id, scan_date, total_issues, critical_count, high_count, medium_count, low_count, status
+               FROM cv_scan_results WHERE id = %s AND user_id = %s""",
+            (scan_id, str(user["id"]))
+        )
+        scan = cursor.fetchone()
+        cursor.close()
+        conn.close()
+
+        if not scan:
             raise HTTPException(status_code=404, detail="Scan results not found")
-
-        scan = result.data[0]
 
         return {
             'id': scan['id'],
@@ -279,17 +315,22 @@ async def get_detailed_report(scan_id: str, token: str):
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
 
-    client = get_supabase_client()
-    if not client:
-        raise HTTPException(status_code=500, detail="Database not available")
-
     try:
-        result = client.table("cv_scan_results").select("*").eq("id", scan_id).eq("user_id", user["id"]).execute()
+        conn = get_db_connection()
+        if not conn:
+            raise HTTPException(status_code=500, detail="Database not available")
 
-        if not result.data:
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute(
+            """SELECT * FROM cv_scan_results WHERE id = %s AND user_id = %s""",
+            (scan_id, str(user["id"]))
+        )
+        scan = cursor.fetchone()
+        cursor.close()
+        conn.close()
+
+        if not scan:
             raise HTTPException(status_code=404, detail="Scan not found")
-
-        scan = result.data[0]
 
         issues = scan.get('issues_json', [])
         if isinstance(issues, str):
@@ -350,19 +391,26 @@ async def generate_fixed_cv(request: Request, scan_id: str, token: str):
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
 
-    client = get_supabase_client()
-    if not client:
-        raise HTTPException(status_code=500, detail="Database not available")
-
     try:
-        result = client.table("cv_scan_results").select("*").eq("id", scan_id).eq("user_id", user["id"]).execute()
+        conn = get_db_connection()
+        if not conn:
+            raise HTTPException(status_code=500, detail="Database not available")
 
-        if not result.data:
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute(
+            """SELECT * FROM cv_scan_results WHERE id = %s AND user_id = %s""",
+            (scan_id, str(user["id"]))
+        )
+        scan = cursor.fetchone()
+
+        if not scan:
+            cursor.close()
+            conn.close()
             raise HTTPException(status_code=404, detail="Scan not found")
 
-        scan = result.data[0]
-
         if scan.get('fixed_cv_content'):
+            cursor.close()
+            conn.close()
             return {
                 'success': True,
                 'message': 'Fixed CV already generated',
@@ -375,6 +423,8 @@ async def generate_fixed_cv(request: Request, scan_id: str, token: str):
             issues = json.loads(issues)
 
         if not original_content:
+            cursor.close()
+            conn.close()
             raise HTTPException(status_code=400, detail="Original CV content not found")
 
         issues_text = "\n".join([
@@ -395,11 +445,13 @@ async def generate_fixed_cv(request: Request, scan_id: str, token: str):
             max_tokens=4000
         )
 
-        client.table("cv_scan_results").update({
-            'fixed_cv_content': fixed_content,
-            'status': 'fixed',
-            'updated_at': datetime.utcnow().isoformat()
-        }).eq("id", scan_id).execute()
+        cursor.execute(
+            """UPDATE cv_scan_results SET fixed_cv_content = %s, status = %s, updated_at = %s WHERE id = %s""",
+            (fixed_content, 'fixed', datetime.utcnow().isoformat(), scan_id)
+        )
+        conn.commit()
+        cursor.close()
+        conn.close()
 
         return {
             'success': True,
@@ -420,17 +472,22 @@ async def get_fixed_cv(scan_id: str, token: str):
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
 
-    client = get_supabase_client()
-    if not client:
-        raise HTTPException(status_code=500, detail="Database not available")
-
     try:
-        result = client.table("cv_scan_results").select("*").eq("id", scan_id).eq("user_id", user["id"]).execute()
+        conn = get_db_connection()
+        if not conn:
+            raise HTTPException(status_code=500, detail="Database not available")
 
-        if not result.data:
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute(
+            """SELECT * FROM cv_scan_results WHERE id = %s AND user_id = %s""",
+            (scan_id, str(user["id"]))
+        )
+        scan = cursor.fetchone()
+        cursor.close()
+        conn.close()
+
+        if not scan:
             raise HTTPException(status_code=404, detail="Scan not found")
-
-        scan = result.data[0]
 
         if not scan.get('fixed_cv_content'):
             raise HTTPException(status_code=400, detail="Fixed CV not generated yet")
@@ -461,17 +518,24 @@ async def download_fixed_cv(scan_id: str, format: str = 'txt', token: str = ''):
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
 
-    client = get_supabase_client()
-    if not client:
-        raise HTTPException(status_code=500, detail="Database not available")
-
     try:
-        result = client.table("cv_scan_results").select("fixed_cv_content").eq("id", scan_id).eq("user_id", user["id"]).execute()
+        conn = get_db_connection()
+        if not conn:
+            raise HTTPException(status_code=500, detail="Database not available")
 
-        if not result.data or not result.data[0].get('fixed_cv_content'):
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute(
+            """SELECT fixed_cv_content FROM cv_scan_results WHERE id = %s AND user_id = %s""",
+            (scan_id, str(user["id"]))
+        )
+        result = cursor.fetchone()
+        cursor.close()
+        conn.close()
+
+        if not result or not result.get('fixed_cv_content'):
             raise HTTPException(status_code=404, detail="Fixed CV not found")
 
-        content = result.data[0]['fixed_cv_content']
+        content = result['fixed_cv_content']
 
         if format == 'txt':
             return StreamingResponse(

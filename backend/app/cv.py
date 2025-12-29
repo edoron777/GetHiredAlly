@@ -2,6 +2,10 @@
 import os
 import sys
 import io
+import logging
+import hashlib
+import psycopg2
+from psycopg2.extras import RealDictCursor
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from supabase import create_client, Client
 
@@ -9,39 +13,62 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.encryption import encrypt_text
 from config.rate_limiter import limiter
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/cv", tags=["cv"])
 
 MAX_FILE_SIZE = 10 * 1024 * 1024
 ALLOWED_EXTENSIONS = ['pdf', 'docx', 'doc', 'txt']
 
+
+def get_db_connection():
+    """Get direct PostgreSQL connection."""
+    database_url = os.environ.get("DATABASE_URL")
+    if not database_url:
+        return None
+    return psycopg2.connect(database_url)
+
+
 def get_supabase_client() -> Client | None:
     url = os.environ.get("SUPABASE_URL")
     key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
     if not url or not key:
+        logger.error(f"Supabase config missing: URL={bool(url)}, KEY={bool(key)}")
         return None
     return create_client(url, key)
 
 
 def get_user_from_token(token: str) -> dict | None:
-    """Get user from session token."""
-    import hashlib
-    client = get_supabase_client()
-    if not client or not token:
+    """Get user from session token using direct database connection."""
+    if not token:
         return None
     
-    token_hash = hashlib.sha256(token.encode()).hexdigest()
-    session_result = client.table("user_sessions").select("user_id, expires_at").eq("token_hash", token_hash).execute()
-    
-    if not session_result.data:
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return None
+        
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        token_hash = hashlib.sha256(token.encode()).hexdigest()
+        
+        cursor.execute(
+            """SELECT s.user_id, s.expires_at, u.id, u.email, u.name, u.profile_id, u.is_verified, u.is_admin
+               FROM user_sessions s
+               JOIN users u ON s.user_id = u.id
+               WHERE s.token_hash = %s""",
+            (token_hash,)
+        )
+        result = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if not result:
+            return None
+        
+        return dict(result)
+        
+    except Exception as e:
+        logger.error(f"Database error in get_user_from_token: {str(e)}")
         return None
-    
-    session = session_result.data[0]
-    user_result = client.table("users").select("*").eq("id", session["user_id"]).execute()
-    
-    if not user_result.data:
-        return None
-    
-    return user_result.data[0]
 
 
 def extract_text_from_file(file_content: bytes, filename: str) -> str:
@@ -104,16 +131,24 @@ async def list_user_cvs(token: str):
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
     
-    client = get_supabase_client()
-    if not client:
-        raise HTTPException(status_code=500, detail="Database not available")
-    
     try:
-        result = client.table("user_cvs").select(
-            "id, filename, created_at"
-        ).eq("user_id", user["id"]).order("created_at", desc=True).execute()
+        conn = get_db_connection()
+        if not conn:
+            raise HTTPException(status_code=500, detail="Database not available")
         
-        return {"cvs": result.data or []}
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute(
+            """SELECT id, filename, created_at FROM user_cvs 
+               WHERE user_id = %s ORDER BY created_at DESC""",
+            (str(user["id"]),)
+        )
+        cvs = [dict(row) for row in cursor.fetchall()]
+        cursor.close()
+        conn.close()
+        
+        return {"cvs": cvs}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -147,26 +182,26 @@ async def upload_cv_for_scan(
     
     encrypted_content = encrypt_text(text_content)
     
-    client = get_supabase_client()
-    if not client:
-        raise HTTPException(status_code=500, detail="Database not available")
-    
     try:
-        cv_data = {
-            "user_id": str(user["id"]),
-            "filename": file.filename,
-            "original_filename": file.filename,
-            "content": encrypted_content,
-            "file_size": len(file_content),
-            "file_type": extension
-        }
+        conn = get_db_connection()
+        if not conn:
+            raise HTTPException(status_code=500, detail="Database not available")
         
-        result = client.table("user_cvs").insert(cv_data).execute()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute(
+            """INSERT INTO user_cvs (user_id, filename, original_filename, content, file_size, file_type)
+               VALUES (%s, %s, %s, %s, %s, %s) RETURNING id""",
+            (str(user["id"]), file.filename, file.filename, encrypted_content, len(file_content), extension)
+        )
+        result = cursor.fetchone()
+        conn.commit()
+        cursor.close()
+        conn.close()
         
-        if not result.data:
+        if not result:
             raise HTTPException(status_code=500, detail="Failed to save CV")
         
-        cv_id = result.data[0]["id"]
+        cv_id = result["id"]
         
         return {
             "cv_id": cv_id,
@@ -187,17 +222,23 @@ async def get_cv(cv_id: str, token: str):
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
     
-    client = get_supabase_client()
-    if not client:
-        raise HTTPException(status_code=500, detail="Database not available")
-    
     try:
-        result = client.table("user_cvs").select("*").eq("id", cv_id).eq("user_id", user["id"]).execute()
+        conn = get_db_connection()
+        if not conn:
+            raise HTTPException(status_code=500, detail="Database not available")
         
-        if not result.data:
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute(
+            """SELECT id, filename, file_type, file_size, created_at FROM user_cvs 
+               WHERE id = %s AND user_id = %s""",
+            (cv_id, str(user["id"]))
+        )
+        cv = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if not cv:
             raise HTTPException(status_code=404, detail="CV not found")
-        
-        cv = result.data[0]
         
         return {
             "id": cv["id"],
