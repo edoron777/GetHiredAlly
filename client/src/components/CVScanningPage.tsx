@@ -96,7 +96,7 @@ export function CVScanningPage() {
         setScanComplete(true)
 
         setTimeout(() => {
-          navigate(`/service/cv-optimizer/results/${data.scan_id}`)
+          navigate(`/service/cv-optimizer/report/${data.scan_id}`)
         }, 2000)
 
       } catch (err) {

@@ -1,0 +1,105 @@
+APPROVED
+
+## CRITICAL: 3 Bugs in CV Optimizer After Recent Changes
+
+### BUG 1: Remove Results Page COMPLETELY (Not Just Hide)
+
+CURRENT PROBLEM:
+The Results page (/service/cv-optimizer/results/:scanId) still shows for 2 seconds with "Yes, Show Report" / "No, Go Back" buttons, then auto-redirects.
+
+THIS IS WRONG:
+The page should NOT exist at all. Do not just hide it or auto-redirect.
+
+REQUIRED FIX:
+After scanning completes, navigate DIRECTLY to the Report page.
+Skip the Results page entirely.
+
+LOCATION:
+- CVScanningPage.tsx - change where it navigates after scan completes
+- Change: navigate to /service/cv-optimizer/report/:scanId instead of /results/:scanId
+
+DO NOT just add a timer or auto-redirect. Remove the Results page from the flow completely.
+
+---
+
+### BUG 2: "How much information" Toolbar Not Working
+
+CURRENT PROBLEM:
+The toolbar with options:
+- Quick Review (Just titles)
+- Standard (+ Category & location)
+- With Fix (+ How to fix it)
+- Complete (Full details)
+
+When clicking these options, NOTHING CHANGES. The view stays the same.
+
+REQUIRED FIX:
+Make these buttons actually filter/change what is displayed:
+- Quick Review: Show only issue titles
+- Standard: Show titles + category + location
+- With Fix: Show titles + category + location + suggested fix
+- Complete: Show all details
+
+LOCATION:
+- CVReportPage.tsx - the view mode buttons and their handlers
+
+Check:
+1. Is there a state for selected view mode?
+2. Are the buttons updating that state?
+3. Is the rendering logic checking that state?
+
+---
+
+### BUG 3: Analysis Parsing BROKEN AGAIN
+
+CURRENT PROBLEM:
+The scan shows "Analysis parsing error" instead of real issues.
+Previously this was fixed, now it's broken again.
+
+CAUSE:
+Something in the recent changes broke the JSON parsing of AI response.
+
+REQUIRED FIX:
+1. Check what was changed in cv_optimizer.py recently
+2. Restore the working parsing logic
+3. Add defensive parsing that handles:
+   - JSON wrapped in ```json ``` code fences
+   - Extra text before/after JSON
+   - Finding the JSON array in the response
+
+LOCATION:
+- backend/app/cv_optimizer.py - analyze_cv_with_ai() function
+
+Add logging to debug:
+print("DEBUG Raw AI response:", response[:1000])
+
+---
+
+## IMPORTANT
+
+These bugs were introduced by recent changes.
+
+BEFORE making new changes:
+1. Identify what was changed that broke each feature
+2. Understand WHY it broke
+3. Fix without breaking other things
+
+DO NOT add new features.
+DO NOT refactor other code.
+ONLY fix these 3 specific bugs.
+
+---
+
+## SUMMARY TABLE
+
+| Bug | Problem | Fix Location |
+|-----|---------|--------------|
+| 1 | Results page still shows | CVScanningPage.tsx navigation |
+| 2 | View mode buttons don't work | CVReportPage.tsx button handlers |
+| 3 | Analysis parsing error | cv_optimizer.py parsing logic |
+
+## AFTER COMPLETION
+Provide detailed summary of:
+1. What was the root cause of each bug
+2. What exactly was changed to fix it
+3. Which files were modified

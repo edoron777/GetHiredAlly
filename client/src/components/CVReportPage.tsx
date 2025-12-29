@@ -469,7 +469,7 @@ export function CVReportPage() {
                           </div>
                         </button>
 
-                        {expandedIssues.has(issue.id) && displayLevel >= 2 && (
+                        {(displayLevel >= 2 || expandedIssues.has(issue.id)) && (
                           <div className="p-4 bg-white border-t border-gray-100">
                             <div className="grid grid-cols-2 gap-4 mb-4">
                               <div>
@@ -482,7 +482,7 @@ export function CVReportPage() {
                               </div>
                             </div>
 
-                            {displayLevel >= 3 && (
+                            {(displayLevel >= 3 || expandedIssues.has(issue.id)) && (
                               <>
                                 <div className="mb-4">
                                   <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Found</p>
@@ -500,7 +500,7 @@ export function CVReportPage() {
                               </>
                             )}
 
-                            {displayLevel >= 4 && issue.additional_info && (
+                            {(displayLevel >= 4 || expandedIssues.has(issue.id)) && issue.additional_info && (
                               <div className="mt-4 pt-4 border-t border-gray-100">
                                 <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Additional Information</p>
                                 <p className="text-gray-600 text-sm">{issue.additional_info}</p>
