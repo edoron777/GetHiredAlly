@@ -1,0 +1,263 @@
+# PROMPT: Add Report Header and Subheader to X-Ray Analyzer
+
+## ⚠️ CRITICAL: READ BEFORE ANY ACTION
+
+1. Read `/AGENTS.md` and `/replit.md` first
+2. Make ONLY the changes specified below
+3. Do NOT touch any other files or functionality
+4. Do NOT add features not requested
+
+Confirm understanding before proceeding.
+
+---
+
+## TASK: Add Header and Subheader to X-Ray Analyzer Report
+
+### CONTEXT
+The X-Ray Analyzer report needs a professional header and subheader that displays:
+- Report title with job name
+- Date generated
+- Report type selected
+- Interviewer type selected
+
+### FILES TO MODIFY
+Only modify the file that displays the X-Ray report (likely `UnderstandJobPage.tsx` or similar).
+
+---
+
+## REQUIRED CHANGES
+
+### 1. Report Header (Main Title)
+
+Display at the TOP of the report:
+
+```
+Job Description X-Ray Analyzer Report
+[Job Title from job description]
+```
+
+Example:
+```
+Job Description X-Ray Analyzer Report
+Staff Product Manager - AI Agent Security at SentinelOne
+```
+
+### 2. Report Subheader (Metadata)
+
+Display BELOW the header, showing 3 pieces of information:
+
+| Field | Value |
+|-------|-------|
+| **Generated:** | [Current date in format: December 29, 2025] |
+| **Report Type:** | [Interview Ready OR Fully Prepared] |
+| **Prepared For:** | [HR/Recruiter OR Technical OR Hiring Manager OR General] |
+
+---
+
+## VISUAL DESIGN
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                                                                 │
+│   📋 Job Description X-Ray Analyzer Report                      │
+│   Staff Product Manager - AI Agent Security at SentinelOne      │
+│                                                                 │
+│   ─────────────────────────────────────────────────────────     │
+│   Generated: December 29, 2025                                  │
+│   Report Type: Interview Ready                                  │
+│   Prepared For: HR / Recruiter Interview                        │
+│   ─────────────────────────────────────────────────────────     │
+│                                                                 │
+│   ▶ ℹ️ About This Report (expand/collapse)                      │
+│                                                                 │
+│   ## 1. Executive Summary                                       │
+│   [content...]                                                  │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## CODE IMPLEMENTATION
+
+### Header Component
+
+```tsx
+{/* Report Header */}
+<div className="report-header">
+  <h1 className="report-title">
+    📋 Job Description X-Ray Analyzer Report
+  </h1>
+  <h2 className="report-job-title">
+    {jobTitle}
+  </h2>
+</div>
+
+{/* Report Metadata */}
+<div className="report-metadata">
+  <div className="metadata-item">
+    <span className="metadata-label">Generated:</span>
+    <span className="metadata-value">{formatDate(new Date())}</span>
+  </div>
+  <div className="metadata-item">
+    <span className="metadata-label">Report Type:</span>
+    <span className="metadata-value">{depthMode === 'ready' ? 'Interview Ready' : 'Fully Prepared'}</span>
+  </div>
+  <div className="metadata-item">
+    <span className="metadata-label">Prepared For:</span>
+    <span className="metadata-value">{getInterviewerLabel(interviewerType)}</span>
+  </div>
+</div>
+```
+
+### Helper Function for Interviewer Label
+
+```tsx
+const getInterviewerLabel = (type: string): string => {
+  switch (type) {
+    case 'hr':
+      return 'HR / Recruiter Interview';
+    case 'technical':
+      return 'Technical Interview';
+    case 'manager':
+      return 'Hiring Manager Interview';
+    case 'general':
+    default:
+      return 'General Preparation';
+  }
+};
+```
+
+### Helper Function for Date Format
+
+```tsx
+const formatDate = (date: Date): string => {
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+};
+```
+
+---
+
+## STYLING (CSS)
+
+```css
+.report-header {
+  text-align: center;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #E5E7EB;
+}
+
+.report-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1E3A5F;
+  margin-bottom: 8px;
+}
+
+.report-job-title {
+  font-size: 18px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.report-metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+  padding: 12px 16px;
+  background: #F9FAFB;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.metadata-item {
+  display: flex;
+  gap: 8px;
+}
+
+.metadata-label {
+  font-weight: 600;
+  color: #6B7280;
+}
+
+.metadata-value {
+  color: #1E3A5F;
+}
+
+/* Mobile responsive */
+@media (max-width: 640px) {
+  .report-metadata {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .report-title {
+    font-size: 20px;
+  }
+  
+  .report-job-title {
+    font-size: 16px;
+  }
+}
+```
+
+---
+
+## WHERE TO GET THE DATA
+
+| Data | Source |
+|------|--------|
+| **Job Title** | Extract from job description OR use "Untitled Position" as fallback |
+| **Date** | `new Date()` - current date when report is generated |
+| **Report Type** | From user selection (depth mode: 'ready' or 'full') |
+| **Interviewer Type** | From user selection (interviewer type dropdown) |
+
+### Extracting Job Title
+
+If job title is not already extracted, the AI should extract it from the job description. Look for patterns like:
+- First line of job description
+- Text before "at" or "@" (e.g., "Product Manager at Google")
+- Text in the first `<h1>` or `<title>` if HTML
+
+Fallback: "Position Analysis"
+
+---
+
+## CONSTRAINTS
+
+❌ DO NOT:
+- Modify the report content/categories
+- Change existing styling elsewhere
+- Touch the toolbar or other components
+- Add any features not specified here
+
+✅ DO:
+- Add header component at the TOP of the report
+- Add metadata section below header
+- Make it responsive for mobile
+- Use existing color scheme (#1E3A5F, #374151, etc.)
+
+---
+
+## VERIFICATION
+
+After implementation, verify:
+1. ☐ Header shows "Job Description X-Ray Analyzer Report"
+2. ☐ Job title is displayed
+3. ☐ Date shows current date in readable format
+4. ☐ Report type shows correctly (Interview Ready / Fully Prepared)
+5. ☐ Interviewer type shows correctly
+6. ☐ Layout looks good on desktop
+7. ☐ Layout looks good on mobile
+8. ☐ No other functionality is broken
+
+---
+
+APPROVED
