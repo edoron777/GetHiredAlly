@@ -1,0 +1,182 @@
+# PROMPT: Hardcode Self-Reflection Questions in Report (Backup)
+
+## ⚠️ CRITICAL: READ BEFORE ANY ACTION
+
+1. Read `/AGENTS.md` and `/replit.md` first
+2. Make ONLY the changes specified below
+3. Do NOT touch any other files or functionality
+4. UnderstandJobPage.tsx is PROTECTED - only make specified changes
+
+Confirm understanding before proceeding.
+
+---
+
+## CONTEXT
+
+The AI sometimes skips some of the 5 self-reflection questions in Category 6 ("Is This Job Right for Me?").
+
+To guarantee all 5 questions ALWAYS appear, we will hardcode them in the frontend as a backup.
+
+---
+
+## TASK: Add Hardcoded Self-Reflection Questions
+
+### LOGIC
+
+After the AI-generated content for Category 6, ALWAYS append the 5 self-reflection questions.
+
+To avoid duplication:
+1. Check if the AI response already contains "Questions to Ask Yourself"
+2. If YES → Do NOT add the hardcoded section
+3. If NO → Add the hardcoded section
+
+### FILES TO MODIFY
+
+Only modify: `UnderstandJobPage.tsx` (or wherever the report is rendered)
+
+---
+
+## IMPLEMENTATION
+
+### Step 1: Create the Hardcoded Questions Component
+
+```tsx
+const SelfReflectionQuestions = () => (
+  <div className="self-reflection-section" style={{
+    marginTop: '24px',
+    padding: '16px',
+    backgroundColor: '#FEF3C7',
+    borderRadius: '8px',
+    borderLeft: '4px solid #F59E0B'
+  }}>
+    <h4 style={{
+      fontSize: '16px',
+      fontWeight: '600',
+      color: '#92400E',
+      marginBottom: '12px'
+    }}>
+      🤔 Questions to Ask Yourself
+    </h4>
+    <ol style={{
+      paddingLeft: '20px',
+      color: '#78350F',
+      lineHeight: '1.8'
+    }}>
+      <li>Does this role align with my career goals for the next 2-3 years?</li>
+      <li>Am I excited about the core responsibilities, or just the title/salary?</li>
+      <li>Does the company culture (based on JD signals) match how I work best?</li>
+      <li>Are there any red flags I am ignoring because I need a job?</li>
+      <li>Would I recommend this job to a friend in my situation?</li>
+    </ol>
+    <p style={{
+      marginTop: '12px',
+      fontStyle: 'italic',
+      color: '#92400E',
+      fontSize: '14px'
+    }}>
+      <strong>Remember:</strong> A bad job fit is worse than continuing your search.
+    </p>
+  </div>
+);
+```
+
+### Step 2: Add Logic to Check and Display
+
+```tsx
+// Function to check if AI response already has self-reflection questions
+const hasReflectionQuestions = (content: string): boolean => {
+  return content.toLowerCase().includes('questions to ask yourself') ||
+         content.toLowerCase().includes('self-reflection questions');
+};
+
+// In the render, after the ReactMarkdown content:
+{!hasReflectionQuestions(analysisContent) && <SelfReflectionQuestions />}
+```
+
+### Step 3: Where to Place It
+
+Place the `<SelfReflectionQuestions />` component AFTER the main report content (ReactMarkdown) but BEFORE the toolbar/footer.
+
+```tsx
+{/* Report Content */}
+<ReactMarkdown>
+  {analysisContent}
+</ReactMarkdown>
+
+{/* Hardcoded Self-Reflection Questions (backup) */}
+{!hasReflectionQuestions(analysisContent) && <SelfReflectionQuestions />}
+
+{/* Rest of the page (toolbar, etc.) */}
+```
+
+---
+
+## VISUAL RESULT
+
+When AI includes the questions:
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ ## 6. Is This Job Right for Me?                                 │
+│                                                                 │
+│ [AI-generated red flags, green flags, etc.]                     │
+│                                                                 │
+│ ### Questions to Ask Yourself (from AI)                         │
+│ 1. Question 1                                                   │
+│ 2. Question 2                                                   │
+│ ...                                                             │
+│                                                                 │
+│ [NO hardcoded section - AI already included it]                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+When AI skips the questions:
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ ## 6. Is This Job Right for Me?                                 │
+│                                                                 │
+│ [AI-generated red flags, green flags, etc.]                     │
+│                                                                 │
+│ ┌─────────────────────────────────────────────────────────────┐ │
+│ │ 🤔 Questions to Ask Yourself (hardcoded backup)             │ │
+│ │                                                             │ │
+│ │ 1. Does this role align with my career goals...            │ │
+│ │ 2. Am I excited about the core responsibilities...         │ │
+│ │ 3. Does the company culture...                             │ │
+│ │ 4. Are there any red flags I am ignoring...                │ │
+│ │ 5. Would I recommend this job to a friend...               │ │
+│ │                                                             │ │
+│ │ Remember: A bad job fit is worse than continuing...        │ │
+│ └─────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## CONSTRAINTS
+
+❌ DO NOT:
+- Remove or modify AI-generated content
+- Change the report categories or structure
+- Modify the toolbar or other components
+- Add any features not specified
+
+✅ DO:
+- Add the SelfReflectionQuestions component
+- Add the hasReflectionQuestions check function
+- Use inline styles (consistent with existing code)
+- Place it after report content, before footer/toolbar
+
+---
+
+## VERIFICATION
+
+After implementation:
+1. ☐ Generate a report where AI includes the questions → Hardcoded section should NOT appear
+2. ☐ If AI ever skips questions → Hardcoded section WILL appear
+3. ☐ Styling matches the yellow/warning box design
+4. ☐ All 5 questions are present
+5. ☐ No other functionality is broken
+
+---
+
+APPROVED

@@ -110,6 +110,51 @@ const extractJobTitle = (analysisText: string): string => {
   return 'Position Analysis';
 };
 
+const hasReflectionQuestions = (content: string): boolean => {
+  return content.toLowerCase().includes('questions to ask yourself') ||
+         content.toLowerCase().includes('self-reflection questions');
+};
+
+const SelfReflectionQuestions = () => (
+  <div style={{
+    marginTop: '24px',
+    padding: '16px',
+    backgroundColor: '#FEF3C7',
+    borderRadius: '8px',
+    borderLeft: '4px solid #F59E0B'
+  }}>
+    <h4 style={{
+      fontSize: '16px',
+      fontWeight: 600,
+      color: '#92400E',
+      marginBottom: '12px'
+    }}>
+      🤔 Questions to Ask Yourself
+    </h4>
+    <ol style={{
+      paddingLeft: '20px',
+      color: '#78350F',
+      lineHeight: '1.8',
+      margin: 0
+    }}>
+      <li>Does this role align with my career goals for the next 2-3 years?</li>
+      <li>Am I excited about the core responsibilities, or just the title/salary?</li>
+      <li>Does the company culture (based on JD signals) match how I work best?</li>
+      <li>Are there any red flags I am ignoring because I need a job?</li>
+      <li>Would I recommend this job to a friend in my situation?</li>
+    </ol>
+    <p style={{
+      marginTop: '12px',
+      fontStyle: 'italic',
+      color: '#92400E',
+      fontSize: '14px',
+      marginBottom: 0
+    }}>
+      <strong>Remember:</strong> A bad job fit is worse than continuing your search.
+    </p>
+  </div>
+);
+
 export function UnderstandJobPage() {
   const navigate = useNavigate()
   const [jobDescription, setJobDescription] = useState('')
@@ -826,6 +871,9 @@ export function UnderstandJobPage() {
               >
                 {analysis}
               </ReactMarkdown>
+              
+              {/* Hardcoded Self-Reflection Questions (backup if AI skips them) */}
+              {!hasReflectionQuestions(analysis) && <SelfReflectionQuestions />}
             </div>
             
             {/* Next Step CTA */}
