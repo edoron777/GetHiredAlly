@@ -1,0 +1,100 @@
+==========================================================
+PHASE 3D: IMPLEMENT EXPERIENCE AND LENGTH SCORING
+==========================================================
+
+TASK: Add content to TWO files:
+1. `server/common/scoring/categories/experience.py`
+2. `server/common/scoring/categories/length.py`
+
+=== FILE 1: categories/experience.py ===
+```python
+"""
+Experience section scoring category.
+Max: 10 points
+"""
+
+from ..config import CATEGORY_WEIGHTS
+
+
+def calculate_experience_score(data) -> float:
+    """
+    Calculate experience presentation score.
+    
+    Scoring breakdown:
+    - Reverse chronological order: 3 points
+    - Company names present: 2 points
+    - Job titles present: 2 points
+    - Dates for each role: 3 points
+    """
+    score = 0.0
+    
+    # Handle both dict and dataclass
+    if isinstance(data, dict):
+        reverse_chrono = data.get("is_reverse_chronological", False)
+        has_companies = data.get("has_company_names", False)
+        has_titles = data.get("has_job_titles", False)
+        has_dates = data.get("has_dates_for_each_role", False)
+    else:
+        reverse_chrono = data.is_reverse_chronological
+        has_companies = data.has_company_names
+        has_titles = data.has_job_titles
+        has_dates = data.has_dates_for_each_role
+    
+    if reverse_chrono:
+        score += 3.0
+    if has_companies:
+        score += 2.0
+    if has_titles:
+        score += 2.0
+    if has_dates:
+        score += 3.0
+    
+    return score
+```
+
+=== FILE 2: categories/length.py ===
+```python
+"""
+CV length scoring category.
+Max: 5 points
+"""
+
+from ..config import CATEGORY_WEIGHTS
+
+
+def calculate_length_score(data) -> float:
+    """
+    Calculate CV length score.
+    
+    Scoring logic:
+    - 1 page: 5 points (optimal for most cases)
+    - 2 pages: 4 points (acceptable)
+    - 3+ pages: 2 points (too long)
+    - Less than 1 page: 1 point (too short)
+    """
+    # Handle both dict and dataclass
+    if isinstance(data, dict):
+        pages = data.get("page_count", 1)
+    else:
+        pages = data.page_count
+    
+    if pages == 1:
+        return 5.0
+    elif pages == 2:
+        return 4.0
+    elif pages >= 3:
+        return 2.0
+    else:
+        return 1.0
+```
+
+RULES:
+- Create ONLY these two files
+- Copy code EXACTLY as shown
+- Do NOT modify any other files
+
+AFTER COMPLETION:
+1. Confirm both files were created
+2. Confirm no other files were changed
+
+==========================================================
