@@ -1,0 +1,69 @@
+Choose Option B: Add Text Extraction Step
+
+Here's how to integrate:
+
+STEP 1: Import the extractors and calculator
+```python
+from common.scoring import calculate_cv_score
+from common.scoring.extractors import extract_patterns, analyze_text
+```
+
+STEP 2: After extracting CV text, run the extractors to build ExtractedData
+```python
+# After getting cv_text from PDF
+patterns = extract_patterns(cv_text)
+text_metrics = analyze_text(cv_text)
+
+# Combine into extracted_data dict
+extracted_data = {
+    "has_name": True,  # You may need AI for this one
+    "has_email": patterns.get("has_email", False),
+    "has_phone": patterns.get("has_phone", False),
+    "has_linkedin": patterns.get("has_linkedin", False),
+    "email_is_professional": True,  # Default or check
+    "has_section_headers": patterns.get("has_section_headers", False),
+    "uses_bullet_points": text_metrics.get("total_bullet_points", 0) > 0,
+    "has_skills_section": True,  # AI can detect this
+    "skills_are_categorized": False,  # AI can detect this
+    "page_count": text_metrics.get("estimated_page_count", 1),
+    "word_count": text_metrics.get("word_count", 0),
+    "total_bullet_points": text_metrics.get("total_bullet_points", 0),
+    "bullets_with_numbers": patterns.get("bullets_with_numbers", 0),
+    "strong_action_verbs_count": patterns.get("strong_action_verbs_count", 0),
+    "weak_phrases_count": patterns.get("weak_phrases_count", 0),
+    "passive_voice_count": patterns.get("passive_voice_count", 0),
+    "grammar_errors_count": 0,  # Will need grammar checker later
+    "spelling_errors_count": 0,  # Will need grammar checker later
+    "has_dates_for_each_role": True,  # AI can detect
+    "dates_are_consistent_format": True,  # AI can detect
+    "is_reverse_chronological": True,  # AI can detect
+    "has_company_names": True,  # AI can detect
+    "has_job_titles": True,  # AI can detect
+    "tech_keywords_found": []  # Can extract from skills section
+}
+```
+
+STEP 3: Calculate score using new module
+```python
+score_result = calculate_cv_score(extracted_data)
+```
+
+STEP 4: Keep AI analysis for ISSUES (report suggestions), but NOT for scoring
+
+STEP 5: Return combined result
+```python
+return {
+    "score": score_result.total_score,
+    "score_breakdown": score_result.breakdown.to_dict(),
+    "grade": score_result.grade,
+    "message": score_result.message,
+    "issues": ai_detected_issues  # From AI, for the report
+}
+```
+
+IMPORTANT:
+- The SCORE comes from extractors + calculator (deterministic)
+- The ISSUES come from AI (for suggestions in the report)
+- These are separate concerns
+
+Show me the current cv_optimizer.py code structure first, then propose specific changes.
