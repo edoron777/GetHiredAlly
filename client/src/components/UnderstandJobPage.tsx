@@ -102,12 +102,19 @@ const formatDate = (date: Date): string => {
   });
 };
 
-const extractJobTitle = (analysisText: string): string => {
-  const match = analysisText.match(/^##\s+(?:X-Ray Analysis:\s*)?(.+)$/m);
-  if (match && match[1]) {
-    return match[1].trim();
-  }
-  return 'Position Analysis';
+const extractJobTitle = (jobDescriptionInput: string): string => {
+  if (!jobDescriptionInput) return 'Position Analysis';
+  
+  const lines = jobDescriptionInput.split('\n').filter(line => line.trim());
+  if (lines.length === 0) return 'Position Analysis';
+  
+  const firstLine = lines[0].trim();
+  
+  const cleaned = firstLine
+    .replace(/^(job title|position|role|we are hiring|hiring|looking for)[:\s]*/i, '')
+    .trim();
+  
+  return cleaned.length > 100 ? cleaned.substring(0, 100) + '...' : cleaned;
 };
 
 const hasReflectionQuestions = (content: string): boolean => {
@@ -241,7 +248,7 @@ export function UnderstandJobPage() {
       const data = await response.json()
       
       // Prepend header to report content so it's included in exports
-      const jobTitle = extractJobTitle(data.analysis);
+      const jobTitle = extractJobTitle(jobDescription);
       const reportHeader = `# Job Description X-Ray Analyzer Report
 ## ${jobTitle}
 
@@ -628,7 +635,7 @@ export function UnderstandJobPage() {
               showWhatsApp={true}
               onPDF={async () => {
                 setDownloadError(null);
-                const jobTitle = extractJobTitle(analysis);
+                const jobTitle = extractJobTitle(jobDescription);
                 const response = await fetch('/api/xray/download/pdf', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
@@ -653,7 +660,7 @@ export function UnderstandJobPage() {
               }}
               onWord={async () => {
                 setDownloadError(null);
-                const jobTitle = extractJobTitle(analysis);
+                const jobTitle = extractJobTitle(jobDescription);
                 const response = await fetch('/api/xray/download/docx', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
@@ -677,7 +684,7 @@ export function UnderstandJobPage() {
                 window.URL.revokeObjectURL(url);
               }}
               onMarkdown={async () => {
-                const jobTitle = extractJobTitle(analysis);
+                const jobTitle = extractJobTitle(jobDescription);
                 const blob = new Blob([analysis], { type: 'text/markdown' });
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
