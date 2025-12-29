@@ -19,14 +19,16 @@ from services.ai_service import generate_completion
 from utils.encryption import decrypt_text
 from utils.file_generators import generate_pdf, generate_docx
 from config.rate_limiter import limiter
+from common.scoring import calculate_cv_score as calculate_cv_score_new
+from common.scoring.extractors import extract_patterns, analyze_text
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/cv-optimizer", tags=["cv-optimizer"])
 
 
-def calculate_cv_score(issues: list) -> dict:
+def calculate_cv_score_from_issues(issues: list) -> dict:
     """
-    Calculate CV score based on issues found.
+    Calculate CV score based on issues found (fallback method).
     Score is deterministic - same issues = same score.
     
     Scoring weights:
@@ -95,6 +97,51 @@ def calculate_cv_score(issues: list) -> dict:
             'low_issues': low_count,
             'total_penalty': penalty
         }
+    }
+
+
+def extract_cv_data_and_score(cv_text: str) -> dict:
+    """Extract CV features and calculate deterministic score using new scoring module."""
+    patterns = extract_patterns(cv_text)
+    text_metrics = analyze_text(cv_text)
+    
+    extracted_data = {
+        "has_name": True,
+        "has_email": patterns.get("has_email", False),
+        "has_phone": patterns.get("has_phone", False),
+        "has_linkedin": patterns.get("has_linkedin", False),
+        "email_is_professional": True,
+        "has_section_headers": patterns.get("has_section_headers", False),
+        "uses_bullet_points": text_metrics.get("total_bullet_points", 0) > 0,
+        "has_skills_section": True,
+        "skills_are_categorized": False,
+        "page_count": text_metrics.get("estimated_page_count", 1),
+        "word_count": text_metrics.get("word_count", 0),
+        "total_bullet_points": text_metrics.get("total_bullet_points", 0),
+        "bullets_with_numbers": patterns.get("bullets_with_numbers", 0),
+        "strong_action_verbs_count": patterns.get("strong_action_verbs_count", 0),
+        "weak_phrases_count": patterns.get("weak_phrases_count", 0),
+        "passive_voice_count": patterns.get("passive_voice_count", 0),
+        "grammar_errors_count": 0,
+        "spelling_errors_count": 0,
+        "has_dates_for_each_role": True,
+        "dates_are_consistent_format": True,
+        "is_reverse_chronological": True,
+        "has_company_names": True,
+        "has_job_titles": True,
+        "tech_keywords_found": []
+    }
+    
+    score_result = calculate_cv_score_new(extracted_data)
+    
+    logger.info(f"[CV_SCORE_NEW] Score: {score_result.total_score}, Grade: {score_result.grade}, Breakdown: {score_result.breakdown.to_dict()}")
+    
+    return {
+        'score': score_result.total_score,
+        'message': score_result.message,
+        'status': score_result.grade.lower().replace(' ', '_'),
+        'breakdown': score_result.breakdown.to_dict(),
+        'version': score_result.version
     }
 
 
@@ -445,7 +492,7 @@ async def scan_cv(request: Request, scan_request: ScanRequest):
             raise HTTPException(status_code=500, detail="Failed to save scan results")
 
         scan_id = result["id"]
-        score_data = calculate_cv_score(issues)
+        score_data = extract_cv_data_and_score(cv_content) if cv_content else calculate_cv_score_from_issues(issues)
 
         return {
             'scan_id': scan_id,
@@ -534,12 +581,13 @@ async def get_detailed_report(scan_id: str, token: str):
         if isinstance(issues, str):
             issues = json.loads(issues)
 
-        score_data = calculate_cv_score(issues)
+        cv_content = scan.get('original_cv_content', '')
+        score_data = extract_cv_data_and_score(cv_content) if cv_content else calculate_cv_score_from_issues(issues)
 
         return {
             'scan_id': scan['id'],
             'scan_date': scan['scan_date'],
-            'cv_content': scan.get('original_cv_content', ''),
+            'cv_content': cv_content,
             'total_issues': scan['total_issues'],
             'critical_count': scan['critical_count'],
             'high_count': scan['high_count'],
@@ -735,9 +783,10 @@ async def get_fixed_cv(scan_id: str, token: str):
         if isinstance(issues, str):
             issues = json.loads(issues)
 
-        score_data = calculate_cv_score(issues)
+        cv_content = scan.get('original_cv_content', '')
+        score_data = extract_cv_data_and_score(cv_content) if cv_content else calculate_cv_score_from_issues(issues)
         original_score = score_data['score']
-        fixed_score = 100
+        fixed_score = 95
 
         return {
             'scan_id': scan['id'],
