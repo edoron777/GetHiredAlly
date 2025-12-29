@@ -49,7 +49,7 @@ export default function EncouragementMessage({
         return {
           icon: '📋',
           title: 'All Suggestions',
-          message: `${count} total suggestion${count !== 1 ? 's' : ''} found`
+          message: `You have ${count} total suggestion${count !== 1 ? 's' : ''} to review`
         }
     }
   }

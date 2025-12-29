@@ -357,7 +357,7 @@ export function CVReportPage() {
         <StrengthsSection strengths={strengths} />
 
         <EncouragementMessage 
-          type={severityFilter === 'all' ? 'intro' : 'filter'} 
+          type="filter" 
           filterType={severityFilter}
           count={filteredIssues.length}
         />
