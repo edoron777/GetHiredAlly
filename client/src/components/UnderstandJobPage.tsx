@@ -83,8 +83,8 @@ const depthOptions: DepthOption[] = [
 export function UnderstandJobPage() {
   const navigate = useNavigate()
   const [jobDescription, setJobDescription] = useState('')
-  const [selectedInterviewer, setSelectedInterviewer] = useState<InterviewerType | null>(null)
-  const [depthLevel, setDepthLevel] = useState<DepthLevel | null>(null)
+  const [selectedInterviewer, setSelectedInterviewer] = useState<InterviewerType | null>('hr')
+  const [depthLevel, setDepthLevel] = useState<DepthLevel | null>('ready')
   const [isLoading, setIsLoading] = useState(false)
   const [touched, setTouched] = useState(false)
   const [analysis, setAnalysis] = useState<string | null>(null)
