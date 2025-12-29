@@ -387,13 +387,19 @@ FIXED CV:
 @limiter.limit("5/hour")
 async def generate_fixed_cv(request: Request, scan_id: str, token: str):
     """Generate a fixed version of the CV."""
+    logger.info(f"[CV_FIX] Starting fix for scan_id: {scan_id}")
+    
     user = get_user_from_token(token)
     if not user:
+        logger.error("[CV_FIX] Authentication failed - no user from token")
         raise HTTPException(status_code=401, detail="Not authenticated")
+
+    logger.info(f"[CV_FIX] User authenticated: {user.get('email', 'unknown')}")
 
     try:
         conn = get_db_connection()
         if not conn:
+            logger.error("[CV_FIX] Database connection failed")
             raise HTTPException(status_code=500, detail="Database not available")
 
         cursor = conn.cursor(cursor_factory=RealDictCursor)
@@ -406,11 +412,15 @@ async def generate_fixed_cv(request: Request, scan_id: str, token: str):
         if not scan:
             cursor.close()
             conn.close()
+            logger.error(f"[CV_FIX] Scan not found: {scan_id}")
             raise HTTPException(status_code=404, detail="Scan not found")
+
+        logger.info(f"[CV_FIX] Scan found, status: {scan.get('status')}")
 
         if scan.get('fixed_cv_content'):
             cursor.close()
             conn.close()
+            logger.info("[CV_FIX] Fixed CV already exists, returning cached")
             return {
                 'success': True,
                 'message': 'Fixed CV already generated',
@@ -422,9 +432,12 @@ async def generate_fixed_cv(request: Request, scan_id: str, token: str):
         if isinstance(issues, str):
             issues = json.loads(issues)
 
+        logger.info(f"[CV_FIX] Original CV length: {len(original_content)} chars, Issues count: {len(issues)}")
+
         if not original_content:
             cursor.close()
             conn.close()
+            logger.error("[CV_FIX] Original CV content is empty")
             raise HTTPException(status_code=400, detail="Original CV content not found")
 
         issues_text = "\n".join([
@@ -437,13 +450,30 @@ async def generate_fixed_cv(request: Request, scan_id: str, token: str):
             issues_list=issues_text
         )
 
-        fixed_content = await generate_completion(
-            prompt=prompt,
-            user_id=str(user["id"]),
-            service_name="cv_fix",
-            provider="gemini",
-            max_tokens=4000
-        )
+        logger.info(f"[CV_FIX] Prompt length: {len(prompt)} chars (~{len(prompt)//4} tokens)")
+        logger.info("[CV_FIX] Calling AI API (gemini) for CV fix...")
+
+        try:
+            ai_response = await generate_completion(
+                prompt=prompt,
+                user_id=str(user["id"]),
+                service_name="cv_fix",
+                provider="gemini",
+                max_tokens=4000
+            )
+            fixed_content = ai_response.content if ai_response else ""
+            logger.info(f"[CV_FIX] AI response received, length: {len(fixed_content)} chars, tokens: {ai_response.total_tokens if ai_response else 0}")
+        except Exception as ai_error:
+            logger.error(f"[CV_FIX] AI API ERROR: {type(ai_error).__name__}: {str(ai_error)}")
+            cursor.close()
+            conn.close()
+            raise HTTPException(status_code=500, detail=f"AI generation failed: {str(ai_error)}")
+
+        if not fixed_content:
+            logger.error("[CV_FIX] AI returned empty response")
+            cursor.close()
+            conn.close()
+            raise HTTPException(status_code=500, detail="AI returned empty response")
 
         cursor.execute(
             """UPDATE cv_scan_results SET fixed_cv_content = %s, status = %s, updated_at = %s WHERE id = %s""",
@@ -452,6 +482,8 @@ async def generate_fixed_cv(request: Request, scan_id: str, token: str):
         conn.commit()
         cursor.close()
         conn.close()
+
+        logger.info(f"[CV_FIX] Successfully saved fixed CV for scan_id: {scan_id}")
 
         return {
             'success': True,
@@ -462,6 +494,9 @@ async def generate_fixed_cv(request: Request, scan_id: str, token: str):
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"[CV_FIX] UNEXPECTED ERROR: {type(e).__name__}: {str(e)}")
+        import traceback
+        logger.error(f"[CV_FIX] Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
