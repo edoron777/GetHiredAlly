@@ -24,6 +24,28 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/cv-optimizer", tags=["cv-optimizer"])
 
 
+def calculate_cv_score(issues: list) -> int:
+    """
+    Calculate CV score based on issues found.
+    Fewer issues = higher score.
+    Critical issues have more weight.
+    """
+    base_score = 100
+    
+    for issue in issues:
+        severity = issue.get('severity', 'low') if isinstance(issue, dict) else 'low'
+        if severity == 'critical':
+            base_score -= 10
+        elif severity == 'high':
+            base_score -= 5
+        elif severity == 'medium':
+            base_score -= 2
+        elif severity == 'low':
+            base_score -= 1
+    
+    return max(0, min(100, base_score))
+
+
 def get_db_connection():
     """Get direct PostgreSQL connection."""
     database_url = os.environ.get("DATABASE_URL")
@@ -371,11 +393,13 @@ async def scan_cv(request: Request, scan_request: ScanRequest):
             raise HTTPException(status_code=500, detail="Failed to save scan results")
 
         scan_id = result["id"]
+        cv_score = calculate_cv_score(issues)
 
         return {
             'scan_id': scan_id,
             'summary': summary,
-            'issues': issues
+            'issues': issues,
+            'cv_score': cv_score
         }
 
     except HTTPException:
@@ -455,6 +479,8 @@ async def get_detailed_report(scan_id: str, token: str):
         if isinstance(issues, str):
             issues = json.loads(issues)
 
+        cv_score = calculate_cv_score(issues)
+
         return {
             'scan_id': scan['id'],
             'scan_date': scan['scan_date'],
@@ -465,7 +491,8 @@ async def get_detailed_report(scan_id: str, token: str):
             'medium_count': scan['medium_count'],
             'low_count': scan['low_count'],
             'issues': issues,
-            'status': scan['status']
+            'status': scan['status'],
+            'cv_score': cv_score
         }
 
     except HTTPException:
@@ -650,13 +677,19 @@ async def get_fixed_cv(scan_id: str, token: str):
         if isinstance(issues, str):
             issues = json.loads(issues)
 
+        original_score = calculate_cv_score(issues)
+        fixed_score = 100
+
         return {
             'scan_id': scan['id'],
             'original_cv_content': scan.get('original_cv_content', ''),
             'fixed_cv_content': scan['fixed_cv_content'],
             'total_issues': scan['total_issues'],
             'issues': issues,
-            'status': scan['status']
+            'status': scan['status'],
+            'original_score': original_score,
+            'fixed_score': fixed_score,
+            'improvement': fixed_score - original_score
         }
 
     except HTTPException:

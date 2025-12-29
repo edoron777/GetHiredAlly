@@ -1,0 +1,204 @@
+APPROVED
+
+## NEW FEATURE: CV Score Display
+
+### OVERVIEW
+Add a visual CV Score feature that shows users a percentage score for their CV quality.
+
+### WHEN TO DISPLAY
+
+1. AFTER SCAN COMPLETES:
+   - Show single circular score (0-100%)
+   - Display on results/report page
+
+2. AFTER FIX COMPLETES:
+   - Show BEFORE score (original CV)
+   - Show AFTER score (fixed CV)
+   - Show improvement percentage
+   - Show breakdown by category (optional)
+
+---
+
+### PART 1: CALCULATE CV SCORE
+
+LOCATION: backend/app/cv_optimizer.py
+
+Add score calculation logic:
+
+def calculate_cv_score(issues: list) -> int:
+    """
+    Calculate CV score based on issues found.
+    Fewer issues = higher score.
+    Critical issues have more weight.
+    """
+    base_score = 100
+    
+    for issue in issues:
+        severity = issue.get('severity', 'low')
+        if severity == 'critical':
+            base_score -= 10
+        elif severity == 'high':
+            base_score -= 5
+        elif severity == 'medium':
+            base_score -= 2
+        elif severity == 'low':
+            base_score -= 1
+    
+    return max(0, min(100, base_score))
+
+Add to scan response:
+- original_score: Score of uploaded CV
+- Store in cv_scan_results table
+
+Add to fix response:
+- original_score: Score before fix
+- fixed_score: Score after fix
+- improvement: fixed_score - original_score
+
+---
+
+### PART 2: SCORE COMPONENT (Frontend)
+
+LOCATION: Create new file: client/src/components/cv-optimizer/CVScoreCircle.tsx
+
+Create a circular progress component that:
+- Shows percentage in center (large number)
+- Has colored ring based on score
+- Shows label below (e.g., "CV Score", "Before", "After")
+- Shows message below (e.g., "Good - Room to improve")
+
+Color logic:
+- 90-100: Green (#22C55E) - "Excellent!"
+- 80-89: Green (#22C55E) - "Great CV!"
+- 70-79: Yellow (#EAB308) - "Good - Minor improvements"
+- 60-69: Yellow (#EAB308) - "Fair - Room to improve"
+- 50-59: Orange (#F97316) - "Needs work"
+- 0-49: Red (#EF4444) - "Significant improvements needed"
+
+Use SVG for the circular progress ring. Modern flat design, no 3D effects.
+
+---
+
+### PART 3: DISPLAY AFTER SCAN
+
+LOCATION: CVReportPage.tsx
+
+Add score display at TOP of report page, before the issues list:
+
+- Center aligned
+- Large size circle
+- Label: "Your CV Score"
+- Show appropriate message based on score
+
+---
+
+### PART 4: DISPLAY AFTER FIX (Comparison)
+
+LOCATION: CVFixedPage.tsx
+
+Add comparison section at TOP of fixed CV page:
+
+Layout (horizontal, centered):
+[Before Circle] --> [After Circle] --> [Improvement Badge]
+
+Before Circle:
+- Medium size
+- Label: "Before"
+- Shows original_score
+
+After Circle:
+- Medium size  
+- Label: "After"
+- Shows fixed_score
+
+Improvement Badge:
+- Large green text showing "+XX%"
+- Label: "Improvement"
+
+Below the circles, add a message:
+- If improvement > 20%: "Your CV improved significantly!"
+- If improvement > 10%: "Nice improvement!"
+- If improvement > 0%: "Your CV has been polished"
+
+Optional - Category Breakdown:
+Show list of categories with individual improvement percentages:
+- Grammar & Spelling: +40%
+- Action Verbs: +25%
+- Quantified Results: +15%
+
+---
+
+### PART 5: DATABASE UPDATE (Optional)
+
+If needed, add columns to cv_scan_results table:
+- original_score (integer): Score of original CV
+- fixed_score (integer): Score after fix
+
+Or calculate scores on-the-fly without storing.
+
+---
+
+### VISUAL DESIGN EXAMPLE
+
+After Scan:
+        ┌─────────┐
+       /           \
+      |     72%     |
+      |             |
+       \           /
+        └─────────┘
+        Your CV Score
+   Good - Room to improve
+
+After Fix:
+   BEFORE          AFTER         IMPROVEMENT
+  ┌──────┐       ┌──────┐
+ /   62%  \     /   89%  \         +27%
+ \        /     \        /       improvement
+  └──────┘       └──────┘
+  
+  Your CV improved significantly!
+
+---
+
+### FILES TO CREATE/MODIFY
+
+NEW FILES:
+- client/src/components/cv-optimizer/CVScoreCircle.tsx
+
+MODIFY:
+- backend/app/cv_optimizer.py (add calculate_cv_score function, add to responses)
+- CVReportPage.tsx (display score after scan)
+- CVFixedPage.tsx (display before/after comparison)
+
+---
+
+### IMPLEMENTATION ORDER
+
+1. Create calculate_cv_score() function in backend
+2. Add original_score to scan API response
+3. Create CVScoreCircle.tsx component
+4. Add score display to CVReportPage.tsx
+5. Add fixed_score to fix API response
+6. Add comparison display to CVFixedPage.tsx
+7. (Optional) Add category breakdown
+
+---
+
+### CONSTRAINTS
+
+- Do NOT change existing scan/fix logic, only ADD score calculation
+- Keep design modern and flat (no 3D gradients)
+- Ensure score is always between 0 and 100
+- Use SVG for circular progress (smooth rendering)
+- Make component reusable with props for size, label, score
+
+### SUCCESS CRITERIA
+
+- [ ] Score circle displays after CV scan completes
+- [ ] Circle color matches score range (green/yellow/orange/red)
+- [ ] Appropriate message displays based on score
+- [ ] Before/After scores display on fixed CV page
+- [ ] Improvement percentage shows correctly
+- [ ] Design is modern flat style
+- [ ] Component is reusable

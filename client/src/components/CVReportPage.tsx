@@ -13,6 +13,7 @@ import EncouragementMessage from './cv-optimizer/EncouragementMessage'
 import ViewModeToggle from './cv-optimizer/ViewModeToggle'
 import EffortGroupView from './cv-optimizer/EffortGroupView'
 import WorkTypeGroupView from './cv-optimizer/WorkTypeGroupView'
+import CVScoreCircle from './cv-optimizer/CVScoreCircle'
 import { mapIssueCategoryToId } from '../config/cvCategories'
 import { detectStrengths } from '../utils/strengthsDetector'
 import { playStartSound, playCompleteSound } from '../utils/sounds'
@@ -41,6 +42,7 @@ interface ReportData {
   low_count: number
   issues: Issue[]
   status: string
+  cv_score?: number
 }
 
 const DISPLAY_LEVELS = [
@@ -354,6 +356,16 @@ export function CVReportPage() {
           onMarkdown={handleExportMarkdown}
           serviceName="CV Analysis Report"
         />
+
+        {reportData.cv_score !== undefined && (
+          <div className="flex justify-center mb-8">
+            <CVScoreCircle 
+              score={reportData.cv_score} 
+              size="large" 
+              label="Your CV Score"
+            />
+          </div>
+        )}
 
         <StrengthsSection strengths={strengths} />
 

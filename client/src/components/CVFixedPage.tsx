@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import { 
   ArrowLeft, CheckCircle, FileText, File, 
-  FileType, Home, Columns
+  FileType, Home, Columns, ArrowRight
 } from 'lucide-react'
 import { isAuthenticated, getAuthToken } from '@/lib/auth'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import CVScoreCircle from './cv-optimizer/CVScoreCircle'
 
 interface FixedData {
   scan_id: string
@@ -23,6 +24,9 @@ interface FixedData {
     suggested_fix: string
   }>
   status: string
+  original_score?: number
+  fixed_score?: number
+  improvement?: number
 }
 
 const VIEW_MODES = [
@@ -147,6 +151,41 @@ export function CVFixedPage() {
             </p>
           </div>
         </div>
+
+        {data.original_score !== undefined && data.fixed_score !== undefined && (
+          <div className="bg-white border border-gray-200 rounded-xl p-8 mb-8">
+            <div className="flex items-center justify-center gap-8">
+              <CVScoreCircle 
+                score={data.original_score} 
+                size="medium" 
+                label="Before"
+                showMessage={false}
+              />
+              <div className="flex flex-col items-center">
+                <ArrowRight size={32} className="text-gray-400" />
+              </div>
+              <CVScoreCircle 
+                score={data.fixed_score} 
+                size="medium" 
+                label="After"
+                showMessage={false}
+              />
+              <div className="flex flex-col items-center px-6">
+                <span className="text-4xl font-bold text-green-600">+{data.improvement}%</span>
+                <span className="text-sm text-gray-600 mt-1">Improvement</span>
+              </div>
+            </div>
+            <div className="text-center mt-6">
+              <p className="text-lg font-medium text-gray-800">
+                {data.improvement && data.improvement > 20 
+                  ? 'Your CV improved significantly!' 
+                  : data.improvement && data.improvement > 10 
+                    ? 'Nice improvement!' 
+                    : 'Your CV has been polished'}
+              </p>
+            </div>
+          </div>
+        )}
 
         <div className="bg-gray-100 rounded-lg p-1 inline-flex mb-6">
           {VIEW_MODES.map(mode => {
