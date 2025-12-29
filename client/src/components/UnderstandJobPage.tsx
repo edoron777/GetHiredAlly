@@ -80,6 +80,36 @@ const depthOptions: DepthOption[] = [
   }
 ]
 
+const getInterviewerLabel = (type: string): string => {
+  switch (type) {
+    case 'hr':
+      return 'HR / Recruiter Interview';
+    case 'technical':
+      return 'Technical Interview';
+    case 'manager':
+      return 'Hiring Manager Interview';
+    case 'general':
+    default:
+      return 'General Preparation';
+  }
+};
+
+const formatDate = (date: Date): string => {
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+};
+
+const extractJobTitle = (analysisText: string): string => {
+  const match = analysisText.match(/^##\s+(?:X-Ray Analysis:\s*)?(.+)$/m);
+  if (match && match[1]) {
+    return match[1].trim();
+  }
+  return 'Position Analysis';
+};
+
 export function UnderstandJobPage() {
   const navigate = useNavigate()
   const [jobDescription, setJobDescription] = useState('')
@@ -516,9 +546,55 @@ export function UnderstandJobPage() {
               boxShadow: showHighlight ? '0 0 0 4px rgba(30, 90, 133, 0.1)' : 'none'
             }}
           >
-            <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#1E3A5F', marginBottom: '16px' }}>
-              Analysis Results
-            </h2>
+            {/* Report Header */}
+            <div style={{
+              textAlign: 'center',
+              marginBottom: '16px',
+              paddingBottom: '16px',
+              borderBottom: '2px solid #E5E7EB'
+            }}>
+              <h1 style={{
+                fontSize: '24px',
+                fontWeight: 700,
+                color: '#1E3A5F',
+                marginBottom: '8px'
+              }}>
+                📋 Job Description X-Ray Analyzer Report
+              </h1>
+              <h2 style={{
+                fontSize: '18px',
+                fontWeight: 500,
+                color: '#374151',
+                margin: 0
+              }}>
+                {extractJobTitle(analysis)}
+              </h2>
+            </div>
+
+            {/* Report Metadata */}
+            <div style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '16px',
+              justifyContent: 'center',
+              padding: '12px 16px',
+              background: '#F9FAFB',
+              borderRadius: '8px',
+              marginBottom: '16px'
+            }}>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <span style={{ fontWeight: 600, color: '#6B7280' }}>Generated:</span>
+                <span style={{ color: '#1E3A5F' }}>{formatDate(new Date())}</span>
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <span style={{ fontWeight: 600, color: '#6B7280' }}>Report Type:</span>
+                <span style={{ color: '#1E3A5F' }}>{depthLevel === 'ready' ? 'Interview Ready' : 'Fully Prepared'}</span>
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <span style={{ fontWeight: 600, color: '#6B7280' }}>Prepared For:</span>
+                <span style={{ color: '#1E3A5F' }}>{getInterviewerLabel(selectedInterviewer || 'general')}</span>
+              </div>
+            </div>
             
             <StandardToolbar
               serviceName="X-Ray Analyzer"
