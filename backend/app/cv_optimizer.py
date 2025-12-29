@@ -135,6 +135,67 @@ Return ONLY a valid JSON array of issues. No other text. Example:
 """
 
 
+def parse_ai_json_response(response_text: str) -> list:
+    """Robust JSON parsing that handles markdown code fences and extra text."""
+    text = response_text.strip()
+    
+    # Remove markdown code fences if present
+    if text.startswith("```json"):
+        text = text[7:]
+    elif text.startswith("```"):
+        text = text[3:]
+    if text.endswith("```"):
+        text = text[:-3]
+    text = text.strip()
+    
+    # Try direct parse first
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+    
+    # Try to find JSON array in the text
+    start = text.find('[')
+    end = text.rfind(']')
+    if start != -1 and end > start:
+        json_text = text[start:end + 1]
+        try:
+            return json.loads(json_text)
+        except json.JSONDecodeError:
+            # JSON might be truncated - try to fix it
+            json_text = fix_truncated_json(json_text)
+            return json.loads(json_text)
+    
+    raise json.JSONDecodeError("No valid JSON array found", text, 0)
+
+
+def fix_truncated_json(json_text: str) -> str:
+    """Attempt to fix truncated JSON array by closing open structures."""
+    text = json_text.rstrip()
+    
+    # Count open braces/brackets
+    open_braces = text.count('{') - text.count('}')
+    open_brackets = text.count('[') - text.count(']')
+    
+    # If we're inside an incomplete object, try to close it gracefully
+    if open_braces > 0 or open_brackets > 0:
+        # Find the last complete object
+        last_complete = text.rfind('},')
+        if last_complete != -1:
+            text = text[:last_complete + 1]
+        else:
+            # Try to find last complete object without comma
+            last_complete = text.rfind('}')
+            if last_complete != -1 and last_complete > text.rfind('{'):
+                text = text[:last_complete + 1]
+        
+        # Close the array
+        if not text.endswith(']'):
+            text = text.rstrip(',') + ']'
+    
+    return text
+
+
 async def analyze_cv_with_ai(cv_content: str, user_id: str) -> dict:
     prompt = CV_ANALYSIS_PROMPT.format(cv_content=cv_content)
 
@@ -142,23 +203,19 @@ async def analyze_cv_with_ai(cv_content: str, user_id: str) -> dict:
         ai_response = await generate_completion(
             prompt=prompt,
             provider='gemini',
-            max_tokens=4096,
+            max_tokens=8192,
             temperature=0.3,
             user_id=user_id,
             service_name="cv_optimizer"
         )
 
-        response_text = ai_response.content.strip()
+        logger.info(f"[CV_SCAN] Raw AI response length: {len(ai_response.content)} chars")
+        logger.info(f"[CV_SCAN] Raw AI response first 500 chars: {ai_response.content[:500]}")
+        logger.info(f"[CV_SCAN] Raw AI response last 500 chars: {ai_response.content[-500:]}")
 
-        if response_text.startswith('```json'):
-            response_text = response_text[7:]
-        if response_text.startswith('```'):
-            response_text = response_text[3:]
-        if response_text.endswith('```'):
-            response_text = response_text[:-3]
-        response_text = response_text.strip()
-
-        issues = json.loads(response_text)
+        issues = parse_ai_json_response(ai_response.content)
+        
+        logger.info(f"[CV_SCAN] Successfully parsed {len(issues)} issues")
 
         return {
             'issues': issues,
@@ -166,6 +223,8 @@ async def analyze_cv_with_ai(cv_content: str, user_id: str) -> dict:
         }
 
     except json.JSONDecodeError as e:
+        logger.error(f"[CV_SCAN] JSON parsing failed: {str(e)}")
+        logger.error(f"[CV_SCAN] Full AI response for debugging:\n{ai_response.content}")
         return {
             'issues': [{
                 'id': 1,
@@ -180,6 +239,7 @@ async def analyze_cv_with_ai(cv_content: str, user_id: str) -> dict:
             'error': str(e)
         }
     except Exception as e:
+        logger.error(f"[CV_SCAN] AI analysis failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"AI analysis failed: {str(e)}")
 
 
