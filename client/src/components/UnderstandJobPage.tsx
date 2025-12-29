@@ -519,198 +519,82 @@ export function UnderstandJobPage() {
               boxShadow: showHighlight ? '0 0 0 4px rgba(30, 90, 133, 0.1)' : 'none'
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#1E3A5F' }}>
-                Analysis Results
-              </h2>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    if (analysis) {
-                      await navigator.clipboard.writeText(analysis);
-                      setCopied(true);
-                      setTimeout(() => setCopied(false), 2000);
-                    }
-                  }}
-                  style={{
-                    background: 'none',
-                    border: '1px solid #E5E7EB',
-                    borderRadius: '6px',
-                    padding: '6px 12px',
-                    fontSize: '13px',
-                    color: copied ? '#10B981' : '#6B7280',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={(e) => { if (!copied) e.currentTarget.style.color = '#1E3A5F'; e.currentTarget.style.borderColor = '#1E3A5F'; }}
-                  onMouseLeave={(e) => { if (!copied) e.currentTarget.style.color = '#6B7280'; e.currentTarget.style.borderColor = '#E5E7EB'; }}
-                >
-                  {copied ? '✓ Copied!' : '📋 Copy'}
-                </button>
-                <button
-                  type="button"
-                  disabled={downloadingPdf}
-                  onClick={async () => {
-                    if (analysis) {
-                      setDownloadingPdf(true);
-                      setDownloadError(null);
-                      try {
-                        const response = await fetch('/api/xray/download/pdf', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ 
-                            report_content: analysis, 
-                            job_title: 'Job Analysis Report',
-                            company_name: ''
-                          })
-                        });
-                        if (!response.ok) throw new Error('PDF generation failed');
-                        const blob = await response.blob();
-                        const url = window.URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = 'XRay_Analysis.pdf';
-                        a.click();
-                        window.URL.revokeObjectURL(url);
-                      } catch (err) {
-                        console.error('PDF download failed:', err);
-                        setDownloadError('PDF download failed. Please try again.');
-                        setTimeout(() => setDownloadError(null), 4000);
-                      } finally {
-                        setDownloadingPdf(false);
-                      }
-                    }
-                  }}
-                  style={{
-                    background: 'none',
-                    border: '1px solid #E5E7EB',
-                    borderRadius: '6px',
-                    padding: '6px 12px',
-                    fontSize: '13px',
-                    color: downloadingPdf ? '#9CA3AF' : '#6B7280',
-                    cursor: downloadingPdf ? 'not-allowed' : 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    transition: 'all 0.2s',
-                    opacity: downloadingPdf ? 0.7 : 1
-                  }}
-                  onMouseEnter={(e) => { if (!downloadingPdf) { e.currentTarget.style.color = '#DC2626'; e.currentTarget.style.borderColor = '#DC2626'; }}}
-                  onMouseLeave={(e) => { if (!downloadingPdf) { e.currentTarget.style.color = '#6B7280'; e.currentTarget.style.borderColor = '#E5E7EB'; }}}
-                >
-                  {downloadingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} PDF
-                </button>
-                <button
-                  type="button"
-                  disabled={downloadingDocx}
-                  onClick={async () => {
-                    if (analysis) {
-                      setDownloadingDocx(true);
-                      setDownloadError(null);
-                      try {
-                        const response = await fetch('/api/xray/download/docx', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ 
-                            report_content: analysis, 
-                            job_title: 'Job Analysis Report',
-                            company_name: ''
-                          })
-                        });
-                        if (!response.ok) throw new Error('Word generation failed');
-                        const blob = await response.blob();
-                        const url = window.URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = 'XRay_Analysis.docx';
-                        a.click();
-                        window.URL.revokeObjectURL(url);
-                      } catch (err) {
-                        console.error('Word download failed:', err);
-                        setDownloadError('Word download failed. Please try again.');
-                        setTimeout(() => setDownloadError(null), 4000);
-                      } finally {
-                        setDownloadingDocx(false);
-                      }
-                    }
-                  }}
-                  style={{
-                    background: 'none',
-                    border: '1px solid #E5E7EB',
-                    borderRadius: '6px',
-                    padding: '6px 12px',
-                    fontSize: '13px',
-                    color: downloadingDocx ? '#9CA3AF' : '#6B7280',
-                    cursor: downloadingDocx ? 'not-allowed' : 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    transition: 'all 0.2s',
-                    opacity: downloadingDocx ? 0.7 : 1
-                  }}
-                  onMouseEnter={(e) => { if (!downloadingDocx) { e.currentTarget.style.color = '#2563EB'; e.currentTarget.style.borderColor = '#2563EB'; }}}
-                  onMouseLeave={(e) => { if (!downloadingDocx) { e.currentTarget.style.color = '#6B7280'; e.currentTarget.style.borderColor = '#E5E7EB'; }}}
-                >
-                  {downloadingDocx ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />} Word
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (analysis) {
-                      const blob = new Blob([analysis], { type: 'text/markdown' });
-                      const url = window.URL.createObjectURL(blob);
-                      const a = document.createElement('a');
-                      a.href = url;
-                      a.download = 'XRay_Analysis.md';
-                      a.click();
-                      window.URL.revokeObjectURL(url);
-                    }
-                  }}
-                  style={{
-                    background: 'none',
-                    border: '1px solid #E5E7EB',
-                    borderRadius: '6px',
-                    padding: '6px 12px',
-                    fontSize: '13px',
-                    color: '#6B7280',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.color = '#8B5CF6'; e.currentTarget.style.borderColor = '#8B5CF6'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.color = '#6B7280'; e.currentTarget.style.borderColor = '#E5E7EB'; }}
-                >
-                  <FileCode className="h-4 w-4" /> Markdown
-                </button>
-                <button
-                  type="button"
-                  onClick={() => window.print()}
-                  style={{
-                    background: 'none',
-                    border: '1px solid #E5E7EB',
-                    borderRadius: '6px',
-                    padding: '6px 12px',
-                    fontSize: '13px',
-                    color: '#6B7280',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.color = '#059669'; e.currentTarget.style.borderColor = '#059669'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.color = '#6B7280'; e.currentTarget.style.borderColor = '#E5E7EB'; }}
-                >
-                  <Printer className="h-4 w-4" /> Print
-                </button>
-              </div>
-            </div>
+            <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#1E3A5F', marginBottom: '16px' }}>
+              Analysis Results
+            </h2>
+            
+            <StandardToolbar
+              serviceName="X-Ray Analyzer"
+              showExpandCollapse={false}
+              showEmail={true}
+              showWhatsApp={true}
+              onPDF={async () => {
+                setDownloadingPdf(true);
+                setDownloadError(null);
+                try {
+                  const response = await fetch('/api/xray/download/pdf', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                      report_content: analysis, 
+                      job_title: 'Job Analysis Report',
+                      company_name: ''
+                    })
+                  });
+                  if (!response.ok) throw new Error('PDF generation failed');
+                  const blob = await response.blob();
+                  const url = window.URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = 'XRay_Analysis.pdf';
+                  a.click();
+                  window.URL.revokeObjectURL(url);
+                } catch (err) {
+                  setDownloadError('PDF download failed. Please try again.');
+                  setTimeout(() => setDownloadError(null), 4000);
+                } finally {
+                  setDownloadingPdf(false);
+                }
+              }}
+              onWord={async () => {
+                setDownloadingDocx(true);
+                setDownloadError(null);
+                try {
+                  const response = await fetch('/api/xray/download/docx', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                      report_content: analysis, 
+                      job_title: 'Job Analysis Report',
+                      company_name: ''
+                    })
+                  });
+                  if (!response.ok) throw new Error('Word generation failed');
+                  const blob = await response.blob();
+                  const url = window.URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = 'XRay_Analysis.docx';
+                  a.click();
+                  window.URL.revokeObjectURL(url);
+                } catch (err) {
+                  setDownloadError('Word download failed. Please try again.');
+                  setTimeout(() => setDownloadError(null), 4000);
+                } finally {
+                  setDownloadingDocx(false);
+                }
+              }}
+              onMarkdown={async () => {
+                const blob = new Blob([analysis], { type: 'text/markdown' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'XRay_Analysis.md';
+                a.click();
+                window.URL.revokeObjectURL(url);
+              }}
+            />
+
             {downloadError && (
               <div style={{
                 background: '#FEF2F2',
@@ -727,7 +611,7 @@ export function UnderstandJobPage() {
               </div>
             )}
             
-            {/* Table of Contents */}
+            {/* Table of Contents - with working scroll links */}
             <div style={{
               position: 'sticky',
               top: 0,
@@ -744,25 +628,39 @@ export function UnderstandJobPage() {
                 📋 Jump to Section
               </h4>
               <nav style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                {['Summary', 'Requirements', 'Skills', 'Red Flags', 'Questions', 'Prep Tips'].map((section) => (
-                  <a
-                    key={section}
-                    href={`#section-${section.toLowerCase().replace(' ', '-')}`}
-                    style={{
-                      fontSize: '13px',
-                      color: '#2563EB',
-                      padding: '4px 10px',
-                      background: '#EFF6FF',
-                      borderRadius: '4px',
-                      textDecoration: 'none',
-                      transition: 'all 0.2s'
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = '#DBEAFE'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = '#EFF6FF'; }}
-                  >
-                    {section}
-                  </a>
-                ))}
+                {(() => {
+                  const headings = analysis.match(/^##\s+(.+)$/gm) || [];
+                  return headings.slice(0, 8).map((heading) => {
+                    const text = heading.replace(/^##\s+/, '').replace(/\*\*/g, '');
+                    const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        onClick={() => {
+                          const element = document.getElementById(id);
+                          if (element) {
+                            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                          }
+                        }}
+                        style={{
+                          fontSize: '13px',
+                          color: '#2563EB',
+                          padding: '4px 10px',
+                          background: '#EFF6FF',
+                          borderRadius: '4px',
+                          border: 'none',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s'
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = '#DBEAFE'; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = '#EFF6FF'; }}
+                      >
+                        {text.length > 25 ? text.substring(0, 25) + '...' : text}
+                      </button>
+                    );
+                  });
+                })()}
               </nav>
             </div>
             
@@ -805,11 +703,17 @@ export function UnderstandJobPage() {
                 .callout-yellow p { color: #92400E; margin: 0; }
               `}</style>
               <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
                 components={{
                   h2: ({ children }) => {
                     const text = String(children).toLowerCase();
-                    const id = `section-${text.replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')}`;
-                    return <h2 id={id}>{children}</h2>;
+                    const id = text.replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+                    return <h2 id={id} className="scroll-mt-20">{children}</h2>;
+                  },
+                  h3: ({ children }) => {
+                    const text = String(children).toLowerCase();
+                    const id = text.replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+                    return <h3 id={id} className="scroll-mt-20">{children}</h3>;
                   },
                   p: ({ children }) => {
                     const text = String(children);
