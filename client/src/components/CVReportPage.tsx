@@ -118,9 +118,6 @@ export function CVReportPage() {
     return detectStrengths(reportData.cv_content, reportData.issues)
   }, [reportData?.cv_content, reportData?.issues])
 
-  const quickWinsCount = useMemo(() => {
-    return reportData?.issues.filter(issue => issue.fix_difficulty === 'quick').length || 0
-  }, [reportData?.issues])
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -451,10 +448,6 @@ export function CVReportPage() {
           </div>
         )}
 
-
-        {quickWinsCount > 0 && (
-          <EncouragementMessage type="effort" quickWinsCount={quickWinsCount} />
-        )}
 
         {viewMode === 'severity' ? (
           <div className="space-y-8">

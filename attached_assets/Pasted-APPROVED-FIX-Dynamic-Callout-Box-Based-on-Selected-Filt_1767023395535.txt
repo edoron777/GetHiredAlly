@@ -1,0 +1,110 @@
+APPROVED
+
+## FIX: Dynamic Callout Box Based on Selected Filter
+
+### THE PROBLEM (STILL NOT FIXED)
+When user clicks "Consider" filter button, the Callout box STILL shows:
+"Quick Wins Available - Start with 4 quick fixes below..."
+
+This is WRONG. The Callout should CHANGE based on which filter is selected.
+
+### CURRENT BEHAVIOR (WRONG)
+- User clicks "Consider" (7 items)
+- Callout shows: "Quick Wins Available" (WRONG!)
+
+### EXPECTED BEHAVIOR (CORRECT)
+- User clicks "Consider" (7 items)
+- Callout shows: "Consider - 7 suggestions worth considering to make your CV stand out"
+
+### STEP BY STEP FIX
+
+STEP 1: Find the filter state
+In CVReportPage.tsx, find the state that tracks which filter is selected.
+Look for something like:
+const [selectedFilter, setSelectedFilter] = useState('all');
+or
+const [activeFilter, setActiveFilter] = useState('all');
+
+DEBUG: Add this line:
+console.log("Selected filter:", selectedFilter);
+
+STEP 2: Find the Callout component
+Look for the component that renders:
+"Quick Wins Available - Start with X quick fixes below..."
+
+It might be hardcoded. Find it.
+
+DEBUG: Add this line above the callout:
+console.log("Rendering callout, current filter:", selectedFilter);
+
+STEP 3: Make Callout dynamic
+Replace the hardcoded callout with dynamic content:
+
+const getCalloutContent = () => {
+  switch (selectedFilter) {
+    case 'quick_wins':
+    case 'critical':
+      return {
+        title: "Quick Wins Available",
+        message: `Start with ${quickWinsCount} quick fixes below - they take just minutes and have big impact!`,
+        icon: "⚡",
+        color: "yellow"
+      };
+    case 'important':
+    case 'high':
+      return {
+        title: "Important Improvements",
+        message: `${importantCount} important improvements that will significantly strengthen your CV`,
+        icon: "⚠️",
+        color: "orange"
+      };
+    case 'consider':
+    case 'medium':
+      return {
+        title: "Worth Considering",
+        message: `${considerCount} suggestions worth considering to make your CV stand out`,
+        icon: "💡",
+        color: "blue"
+      };
+    case 'polish':
+    case 'low':
+      return {
+        title: "Polish Items",
+        message: `${polishCount} minor polish items for that extra professional touch`,
+        icon: "✨",
+        color: "green"
+      };
+    default:
+      return {
+        title: "All Suggestions",
+        message: `${totalCount} total improvement opportunities found`,
+        icon: "📋",
+        color: "gray"
+      };
+  }
+};
+
+STEP 4: Use the dynamic content
+const callout = getCalloutContent();
+
+<div className={`callout callout-${callout.color}`}>
+  <span>{callout.icon}</span>
+  <div>
+    <strong>{callout.title}</strong>
+    <p>{callout.message}</p>
+  </div>
+</div>
+
+### DEBUG CHECKLIST
+Before submitting, verify:
+- [ ] console.log shows correct filter when clicking buttons
+- [ ] Callout title changes when clicking different filters
+- [ ] Callout message includes correct count for that filter
+
+### LOCATION
+File: CVReportPage.tsx
+
+### DO NOT
+- Do not change filter logic
+- Do not change other components
+- Only fix the Callout to be dynamic
