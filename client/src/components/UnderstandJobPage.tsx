@@ -1,9 +1,11 @@
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { isAuthenticated } from '@/lib/auth'
-import { Loader2, Sparkles, CheckCircle, X, Users, Code, Briefcase, HelpCircle, Zap, ClipboardList, Download, FileText, FileCode, Printer } from 'lucide-react'
+import { Loader2, Sparkles, CheckCircle, X, Users, Code, Briefcase, HelpCircle, Zap, ClipboardList } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { AIProviderSelector } from './AIProviderSelector'
+import { StandardToolbar } from './common'
 
 type Provider = 'claude' | 'gemini'
 
@@ -95,7 +97,7 @@ export function UnderstandJobPage() {
   const [downloadingDocx, setDownloadingDocx] = useState(false)
   const [downloadError, setDownloadError] = useState<string | null>(null)
   const resultsRef = useRef<HTMLDivElement>(null)
-  const [selectedProvider, setSelectedProvider] = useState<Provider>('claude')
+  const [selectedProvider, setSelectedProvider] = useState<Provider>('gemini')
 
   useEffect(() => {
     if (!isAuthenticated()) {
