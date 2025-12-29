@@ -1,25 +1,26 @@
 """
 CV Scoring Configuration
 All weights, thresholds, and constants.
-Version: 1.0.0
+Version: 1.1.0
 """
 
 # Version - increment when changing weights
-SCORING_VERSION = "1.0.0"
+SCORING_VERSION = "1.1.0"
 
 # Score boundaries
-SCORE_MIN = 10   # Never show 0 (too demoralizing)
+SCORE_MIN = 15   # Never show 0 (too demoralizing)
 SCORE_MAX = 95   # Never show 100 (no CV is perfect)
+AFTER_FIX_MAX = 88  # Cap for after-fix score (realistic improvement)
 
 # Category weights (must sum to 100)
 CATEGORY_WEIGHTS = {
-    "grammar": 15,
-    "formatting": 15,
-    "quantification": 20,
+    "grammar": 10,
+    "formatting": 12,
+    "quantification": 25,
     "language": 15,
-    "contact": 10,
-    "skills": 10,
-    "experience": 10,
+    "contact": 5,
+    "skills": 13,
+    "experience": 15,
     "length": 5
 }
 
@@ -28,10 +29,10 @@ assert sum(CATEGORY_WEIGHTS.values()) == 100, "Weights must sum to 100"
 
 # Grade thresholds
 GRADE_THRESHOLDS = {
-    "excellent": 85,
-    "good": 70,
-    "fair": 55,
-    "needs_work": 40
+    "excellent": 82,
+    "good": 68,
+    "fair": 52,
+    "needs_work": 35
 }
 
 # Grade messages
@@ -45,12 +46,12 @@ GRADE_MESSAGES = {
 
 # Fixability rates for after-fix calculation
 FIXABILITY_RATES = {
-    "grammar": 0.85,
-    "formatting": 0.80,
-    "language": 0.80,
-    "quantification": 0.50,
-    "skills": 0.60,
-    "contact": 0.30,
-    "experience": 0.20,
-    "length": 0.40
+    "grammar": 0.70,
+    "formatting": 0.60,
+    "language": 0.65,
+    "quantification": 0.35,
+    "skills": 0.40,
+    "contact": 0.80,
+    "experience": 0.15,
+    "length": 0.50
 }

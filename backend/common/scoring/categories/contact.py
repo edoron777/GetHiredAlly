@@ -11,11 +11,11 @@ def calculate_contact_score(data) -> float:
     Calculate contact information score.
     
     Scoring breakdown:
-    - Name present: 2 points
-    - Email present: 3 points
-    - Phone present: 2 points
-    - LinkedIn present: 2 points
-    - Professional email: 1 point
+    - Name present: 1.5 points
+    - Email present: 1.5 points
+    - Phone present: 1.0 points
+    - LinkedIn present: 0.5 points
+    - Professional email: 0.5 points
     """
     score = 0.0
     
@@ -34,14 +34,14 @@ def calculate_contact_score(data) -> float:
         professional_email = data.email_is_professional
     
     if has_name:
-        score += 2.0
+        score += 1.5
     if has_email:
-        score += 3.0
+        score += 1.5
     if has_phone:
-        score += 2.0
-    if has_linkedin:
-        score += 2.0
-    if professional_email:
         score += 1.0
+    if has_linkedin:
+        score += 0.5
+    if professional_email:
+        score += 0.5
     
     return score

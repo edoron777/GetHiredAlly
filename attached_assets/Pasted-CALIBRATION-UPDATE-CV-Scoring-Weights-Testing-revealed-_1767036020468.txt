@@ -1,0 +1,83 @@
+CALIBRATION UPDATE - CV Scoring Weights
+
+Testing revealed scoring issues:
+- LinkedIn URL missing penalized too heavily
+- High-quality CV scored 69% (should be ~80%)
+- After-fix showed 95% (unrealistic, should cap at 88%)
+
+MAKE THESE CHANGES:
+
+=== FILE 1: backend/common/scoring/config.py ===
+
+Update these values:
+
+SCORING_VERSION = "1.1.0"
+
+SCORE_MIN = 15
+
+AFTER_FIX_MAX = 88  # ADD THIS NEW VARIABLE
+
+CATEGORY_WEIGHTS = {
+    "grammar": 10,        # Was 15
+    "formatting": 12,     # Was 15
+    "quantification": 25, # Was 20
+    "language": 15,       
+    "contact": 5,         # Was 10
+    "skills": 13,         # Was 10
+    "experience": 15,     # Was 10
+    "length": 5           
+}
+
+GRADE_THRESHOLDS = {
+    "excellent": 82,    # Was 85
+    "good": 68,         # Was 70
+    "fair": 52,         # Was 55
+    "needs_work": 35    # Was 40
+}
+
+FIXABILITY_RATES = {
+    "grammar": 0.70,        # Was 0.85
+    "formatting": 0.60,     # Was 0.80
+    "language": 0.65,       # Was 0.80
+    "quantification": 0.35, # Was 0.50
+    "skills": 0.40,         # Was 0.60
+    "contact": 0.80,        # Was 0.30
+    "experience": 0.15,     # Was 0.20
+    "length": 0.50          # Was 0.40
+}
+
+
+=== FILE 2: backend/common/scoring/categories/contact.py ===
+
+Update the point values in calculate_contact_score:
+
+    if has_name:
+        score += 1.5      # Was 2.0
+    if has_email:
+        score += 1.5      # Was 3.0
+    if has_phone:
+        score += 1.0      # Was 2.0
+    if has_linkedin:
+        score += 0.5      # Was 2.0 - KEY CHANGE
+    if professional_email:
+        score += 0.5      # Was 1.0
+
+
+=== FILE 3: backend/common/scoring/after_fix.py ===
+
+1. Add AFTER_FIX_MAX to the import:
+   from .config import SCORE_MIN, SCORE_MAX, CATEGORY_WEIGHTS, FIXABILITY_RATES, AFTER_FIX_MAX
+
+2. Change the cap line from:
+   after_score = max(SCORE_MIN, min(SCORE_MAX, after_score))
+   
+   To:
+   after_score = max(SCORE_MIN, min(AFTER_FIX_MAX, after_score))
+
+
+=== RULES ===
+- Change ONLY these 3 files
+- Do NOT modify any other code
+- Keep all other logic unchanged
+
+After completion, provide list of changes made.

@@ -4,7 +4,7 @@ Calculates projected score based on fixability, NOT re-analysis.
 """
 
 from typing import Dict, List
-from .config import SCORE_MIN, SCORE_MAX, CATEGORY_WEIGHTS, FIXABILITY_RATES
+from .config import SCORE_MIN, SCORE_MAX, CATEGORY_WEIGHTS, FIXABILITY_RATES, AFTER_FIX_MAX
 
 
 def calculate_after_fix_score(
@@ -66,8 +66,8 @@ def calculate_after_fix_score(
     # Calculate after score
     after_score = before_score + recovery_points
     
-    # Apply bounds - NEVER 100%
-    after_score = max(SCORE_MIN, min(SCORE_MAX, after_score))
+    # Apply bounds - cap at AFTER_FIX_MAX for realistic improvement
+    after_score = max(SCORE_MIN, min(AFTER_FIX_MAX, after_score))
     
     improvement = round(after_score - before_score)
     
