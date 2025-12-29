@@ -5,7 +5,8 @@ Uses Kaggle Resume Dataset to validate scoring algorithm
 
 import pandas as pd
 import sys
-sys.path.append('..')
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from backend.common.scoring import calculate_cv_score
 from backend.common.scoring.extractors import extract_patterns, analyze_text
