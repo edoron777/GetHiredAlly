@@ -170,7 +170,7 @@ export function UnderstandJobPage() {
     setDepthLevel(null)
     setTouched(false)
     setError(null)
-    setSelectedProvider('claude')
+    setSelectedProvider('gemini')
   }
 
   const handleStartOver = () => {
