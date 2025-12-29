@@ -656,9 +656,13 @@ export function UnderstandJobPage() {
             <div 
               className="prose prose-slate max-w-none"
               style={{ 
+                backgroundColor: '#FFFFFF',
                 color: '#333333',
                 fontSize: '15px',
-                lineHeight: '1.7'
+                lineHeight: '1.7',
+                padding: '24px',
+                borderRadius: '8px',
+                border: '1px solid #E5E7EB'
               }}
             >
               <style>{`
