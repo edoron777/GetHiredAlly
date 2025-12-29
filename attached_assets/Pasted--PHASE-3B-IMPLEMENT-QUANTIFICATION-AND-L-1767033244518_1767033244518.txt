@@ -1,0 +1,124 @@
+==========================================================
+PHASE 3B: IMPLEMENT QUANTIFICATION AND LANGUAGE SCORING
+==========================================================
+
+TASK: Add content to TWO files:
+1. `server/common/scoring/categories/quantification.py`
+2. `server/common/scoring/categories/language.py`
+
+=== FILE 1: categories/quantification.py ===
+```python
+"""
+Quantification scoring category.
+Max: 20 points
+"""
+
+from ..config import CATEGORY_WEIGHTS
+
+
+def calculate_quantification_score(data) -> float:
+    """
+    Calculate quantification score based on % of bullets with numbers.
+    
+    Scoring logic:
+    - 80%+ bullets with numbers: 20 points
+    - 60-79%: 16 points
+    - 40-59%: 12 points
+    - 20-39%: 8 points
+    - Below 20%: 4 points
+    """
+    # Handle both dict and dataclass
+    if isinstance(data, dict):
+        total_bullets = data.get("total_bullet_points", 0)
+        bullets_with_numbers = data.get("bullets_with_numbers", 0)
+    else:
+        total_bullets = data.total_bullet_points
+        bullets_with_numbers = data.bullets_with_numbers
+    
+    if total_bullets == 0:
+        return 10.0  # Neutral if no bullets detected
+    
+    ratio = bullets_with_numbers / total_bullets
+    
+    if ratio >= 0.80:
+        return 20.0
+    elif ratio >= 0.60:
+        return 16.0
+    elif ratio >= 0.40:
+        return 12.0
+    elif ratio >= 0.20:
+        return 8.0
+    else:
+        return 4.0
+```
+
+=== FILE 2: categories/language.py ===
+```python
+"""
+Language scoring category.
+Max: 15 points
+"""
+
+from ..config import CATEGORY_WEIGHTS
+
+
+def calculate_language_score(data) -> float:
+    """
+    Calculate language quality score.
+    
+    Scoring breakdown:
+    - Strong action verbs: 5 points
+    - Minimal passive voice: 5 points
+    - Minimal weak phrases: 5 points
+    """
+    score = 0.0
+    
+    # Handle both dict and dataclass
+    if isinstance(data, dict):
+        strong_verbs = data.get("strong_action_verbs_count", 0)
+        passive_count = data.get("passive_voice_count", 0)
+        weak_count = data.get("weak_phrases_count", 0)
+    else:
+        strong_verbs = data.strong_action_verbs_count
+        passive_count = data.passive_voice_count
+        weak_count = data.weak_phrases_count
+    
+    # Strong action verbs used (5 points)
+    if strong_verbs >= 10:
+        score += 5.0
+    elif strong_verbs >= 7:
+        score += 4.0
+    elif strong_verbs >= 4:
+        score += 3.0
+    elif strong_verbs >= 1:
+        score += 2.0
+    
+    # Minimal passive voice (5 points)
+    if passive_count == 0:
+        score += 5.0
+    elif passive_count <= 2:
+        score += 4.0
+    elif passive_count <= 4:
+        score += 2.0
+    
+    # Minimal weak phrases (5 points)
+    if weak_count == 0:
+        score += 5.0
+    elif weak_count <= 2:
+        score += 4.0
+    elif weak_count <= 4:
+        score += 2.0
+    
+    return score
+```
+
+RULES:
+- Create ONLY these two files
+- Copy code EXACTLY as shown
+- Do NOT modify any other files
+
+AFTER COMPLETION:
+1. Confirm both files were created
+2. Confirm no other files were changed
+
+==========================================================
