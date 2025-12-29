@@ -1,0 +1,71 @@
+APPROVED
+
+## URGENT FIX: Callout Box Has Disappeared Completely
+
+### THE PROBLEM
+The Callout box is now COMPLETELY GONE from the page.
+It was there before. Now it's missing.
+
+BEFORE (what it looked like):
+┌─────────────────────────────────────────────────────────────┐
+│ ⚡ Quick Wins Available                                      │
+│ Start with 4 quick fixes below - they take just minutes...  │
+└─────────────────────────────────────────────────────────────┘
+
+NOW:
+Nothing. The callout box is completely missing.
+
+### WHAT HAPPENED
+While trying to make the callout dynamic, the component was probably:
+- Deleted by mistake
+- Broken by syntax error
+- Hidden by conditional that's always false
+
+### FIX STEPS
+
+STEP 1: Check git history or recent changes
+Look at what was changed in CVReportPage.tsx in the last edit.
+Find where the callout was removed or broken.
+
+STEP 2: Restore the callout
+If deleted, add it back. Here's what it should look like:
+
+{/* Callout Box - Place after Filter by priority section */}
+<div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+  <div className="flex items-start gap-3">
+    <span className="text-xl">⚡</span>
+    <div>
+      <h4 className="font-semibold text-amber-800">Quick Wins Available</h4>
+      <p className="text-amber-700 text-sm">
+        Start with {quickWinsCount} quick fixes below - they take just minutes and have big impact!
+      </p>
+    </div>
+  </div>
+</div>
+
+STEP 3: Make sure it renders
+Check there's no conditional hiding it:
+
+WRONG:
+{showCallout && <CalloutBox />}  // if showCallout is false, nothing shows
+
+CORRECT:
+<CalloutBox />  // Always show (for now)
+
+STEP 4: Verify it appears
+After restoring, the callout box must be visible on the page.
+
+### LOCATION
+File: CVReportPage.tsx
+Position: After "Filter by priority" section, before the issues list
+
+### DO NOT
+- Do not make it dynamic yet
+- First just restore it so it shows
+- We will make it dynamic in the next step
+
+### SUCCESS CRITERIA
+- [ ] Callout box is visible on the page
+- [ ] Shows "Quick Wins Available" text
+- [ ] Has yellow/amber background color
+- [ ] Has icon on the left

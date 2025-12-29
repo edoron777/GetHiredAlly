@@ -366,12 +366,6 @@ export function CVReportPage() {
 
         <StrengthsSection strengths={strengths} />
 
-        <EncouragementMessage 
-          type="filter" 
-          filterType={severityFilter}
-          count={filteredIssues.length}
-        />
-
         <CategoryFilterPanel
           categoryCounts={categoryCounts}
           enabledCategories={enabledCategories}
@@ -448,6 +442,11 @@ export function CVReportPage() {
           </div>
         )}
 
+        <EncouragementMessage 
+          type="filter" 
+          filterType={severityFilter}
+          count={filteredIssues.length}
+        />
 
         {viewMode === 'severity' ? (
           <div className="space-y-8">
