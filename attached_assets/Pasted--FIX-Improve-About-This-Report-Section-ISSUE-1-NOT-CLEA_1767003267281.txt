@@ -1,0 +1,138 @@
+## FIX: Improve "About This Report" Section
+
+### ISSUE 1: NOT CLEAR IT'S EXPANDABLE
+The user doesn't understand they can click to expand. Need visual indicator.
+
+ADD:
+- Arrow icon (▶ when collapsed, ▼ when expanded)
+- Hover effect (cursor pointer, background change)
+- Text hint like "click to expand"
+
+### ISSUE 2: NEED MORE DETAILED CONTENT
+Current content is too brief. User needs to understand:
+- What VALUE each category provides
+- What to DO with the information
+
+### UPDATED COMPONENT
+
+<details style={{
+  marginBottom: '16px',
+  padding: '0',
+  backgroundColor: '#F0F9FF',
+  border: '1px solid #BAE6FD',
+  borderRadius: '8px',
+  overflow: 'hidden'
+}}>
+  <summary style={{
+    cursor: 'pointer',
+    fontWeight: '500',
+    color: '#0369A1',
+    padding: '12px 16px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    listStyle: 'none',
+    userSelect: 'none'
+  }}>
+    <span className="expand-arrow" style={{ transition: 'transform 0.2s' }}>▶</span>
+    ℹ️ About This Report - What each section means (click to expand)
+  </summary>
+  
+  <div style={{ 
+    padding: '16px',
+    borderTop: '1px solid #BAE6FD',
+    fontSize: '14px',
+    lineHeight: '1.7',
+    color: '#1E3A5F'
+  }}>
+    <p style={{ marginBottom: '16px' }}>
+      This report helps you prepare effectively for your interview. 
+      Here's how to use each section:
+    </p>
+    
+    <div style={{ marginBottom: '14px' }}>
+      <strong>📋 Executive Summary</strong><br/>
+      <em>What it is:</em> Quick overview of the role in 60 seconds.<br/>
+      <em>How to use:</em> Read this FIRST to understand what the job is really about. Use it to confirm this role matches your expectations.
+    </div>
+    
+    <div style={{ marginBottom: '14px' }}>
+      <strong>🔍 What They Really Want</strong><br/>
+      <em>What it is:</em> Hidden requirements and priorities decoded from the job description.<br/>
+      <em>How to use:</em> Prepare talking points that address these hidden expectations. This gives you an advantage over other candidates who only read the surface.
+    </div>
+    
+    <div style={{ marginBottom: '14px' }}>
+      <strong>✅ Requirements Breakdown</strong><br/>
+      <em>What it is:</em> Separation of must-have vs nice-to-have requirements.<br/>
+      <em>How to use:</em> Focus your preparation on must-haves. If you have gaps in nice-to-haves, don't worry - mention willingness to learn.
+    </div>
+    
+    <div style={{ marginBottom: '14px' }}>
+      <strong>⭐ Soft Skills & STAR Prep</strong><br/>
+      <em>What it is:</em> Behavioral skills they want + STAR method guide.<br/>
+      <em>How to use:</em> Prepare 2-3 stories from your experience using the STAR format. Practice telling them out loud before the interview.
+    </div>
+    
+    <div style={{ marginBottom: '14px' }}>
+      <strong>💬 Challenges & How to Address</strong><br/>
+      <em>What it is:</em> Concerns interviewer might have about you + smart questions to ask.<br/>
+      <em>How to use:</em> Prepare responses to potential objections. Use the suggested questions to show you researched the role.
+    </div>
+    
+    <div style={{ marginBottom: '14px' }}>
+      <strong>🤔 Is This Job Right for Me?</strong><br/>
+      <em>What it is:</em> Red flags, green flags, and self-reflection questions.<br/>
+      <em>How to use:</em> Before accepting an offer, review this section honestly. A bad job fit is worse than continuing your search.
+    </div>
+    
+    <p style={{ 
+      marginTop: '16px', 
+      padding: '10px',
+      backgroundColor: '#DBEAFE',
+      borderRadius: '6px',
+      fontStyle: 'italic'
+    }}>
+      💡 <strong>Tip:</strong> Print or save this report. Review it 30 minutes before your interview to refresh your memory.
+    </p>
+  </div>
+</details>
+
+### CSS FOR ARROW ROTATION
+Add this CSS or inline style to rotate arrow when expanded:
+
+details[open] .expand-arrow {
+  transform: rotate(90deg);
+}
+
+Or use inline approach:
+- When collapsed: ▶
+- When expanded: ▼ (can toggle with JavaScript or CSS)
+
+### VISUAL RESULT
+
+COLLAPSED:
+┌─────────────────────────────────────────────────────────────────┐
+│ ▶ ℹ️ About This Report - What each section means (click to expand) │
+└─────────────────────────────────────────────────────────────────┘
+
+EXPANDED:
+┌─────────────────────────────────────────────────────────────────┐
+│ ▼ ℹ️ About This Report - What each section means                │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│ 📋 Executive Summary                                            │
+│ What it is: Quick overview...                                   │
+│ How to use: Read this FIRST...                                  │
+│                                                                 │
+│ 🔍 What They Really Want                                        │
+│ What it is: Hidden requirements...                              │
+│ How to use: Prepare talking points...                           │
+│                                                                 │
+│ (etc.)                                                          │
+│                                                                 │
+│ 💡 Tip: Print or save this report...                            │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+APPROVED

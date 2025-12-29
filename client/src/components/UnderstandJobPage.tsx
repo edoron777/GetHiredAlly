@@ -701,32 +701,103 @@ export function UnderstandJobPage() {
             )}
 
             {/* About This Report - Expandable Section */}
-            <details style={{
-              marginBottom: '16px',
-              padding: '12px 16px',
-              backgroundColor: '#F0F9FF',
-              border: '1px solid #BAE6FD',
-              borderRadius: '8px'
-            }}>
+            <details 
+              className="about-report-details"
+              style={{
+                marginBottom: '16px',
+                padding: 0,
+                backgroundColor: '#F0F9FF',
+                border: '1px solid #BAE6FD',
+                borderRadius: '8px',
+                overflow: 'hidden'
+              }}
+            >
               <summary style={{
                 cursor: 'pointer',
                 fontWeight: 500,
                 color: '#0369A1',
-                listStyle: 'none'
+                padding: '12px 16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                listStyle: 'none',
+                userSelect: 'none'
               }}>
-                ℹ️ About This Report - What each section means
+                <span className="expand-arrow">▶</span>
+                ℹ️ About This Report - What each section means (click to expand)
               </summary>
-              <div style={{ marginTop: '12px', fontSize: '14px', color: '#374151', lineHeight: 1.6 }}>
-                <ul style={{ paddingLeft: '20px', margin: 0 }}>
-                  <li style={{ marginBottom: '8px' }}><strong>Executive Summary:</strong> Quick overview of the role and key insights</li>
-                  <li style={{ marginBottom: '8px' }}><strong>What They Really Want:</strong> Hidden priorities and unstated expectations</li>
-                  <li style={{ marginBottom: '8px' }}><strong>Requirements Breakdown:</strong> Must-haves vs nice-to-haves analysis</li>
-                  <li style={{ marginBottom: '8px' }}><strong>Soft Skills & STAR Prep:</strong> Behavioral competencies with example stories</li>
-                  <li style={{ marginBottom: '8px' }}><strong>Challenges & How to Address:</strong> Potential concerns and how to overcome them</li>
-                  <li style={{ marginBottom: '0' }}><strong>Is This Job Right for Me?:</strong> Self-assessment questions for fit evaluation</li>
-                </ul>
+              <div style={{ 
+                padding: '16px',
+                borderTop: '1px solid #BAE6FD',
+                fontSize: '14px',
+                lineHeight: 1.7,
+                color: '#1E3A5F'
+              }}>
+                <p style={{ marginBottom: '16px' }}>
+                  This report helps you prepare effectively for your interview. Here's how to use each section:
+                </p>
+                
+                <div style={{ marginBottom: '14px' }}>
+                  <strong>📋 Executive Summary</strong><br/>
+                  <em>What it is:</em> Quick overview of the role in 60 seconds.<br/>
+                  <em>How to use:</em> Read this FIRST to understand what the job is really about. Use it to confirm this role matches your expectations.
+                </div>
+                
+                <div style={{ marginBottom: '14px' }}>
+                  <strong>🔍 What They Really Want</strong><br/>
+                  <em>What it is:</em> Hidden requirements and priorities decoded from the job description.<br/>
+                  <em>How to use:</em> Prepare talking points that address these hidden expectations. This gives you an advantage over other candidates who only read the surface.
+                </div>
+                
+                <div style={{ marginBottom: '14px' }}>
+                  <strong>✅ Requirements Breakdown</strong><br/>
+                  <em>What it is:</em> Separation of must-have vs nice-to-have requirements.<br/>
+                  <em>How to use:</em> Focus your preparation on must-haves. If you have gaps in nice-to-haves, don't worry - mention willingness to learn.
+                </div>
+                
+                <div style={{ marginBottom: '14px' }}>
+                  <strong>⭐ Soft Skills & STAR Prep</strong><br/>
+                  <em>What it is:</em> Behavioral skills they want + STAR method guide.<br/>
+                  <em>How to use:</em> Prepare 2-3 stories from your experience using the STAR format. Practice telling them out loud before the interview.
+                </div>
+                
+                <div style={{ marginBottom: '14px' }}>
+                  <strong>💬 Challenges & How to Address</strong><br/>
+                  <em>What it is:</em> Concerns interviewer might have about you + smart questions to ask.<br/>
+                  <em>How to use:</em> Prepare responses to potential objections. Use the suggested questions to show you researched the role.
+                </div>
+                
+                <div style={{ marginBottom: '14px' }}>
+                  <strong>🤔 Is This Job Right for Me?</strong><br/>
+                  <em>What it is:</em> Red flags, green flags, and self-reflection questions.<br/>
+                  <em>How to use:</em> Before accepting an offer, review this section honestly. A bad job fit is worse than continuing your search.
+                </div>
+                
+                <p style={{ 
+                  marginTop: '16px', 
+                  marginBottom: 0,
+                  padding: '10px',
+                  backgroundColor: '#DBEAFE',
+                  borderRadius: '6px',
+                  fontStyle: 'italic'
+                }}>
+                  💡 <strong>Tip:</strong> Print or save this report. Review it 30 minutes before your interview to refresh your memory.
+                </p>
               </div>
             </details>
+            <style>{`
+              .about-report-details[open] .expand-arrow {
+                display: inline-block;
+                transform: rotate(90deg);
+              }
+              .about-report-details .expand-arrow {
+                display: inline-block;
+                transition: transform 0.2s;
+              }
+              .about-report-details summary:hover {
+                background-color: #E0F2FE;
+              }
+            `}</style>
 
             {/* Report Container */}
             <div 
