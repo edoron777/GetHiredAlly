@@ -172,20 +172,21 @@ export default function WorkTypeGroupView({
                           </div>
 
                           {displayLevel >= 3 && (
-                            <>
-                              <div className="mb-3">
-                                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Found</p>
-                                <div className="bg-red-50 border border-red-200 rounded p-2">
-                                  <p className="text-red-800 font-mono text-sm">"{issue.current_text}"</p>
-                                </div>
+                            <div className={displayLevel >= 4 ? 'mb-3' : ''}>
+                              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Suggested Fix</p>
+                              <div className="bg-green-50 border border-green-200 rounded p-2">
+                                <p className="text-green-800 text-sm">{issue.suggested_fix}</p>
                               </div>
-                              <div>
-                                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Suggested Fix</p>
-                                <div className="bg-green-50 border border-green-200 rounded p-2">
-                                  <p className="text-green-800 text-sm">{issue.suggested_fix}</p>
-                                </div>
+                            </div>
+                          )}
+
+                          {displayLevel >= 4 && (
+                            <div className="mb-3">
+                              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Found</p>
+                              <div className="bg-red-50 border border-red-200 rounded p-2">
+                                <p className="text-red-800 font-mono text-sm">"{issue.current_text}"</p>
                               </div>
-                            </>
+                            </div>
                           )}
 
                           {displayLevel >= 4 && issue.additional_info && (

@@ -495,21 +495,21 @@ export function CVReportPage() {
                             </div>
 
                             {(displayLevel >= 3 || expandedIssues.has(issue.id)) && (
-                              <>
-                                <div className="mb-4">
-                                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Found</p>
-                                  <div className="bg-red-50 border border-red-200 rounded p-3">
-                                    <p className="text-red-800 font-mono text-sm">"{issue.current_text}"</p>
-                                  </div>
+                              <div className={displayLevel >= 4 || expandedIssues.has(issue.id) ? 'mb-4' : ''}>
+                                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Suggested Fix</p>
+                                <div className="bg-green-50 border border-green-200 rounded p-3">
+                                  <p className="text-green-800">{issue.suggested_fix}</p>
                                 </div>
+                              </div>
+                            )}
 
-                                <div>
-                                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Suggested Fix</p>
-                                  <div className="bg-green-50 border border-green-200 rounded p-3">
-                                    <p className="text-green-800">{issue.suggested_fix}</p>
-                                  </div>
+                            {(displayLevel >= 4 || expandedIssues.has(issue.id)) && (
+                              <div className="mb-4">
+                                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Found</p>
+                                <div className="bg-red-50 border border-red-200 rounded p-3">
+                                  <p className="text-red-800 font-mono text-sm">"{issue.current_text}"</p>
                                 </div>
-                              </>
+                              </div>
                             )}
 
                             {(displayLevel >= 4 || expandedIssues.has(issue.id)) && issue.additional_info && (
