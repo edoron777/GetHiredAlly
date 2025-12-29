@@ -619,6 +619,9 @@ export function UnderstandJobPage() {
               <nav style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {(() => {
                   const headings = analysis.match(/^##\s+(.+)$/gm) || [];
+                  console.log('=== TOC DEBUG ===');
+                  console.log('Headings found:', headings);
+                  console.log('Number of headings:', headings.length);
                   return headings.slice(0, 8).map((heading) => {
                     const text = heading.replace(/^##\s+/, '').replace(/\*\*/g, '');
                     const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
