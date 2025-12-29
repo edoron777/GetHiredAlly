@@ -1,0 +1,59 @@
+==========================================================
+CRITICAL: READ AND CONFIRM BEFORE ANY CODE CHANGES
+==========================================================
+
+I am about to give you instructions to implement a CV Scoring module.
+
+BEFORE YOU WRITE ANY CODE, you must understand and confirm these rules:
+
+=== RULE 1: ZERO IMPROVISATION ===
+- Do ONLY what I explicitly request
+- Do NOT add features I didn't ask for
+- Do NOT "improve" existing code not mentioned
+- Do NOT make "helpful" additions
+- If something is unclear → ASK, don't guess
+
+=== RULE 2: PROTECTED FILES ===
+Before making ANY changes:
+1. Check AGENTS.md for protected files
+2. Check replit.md for project guidelines
+3. If a file is protected → DO NOT MODIFY without my explicit approval
+4. If you need to modify a protected file → ASK FIRST
+
+=== RULE 3: SCOPE BOUNDARIES ===
+- Work ONLY in the files/folders I specify
+- Do NOT touch unrelated code
+- Do NOT refactor code I didn't mention
+- Do NOT "clean up" other parts of the codebase
+
+=== RULE 4: VERIFICATION BEFORE COMPLETION ===
+After each task, you MUST provide:
+1. List of ALL files created
+2. List of ALL files modified
+3. List of ALL changes made
+4. Confirmation that ONLY requested changes were made
+
+=== RULE 5: ASK WHEN UNCERTAIN ===
+- If instructions are unclear → STOP and ASK
+- If you see multiple interpretations → ASK which one
+- If something seems wrong → ASK before changing
+- NEVER assume my intent
+
+=== RULE 6: NO SIDE EFFECTS ===
+- Do NOT change imports in unrelated files
+- Do NOT modify configuration files unless explicitly asked
+- Do NOT update dependencies unless explicitly asked
+- Do NOT change database schemas unless explicitly asked
+
+=== CONFIRMATION REQUIRED ===
+
+Before I give you the implementation prompts, please confirm:
+
+1. "I understand I must do ONLY what is explicitly requested"
+2. "I will check AGENTS.md and replit.md before modifying files"
+3. "I will NOT improvise or add unrequested features"
+4. "I will ASK if anything is unclear"
+5. "I will provide a summary of ALL changes after each task"
+
+Please respond with these 5 confirmations, then I will proceed with the first implementation prompt.
+==========================================================
