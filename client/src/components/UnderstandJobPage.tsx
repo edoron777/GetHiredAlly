@@ -115,6 +115,14 @@ const hasReflectionQuestions = (content: string): boolean => {
          content.toLowerCase().includes('self-reflection questions');
 };
 
+const getExportFileName = (jobTitle: string, extension: string): string => {
+  const cleanTitle = jobTitle
+    .replace(/[<>:"/\\|?*]/g, '-')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return `X-Ray Job Description Analyzer Report - ${cleanTitle}.${extension}`;
+};
+
 const SelfReflectionQuestions = () => (
   <div style={{
     marginTop: '24px',
@@ -605,12 +613,13 @@ export function UnderstandJobPage() {
               showWhatsApp={true}
               onPDF={async () => {
                 setDownloadError(null);
+                const jobTitle = extractJobTitle(analysis);
                 const response = await fetch('/api/xray/download/pdf', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ 
                     report_content: analysis, 
-                    job_title: 'Job Analysis Report',
+                    job_title: jobTitle,
                     company_name: ''
                   })
                 });
@@ -623,18 +632,19 @@ export function UnderstandJobPage() {
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = 'XRay_Analysis.pdf';
+                a.download = getExportFileName(jobTitle, 'pdf');
                 a.click();
                 window.URL.revokeObjectURL(url);
               }}
               onWord={async () => {
                 setDownloadError(null);
+                const jobTitle = extractJobTitle(analysis);
                 const response = await fetch('/api/xray/download/docx', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ 
                     report_content: analysis, 
-                    job_title: 'Job Analysis Report',
+                    job_title: jobTitle,
                     company_name: ''
                   })
                 });
@@ -647,16 +657,17 @@ export function UnderstandJobPage() {
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = 'XRay_Analysis.docx';
+                a.download = getExportFileName(jobTitle, 'docx');
                 a.click();
                 window.URL.revokeObjectURL(url);
               }}
               onMarkdown={async () => {
+                const jobTitle = extractJobTitle(analysis);
                 const blob = new Blob([analysis], { type: 'text/markdown' });
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = 'XRay_Analysis.md';
+                a.download = getExportFileName(jobTitle, 'md');
                 a.click();
                 window.URL.revokeObjectURL(url);
               }}
