@@ -187,6 +187,10 @@ export function UnderstandJobPage() {
   const [selectedProvider, setSelectedProvider] = useState<Provider>('gemini')
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [])
+
+  useEffect(() => {
     if (!isAuthenticated()) {
       navigate('/login')
     }
