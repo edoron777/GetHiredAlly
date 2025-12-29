@@ -1,0 +1,339 @@
+# X-Ray Analyzer Report UI Fix Prompt
+
+**Date:** December 29, 2025  
+**Target File:** `client/src/components/UnderstandJobPage.tsx`  
+**Purpose:** Fix 4 specific bugs in the X-Ray Analyzer report display
+
+---
+
+## ⚠️ CRITICAL RULES - READ FIRST
+
+```
+Before making ANY changes:
+1. Read AGENTS.md and replit.md
+2. Make ONLY the changes described below
+3. Do NOT refactor, reorganize, or "improve" other code
+4. Do NOT add features not requested
+5. Do NOT change file structure
+6. Ask if anything is unclear
+```
+
+---
+
+## BUGS TO FIX (4 Total)
+
+### Bug 1: Default AI Provider Should Be Gemini
+
+**Current:** Claude is selected by default  
+**Target:** Gemini should be selected by default
+
+**Fix Location:** Find the AI provider state initialization
+
+**Change:**
+```tsx
+// FIND this (or similar):
+const [provider, setProvider] = useState('claude');
+
+// CHANGE TO:
+const [provider, setProvider] = useState('gemini');
+```
+
+**Verification:** Reload page → Gemini card should be highlighted/selected by default
+
+---
+
+### Bug 2: Replace Custom Toolbar with StandardToolbar
+
+**Current:** UnderstandJobPage.tsx has inline/custom toolbar code (around lines 551-670)  
+**Target:** Use the shared StandardToolbar component from `components/common`
+
+**Step 2.1: Add Import**
+
+At the top of the file, add this import:
+```tsx
+import { StandardToolbar } from './common';
+```
+
+**Step 2.2: Remove Custom Toolbar Code**
+
+Find and DELETE the entire custom toolbar section. It looks something like this:
+- Has buttons for Copy, PDF, Word, Markdown, Print
+- Has gray borders with hover effects
+- Located around lines 551-670
+- Does NOT use StandardToolbar component
+
+**Step 2.3: Add StandardToolbar Component**
+
+Replace the deleted custom toolbar with StandardToolbar. Place it ABOVE the report content, INSIDE the "Analysis Results" section:
+
+```tsx
+{analysis && (
+  <div className="mt-8">
+    <h2 className="text-xl font-semibold text-[#1E3A5F] mb-4">Analysis Results</h2>
+    
+    {/* STANDARD TOOLBAR - ADD HERE */}
+    <StandardToolbar
+      serviceName="X-Ray Analyzer"
+      onExpandAll={handleExpandAll}
+      onCollapseAll={handleCollapseAll}
+      onPDF={handleExportPDF}
+      onWord={handleExportWord}
+      onMarkdown={handleExportMarkdown}
+      showEmail={true}
+      showWhatsApp={true}
+    />
+    
+    {/* TOC and Report content below */}
+    ...
+  </div>
+)}
+```
+
+**Step 2.4: Ensure Handler Functions Exist**
+
+Make sure these handler functions exist in the component. If they don't exist, create them:
+
+```tsx
+// Expand All handler
+const handleExpandAll = () => {
+  // If using collapsible sections with IDs:
+  // setExpandedSections(new Set(allSectionIds));
+  console.log('Expand all clicked');
+};
+
+// Collapse All handler
+const handleCollapseAll = () => {
+  // setExpandedSections(new Set());
+  console.log('Collapse all clicked');
+};
+
+// PDF Export handler (keep existing logic if it exists)
+const handleExportPDF = async () => {
+  // Keep existing PDF download logic
+  // Should call /api/xray/download/pdf
+};
+
+// Word Export handler (keep existing logic if it exists)
+const handleExportWord = async () => {
+  // Keep existing Word download logic
+  // Should call /api/xray/download/docx
+};
+
+// Markdown Export handler
+const handleExportMarkdown = () => {
+  // Create markdown file from analysis content
+  const blob = new Blob([analysis], { type: 'text/markdown' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'xray-analysis.md';
+  a.click();
+  URL.revokeObjectURL(url);
+};
+```
+
+**Verification:** 
+- Toolbar appears with navy blue background (#1E3A5F)
+- Has [+] [-] buttons on the left
+- Has Email, WhatsApp in the middle
+- Has PDF, WORD, MD on the right
+- Buttons are clickable
+
+---
+
+### Bug 3: Fix TOC (Table of Contents) Links
+
+**Current:** TOC links don't work - clicking them does nothing  
+**Target:** Clicking a TOC link scrolls to that section in the report
+
+**Step 3.1: Add IDs to Report Sections**
+
+The report markdown is rendered with ReactMarkdown. We need to add IDs to the headings.
+
+Find the ReactMarkdown component and add custom heading renderers:
+
+```tsx
+<ReactMarkdown
+  remarkPlugins={[remarkGfm]}
+  components={{
+    // Add IDs to h2 headings for TOC navigation
+    h2: ({ children, ...props }) => {
+      const text = String(children);
+      const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      return <h2 id={id} className="scroll-mt-20" {...props}>{children}</h2>;
+    },
+    // Add IDs to h3 headings
+    h3: ({ children, ...props }) => {
+      const text = String(children);
+      const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      return <h3 id={id} className="scroll-mt-20" {...props}>{children}</h3>;
+    },
+    // Keep other existing component overrides...
+  }}
+>
+  {analysis}
+</ReactMarkdown>
+```
+
+**Step 3.2: Update TOC Links**
+
+Find the TOC section (Jump to Section). Update the buttons/links to use smooth scrolling:
+
+```tsx
+{/* TOC Section */}
+<div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+  <div className="flex items-center gap-2 mb-3">
+    <span>📋</span>
+    <span className="font-medium">Jump to Section</span>
+  </div>
+  <div className="flex flex-wrap gap-2">
+    {tocSections.map((section) => (
+      <button
+        key={section.id}
+        onClick={() => {
+          const element = document.getElementById(section.id);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }}
+        className="px-3 py-1 text-sm bg-blue-50 text-blue-700 rounded-full hover:bg-blue-100 transition-colors"
+      >
+        {section.label}
+      </button>
+    ))}
+  </div>
+</div>
+```
+
+**Step 3.3: Define TOC Sections**
+
+Add a constant or state for TOC sections that match the report structure:
+
+```tsx
+const tocSections = [
+  { id: 'executive-summary', label: 'Summary' },
+  { id: 'what-they-really-want', label: 'What They Want' },
+  { id: 'key-terms-language', label: 'Key Terms' },
+  { id: 'requirements-breakdown', label: 'Requirements' },
+  { id: 'soft-skills-star-prep', label: 'Skills' },
+  { id: 'challenges-how-to-address', label: 'Challenges' },
+];
+```
+
+**Verification:**
+- Click "Summary" → Page scrolls to Executive Summary section
+- Click "Requirements" → Page scrolls to Requirements section
+- All TOC links work correctly
+
+---
+
+### Bug 4: Fix CSS/Styling - Remove Dark Bars
+
+**Current:** Dark blue/navy bars are covering the report text (see screenshot)  
+**Target:** Clean white background for report content, proper text visibility
+
+**Problem Analysis:**
+The dark bars are likely caused by:
+1. The custom toolbar styles bleeding into report content
+2. A parent container with dark background
+3. CSS class conflicts
+
+**Step 4.1: Check Report Container**
+
+Find the container wrapping the ReactMarkdown component. Ensure it has white background:
+
+```tsx
+{/* Report Content Container */}
+<div className="bg-white rounded-lg border border-gray-200 p-6 mt-4">
+  <ReactMarkdown
+    remarkPlugins={[remarkGfm]}
+    className="prose prose-slate max-w-none"
+    components={{
+      // ... component overrides
+    }}
+  >
+    {analysis}
+  </ReactMarkdown>
+</div>
+```
+
+**Step 4.2: Reset Any Dark Backgrounds**
+
+Search for any elements with dark backgrounds (bg-[#1E3A5F], bg-navy, bg-blue-900, etc.) that are NOT the StandardToolbar. Remove or change them.
+
+The ONLY element with navy background should be the StandardToolbar.
+
+**Step 4.3: Ensure Proper Prose Styling**
+
+The ReactMarkdown should use Tailwind prose classes:
+
+```tsx
+<ReactMarkdown
+  remarkPlugins={[remarkGfm]}
+  className="prose prose-slate max-w-none prose-headings:text-[#1E3A5F] prose-p:text-gray-700 prose-li:text-gray-700"
+  components={{...}}
+>
+```
+
+**Step 4.4: Check for Style Conflicts**
+
+If there are any inline styles or className props on markdown elements that include dark backgrounds, remove them:
+
+```tsx
+// BAD - might cause dark bars
+components={{
+  div: ({ ...props }) => <div className="bg-[#1E3A5F]" {...props} />
+}}
+
+// GOOD - clean white
+components={{
+  div: ({ ...props }) => <div className="bg-white" {...props} />
+}}
+```
+
+**Verification:**
+- Report text is clearly visible on white background
+- No dark bars covering content
+- Only the StandardToolbar has navy background
+- Headings are navy (#1E3A5F), body text is gray (#374151)
+
+---
+
+## SUMMARY OF CHANGES
+
+| Bug | File | Change Type |
+|-----|------|-------------|
+| 1 | UnderstandJobPage.tsx | Change default state value |
+| 2 | UnderstandJobPage.tsx | Remove custom toolbar, import StandardToolbar |
+| 3 | UnderstandJobPage.tsx | Add heading IDs, update TOC click handlers |
+| 4 | UnderstandJobPage.tsx | Fix container backgrounds, remove dark styles |
+
+---
+
+## FINAL VERIFICATION CHECKLIST
+
+After making ALL changes, verify:
+
+- [ ] Page loads without errors
+- [ ] Gemini is selected by default
+- [ ] StandardToolbar appears with navy background
+- [ ] [+] and [-] buttons visible and clickable
+- [ ] PDF, WORD, MD buttons work
+- [ ] TOC links scroll to correct sections
+- [ ] Report text is readable on white background
+- [ ] No dark bars covering content
+- [ ] All existing functionality still works
+
+---
+
+## DO NOT TOUCH
+
+These files should NOT be modified:
+- `client/src/components/common/StandardToolbar.tsx`
+- `client/src/components/common/index.ts`
+- `backend/app/analyze.py`
+- Any other files not mentioned above
+
+---
+
+**END OF PROMPT**
