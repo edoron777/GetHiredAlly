@@ -5,6 +5,8 @@ import {
   FileType, Home, Columns
 } from 'lucide-react'
 import { isAuthenticated, getAuthToken } from '@/lib/auth'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 interface FixedData {
   scan_id: string
@@ -285,9 +287,11 @@ function CVPanel({
           ? 'bg-red-50/30 border-red-200'
           : 'bg-green-50/30 border-green-200'
       }`}>
-        <pre className="whitespace-pre-wrap font-sans text-gray-800 text-sm leading-relaxed">
-          {content}
-        </pre>
+        <div className="prose prose-sm max-w-none text-gray-800 leading-relaxed">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            {content}
+          </ReactMarkdown>
+        </div>
       </div>
     </div>
   )

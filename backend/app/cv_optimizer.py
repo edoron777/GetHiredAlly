@@ -1,5 +1,6 @@
 """CV Optimizer scanning and analysis endpoints."""
 import os
+import re
 import sys
 import json
 import hashlib
@@ -169,6 +170,46 @@ def parse_ai_json_response(response_text: str) -> list:
     raise json.JSONDecodeError("No valid JSON array found", text, 0)
 
 
+def clean_markdown_for_analysis(text: str) -> str:
+    """Strip Markdown formatting symbols for cleaner AI analysis.
+    
+    This prevents the AI from flagging markdown syntax (*, **, #, etc.) 
+    as formatting issues when analyzing .md files.
+    """
+    # Remove code blocks
+    text = re.sub(r'```[\s\S]*?```', '', text)
+    text = re.sub(r'`[^`]+`', lambda m: m.group(0).strip('`'), text)
+    
+    # Remove headers (# ## ###) but keep the text
+    text = re.sub(r'^#{1,6}\s+', '', text, flags=re.MULTILINE)
+    
+    # Remove bold/italic markers but keep the text
+    text = re.sub(r'\*\*\*(.+?)\*\*\*', r'\1', text)  # Bold+italic
+    text = re.sub(r'\*\*(.+?)\*\*', r'\1', text)       # Bold
+    text = re.sub(r'\*(.+?)\*', r'\1', text)           # Italic
+    text = re.sub(r'___(.+?)___', r'\1', text)         # Bold+italic underscore
+    text = re.sub(r'__(.+?)__', r'\1', text)           # Bold underscore
+    text = re.sub(r'_(.+?)_', r'\1', text)             # Italic underscore
+    
+    # Remove link syntax but keep text [text](url) -> text
+    text = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', text)
+    
+    # Remove image syntax ![alt](url)
+    text = re.sub(r'!\[([^\]]*)\]\([^)]+\)', r'\1', text)
+    
+    # Remove horizontal rules
+    text = re.sub(r'^[-*_]{3,}\s*$', '', text, flags=re.MULTILINE)
+    
+    # Remove list markers but keep content
+    text = re.sub(r'^\s*[-*+]\s+', '', text, flags=re.MULTILINE)
+    text = re.sub(r'^\s*\d+\.\s+', '', text, flags=re.MULTILINE)
+    
+    # Clean up excessive whitespace
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    
+    return text.strip()
+
+
 def fix_truncated_json(json_text: str) -> str:
     """Attempt to fix truncated JSON array by closing open structures."""
     text = json_text.rstrip()
@@ -196,9 +237,15 @@ def fix_truncated_json(json_text: str) -> str:
     return text
 
 
-async def analyze_cv_with_ai(cv_content: str, user_id: str) -> dict:
+async def analyze_cv_with_ai(cv_content: str, user_id: str, is_markdown: bool = False) -> dict:
+    # Clean markdown formatting if the file was markdown
+    if is_markdown:
+        cv_content = clean_markdown_for_analysis(cv_content)
+        logger.info("[CV_SCAN] Cleaned markdown formatting from CV content")
+    
     prompt = CV_ANALYSIS_PROMPT.format(cv_content=cv_content)
-
+    ai_response = None
+    
     try:
         ai_response = await generate_completion(
             prompt=prompt,
@@ -224,7 +271,8 @@ async def analyze_cv_with_ai(cv_content: str, user_id: str) -> dict:
 
     except json.JSONDecodeError as e:
         logger.error(f"[CV_SCAN] JSON parsing failed: {str(e)}")
-        logger.error(f"[CV_SCAN] Full AI response for debugging:\n{ai_response.content}")
+        if ai_response and hasattr(ai_response, 'content'):
+            logger.error(f"[CV_SCAN] Full AI response for debugging:\n{ai_response.content[:2000]}")
         return {
             'issues': [{
                 'id': 1,
@@ -285,7 +333,18 @@ async def scan_cv(request: Request, scan_request: ScanRequest):
             conn.close()
             raise HTTPException(status_code=400, detail="CV content is too short or empty")
 
-        analysis_result = await analyze_cv_with_ai(cv_content, str(user["id"]))
+        # Check if file is markdown based on filename OR content patterns
+        filename = cv.get("file_name", "") or ""
+        is_markdown = (
+            filename.lower().endswith('.md') or 
+            filename.lower().endswith('.markdown') or
+            # Detect markdown by common patterns in content
+            bool(re.search(r'^#{1,6}\s+', cv_content, re.MULTILINE)) or  # Headers
+            bool(re.search(r'\*\*[^*]+\*\*', cv_content)) or  # Bold
+            bool(re.search(r'\[[^\]]+\]\([^)]+\)', cv_content))  # Links
+        )
+        
+        analysis_result = await analyze_cv_with_ai(cv_content, str(user["id"]), is_markdown=is_markdown)
 
         issues = analysis_result.get('issues', [])
         summary = {

@@ -1,12 +1,59 @@
 interface EncouragementMessageProps {
-  type: 'intro' | 'effort' | 'completion';
+  type: 'intro' | 'effort' | 'completion' | 'filter';
   quickWinsCount?: number;
+  filterType?: string;
+  count?: number;
 }
 
 export default function EncouragementMessage({ 
   type, 
-  quickWinsCount = 0 
+  quickWinsCount = 0,
+  filterType = 'all',
+  count = 0
 }: EncouragementMessageProps) {
+  const getFilterMessage = () => {
+    switch (filterType) {
+      case 'critical':
+        return {
+          icon: '⚡',
+          title: 'Quick Wins',
+          message: count > 0 
+            ? `Start with ${count} quick fix${count !== 1 ? 'es' : ''} below - they take just minutes and have big impact!`
+            : 'No quick wins found in current view.'
+        }
+      case 'high':
+        return {
+          icon: '🎯',
+          title: 'Important Improvements',
+          message: count > 0
+            ? `${count} important improvement${count !== 1 ? 's' : ''} that will significantly strengthen your CV`
+            : 'No important improvements found in current view.'
+        }
+      case 'medium':
+        return {
+          icon: '💡',
+          title: 'Worth Considering',
+          message: count > 0
+            ? `${count} suggestion${count !== 1 ? 's' : ''} worth considering to make your CV stand out`
+            : 'No suggestions found in current view.'
+        }
+      case 'low':
+        return {
+          icon: '✨',
+          title: 'Polish Items',
+          message: count > 0
+            ? `${count} minor polish item${count !== 1 ? 's' : ''} for that extra professional touch`
+            : 'No polish items found in current view.'
+        }
+      default:
+        return {
+          icon: '📋',
+          title: 'All Suggestions',
+          message: `${count} total suggestion${count !== 1 ? 's' : ''} found`
+        }
+    }
+  }
+
   const messages = {
     intro: {
       icon: '🚀',
@@ -22,7 +69,8 @@ export default function EncouragementMessage({
       icon: '🎉',
       title: 'Great Job!',
       message: 'You\'ve taken an important step by reviewing your CV. Every improvement increases your chances of landing interviews. You\'ve got this!'
-    }
+    },
+    filter: getFilterMessage()
   };
 
   const { icon, title, message } = messages[type];

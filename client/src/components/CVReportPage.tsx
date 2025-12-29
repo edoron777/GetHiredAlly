@@ -43,10 +43,10 @@ interface ReportData {
 }
 
 const DISPLAY_LEVELS = [
-  { id: 1, name: 'Quick Review', description: 'Suggestion titles only', shortDesc: 'Just titles' },
-  { id: 2, name: 'Standard', description: 'With category and location', shortDesc: '+ Category & location' },
-  { id: 3, name: 'With Fix', description: 'Including suggested fixes', shortDesc: '+ How to fix it' },
-  { id: 4, name: 'Complete', description: 'Full details', shortDesc: 'Full details' }
+  { id: 1, name: 'Quick Review', description: 'Suggestion titles only', shortDesc: 'Just titles', tooltip: 'Show only issue titles - fastest overview' },
+  { id: 2, name: 'Standard', description: 'With category and location', shortDesc: '+ Category & location', tooltip: 'Show titles with category and location' },
+  { id: 3, name: 'With Fix', description: 'Including suggested fixes', shortDesc: '+ How to fix it', tooltip: 'Show titles, location, and how to fix each issue' },
+  { id: 4, name: 'Complete', description: 'Full details', shortDesc: 'Full details', tooltip: 'Show all details including original text and suggested fix' }
 ]
 
 const SEVERITY_FILTERS = [
@@ -83,7 +83,7 @@ export function CVReportPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const [displayLevel, setDisplayLevel] = useState(3)
+  const [displayLevel, setDisplayLevel] = useState(1)
   const [severityFilter, setSeverityFilter] = useState('all')
   const [expandedIssues, setExpandedIssues] = useState<Set<number>>(new Set())
   const [isGeneratingFix, setIsGeneratingFix] = useState(false)
@@ -356,7 +356,11 @@ export function CVReportPage() {
 
         <StrengthsSection strengths={strengths} />
 
-        <EncouragementMessage type="intro" />
+        <EncouragementMessage 
+          type={severityFilter === 'all' ? 'intro' : 'filter'} 
+          filterType={severityFilter}
+          count={filteredIssues.length}
+        />
 
         <CategoryFilterPanel
           categoryCounts={categoryCounts}
@@ -375,7 +379,15 @@ export function CVReportPage() {
             {DISPLAY_LEVELS.map(level => (
               <button
                 key={level.id}
-                onClick={() => setDisplayLevel(level.id)}
+                onClick={() => {
+                  setDisplayLevel(level.id)
+                  if (level.id >= 2) {
+                    setExpandedIssues(new Set(filteredIssues.map(i => i.id)))
+                  } else {
+                    setExpandedIssues(new Set())
+                  }
+                }}
+                title={level.tooltip}
                 className={`flex flex-col items-center px-4 py-2 rounded-lg border transition-colors ${
                   displayLevel === level.id
                     ? 'bg-blue-50 border-blue-500 text-blue-700'

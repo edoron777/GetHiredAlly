@@ -1,0 +1,192 @@
+APPROVED
+
+## CV Optimizer - 7 UI/UX Fixes
+
+### FIX 1: Dynamic Callout Box Based on Selected Filter
+
+CURRENT PROBLEM:
+The "Quick Wins Available" callout always shows regardless of which filter is selected.
+Example: Shows "Start with 75 quick fixes" but Quick Wins filter shows "0".
+
+REQUIRED:
+1. The callout should change based on the SELECTED filter
+2. If "Quick Wins" is selected (and has items): Show Quick Wins callout
+3. If "Important" is selected: Show Important callout
+4. If "Consider" is selected: Show Consider callout
+5. If "Polish" is selected: Show Polish callout
+6. If "All" is selected: Show summary or hide callout
+7. The NUMBER in the callout must match the actual count
+
+CALLOUT CONTENT BY FILTER:
+- Quick Wins: "Start with X quick fixes below - they take just minutes and have big impact!"
+- Important: "X important improvements that will significantly strengthen your CV"
+- Consider: "X suggestions worth considering to make your CV stand out"
+- Polish: "X minor polish items for that extra professional touch"
+- All: "X total suggestions found" OR hide callout
+
+LOCATION: CVReportPage.tsx - callout/banner component
+
+---
+
+### FIX 2: Items COLLAPSED by Default (STILL NOT FIXED)
+
+CURRENT PROBLEM:
+All issue items are EXPANDED when the page loads.
+This creates visual overload.
+
+REQUIRED:
+All items must be COLLAPSED (closed) by default.
+User clicks to expand individual items.
+
+THIS WAS REQUESTED BEFORE BUT NOT FIXED.
+
+LOCATION: CVReportPage.tsx
+Find the state that controls expanded/collapsed.
+Set default to FALSE or empty array.
+
+---
+
+### FIX 3: Ignore Markdown Formatting in Analysis
+
+CURRENT PROBLEM:
+When user uploads a Markdown (.md) file, the AI detects formatting symbols (*, **, #, etc.) as "issues".
+This creates false positives.
+
+REQUIRED:
+Before sending CV content to AI for analysis:
+1. Check if file is Markdown (by extension or content)
+2. Strip Markdown formatting symbols:
+   - Remove * and ** (bold/italic)
+   - Remove # ## ### (headers)
+   - Remove []() (links)
+   - Remove ``` (code blocks)
+   - Keep the actual text content
+3. Send clean text to AI
+
+LOCATION: backend/app/cv_optimizer.py or cv.py
+Add a function: clean_markdown_for_analysis(text)
+
+Example:
+Input: "**David Cohen** | Email: test@email.com"
+Output: "David Cohen | Email: test@email.com"
+
+---
+
+### FIX 4: "How much information" Toolbar - Fix + Add Tooltips
+
+CURRENT PROBLEM:
+1. Clicking "Complete" button does nothing
+2. Users don't understand what each option means
+
+REQUIRED:
+1. Make ALL buttons functional (Quick Review, Standard, With Fix, Complete)
+2. Add TOOLTIPS on hover explaining each option:
+
+TOOLTIP TEXT:
+- Quick Review: "Show only issue titles - fastest overview"
+- Standard: "Show titles with category and location"
+- With Fix: "Show titles, location, and how to fix each issue"
+- Complete: "Show all details including original text and suggested fix"
+
+IMPLEMENTATION:
+Add title attribute or tooltip component to each button.
+
+LOCATION: CVReportPage.tsx - view mode toolbar
+
+---
+
+### FIX 5: "View by" Toolbar - Add Tooltips
+
+CURRENT PROBLEM:
+Users don't understand what "By Work Type" means.
+
+REQUIRED:
+Add TOOLTIPS on hover for each option:
+
+TOOLTIP TEXT:
+- By Priority: "Group issues by severity - Critical, High, Medium, Low"
+- By Effort: "Group issues by time to fix - Quick fixes first"
+- By Work Type: "Group issues by category - Grammar, Formatting, etc."
+
+LOCATION: CVReportPage.tsx - view by toolbar
+
+---
+
+### FIX 6: Add Sound Effects for Scanning (OPTIONAL)
+
+REQUIRED:
+Add subtle audio feedback:
+1. Short "start" sound (0.3-0.5 sec) when scanning BEGINS
+2. Short "complete" sound (0.3-0.5 sec) when scanning ENDS
+
+SOUNDS:
+Use simple, professional tones. Not loud or annoying.
+Can use Web Audio API or simple audio files.
+
+Example sounds:
+- Start: soft "whoosh" or subtle chime
+- Complete: pleasant "ding" or success tone
+
+LOCATION: 
+- CVScanningPage.tsx (for CV scan)
+- CVReportPage.tsx (for Fix CV generation)
+
+NOTE: This is lower priority. Skip if complex.
+
+---
+
+### FIX 7: Render Fixed CV Properly (Not Raw Markdown)
+
+CURRENT PROBLEM:
+The Fixed CV page shows raw Markdown text with ** and other symbols visible.
+Example: "**David Cohen**" instead of "David Cohen" (bold)
+
+REQUIRED:
+Render the Fixed CV as formatted text, not raw Markdown.
+
+OPTIONS:
+Option A: Convert Markdown to HTML and render
+Option B: Strip Markdown symbols and show plain text
+Option C: Use a Markdown renderer component
+
+RECOMMENDATION: Option A - Render as HTML for nice formatting
+
+IMPLEMENTATION:
+Use a library like react-markdown or marked to render the content.
+
+LOCATION: CVFixedPage.tsx - CV content display
+
+---
+
+## PRIORITY ORDER
+
+1. Fix 2 (collapsed by default) - EASY, HIGH IMPACT
+2. Fix 1 (dynamic callout) - MEDIUM, HIGH IMPACT
+3. Fix 7 (render Fixed CV) - MEDIUM, HIGH IMPACT
+4. Fix 3 (ignore Markdown symbols) - MEDIUM, PREVENTS CONFUSION
+5. Fix 4 (tooltips + fix Complete button) - EASY, IMPROVES UX
+6. Fix 5 (view by tooltips) - EASY, IMPROVES UX
+7. Fix 6 (sound effects) - OPTIONAL, NICE TO HAVE
+
+---
+
+## FILES TO MODIFY
+
+- CVReportPage.tsx (Fixes 1, 2, 4, 5, 6)
+- CVFixedPage.tsx (Fix 7)
+- CVScanningPage.tsx (Fix 6)
+- backend/app/cv_optimizer.py (Fix 3)
+
+## CONSTRAINTS
+
+- Do NOT change any other functionality
+- Do NOT add features not listed here
+- Do NOT refactor unrelated code
+- Test each fix individually
+
+## AFTER COMPLETION
+
+Provide summary:
+1. Which fixes were completed
+2. Which files were modified
+3. Any fixes that could not be completed and why

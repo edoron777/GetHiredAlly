@@ -15,6 +15,7 @@ interface Issues {
   high: number
   medium: number
   low: number
+  total: number
 }
 
 interface ScannerGridProps {

@@ -13,6 +13,7 @@ export default function ViewModeToggle({
       <div className="inline-flex rounded-lg border border-gray-200 p-1 bg-gray-50">
         <button
           onClick={() => onModeChange('severity')}
+          title="Group issues by severity - Critical, High, Medium, Low"
           className={`
             px-4 py-2 text-sm font-medium rounded-md transition-all
             ${currentMode === 'severity'
@@ -25,6 +26,7 @@ export default function ViewModeToggle({
         </button>
         <button
           onClick={() => onModeChange('effort')}
+          title="Group issues by time to fix - Quick fixes first"
           className={`
             px-4 py-2 text-sm font-medium rounded-md transition-all
             ${currentMode === 'effort'
@@ -37,6 +39,7 @@ export default function ViewModeToggle({
         </button>
         <button
           onClick={() => onModeChange('worktype')}
+          title="Group issues by category - Grammar, Formatting, etc."
           className={`
             px-4 py-2 text-sm font-medium rounded-md transition-all
             ${currentMode === 'worktype'
