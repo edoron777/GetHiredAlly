@@ -280,14 +280,6 @@ export function UnderstandJobPage() {
     setSelectedProvider('gemini')
   }
 
-  const handleStartOver = () => {
-    if (window.confirm('Are you sure you want to start over? All data will be cleared.')) {
-      handleClearForm()
-      setAnalysis(null)
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-    }
-  }
-
   const containerStyle = {
     border: '1px solid #E5E7EB',
     borderRadius: '12px',
@@ -334,14 +326,6 @@ export function UnderstandJobPage() {
               title="Clear all form inputs"
             >
               <span>Clear Form</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleStartOver}
-              className="px-3 py-2 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg flex items-center gap-1"
-              title="Start completely fresh"
-            >
-              <span>Start Over</span>
             </button>
           </div>
         </div>
