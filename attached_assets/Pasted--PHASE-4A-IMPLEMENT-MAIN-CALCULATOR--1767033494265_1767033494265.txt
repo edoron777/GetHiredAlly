@@ -1,0 +1,95 @@
+==========================================================
+PHASE 4A: IMPLEMENT MAIN CALCULATOR
+==========================================================
+
+TASK: Add content to `server/common/scoring/calculator.py`
+
+WRITE THIS EXACT CODE:
+```python
+"""
+Main CV Scoring Calculator
+DETERMINISTIC: Same input ALWAYS produces same output.
+"""
+
+from typing import Dict, Union
+from .config import SCORE_MIN, SCORE_MAX, GRADE_THRESHOLDS, GRADE_MESSAGES, SCORING_VERSION
+from .models import ScoreResult, ScoreBreakdown, ExtractedData
+from .categories import (
+    calculate_grammar_score,
+    calculate_formatting_score,
+    calculate_quantification_score,
+    calculate_language_score,
+    calculate_contact_score,
+    calculate_skills_score,
+    calculate_experience_score,
+    calculate_length_score
+)
+
+
+def calculate_cv_score(data: Union[Dict, ExtractedData]) -> ScoreResult:
+    """
+    Calculate CV score from extracted data.
+    
+    THIS FUNCTION IS DETERMINISTIC.
+    Same input will ALWAYS produce same output.
+    
+    Args:
+        data: Either ExtractedData object or dict with same fields
+        
+    Returns:
+        ScoreResult with total score, breakdown, grade, and message
+    """
+    # Calculate each category score
+    breakdown = ScoreBreakdown(
+        grammar=calculate_grammar_score(data),
+        formatting=calculate_formatting_score(data),
+        quantification=calculate_quantification_score(data),
+        language=calculate_language_score(data),
+        contact=calculate_contact_score(data),
+        skills=calculate_skills_score(data),
+        experience=calculate_experience_score(data),
+        length=calculate_length_score(data)
+    )
+    
+    # Calculate total
+    raw_total = breakdown.total()
+    
+    # Apply bounds
+    final_score = int(max(SCORE_MIN, min(SCORE_MAX, raw_total)))
+    
+    # Determine grade and message
+    grade, message = _get_grade_and_message(final_score)
+    
+    return ScoreResult(
+        total_score=final_score,
+        breakdown=breakdown,
+        grade=grade,
+        message=message,
+        version=SCORING_VERSION
+    )
+
+
+def _get_grade_and_message(score: int) -> tuple:
+    """Get grade and message based on score."""
+    if score >= GRADE_THRESHOLDS["excellent"]:
+        return "Excellent", GRADE_MESSAGES["excellent"]
+    elif score >= GRADE_THRESHOLDS["good"]:
+        return "Good", GRADE_MESSAGES["good"]
+    elif score >= GRADE_THRESHOLDS["fair"]:
+        return "Fair", GRADE_MESSAGES["fair"]
+    elif score >= GRADE_THRESHOLDS["needs_work"]:
+        return "Needs Work", GRADE_MESSAGES["needs_work"]
+    else:
+        return "Needs Attention", GRADE_MESSAGES["needs_attention"]
+```
+
+RULES:
+- Update ONLY this file
+- Copy code EXACTLY as shown
+- Do NOT modify any other files
+
+AFTER COMPLETION:
+1. Confirm `calculator.py` was updated
+2. Confirm no other files were changed
+
+==========================================================
