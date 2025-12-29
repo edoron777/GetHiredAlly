@@ -700,6 +700,34 @@ export function UnderstandJobPage() {
               </div>
             )}
 
+            {/* About This Report - Expandable Section */}
+            <details style={{
+              marginBottom: '16px',
+              padding: '12px 16px',
+              backgroundColor: '#F0F9FF',
+              border: '1px solid #BAE6FD',
+              borderRadius: '8px'
+            }}>
+              <summary style={{
+                cursor: 'pointer',
+                fontWeight: 500,
+                color: '#0369A1',
+                listStyle: 'none'
+              }}>
+                ℹ️ About This Report - What each section means
+              </summary>
+              <div style={{ marginTop: '12px', fontSize: '14px', color: '#374151', lineHeight: 1.6 }}>
+                <ul style={{ paddingLeft: '20px', margin: 0 }}>
+                  <li style={{ marginBottom: '8px' }}><strong>Executive Summary:</strong> Quick overview of the role and key insights</li>
+                  <li style={{ marginBottom: '8px' }}><strong>What They Really Want:</strong> Hidden priorities and unstated expectations</li>
+                  <li style={{ marginBottom: '8px' }}><strong>Requirements Breakdown:</strong> Must-haves vs nice-to-haves analysis</li>
+                  <li style={{ marginBottom: '8px' }}><strong>Soft Skills & STAR Prep:</strong> Behavioral competencies with example stories</li>
+                  <li style={{ marginBottom: '8px' }}><strong>Challenges & How to Address:</strong> Potential concerns and how to overcome them</li>
+                  <li style={{ marginBottom: '0' }}><strong>Is This Job Right for Me?:</strong> Self-assessment questions for fit evaluation</li>
+                </ul>
+              </div>
+            </details>
+
             {/* Report Container */}
             <div 
               ref={resultsRef}
