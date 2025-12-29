@@ -231,7 +231,20 @@ export function UnderstandJobPage() {
       }
       
       const data = await response.json()
-      setAnalysis(data.analysis)
+      
+      // Prepend header to report content so it's included in exports
+      const jobTitle = extractJobTitle(data.analysis);
+      const reportHeader = `# Job Description X-Ray Analyzer Report
+## ${jobTitle}
+
+**Generated:** ${formatDate(new Date())}  
+**Report Type:** ${depthLevel === 'ready' ? 'Interview Ready' : 'Fully Prepared'}  
+**Prepared For:** ${getInterviewerLabel(selectedInterviewer || 'general')}
+
+---
+
+`;
+      setAnalysis(reportHeader + data.analysis)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
     } finally {
@@ -676,56 +689,6 @@ export function UnderstandJobPage() {
                 boxShadow: showHighlight ? '0 0 0 4px rgba(30, 90, 133, 0.1)' : 'none'
               }}
             >
-              {/* Report Header */}
-              <div style={{
-                textAlign: 'center',
-                marginBottom: '16px',
-                paddingBottom: '16px',
-                borderBottom: '2px solid #E5E7EB'
-              }}>
-                <h1 style={{
-                  fontSize: '24px',
-                  fontWeight: 700,
-                  color: '#1E3A5F',
-                  marginBottom: '8px'
-                }}>
-                  📋 Job Description X-Ray Analyzer Report
-                </h1>
-                <h2 style={{
-                  fontSize: '18px',
-                  fontWeight: 500,
-                  color: '#374151',
-                  margin: 0
-                }}>
-                  {extractJobTitle(analysis)}
-                </h2>
-              </div>
-
-              {/* Report Metadata */}
-              <div style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: '16px',
-                justifyContent: 'center',
-                padding: '12px 16px',
-                background: '#F9FAFB',
-                borderRadius: '8px',
-                marginBottom: '16px'
-              }}>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <span style={{ fontWeight: 600, color: '#6B7280' }}>Generated:</span>
-                  <span style={{ color: '#1E3A5F' }}>{formatDate(new Date())}</span>
-                </div>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <span style={{ fontWeight: 600, color: '#6B7280' }}>Report Type:</span>
-                  <span style={{ color: '#1E3A5F' }}>{depthLevel === 'ready' ? 'Interview Ready' : 'Fully Prepared'}</span>
-                </div>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <span style={{ fontWeight: 600, color: '#6B7280' }}>Prepared For:</span>
-                  <span style={{ color: '#1E3A5F' }}>{getInterviewerLabel(selectedInterviewer || 'general')}</span>
-                </div>
-              </div>
-            
               {/* Table of Contents - with working scroll links */}
             <div style={{
               position: 'sticky',
