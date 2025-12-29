@@ -92,9 +92,6 @@ export function UnderstandJobPage() {
   const [statusIndex, setStatusIndex] = useState(0)
   const [showSuccess, setShowSuccess] = useState(false)
   const [showHighlight, setShowHighlight] = useState(false)
-  const [copied, setCopied] = useState(false)
-  const [downloadingPdf, setDownloadingPdf] = useState(false)
-  const [downloadingDocx, setDownloadingDocx] = useState(false)
   const [downloadError, setDownloadError] = useState<string | null>(null)
   const resultsRef = useRef<HTMLDivElement>(null)
   const [selectedProvider, setSelectedProvider] = useState<Provider>('gemini')
@@ -529,60 +526,52 @@ export function UnderstandJobPage() {
               showEmail={true}
               showWhatsApp={true}
               onPDF={async () => {
-                setDownloadingPdf(true);
                 setDownloadError(null);
-                try {
-                  const response = await fetch('/api/xray/download/pdf', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                      report_content: analysis, 
-                      job_title: 'Job Analysis Report',
-                      company_name: ''
-                    })
-                  });
-                  if (!response.ok) throw new Error('PDF generation failed');
-                  const blob = await response.blob();
-                  const url = window.URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = url;
-                  a.download = 'XRay_Analysis.pdf';
-                  a.click();
-                  window.URL.revokeObjectURL(url);
-                } catch (err) {
+                const response = await fetch('/api/xray/download/pdf', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ 
+                    report_content: analysis, 
+                    job_title: 'Job Analysis Report',
+                    company_name: ''
+                  })
+                });
+                if (!response.ok) {
                   setDownloadError('PDF download failed. Please try again.');
                   setTimeout(() => setDownloadError(null), 4000);
-                } finally {
-                  setDownloadingPdf(false);
+                  throw new Error('PDF generation failed');
                 }
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'XRay_Analysis.pdf';
+                a.click();
+                window.URL.revokeObjectURL(url);
               }}
               onWord={async () => {
-                setDownloadingDocx(true);
                 setDownloadError(null);
-                try {
-                  const response = await fetch('/api/xray/download/docx', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                      report_content: analysis, 
-                      job_title: 'Job Analysis Report',
-                      company_name: ''
-                    })
-                  });
-                  if (!response.ok) throw new Error('Word generation failed');
-                  const blob = await response.blob();
-                  const url = window.URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = url;
-                  a.download = 'XRay_Analysis.docx';
-                  a.click();
-                  window.URL.revokeObjectURL(url);
-                } catch (err) {
+                const response = await fetch('/api/xray/download/docx', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ 
+                    report_content: analysis, 
+                    job_title: 'Job Analysis Report',
+                    company_name: ''
+                  })
+                });
+                if (!response.ok) {
                   setDownloadError('Word download failed. Please try again.');
                   setTimeout(() => setDownloadError(null), 4000);
-                } finally {
-                  setDownloadingDocx(false);
+                  throw new Error('Word generation failed');
                 }
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'XRay_Analysis.docx';
+                a.click();
+                window.URL.revokeObjectURL(url);
               }}
               onMarkdown={async () => {
                 const blob = new Blob([analysis], { type: 'text/markdown' });
