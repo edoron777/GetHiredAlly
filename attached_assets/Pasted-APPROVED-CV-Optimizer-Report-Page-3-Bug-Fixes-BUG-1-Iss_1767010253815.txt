@@ -1,0 +1,112 @@
+APPROVED
+
+## CV Optimizer Report Page - 3 Bug Fixes
+
+### BUG 1: Issues Should Be COLLAPSED by Default
+
+CURRENT BEHAVIOR:
+All issue items are EXPANDED (open) by default when the report loads.
+
+PROBLEM:
+- Too much information at once
+- Cognitive overload for the user
+- User has to scroll through everything
+
+EXPECTED BEHAVIOR:
+All issue items should be COLLAPSED (closed) by default.
+User clicks on an item to expand and see details.
+
+LOCATION:
+File: CVReportPage.tsx (or wherever issue items are rendered)
+
+FIX:
+Find the state that controls expanded/collapsed and set default to FALSE (collapsed).
+
+Example:
+// WRONG (current):
+const [expanded, setExpanded] = useState(true);
+
+// CORRECT:
+const [expanded, setExpanded] = useState(false);
+
+Or if using an array of expanded IDs:
+// WRONG:
+const [expandedItems, setExpandedItems] = useState(allItemIds);
+
+// CORRECT:
+const [expandedItems, setExpandedItems] = useState([]);
+
+---
+
+### BUG 2: Filter Bar Numbers Are WRONG
+
+CURRENT BEHAVIOR:
+The filter buttons show incorrect counts:
+- Quick Wins: 0
+- Important: 0
+- Consider: 0 (but shows 26 when clicked)
+- Polish: 0 (but shows 15 when clicked)
+
+PROBLEM:
+The counts displayed on the filter buttons do not match the actual number of items in each category.
+
+EXPECTED BEHAVIOR:
+Filter buttons should show the CORRECT count of items in each category.
+Example: If there are 26 "Consider" items, the button should show "Consider 26"
+
+LOCATION:
+File: CVReportPage.tsx - filter bar component
+
+FIX:
+The count calculation is wrong. Check how counts are being calculated:
+
+1. Make sure counts are calculated AFTER issues are loaded
+2. Make sure counts match the filtering logic
+3. Check if severity mapping is correct
+
+Debug by logging:
+console.log("Issues:", issues);
+console.log("Quick Wins count:", issues.filter(i => i.severity === 'critical').length);
+console.log("Important count:", issues.filter(i => i.severity === 'high').length);
+console.log("Consider count:", issues.filter(i => i.severity === 'medium').length);
+console.log("Polish count:", issues.filter(i => i.severity === 'low').length);
+
+---
+
+### BUG 3: Remove "Text Size" Toolbar
+
+CURRENT:
+There is a "Text Size: [-] [+]" control in the report page.
+
+REQUESTED:
+Remove this completely. It is not needed.
+
+LOCATION:
+File: CVReportPage.tsx
+
+FIX:
+Find and DELETE the Text Size component/section:
+
+Look for something like:
+<div>
+  Text Size:
+  <button>-</button>
+  <button>+</button>
+</div>
+
+Delete the entire block.
+
+---
+
+## SUMMARY
+
+| Bug | Issue | Fix |
+|-----|-------|-----|
+| 1 | Items expanded by default | Set default state to collapsed |
+| 2 | Filter counts are wrong | Fix count calculation logic |
+| 3 | Text Size toolbar | Remove completely |
+
+## PRIORITY
+1. Bug 2 (numbers wrong - confusing for users)
+2. Bug 1 (collapsed by default)
+3. Bug 3 (remove text size)

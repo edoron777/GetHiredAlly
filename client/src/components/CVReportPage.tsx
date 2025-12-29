@@ -86,7 +86,6 @@ export function CVReportPage() {
   const [displayLevel, setDisplayLevel] = useState(3)
   const [severityFilter, setSeverityFilter] = useState('all')
   const [expandedIssues, setExpandedIssues] = useState<Set<number>>(new Set())
-  const [textSize, setTextSize] = useState(16)
   const [isGeneratingFix, setIsGeneratingFix] = useState(false)
   const [fixProgress, setFixProgress] = useState(0)
   const [fixMessageIndex, setFixMessageIndex] = useState(0)
@@ -137,7 +136,7 @@ export function CVReportPage() {
 
         const data = await response.json()
         setReportData(data)
-        setExpandedIssues(new Set(data.issues.map((i: Issue) => i.id)))
+        setExpandedIssues(new Set())
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load report')
       } finally {
@@ -188,6 +187,13 @@ export function CVReportPage() {
   const filteredIssues = categoryFilteredIssues.filter(issue =>
     severityFilter === 'all' || issue.severity === severityFilter
   )
+
+  const severityCounts: Record<string, number> = {
+    critical: categoryFilteredIssues.filter(i => i.severity === 'critical').length,
+    high: categoryFilteredIssues.filter(i => i.severity === 'high').length,
+    medium: categoryFilteredIssues.filter(i => i.severity === 'medium').length,
+    low: categoryFilteredIssues.filter(i => i.severity === 'low').length
+  }
 
   const groupedIssues: Record<string, Issue[]> = {
     critical: filteredIssues.filter(i => i.severity === 'critical'),
@@ -320,7 +326,7 @@ export function CVReportPage() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-64px)] p-8" style={{ backgroundColor: '#FAF9F7', fontSize: `${textSize}px` }}>
+    <div className="min-h-[calc(100vh-64px)] p-8" style={{ backgroundColor: '#FAF9F7' }}>
       <div className="max-w-4xl mx-auto">
         <Link
           to={`/service/cv-optimizer/results/${scanId}`}
@@ -411,7 +417,7 @@ export function CVReportPage() {
                     <span className={`ml-1 px-1.5 py-0.5 rounded text-xs ${
                       severityFilter === filter.id ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'
                     }`}>
-                      {groupedIssues[filter.id]?.length || 0}
+                      {severityCounts[filter.id] || 0}
                     </span>
                   )}
                 </button>
@@ -420,23 +426,6 @@ export function CVReportPage() {
           </div>
         )}
 
-        <div className="bg-white border border-gray-200 rounded-lg p-3 mb-6 flex items-center justify-center gap-3">
-          <span className="text-sm text-gray-500">Text Size:</span>
-          <button
-            onClick={() => setTextSize(prev => Math.max(prev - 2, 12))}
-            className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-lg hover:bg-gray-200 text-lg font-bold"
-            title="Decrease text size"
-          >
-            −
-          </button>
-          <button
-            onClick={() => setTextSize(prev => Math.min(prev + 2, 24))}
-            className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-lg hover:bg-gray-200 text-lg font-bold"
-            title="Increase text size"
-          >
-            +
-          </button>
-        </div>
 
         {quickWinsCount > 0 && (
           <EncouragementMessage type="effort" quickWinsCount={quickWinsCount} />
