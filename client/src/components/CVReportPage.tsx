@@ -15,6 +15,7 @@ import EffortGroupView from './cv-optimizer/EffortGroupView'
 import WorkTypeGroupView from './cv-optimizer/WorkTypeGroupView'
 import { mapIssueCategoryToId } from '../config/cvCategories'
 import { detectStrengths } from '../utils/strengthsDetector'
+import { playStartSound, playCompleteSound } from '../utils/sounds'
 import type { Strength } from '../utils/strengthsDetector'
 
 interface Issue {
@@ -564,12 +565,14 @@ export function CVReportPage() {
           <button
             onClick={async () => {
               setIsGeneratingFix(true)
+              playStartSound()
               try {
                 const token = getAuthToken()
                 const response = await fetch(`/api/cv-optimizer/fix/${scanId}?token=${token}`, {
                   method: 'POST'
                 })
                 if (!response.ok) throw new Error('Failed to generate fix')
+                playCompleteSound()
                 navigate(`/service/cv-optimizer/fixed/${scanId}`)
               } catch (err) {
                 alert('Failed to generate fixed CV. Please try again.')

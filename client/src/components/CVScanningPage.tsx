@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { Search } from 'lucide-react'
 import { isAuthenticated, getAuthToken } from '@/lib/auth'
 import { ScannerGrid } from './ScannerGrid'
+import { playStartSound, playCompleteSound } from '@/utils/sounds'
 
 const STATUS_MESSAGES = [
   "Checking spelling and grammar...",
@@ -94,6 +95,7 @@ export function CVScanningPage() {
         animateIssueCount(data.summary)
 
         setScanComplete(true)
+        playCompleteSound()
 
         setTimeout(() => {
           navigate(`/service/cv-optimizer/report/${data.scan_id}`)
@@ -104,6 +106,7 @@ export function CVScanningPage() {
       }
     }
 
+    playStartSound()
     setTimeout(runScan, 1000)
   }, [cvId, navigate])
 
