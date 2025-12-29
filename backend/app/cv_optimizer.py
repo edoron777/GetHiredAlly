@@ -24,26 +24,78 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/cv-optimizer", tags=["cv-optimizer"])
 
 
-def calculate_cv_score(issues: list) -> int:
+def calculate_cv_score(issues: list) -> dict:
     """
     Calculate CV score based on issues found.
-    Fewer issues = higher score.
-    Critical issues have more weight.
+    Score is deterministic - same issues = same score.
+    
+    Scoring weights:
+    - Critical issues: -15 points each (major problems)
+    - High issues: -8 points each (significant issues)
+    - Medium issues: -3 points each (improvements)
+    - Low issues: -1 point each (polish)
+    
+    Base score: 100
+    Minimum score: 10 (never show 0)
     """
     base_score = 100
     
-    for issue in issues:
-        severity = issue.get('severity', 'low') if isinstance(issue, dict) else 'low'
-        if severity == 'critical':
-            base_score -= 10
-        elif severity == 'high':
-            base_score -= 5
-        elif severity == 'medium':
-            base_score -= 2
-        elif severity == 'low':
-            base_score -= 1
+    critical_count = 0
+    high_count = 0
+    medium_count = 0
+    low_count = 0
     
-    return max(0, min(100, base_score))
+    for issue in issues:
+        severity = issue.get('severity', 'low').lower() if isinstance(issue, dict) else 'low'
+        if severity in ['critical', 'quick_wins']:
+            critical_count += 1
+        elif severity in ['high', 'important']:
+            high_count += 1
+        elif severity in ['medium', 'consider']:
+            medium_count += 1
+        elif severity in ['low', 'polish']:
+            low_count += 1
+    
+    penalty = (
+        (critical_count * 15) +
+        (high_count * 8) +
+        (medium_count * 3) +
+        (low_count * 1)
+    )
+    
+    final_score = base_score - penalty
+    final_score = max(10, min(100, final_score))
+    
+    if final_score >= 85:
+        message = "Excellent! Your CV is highly polished."
+        status = "excellent"
+    elif final_score >= 70:
+        message = "Good CV with minor improvements possible."
+        status = "good"
+    elif final_score >= 55:
+        message = "Decent CV. Some improvements recommended."
+        status = "decent"
+    elif final_score >= 40:
+        message = "Your CV needs attention in several areas."
+        status = "needs_work"
+    else:
+        message = "Significant improvements needed for best results."
+        status = "needs_improvement"
+    
+    logger.info(f"[CV_SCORE] Critical: {critical_count}×15={critical_count*15}, High: {high_count}×8={high_count*8}, Medium: {medium_count}×3={medium_count*3}, Low: {low_count}×1={low_count*1}, Penalty: {penalty}, Score: {final_score}")
+    
+    return {
+        'score': final_score,
+        'message': message,
+        'status': status,
+        'breakdown': {
+            'critical_issues': critical_count,
+            'high_issues': high_count,
+            'medium_issues': medium_count,
+            'low_issues': low_count,
+            'total_penalty': penalty
+        }
+    }
 
 
 def get_db_connection():
@@ -393,13 +445,16 @@ async def scan_cv(request: Request, scan_request: ScanRequest):
             raise HTTPException(status_code=500, detail="Failed to save scan results")
 
         scan_id = result["id"]
-        cv_score = calculate_cv_score(issues)
+        score_data = calculate_cv_score(issues)
 
         return {
             'scan_id': scan_id,
             'summary': summary,
             'issues': issues,
-            'cv_score': cv_score
+            'cv_score': score_data['score'],
+            'score_message': score_data['message'],
+            'score_status': score_data['status'],
+            'score_breakdown': score_data['breakdown']
         }
 
     except HTTPException:
@@ -479,7 +534,7 @@ async def get_detailed_report(scan_id: str, token: str):
         if isinstance(issues, str):
             issues = json.loads(issues)
 
-        cv_score = calculate_cv_score(issues)
+        score_data = calculate_cv_score(issues)
 
         return {
             'scan_id': scan['id'],
@@ -492,7 +547,10 @@ async def get_detailed_report(scan_id: str, token: str):
             'low_count': scan['low_count'],
             'issues': issues,
             'status': scan['status'],
-            'cv_score': cv_score
+            'cv_score': score_data['score'],
+            'score_message': score_data['message'],
+            'score_status': score_data['status'],
+            'score_breakdown': score_data['breakdown']
         }
 
     except HTTPException:
@@ -677,7 +735,8 @@ async def get_fixed_cv(scan_id: str, token: str):
         if isinstance(issues, str):
             issues = json.loads(issues)
 
-        original_score = calculate_cv_score(issues)
+        score_data = calculate_cv_score(issues)
+        original_score = score_data['score']
         fixed_score = 100
 
         return {

@@ -3,30 +3,31 @@ interface CVScoreCircleProps {
   size?: 'small' | 'medium' | 'large';
   label?: string;
   showMessage?: boolean;
+  message?: string;
 }
 
 function getScoreColor(score: number): string {
-  if (score >= 80) return '#22C55E';
-  if (score >= 70) return '#EAB308';
-  if (score >= 60) return '#EAB308';
-  if (score >= 50) return '#F97316';
+  if (score >= 85) return '#22C55E';
+  if (score >= 70) return '#84CC16';
+  if (score >= 55) return '#EAB308';
+  if (score >= 40) return '#F97316';
   return '#EF4444';
 }
 
-function getScoreMessage(score: number): string {
-  if (score >= 90) return 'Excellent!';
-  if (score >= 80) return 'Great CV!';
-  if (score >= 70) return 'Good - Minor improvements';
-  if (score >= 60) return 'Fair - Room to improve';
-  if (score >= 50) return 'Needs work';
-  return 'Significant improvements needed';
+function getDefaultScoreMessage(score: number): string {
+  if (score >= 85) return 'Excellent! Your CV is highly polished.';
+  if (score >= 70) return 'Good CV with minor improvements possible.';
+  if (score >= 55) return 'Decent CV. Some improvements recommended.';
+  if (score >= 40) return 'Your CV needs attention in several areas.';
+  return 'Significant improvements needed for best results.';
 }
 
 export default function CVScoreCircle({ 
   score, 
   size = 'large', 
   label = 'CV Score',
-  showMessage = true
+  showMessage = true,
+  message
 }: CVScoreCircleProps) {
   const sizeConfig = {
     small: { width: 100, stroke: 8, fontSize: 24, labelSize: 12 },
@@ -40,7 +41,7 @@ export default function CVScoreCircle({
   const progress = Math.max(0, Math.min(100, score));
   const offset = circumference - (progress / 100) * circumference;
   const color = getScoreColor(score);
-  const message = getScoreMessage(score);
+  const displayMessage = message || getDefaultScoreMessage(score);
 
   return (
     <div className="flex flex-col items-center">
@@ -86,10 +87,10 @@ export default function CVScoreCircle({
       </p>
       {showMessage && (
         <p 
-          className="text-sm mt-1"
+          className="text-sm mt-1 text-center max-w-xs"
           style={{ color }}
         >
-          {message}
+          {displayMessage}
         </p>
       )}
     </div>

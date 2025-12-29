@@ -43,6 +43,15 @@ interface ReportData {
   issues: Issue[]
   status: string
   cv_score?: number
+  score_message?: string
+  score_status?: string
+  score_breakdown?: {
+    critical_issues: number
+    high_issues: number
+    medium_issues: number
+    low_issues: number
+    total_penalty: number
+  }
 }
 
 const DISPLAY_LEVELS = [
@@ -360,6 +369,7 @@ export function CVReportPage() {
               score={reportData.cv_score} 
               size="large" 
               label="Your CV Score"
+              message={reportData.score_message}
             />
           </div>
         )}

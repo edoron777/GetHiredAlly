@@ -1,0 +1,189 @@
+APPROVED
+
+## CRITICAL BUG: CV Score Formula is Broken
+
+### THE PROBLEM
+
+1. INCONSISTENT SCORES:
+   - Same CV scanned twice
+   - First scan: 28%
+   - Second scan: 58%
+   - This should NOT happen. Same CV = Same score.
+
+2. CONTRADICTORY MESSAGE:
+   - Score: 28% (red, "Significant improvements needed")
+   - Message: "Your CV has a solid foundation"
+   - These contradict each other!
+
+3. LIKELY CAUSE:
+   - No proper scoring formula
+   - Score might be random
+   - Or formula doesn't use weighted severity
+
+### INVESTIGATION REQUIRED
+
+STEP 1: Find the scoring function
+Location: backend/app/cv_optimizer.py
+Look for: calculate_cv_score() or similar function
+
+STEP 2: Show me the current code
+Print or share the EXACT current scoring logic.
+I need to see how the score is calculated.
+
+STEP 3: Check if score is deterministic
+The score should be calculated ONLY from:
+- Number of issues
+- Severity of issues
+- Category weights
+
+It should NOT include:
+- Random numbers
+- Timestamps
+- Any variable that changes between scans
+
+### CORRECT SCORING FORMULA
+
+Replace current scoring with this DETERMINISTIC formula:
+```python
+def calculate_cv_score(issues: list) -> dict:
+    """
+    Calculate CV score based on issues found.
+    Score is deterministic - same issues = same score.
+    
+    Scoring weights:
+    - Critical issues: -15 points each (major problems)
+    - High issues: -8 points each (significant issues)
+    - Medium issues: -3 points each (improvements)
+    - Low issues: -1 point each (polish)
+    
+    Base score: 100
+    Minimum score: 10 (never show 0)
+    """
+    
+    base_score = 100
+    
+    # Count issues by severity
+    critical_count = 0
+    high_count = 0
+    medium_count = 0
+    low_count = 0
+    
+    for issue in issues:
+        severity = issue.get('severity', 'low').lower()
+        if severity in ['critical', 'quick_wins']:
+            critical_count += 1
+        elif severity in ['high', 'important']:
+            high_count += 1
+        elif severity in ['medium', 'consider']:
+            medium_count += 1
+        elif severity in ['low', 'polish']:
+            low_count += 1
+    
+    # Apply weighted penalties
+    penalty = (
+        (critical_count * 15) +  # Critical: -15 each
+        (high_count * 8) +       # High: -8 each
+        (medium_count * 3) +     # Medium: -3 each
+        (low_count * 1)          # Low: -1 each
+    )
+    
+    # Calculate final score
+    final_score = base_score - penalty
+    
+    # Ensure score is between 10 and 100
+    final_score = max(10, min(100, final_score))
+    
+    # Determine message based on score
+    if final_score >= 85:
+        message = "Excellent! Your CV is highly polished."
+        status = "excellent"
+    elif final_score >= 70:
+        message = "Good CV with minor improvements possible."
+        status = "good"
+    elif final_score >= 55:
+        message = "Decent CV. Some improvements recommended."
+        status = "decent"
+    elif final_score >= 40:
+        message = "Your CV needs attention in several areas."
+        status = "needs_work"
+    else:
+        message = "Significant improvements needed for best results."
+        status = "needs_improvement"
+    
+    return {
+        'score': final_score,
+        'message': message,
+        'status': status,
+        'breakdown': {
+            'critical_issues': critical_count,
+            'high_issues': high_count,
+            'medium_issues': medium_count,
+            'low_issues': low_count,
+            'total_penalty': penalty
+        }
+    }
+```
+
+### UPDATE THE "What's Working Well" MESSAGE
+
+The green box message should MATCH the score:
+```python
+def get_strengths_message(score: int) -> str:
+    if score >= 85:
+        return "Excellent work! Your CV demonstrates strong professional presentation. The minor suggestions below are optional polish."
+    elif score >= 70:
+        return "Your CV has a solid foundation. The suggestions below will help you stand out even more."
+    elif score >= 55:
+        return "Your CV shows potential. Addressing the suggestions below will strengthen your application."
+    elif score >= 40:
+        return "Your CV has room for improvement. Focus on the high-priority items below."
+    else:
+        return "Let's work on strengthening your CV. Start with the critical issues below for the biggest impact."
+```
+
+### FRONTEND: Sync Message with Score
+
+In CVReportPage.tsx, the "What's Working Well" section should use the message from the API response, NOT a hardcoded string.
+
+WRONG (current):
+<p>Your CV has a solid foundation...</p>  // Always same message
+
+CORRECT:
+<p>{scoreData.message}</p>  // Message matches score
+
+### VERIFICATION TEST
+
+After implementing:
+1. Scan the same CV twice
+2. Both scans MUST return the SAME score
+3. Score must match the severity breakdown:
+   - Example: 2 critical + 5 high + 10 medium + 5 low
+   - Penalty: (2×15) + (5×8) + (10×3) + (5×1) = 30 + 40 + 30 + 5 = 105
+   - Score: 100 - 105 = -5 → capped at 10
+   - So score should be 10%
+
+### DEBUG OUTPUT
+
+Add logging to verify:
+```python
+print(f"DEBUG Score Calculation:")
+print(f"  Critical: {critical_count} × 15 = {critical_count * 15}")
+print(f"  High: {high_count} × 8 = {high_count * 8}")
+print(f"  Medium: {medium_count} × 3 = {medium_count * 3}")
+print(f"  Low: {low_count} × 1 = {low_count * 1}")
+print(f"  Total Penalty: {penalty}")
+print(f"  Final Score: {final_score}")
+```
+
+### FILES TO MODIFY
+
+- backend/app/cv_optimizer.py (scoring function)
+- CVReportPage.tsx (use dynamic message from API)
+
+### SUCCESS CRITERIA
+
+- [ ] Same CV always gets same score
+- [ ] Score calculation is transparent (based on issue counts)
+- [ ] Message in green box matches the score level
+- [ ] No randomness in scoring
+- [ ] Debug log shows calculation breakdown
