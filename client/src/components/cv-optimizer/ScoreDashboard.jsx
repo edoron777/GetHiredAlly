@@ -6,14 +6,12 @@ import React from 'react';
  */
 
 const CATEGORY_CONFIG = {
-  quantification: { label: "Achievements & Metrics", max: 25, order: 1 },
-  experience: { label: "Experience Quality", max: 20, order: 2 },
-  language: { label: "Action Verbs", max: 15, order: 3 },
-  grammar: { label: "Grammar & Spelling", max: 10, order: 4 },
-  skills: { label: "Skills Presentation", max: 10, order: 5 },
-  formatting: { label: "Formatting", max: 10, order: 6 },
-  contact: { label: "Contact Information", max: 5, order: 7 },
-  length: { label: "CV Length", max: 5, order: 8 }
+  content_quality: { label: "Content Quality", max: 40, order: 1 },
+  language_clarity: { label: "Language & Clarity", max: 18, order: 2 },
+  formatting: { label: "Formatting & Structure", max: 18, order: 3 },
+  completeness: { label: "Completeness", max: 12, order: 4 },
+  professional: { label: "Professional Presentation", max: 8, order: 5 },
+  red_flags: { label: "Red Flag Avoidance", max: 4, order: 6 }
 };
 
 const getBarColor = (score, max) => {
