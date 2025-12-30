@@ -1,0 +1,73 @@
+═══════════════════════════════════════════════════════════
+PROMPT 5#5: VERIFY TOOLBAR FUNCTIONALITY
+═══════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. This is a VERIFICATION prompt - minimal changes
+2. Do NOT modify files unless necessary
+3. Report findings accurately
+4. If unclear, STOP and ask
+
+───────────────────────────────────────────────────────────
+TASK: Verify toolbar buttons work correctly
+───────────────────────────────────────────────────────────
+
+INSTRUCTIONS:
+
+Step 1: Find the toolbar component
+
+Step 2: Check each button's functionality:
+        □ Email button - does it have onClick handler?
+        □ WhatsApp button - does it have onClick handler?
+        □ PDF button - does it have onClick handler?
+        □ WORD button - does it have onClick handler?
+
+Step 3: Report for each button:
+        - WORKS: Has working onClick that does something
+        - PLACEHOLDER: Has onClick but shows "coming soon" or similar
+        - BROKEN: Has onClick but throws error
+        - MISSING: No onClick handler at all
+
+Step 4: IF any button is MISSING or BROKEN:
+        Add a simple placeholder alert:
+        
+        onClick={() => alert('This feature is coming soon!')}
+
+Step 5: Do NOT implement full functionality
+        Only add placeholder alerts for broken buttons
+
+───────────────────────────────────────────────────────────
+REPORT TEMPLATE:
+───────────────────────────────────────────────────────────
+
+Toolbar Button Status:
+- Email: [WORKS / PLACEHOLDER / BROKEN / MISSING]
+- WhatsApp: [WORKS / PLACEHOLDER / BROKEN / MISSING]
+- PDF: [WORKS / PLACEHOLDER / BROKEN / MISSING]
+- WORD: [WORKS / PLACEHOLDER / BROKEN / MISSING]
+
+Changes made: [None / Added placeholder to X buttons]
+
+───────────────────────────────────────────────────────────
+FILES TO MODIFY (only if needed):
+───────────────────────────────────────────────────────────
+
+- Toolbar component (only if buttons are broken)
+
+DO NOT:
+- Implement full export functionality
+- Change button appearance
+- Remove any buttons
+
+───────────────────────────────────────────────────────────
+WHEN COMPLETE:
+───────────────────────────────────────────────────────────
+
+Confirm:
+□ All buttons checked
+□ Status reported for each
+□ Placeholder added to broken buttons (if any)
+□ Toolbar is usable (no errors on click)
+
+Summary: All 5 prompts complete.
