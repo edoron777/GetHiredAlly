@@ -223,6 +223,32 @@ export function CVFixedPage() {
                     : 'Your CV has been polished'}
               </p>
             </div>
+
+            {data.category_improvements && Object.keys(data.category_improvements).length > 0 && (
+              <div className="mt-8 pt-6 border-t border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">What Improved</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-w-2xl mx-auto">
+                  {Object.entries(data.category_improvements)
+                    .filter(([_, v]) => v.improvement > 0)
+                    .sort((a, b) => b[1].improvement - a[1].improvement)
+                    .map(([category, values]) => {
+                      const improvementPercent = Math.round((values.improvement / values.max_possible) * 100)
+                      const isBigWin = improvementPercent >= 20
+                      const categoryLabel = category.charAt(0).toUpperCase() + category.slice(1)
+                      return (
+                        <div key={category} className="flex items-center gap-2 bg-green-50 rounded-lg px-3 py-2">
+                          <CheckCircle size={16} className="text-green-600 flex-shrink-0" />
+                          <span className="text-sm text-gray-700">{categoryLabel}</span>
+                          <span className="text-sm font-semibold text-green-600 ml-auto">
+                            +{improvementPercent}%
+                            {isBigWin && ' ⭐'}
+                          </span>
+                        </div>
+                      )
+                    })}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
