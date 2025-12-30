@@ -1,0 +1,122 @@
+═══════════════════════════════════════════════════════════════
+PROMPT: Replace Scoring Module v3.1 with v4.0
+═══════════════════════════════════════════════════════════════
+
+CRITICAL COMPLIANCE REQUIREMENTS
+
+1. Execute ONLY the instructions below - nothing more
+2. Follow the EXACT order of steps
+3. Do NOT skip the backup step
+4. If any step fails, STOP and report
+
+───────────────────────────────────────────────────────────────
+
+TASK: Replace old scoring module with new v4.0 and create cv_optimizer service
+
+───────────────────────────────────────────────────────────────
+
+INSTRUCTIONS:
+
+PART 1: BACKUP OLD CODE
+
+Step 1: Create backup folder
+Create folder: backend/common/scoring_v31_backup/
+
+Step 2: Copy ALL files from backend/common/scoring/ to backend/common/scoring_v31_backup/
+This preserves the old code for reference
+
+Step 3: Confirm backup is complete before proceeding
+
+───────────────────────────────────────────────────────────────
+
+PART 2: REPLACE SCORING MODULE
+
+Step 4: Delete contents of backend/common/scoring/ (NOT the folder itself)
+
+Step 5: Copy ALL files and folders from server/common/scoring/ to backend/common/scoring/
+Copy: __init__.py
+Copy: config.py
+Copy: calculator.py
+Copy: categories/ (entire folder with all 6 files)
+Copy: extractors/ (entire folder)
+
+Step 6: Verify the new structure:
+
+backend/common/scoring/
+├── __init__.py
+├── config.py
+├── calculator.py
+├── categories/
+│   ├── __init__.py
+│   ├── content_quality.py
+│   ├── language_clarity.py
+│   ├── formatting.py
+│   ├── completeness.py
+│   ├── professional.py
+│   └── red_flags.py
+└── extractors/
+    ├── __init__.py
+    └── pattern_matcher.py
+
+───────────────────────────────────────────────────────────────
+
+PART 3: CREATE CV_OPTIMIZER SERVICE
+
+Step 7: Create folder: backend/services/cv_optimizer/
+
+Step 8: Copy files from server/services/cv_optimizer/ to backend/services/cv_optimizer/
+Copy: __init__.py
+Copy: cv_analyzer.py
+Copy: cv_optimizer.py
+
+Step 9: Verify the structure:
+
+backend/services/cv_optimizer/
+├── __init__.py
+├── cv_analyzer.py
+└── cv_optimizer.py
+
+───────────────────────────────────────────────────────────────
+
+PART 4: UPDATE IMPORTS
+
+Step 10: In backend/services/cv_optimizer/cv_optimizer.py verify imports use:
+
+from common.scoring import calculate_cv_score
+from common.scoring.calculator import get_score_message, calculate_improvement
+
+Step 11: In backend/services/cv_optimizer/cv_analyzer.py verify imports are correct
+
+───────────────────────────────────────────────────────────────
+
+PART 5: CLEANUP
+
+Do NOT delete server/ folder yet. Wait for testing confirmation.
+
+───────────────────────────────────────────────────────────────
+
+FILES TO CREATE:
+- backend/common/scoring_v31_backup/ (backup folder)
+- backend/services/cv_optimizer/ (new folder)
+
+FILES TO COPY:
+- server/common/scoring/* to backend/common/scoring/
+- server/services/cv_optimizer/* to backend/services/cv_optimizer/
+
+DO NOT TOUCH:
+- client/ folder
+- Any other backend/ files not mentioned
+- Do NOT delete server/ folder yet
+
+───────────────────────────────────────────────────────────────
+
+WHEN COMPLETE:
+
+Report:
+- Backup created at backend/common/scoring_v31_backup/
+- New scoring module in backend/common/scoring/
+- CV optimizer service in backend/services/cv_optimizer/
+- All imports are correct
+- No syntax errors
+
+List any issues encountered.

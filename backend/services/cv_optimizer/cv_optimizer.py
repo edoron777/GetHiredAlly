@@ -8,8 +8,8 @@ Integrates AI data extraction with deterministic scoring.
 from typing import Dict, Any, Optional, Callable
 
 from .cv_analyzer import extract_cv_data, get_empty_cv_data
-from ...common.scoring import calculate_cv_score
-from ...common.scoring.calculator import get_score_message, calculate_improvement
+from common.scoring import calculate_cv_score
+from common.scoring.calculator import get_score_message, calculate_improvement
 
 
 def analyze_cv(cv_text: str, call_ai_model: Optional[Callable] = None) -> Dict[str, Any]:
