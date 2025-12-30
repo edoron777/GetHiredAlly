@@ -114,35 +114,8 @@ export default function EffortGroupView({
     issues: issues.filter(issue => getEffortLevel(issue) === group.difficulty)
   }));
 
-  const totalMinutes = issues.reduce((acc, issue) => {
-    const effort = getEffortLevel(issue);
-    if (effort === 'quick') return acc + 5;
-    if (effort === 'medium') return acc + 15;
-    return acc + 30;
-  }, 0);
-
-  const formatTotalTime = (minutes: number) => {
-    if (minutes < 60) return `${minutes} minutes`;
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return mins > 0 ? `${hours}h ${mins}m` : `${hours} hour${hours > 1 ? 's' : ''}`;
-  };
-
   return (
     <div className="space-y-4">
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-500">Estimated total time to implement all suggestions:</p>
-            <p className="text-2xl font-bold text-gray-900">{formatTotalTime(totalMinutes)}</p>
-          </div>
-          <div className="text-right">
-            <p className="text-sm text-gray-500">Start with Quick Wins for</p>
-            <p className="text-lg font-semibold text-green-600">immediate impact!</p>
-          </div>
-        </div>
-      </div>
-
       {groupedIssues.map(group => {
         if (group.issues.length === 0) return null;
         

@@ -1,0 +1,97 @@
+═══════════════════════════════════════════════════════════
+PROMPT 1#1: Remove Estimated Time Display
+═══════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify files not explicitly mentioned
+3. Do NOT add features not explicitly requested
+4. If unclear, STOP and ask - do not assume
+5. Make MINIMAL, SURGICAL changes only
+
+FORBIDDEN ACTIONS:
+- Modifying other sections
+- Adding replacement features
+- Changing recommendation cards
+- Modifying filters
+
+───────────────────────────────────────────────────────────
+
+TASK: Remove the "Estimated total time" display
+
+OBJECTIVE:
+Delete the section that shows estimated time to implement suggestions.
+This feature is misleading and discouraging to users.
+
+CONTEXT:
+- Shows "4h 35m" which is unrealistic
+- No user will spend 4+ hours fixing a CV
+- The calculation is not accurate
+- This discourages users instead of helping them
+
+───────────────────────────────────────────────────────────
+
+WHAT TO REMOVE:
+
+The entire box/section containing:
+- "Estimated total time to implement all suggestions:"
+- "4h 35m"
+- "Group by type of work"
+- "for focused sessions!"
+
+VISUAL REFERENCE:
+┌─────────────────────────────────────────────────────────┐
+│  Estimated total time to implement all suggestions:     │
+│  4h 35m                          Group by type of work  │
+│                                  for focused sessions!  │
+└─────────────────────────────────────────────────────────┘
+
+DELETE THIS ENTIRE SECTION ↑
+
+───────────────────────────────────────────────────────────
+
+INSTRUCTIONS:
+
+Step 1: Find the CV Report page component
+- File: client/src/components/CVReportPage.tsx
+
+Step 2: Search for these terms:
+- "Estimated total time"
+- "implement all suggestions"
+- "focused sessions"
+- "4h 35m" or time calculation
+
+Step 3: DELETE the entire container/div that holds this content
+
+Step 4: Verify the layout still looks correct after removal
+- "Your Recommendations" header should connect directly to the recommendation groups
+- No empty space or broken layout
+
+───────────────────────────────────────────────────────────
+
+FILES TO MODIFY:
+- client/src/components/CVReportPage.tsx
+
+FILES TO CREATE:
+- None
+
+DO NOT TOUCH:
+- "Your Recommendations" header
+- Expand All / Collapse All buttons
+- Export Report dropdown
+- Recommendation cards
+- Filter sections
+
+───────────────────────────────────────────────────────────
+
+WHEN COMPLETE:
+
+Confirm:
+□ "Estimated total time" section is completely removed
+□ No empty space left behind
+□ Layout flows correctly from header to recommendations
+□ No console errors
+□ Other functionality still works
+
+═══════════════════════════════════════════════════════════

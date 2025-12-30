@@ -56,12 +56,6 @@ export default function WorkTypeGroupView({
     }));
   }, [issues]);
 
-  const totalMinutes = useMemo(() => {
-    return groupedIssues.reduce((acc, group) => {
-      return acc + (group.issues.length * group.avgTimePerItem);
-    }, 0);
-  }, [groupedIssues]);
-
   const formatTotalTime = (minutes: number) => {
     if (minutes < 60) return `${minutes} minutes`;
     const hours = Math.floor(minutes / 60);
@@ -78,19 +72,6 @@ export default function WorkTypeGroupView({
 
   return (
     <div className="space-y-4">
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-500">Estimated total time to implement all suggestions:</p>
-            <p className="text-2xl font-bold text-gray-900">{formatTotalTime(totalMinutes)}</p>
-          </div>
-          <div className="text-right">
-            <p className="text-sm text-gray-500">Group by type of work</p>
-            <p className="text-lg font-semibold text-blue-600">for focused sessions!</p>
-          </div>
-        </div>
-      </div>
-
       {groupedIssues.map(group => {
         if (group.issues.length === 0) return null;
         
