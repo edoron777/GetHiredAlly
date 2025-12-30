@@ -375,8 +375,6 @@ export function CVReportPage() {
           />
         )}
 
-        <StrengthsSection strengths={strengths} />
-
         <div style={{
           marginTop: '40px',
           marginBottom: '24px',
@@ -603,6 +601,10 @@ export function CVReportPage() {
         )}
 
         <EncouragementMessage type="completion" />
+
+        <div style={{ marginTop: '32px' }}>
+          <StrengthsSection strengths={strengths} />
+        </div>
 
         <div className="mt-12 pt-8 border-t border-gray-200 text-center">
           <p className="text-gray-700 text-lg mb-4">

@@ -1,0 +1,86 @@
+═══════════════════════════════════════════════════════════
+PROMPT 4#5: MOVE "WHAT'S WORKING WELL" TO END OF PAGE
+═══════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify files not explicitly mentioned
+3. Do NOT refactor or "improve" existing code
+4. Make MINIMAL, SURGICAL changes only
+5. If unclear, STOP and ask - do not assume
+
+───────────────────────────────────────────────────────────
+PROBLEM:
+───────────────────────────────────────────────────────────
+
+The "What's Working Well" section currently appears between
+the Score Breakdown and the Suggestions. This interrupts the flow.
+
+User journey should be:
+1. See score → 2. Understand breakdown → 3. See what to fix → 4. End positive
+
+───────────────────────────────────────────────────────────
+TASK: Move "What's Working Well" to the END of the page
+───────────────────────────────────────────────────────────
+
+INSTRUCTIONS:
+
+Step 1: Find the CV Report page component
+
+Step 2: Find the "What's Working Well" section
+        It contains:
+        - Title: "What's Working Well"
+        - Subtitle: "Your CV already demonstrates several strengths:"
+        - List of strengths (checkmarks)
+        - Green box with encouraging message
+
+Step 3: CUT this entire section from its current position
+
+Step 4: PASTE it at the VERY END of the page content
+        After all suggestions and filters
+
+Step 5: Optionally add a small top margin for spacing:
+        style={{ marginTop: '32px' }}
+
+───────────────────────────────────────────────────────────
+VISUAL RESULT:
+───────────────────────────────────────────────────────────
+
+CURRENT (WRONG):
+Score → Breakdown → [WHAT'S WORKING WELL] → Filters → Suggestions
+
+REQUIRED (CORRECT):
+Score → Breakdown → Filters → Suggestions → [WHAT'S WORKING WELL]
+
+───────────────────────────────────────────────────────────
+WHY THIS IS BETTER:
+───────────────────────────────────────────────────────────
+
+1. User sees score (understanding)
+2. User sees breakdown (why this score)
+3. User sees what to fix (actionable)
+4. User ends on POSITIVE note (psychological benefit)
+
+───────────────────────────────────────────────────────────
+FILES TO MODIFY:
+───────────────────────────────────────────────────────────
+
+- CV Report page component only
+
+DO NOT TOUCH:
+- Content of "What's Working Well" (keep text and styling)
+- Any other sections
+- Any other files
+
+───────────────────────────────────────────────────────────
+WHEN COMPLETE:
+───────────────────────────────────────────────────────────
+
+Confirm:
+□ "What's Working Well" section moved to end of page
+□ Section appears AFTER all suggestions
+□ Content and styling preserved
+□ Page flow is now: Score → Breakdown → Analysis → Suggestions → Strengths
+
+Report which file was changed.
