@@ -409,17 +409,40 @@ This section documents how components work together.
 
 ### ActionBar → DocStyler (Document Export)
 
-When user clicks PDF/WORD/MD buttons in ActionBar:
+**Flow:**
+1. User clicks PDF/WORD/MD button
+2. ActionBar captures: content, fileName, contentType, metadata
+3. ActionBar calls DocStyler.pdf() or .word() or .md()
+4. DocStyler applies: header, footer, styling, branding
+5. User downloads styled document
+
+**How to Connect:**
+1. ActionBar passes contentType and contentMetadata props
+2. DocStyler uses these to generate appropriate header
+3. Document includes service name, date, score (if applicable)
+
 ```
 ActionBar.handlePDF() → DocStyler.pdf(content, options) → Downloads styled PDF
 ActionBar.handleWord() → DocStyler.word(content, options) → Downloads styled DOCX
 ActionBar.handleMD() → DocStyler.md(content, options) → Downloads Markdown
 ```
 
-### ActionBar → GHATooltip (User Guidance)
+### ActionBar → GHATooltip (Button Explanations)
 
-Wrap ActionBar buttons with GHATooltip for contextual help:
+**Flow:**
+1. ActionBarButton wrapped in GHATooltip
+2. User hovers over button
+3. GHATooltip shows: title, description, icon
+4. User understands button purpose
+
+**How to Connect:**
+1. Import GHATooltip and TOOLTIP_TEXTS
+2. Wrap ActionBarButton with GHATooltip
+3. Use TOOLTIP_TEXTS.actionBar.[buttonName] for content
+
 ```tsx
+import { GHATooltip, TOOLTIP_TEXTS } from '@/components/common/Tooltip';
+
 <GHATooltip {...TOOLTIP_TEXTS.actionBar.pdf}>
   <ActionBarButton label="PDF" onClick={handlePDF} />
 </GHATooltip>
@@ -433,6 +456,25 @@ All tooltip content organized by service:
 - `TOOLTIP_TEXTS.xrayAnalyzer` - X-Ray Analyzer tooltips
 - `TOOLTIP_TEXTS.interviewQuestions` - Interview Questions tooltips
 - `TOOLTIP_TEXTS.general` - Shared tooltips (delete, save, etc.)
+
+### Full Integration Example
+
+```tsx
+import { ActionBar } from '@/components/common/ActionBar';
+import { DocStyler } from '@/components/common/DocStyler';
+import { GHATooltip, TOOLTIP_TEXTS } from '@/components/common/Tooltip';
+
+<ActionBar
+  content={analysisResult.report}
+  fileName="CV_Analysis_Report"
+  emailSubject="My CV Analysis"
+  contentType="cv-optimizer"
+  contentMetadata={{
+    score: analysisResult.score,
+    grade: analysisResult.grade,
+  }}
+/>
+```
 
 ---
 

@@ -1,0 +1,111 @@
+═══════════════════════════════════════════════════════════
+PROMPT 3#4: UPDATE ACTIONBAR AND ADD RELATIONSHIPS
+═══════════════════════════════════════════════════════════
+
+CRITICAL: Do NOT delete existing content. UPDATE and ADD only.
+
+───────────────────────────────────────────────────────────
+TASK 1: Update ActionBar Entry
+───────────────────────────────────────────────────────────
+
+Find the existing ActionBar entry in docs/ComponentRegistry.md.
+ADD these sections to it (keep existing content):
+
+Integration with DocStyler:
+
+ActionBar calls DocStyler when export buttons are clicked:
+- PDF button calls DocStyler.pdf()
+- WORD button calls DocStyler.word()
+- MD button calls DocStyler.md()
+
+Integration with GHATooltip:
+
+Wrap ActionBar buttons with GHATooltip for user guidance:
+
+import { GHATooltip, TOOLTIP_TEXTS } from '@/components/common/Tooltip';
+
+<GHATooltip {...TOOLTIP_TEXTS.actionBar.pdf}>
+  <ActionBarButton label="PDF" onClick={handlePDF} />
+</GHATooltip>
+
+───────────────────────────────────────────────────────────
+TASK 2: Add COMPONENT RELATIONSHIPS Section
+───────────────────────────────────────────────────────────
+
+ADD this new section AFTER the "HOW TO UPDATE THIS REGISTRY" section:
+
+## COMPONENT RELATIONSHIPS
+
+This section documents how components work together.
+
+### ActionBar to DocStyler (Document Export)
+
+Flow:
+1. User clicks PDF/WORD/MD button
+2. ActionBar captures: content, fileName, contentType, metadata
+3. ActionBar calls DocStyler.pdf() or .word() or .md()
+4. DocStyler applies: header, footer, styling, branding
+5. User downloads styled document
+
+How to Connect:
+1. ActionBar passes contentType and contentMetadata props
+2. DocStyler uses these to generate appropriate header
+3. Document includes service name, date, score (if applicable)
+
+### ActionBar with GHATooltip (Button Explanations)
+
+Flow:
+1. ActionBarButton wrapped in GHATooltip
+2. User hovers over button
+3. GHATooltip shows: title, description, icon
+4. User understands button purpose
+
+How to Connect:
+1. Import GHATooltip and TOOLTIP_TEXTS
+2. Wrap ActionBarButton with GHATooltip
+3. Use TOOLTIP_TEXTS.actionBar.[buttonName] for content
+
+Example:
+import { GHATooltip, TOOLTIP_TEXTS } from '@/components/common/Tooltip';
+
+<GHATooltip {...TOOLTIP_TEXTS.actionBar.pdf}>
+  <ActionBarButton label="PDF" onClick={handlePDF} />
+</GHATooltip>
+
+### Full Integration Example
+
+import { ActionBar } from '@/components/common/ActionBar';
+import { DocStyler } from '@/components/common/DocStyler';
+import { GHATooltip, TOOLTIP_TEXTS } from '@/components/common/Tooltip';
+
+<ActionBar
+  content={analysisResult.report}
+  fileName="CV_Analysis_Report"
+  emailSubject="My CV Analysis"
+  contentType="cv-optimizer"
+  contentMetadata={{
+    score: analysisResult.score,
+    grade: analysisResult.grade,
+  }}
+/>
+
+───────────────────────────────────────────────────────────
+TASK 3: Update Total Count
+───────────────────────────────────────────────────────────
+
+At the bottom of the file, update:
+
+TOTAL COMPONENTS: 16
+Last Updated: December 30, 2025
+
+───────────────────────────────────────────────────────────
+WHEN COMPLETE:
+───────────────────────────────────────────────────────────
+
+Confirm:
+- ActionBar entry updated with integration info
+- COMPONENT RELATIONSHIPS section added
+- Total count updated to 16
+- No existing content deleted
+
+Type "COMPLETE - READY FOR PROMPT 4#4" when done.
