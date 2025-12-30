@@ -1,0 +1,103 @@
+═══════════════════════════════════════════════════════════
+PROMPT 6#7: REPLACE OLD TOOLBAR WITH ACTIONBAR
+═══════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify files not explicitly mentioned
+3. Do NOT add features not explicitly requested
+4. If unclear, STOP and ask - do not assume
+
+FORBIDDEN ACTIONS:
+- Modifying ActionBar component
+- Changing page layout beyond toolbar replacement
+- Adding extra features
+
+───────────────────────────────────────────────────────────
+TASK: Replace old toolbar with new ActionBar in CV Report page
+───────────────────────────────────────────────────────────
+
+OBJECTIVE:
+Replace the existing dark blue toolbar with the new ActionBar component.
+
+───────────────────────────────────────────────────────────
+IMPORTANT - READ FIRST:
+───────────────────────────────────────────────────────────
+
+Before making changes:
+1. Find the CV Report page component file
+2. Identify the current toolbar element (dark blue bar with +/- buttons)
+3. Report the file path and what you found
+
+DO NOT proceed with changes until you report findings.
+
+───────────────────────────────────────────────────────────
+INSTRUCTIONS (after identifying the file):
+───────────────────────────────────────────────────────────
+
+Step 1: Add import at the top of the CV Report page file:
+
+import { ActionBar } from '../components/common/ActionBar';
+
+(Adjust path based on file location)
+
+Step 2: Find the old toolbar element 
+        (Look for: dark blue background, +/- buttons, Email, WhatsApp, PDF, WORD, MD buttons)
+
+Step 3: REMOVE the old toolbar element entirely
+
+Step 4: ADD the new ActionBar in its place:
+
+<ActionBar
+  content={/* pass the report content as string */}
+  fileName="CV_Analysis_Report"
+  emailSubject="My CV Analysis Report - GetHiredAlly"
+  hiddenButtons={[]}
+  disabledButtons={['pdf', 'word']}
+/>
+
+Step 5: Pass the correct content prop
+        This should be the text/markdown content of the report
+        Look for existing variables like:
+        - reportContent
+        - analysisText
+        - suggestions (formatted as text)
+
+Step 6: If content variable doesn't exist, create a simple placeholder:
+
+const reportContent = "CV Analysis Report content here";
+
+And add a TODO comment:
+// TODO: Pass actual report content to ActionBar
+
+───────────────────────────────────────────────────────────
+FILES TO MODIFY:
+───────────────────────────────────────────────────────────
+
+- [CV Report page file - report path first]
+  - Add ActionBar import
+  - Remove old toolbar
+  - Add new ActionBar component
+
+DO NOT TOUCH:
+- ActionBar component files
+- Any other pages
+- Any other components
+
+───────────────────────────────────────────────────────────
+WHEN COMPLETE:
+───────────────────────────────────────────────────────────
+
+Confirm:
+□ ActionBar imported correctly
+□ Old toolbar removed
+□ New ActionBar added in correct position
+□ Content prop passed (or placeholder added)
+□ PDF and WORD buttons disabled (coming soon)
+□ Page still works without errors
+□ No other files modified
+
+Report which file was changed and show the ActionBar usage.
+
+Type "COMPLETE - READY FOR PROMPT 7#7" when done.
