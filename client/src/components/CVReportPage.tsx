@@ -355,15 +355,6 @@ export function CVReportPage() {
           </p>
         </div>
 
-        <StandardToolbar
-          onExpandAll={expandAll}
-          onCollapseAll={collapseAll}
-          onPDF={handleExportPDF}
-          onWord={handleExportWord}
-          onMarkdown={handleExportMarkdown}
-          serviceName="CV Analysis Report"
-        />
-
         {reportData.cv_score !== undefined && (
           <div className="flex justify-center mb-8">
             <CVScoreCircle 
@@ -407,6 +398,15 @@ export function CVReportPage() {
             Review the suggestions below to improve your CV and increase your interview chances.
           </p>
         </div>
+
+        <StandardToolbar
+          onExpandAll={expandAll}
+          onCollapseAll={collapseAll}
+          onPDF={handleExportPDF}
+          onWord={handleExportWord}
+          onMarkdown={handleExportMarkdown}
+          serviceName="CV Analysis Report"
+        />
 
         <CategoryFilterPanel
           categoryCounts={categoryCounts}

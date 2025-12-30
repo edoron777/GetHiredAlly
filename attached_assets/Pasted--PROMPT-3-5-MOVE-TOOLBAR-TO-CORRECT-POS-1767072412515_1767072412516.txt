@@ -1,0 +1,78 @@
+═══════════════════════════════════════════════════════════
+PROMPT 3#5: MOVE TOOLBAR TO CORRECT POSITION
+═══════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify files not explicitly mentioned
+3. Do NOT refactor or "improve" existing code
+4. Make MINIMAL, SURGICAL changes only
+5. If unclear, STOP and ask - do not assume
+
+───────────────────────────────────────────────────────────
+PROBLEM:
+───────────────────────────────────────────────────────────
+
+The toolbar (with Email, WhatsApp, PDF, WORD buttons) is currently 
+displayed at the TOP of the page near the score.
+
+This is the WRONG position. The toolbar should be in Part B,
+above the suggestions section.
+
+───────────────────────────────────────────────────────────
+TASK: Move toolbar to Part B (above suggestions)
+───────────────────────────────────────────────────────────
+
+INSTRUCTIONS:
+
+Step 1: Find the CV Report page component
+
+Step 2: Find the toolbar component/element
+        It contains buttons for: Email, WhatsApp, PDF, WORD
+        It may have zoom buttons (+/-) as well
+
+Step 3: MOVE the toolbar JSX from its current position to:
+        - AFTER the section header "Detailed Analysis & Recommendations"
+        - BEFORE the "Filter Results by Category" section
+
+Step 4: If the section header from Prompt 2#5 exists, place toolbar after it
+        If not, place toolbar right before the filters section
+
+───────────────────────────────────────────────────────────
+VISUAL RESULT:
+───────────────────────────────────────────────────────────
+
+CURRENT (WRONG):
+Score → [TOOLBAR] → Breakdown → Suggestions
+
+REQUIRED (CORRECT):
+Score → Breakdown
+─────────────────────────────────
+Detailed Analysis & Recommendations
+[TOOLBAR: Email | WhatsApp | PDF | WORD]
+─────────────────────────────────
+Filters → Suggestions
+
+───────────────────────────────────────────────────────────
+FILES TO MODIFY:
+───────────────────────────────────────────────────────────
+
+- CV Report page component only
+
+DO NOT TOUCH:
+- Toolbar functionality (keep all buttons working)
+- Toolbar styling (keep appearance the same)
+- Any other files
+
+───────────────────────────────────────────────────────────
+WHEN COMPLETE:
+───────────────────────────────────────────────────────────
+
+Confirm:
+□ Toolbar moved from top to Part B section
+□ Toolbar appears above filters/suggestions
+□ Toolbar buttons still work
+□ No functionality broken
+
+Report which file was changed.
