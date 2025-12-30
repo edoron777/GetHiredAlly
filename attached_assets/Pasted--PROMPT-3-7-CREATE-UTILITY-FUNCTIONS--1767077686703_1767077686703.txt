@@ -1,0 +1,219 @@
+═══════════════════════════════════════════════════════════
+PROMPT 3#7: CREATE UTILITY FUNCTIONS
+═══════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify files not explicitly mentioned
+3. Do NOT add features not explicitly requested
+4. If unclear, STOP and ask - do not assume
+
+FORBIDDEN ACTIONS:
+- Adding npm packages
+- Modifying any other files
+- Adding extra utility functions
+
+───────────────────────────────────────────────────────────
+TASK: Implement utility functions for ActionBar
+───────────────────────────────────────────────────────────
+
+OBJECTIVE:
+Create the utility functions that handle copy, email, and WhatsApp actions.
+
+───────────────────────────────────────────────────────────
+INSTRUCTIONS:
+───────────────────────────────────────────────────────────
+
+Step 1: Replace client/src/components/common/ActionBar/utils/formatters.js with:
+
+/**
+ * Content formatting utilities for ActionBar
+ */
+
+/**
+ * Strip markdown formatting from text
+ * @param {string} content - Markdown content
+ * @returns {string} Plain text
+ */
+export const stripMarkdown = (content) => {
+  if (!content) return '';
+  
+  return content
+    // Remove headers
+    .replace(/^#{1,6}\s+/gm, '')
+    // Remove bold/italic
+    .replace(/\*\*(.+?)\*\*/g, '$1')
+    .replace(/\*(.+?)\*/g, '$1')
+    .replace(/__(.+?)__/g, '$1')
+    .replace(/_(.+?)_/g, '$1')
+    // Remove links, keep text
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    // Remove bullet points
+    .replace(/^[\s]*[-*+]\s+/gm, '• ')
+    // Remove numbered lists formatting
+    .replace(/^[\s]*\d+\.\s+/gm, '')
+    // Remove code blocks
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/`([^`]+)`/g, '$1')
+    // Remove horizontal rules
+    .replace(/^[-*_]{3,}$/gm, '')
+    // Clean up extra whitespace
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+};
+
+/**
+ * Format content for specific output type
+ * @param {string} content - Raw content
+ * @param {string} format - Output format: 'plain', 'html', 'markdown'
+ * @returns {string} Formatted content
+ */
+export const formatContent = (content, format = 'plain') => {
+  if (!content) return '';
+  
+  switch (format) {
+    case 'plain':
+      return stripMarkdown(content);
+    case 'html':
+      // Basic markdown to HTML conversion
+      return content
+        .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+        .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+        .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        .replace(/\n/g, '<br>');
+    case 'markdown':
+    default:
+      return content;
+  }
+};
+
+Step 2: Replace client/src/components/common/ActionBar/utils/clipboard.js with:
+
+/**
+ * Clipboard utility for ActionBar
+ */
+
+/**
+ * Copy text to clipboard with fallback
+ * @param {string} text - Text to copy
+ * @returns {Promise<boolean>} Success status
+ */
+export const copyToClipboard = async (text) => {
+  if (!text) return false;
+  
+  try {
+    // Modern API
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+    
+    // Fallback for older browsers
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-9999px';
+    textArea.style.top = '-9999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    const successful = document.execCommand('copy');
+    document.body.removeChild(textArea);
+    
+    return successful;
+  } catch (err) {
+    console.error('Failed to copy to clipboard:', err);
+    return false;
+  }
+};
+
+Step 3: Replace client/src/components/common/ActionBar/utils/email.js with:
+
+/**
+ * Email utility for ActionBar
+ */
+
+/**
+ * Open email client with pre-filled content
+ * @param {Object} options - Email options
+ * @param {string} options.subject - Email subject
+ * @param {string} options.body - Email body content
+ * @param {string} options.to - Optional recipient
+ * @returns {void}
+ */
+export const sendEmail = ({ subject = '', body = '', to = '' }) => {
+  const encodedSubject = encodeURIComponent(subject);
+  const encodedBody = encodeURIComponent(body);
+  const encodedTo = encodeURIComponent(to);
+  
+  let mailtoUrl = 'mailto:';
+  
+  if (to) {
+    mailtoUrl += encodedTo;
+  }
+  
+  mailtoUrl += `?subject=${encodedSubject}&body=${encodedBody}`;
+  
+  // Open in same window (will open email client)
+  window.location.href = mailtoUrl;
+};
+
+Step 4: Replace client/src/components/common/ActionBar/utils/whatsapp.js with:
+
+/**
+ * WhatsApp utility for ActionBar
+ */
+
+// WhatsApp message limit
+const WHATSAPP_MAX_LENGTH = 4096;
+
+/**
+ * Share content via WhatsApp
+ * @param {string} text - Text to share
+ * @returns {void}
+ */
+export const shareToWhatsApp = (text) => {
+  if (!text) return;
+  
+  // Truncate if too long
+  let content = text;
+  if (content.length > WHATSAPP_MAX_LENGTH) {
+    content = content.substring(0, WHATSAPP_MAX_LENGTH - 20) + '...\n\n[Truncated]';
+  }
+  
+  const encoded = encodeURIComponent(content);
+  const url = `https://wa.me/?text=${encoded}`;
+  
+  // Open in new tab
+  window.open(url, '_blank', 'noopener,noreferrer');
+};
+
+───────────────────────────────────────────────────────────
+FILES TO MODIFY:
+───────────────────────────────────────────────────────────
+
+- client/src/components/common/ActionBar/utils/formatters.js - Replace content
+- client/src/components/common/ActionBar/utils/clipboard.js - Replace content
+- client/src/components/common/ActionBar/utils/email.js - Replace content
+- client/src/components/common/ActionBar/utils/whatsapp.js - Replace content
+
+DO NOT TOUCH:
+- All other files
+- utils/index.js (already created)
+
+───────────────────────────────────────────────────────────
+WHEN COMPLETE:
+───────────────────────────────────────────────────────────
+
+Confirm:
+□ formatters.js has stripMarkdown and formatContent functions
+□ clipboard.js has copyToClipboard function with fallback
+□ email.js has sendEmail function
+□ whatsapp.js has shareToWhatsApp function
+□ No other files modified
+
+Type "COMPLETE - READY FOR PROMPT 4#7" when done.
