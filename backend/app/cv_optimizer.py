@@ -106,30 +106,44 @@ def extract_cv_data_and_score(cv_text: str) -> dict:
     text_metrics = analyze_text(cv_text)
     
     extracted_data = {
-        "has_name": True,
-        "has_email": patterns.get("has_email", False),
-        "has_phone": patterns.get("has_phone", False),
-        "has_linkedin": patterns.get("has_linkedin", False),
-        "email_is_professional": True,
-        "has_section_headers": patterns.get("has_section_headers", False),
-        "uses_bullet_points": text_metrics.get("total_bullet_points", 0) > 0,
-        "has_skills_section": True,
-        "skills_are_categorized": False,
-        "page_count": text_metrics.get("estimated_page_count", 1),
-        "word_count": text_metrics.get("word_count", 0),
-        "total_bullet_points": text_metrics.get("total_bullet_points", 0),
-        "bullets_with_numbers": patterns.get("bullets_with_numbers", 0),
-        "strong_action_verbs_count": patterns.get("strong_action_verbs_count", 0),
-        "weak_phrases_count": patterns.get("weak_phrases_count", 0),
-        "passive_voice_count": patterns.get("passive_voice_count", 0),
-        "grammar_errors_count": 0,
-        "spelling_errors_count": 0,
-        "has_dates_for_each_role": True,
-        "dates_are_consistent_format": True,
-        "is_reverse_chronological": True,
-        "has_company_names": True,
-        "has_job_titles": True,
-        "tech_keywords_found": []
+        "contact": {
+            "has_name": True,
+            "has_email": patterns.get("has_email", False),
+            "has_phone": patterns.get("has_phone", False),
+            "has_linkedin": patterns.get("has_linkedin", False),
+            "email_is_professional": True,
+        },
+        "structure": {
+            "has_section_headers": patterns.get("has_section_headers", False),
+            "uses_bullet_points": text_metrics.get("total_bullet_points", 0) > 0,
+            "has_skills_section": True,
+            "skills_are_categorized": False,
+            "page_count": text_metrics.get("estimated_page_count", 1),
+            "word_count": text_metrics.get("word_count", 0),
+        },
+        "quantification": {
+            "total_bullet_points": text_metrics.get("total_bullet_points", 0),
+            "bullets_with_numbers": patterns.get("bullets_with_numbers", 0),
+        },
+        "language": {
+            "strong_action_verbs_count": patterns.get("strong_action_verbs_count", 0),
+            "weak_phrases_count": patterns.get("weak_phrases_count", 0),
+            "passive_voice_count": patterns.get("passive_voice_count", 0),
+        },
+        "grammar": {
+            "grammar_errors_count": 0,
+            "spelling_errors_count": 0,
+        },
+        "experience": {
+            "has_dates_for_each_role": True,
+            "dates_are_consistent_format": True,
+            "is_reverse_chronological": True,
+            "has_company_names": True,
+            "has_job_titles": True,
+        },
+        "keywords": {
+            "tech_keywords_found": [],
+        }
     }
     
     score_result = calculate_cv_score_new(extracted_data)

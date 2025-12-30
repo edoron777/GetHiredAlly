@@ -1,0 +1,203 @@
+═══════════════════════════════════════════════════════════
+PROMPT 1#1: Fix Scoring Data Structure Mismatch
+═══════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify files not explicitly mentioned
+3. Do NOT add features not explicitly requested
+4. If unclear, STOP and ask - do not assume
+5. Make MINIMAL, SURGICAL changes only
+
+FORBIDDEN ACTIONS:
+- Changing scoring category functions
+- Modifying extractors
+- Adding new scoring categories
+- Changing score weights
+
+───────────────────────────────────────────────────────────
+
+ROOT CAUSE (From Debug):
+
+The extract_cv_data_and_score() function builds a FLAT dictionary:
+
+    {
+        'total_bullet_points': 2,
+        'bullets_with_numbers': 2,
+        'strong_action_verbs_count': 2,
+    }
+
+But the scoring category functions expect NESTED dictionary:
+
+    {
+        'quantification': {
+            'total_bullet_points': 2,
+            'bullets_with_numbers': 2,
+        },
+        'language': {
+            'strong_action_verbs_count': 2,
+        },
+    }
+
+───────────────────────────────────────────────────────────
+
+TASK: Restructure extracted_data to use NESTED format
+
+───────────────────────────────────────────────────────────
+
+INSTRUCTIONS:
+
+Step 1: Open backend/app/cv_optimizer.py
+
+Step 2: Find the extract_cv_data_and_score() function (around lines 108-133)
+
+Step 3: Find where extracted_data dictionary is built
+
+Step 4: REPLACE the FLAT structure with NESTED structure:
+
+BEFORE (FLAT - WRONG):
+    extracted_data = {
+        "has_name": True,
+        "has_email": patterns.get("has_email", False),
+        "has_phone": patterns.get("has_phone", False),
+        "has_linkedin": patterns.get("has_linkedin", False),
+        "email_is_professional": True,
+        "has_section_headers": patterns.get("has_section_headers", False),
+        "uses_bullet_points": text_metrics.get("total_bullet_points", 0) > 0,
+        "has_skills_section": True,
+        "skills_are_categorized": False,
+        "page_count": text_metrics.get("estimated_page_count", 1),
+        "word_count": text_metrics.get("word_count", 0),
+        "total_bullet_points": text_metrics.get("total_bullet_points", 0),
+        "bullets_with_numbers": patterns.get("bullets_with_numbers", 0),
+        "strong_action_verbs_count": patterns.get("strong_action_verbs_count", 0),
+        "weak_phrases_count": patterns.get("weak_phrases_count", 0),
+        "passive_voice_count": patterns.get("passive_voice_count", 0),
+        "grammar_errors_count": 0,
+        "spelling_errors_count": 0,
+        "has_dates_for_each_role": True,
+        "dates_are_consistent_format": True,
+        "is_reverse_chronological": True,
+        "has_company_names": True,
+        "has_job_titles": True,
+        "tech_keywords_found": []
+    }
+
+AFTER (NESTED - CORRECT):
+    extracted_data = {
+        "contact": {
+            "has_name": True,
+            "has_email": patterns.get("has_email", False),
+            "has_phone": patterns.get("has_phone", False),
+            "has_linkedin": patterns.get("has_linkedin", False),
+            "email_is_professional": True,
+        },
+        "structure": {
+            "has_section_headers": patterns.get("has_section_headers", False),
+            "uses_bullet_points": text_metrics.get("total_bullet_points", 0) > 0,
+            "has_skills_section": True,
+            "skills_are_categorized": False,
+            "page_count": text_metrics.get("estimated_page_count", 1),
+            "word_count": text_metrics.get("word_count", 0),
+        },
+        "quantification": {
+            "total_bullet_points": text_metrics.get("total_bullet_points", 0),
+            "bullets_with_numbers": patterns.get("bullets_with_numbers", 0),
+        },
+        "language": {
+            "strong_action_verbs_count": patterns.get("strong_action_verbs_count", 0),
+            "weak_phrases_count": patterns.get("weak_phrases_count", 0),
+            "passive_voice_count": patterns.get("passive_voice_count", 0),
+            "grammar_errors_count": 0,
+            "spelling_errors_count": 0,
+        },
+        "experience": {
+            "has_dates_for_each_role": True,
+            "dates_are_consistent_format": True,
+            "is_reverse_chronological": True,
+            "has_company_names": True,
+            "has_job_titles": True,
+        },
+        "keywords": {
+            "tech_keywords_found": [],
+        }
+    }
+
+Step 5: Verify the nested keys match what scoring functions expect
+
+Check backend/common/scoring/categories/ files to confirm:
+- content_quality.py expects: quantification, language
+- language_clarity.py expects: language
+- formatting.py expects: structure
+- completeness.py expects: contact, experience
+- professional.py expects: contact, structure
+- red_flags.py expects: language
+
+Step 6: Run the test again to verify fix:
+
+    from common.scoring import extract_cv_data_and_score
+
+    test_bad_cv = """
+    john doe
+    email me
+    i worked at company
+    i did stuff
+    """
+
+    test_good_cv = """
+    John Doe
+    john.doe@email.com | (555) 123-4567 | linkedin.com/in/johndoe
+
+    PROFESSIONAL SUMMARY
+    Results-driven Software Engineer with 5+ years experience.
+
+    WORK EXPERIENCE
+    Senior Developer | Tech Corp | 2020-Present
+    - Increased system performance by 40% through optimization
+    - Led team of 5 engineers delivering $2M project on time
+    """
+
+    score_bad = extract_cv_data_and_score(test_bad_cv)
+    score_good = extract_cv_data_and_score(test_good_cv)
+
+    print(f"Bad CV score: {score_bad['score']}")
+    print(f"Good CV score: {score_good['score']}")
+    print(f"Scores are different: {score_bad['score'] != score_good['score']}")
+
+EXPECTED RESULT:
+- Bad CV score: LOW (e.g., 25-40)
+- Good CV score: HIGH (e.g., 70-85)
+- Scores MUST be different
+
+───────────────────────────────────────────────────────────
+
+FILES TO MODIFY:
+- backend/app/cv_optimizer.py (extract_cv_data_and_score function only)
+
+FILES TO CREATE:
+- None
+
+DO NOT TOUCH:
+- backend/common/scoring/categories/*.py
+- backend/common/scoring/calculator.py
+- backend/common/scoring/extractors.py
+- Any frontend files
+
+───────────────────────────────────────────────────────────
+
+WHEN COMPLETE:
+
+Confirm:
+□ extracted_data now uses NESTED structure
+□ Keys match: contact, structure, quantification, language, experience, keywords
+□ Test shows DIFFERENT scores for bad vs good CV
+□ Bad CV scores lower than good CV
+□ No errors in console
+
+Report:
+- Bad CV score: ________
+- Good CV score: ________
+- Difference: ________ points
+
+═══════════════════════════════════════════════════════════
