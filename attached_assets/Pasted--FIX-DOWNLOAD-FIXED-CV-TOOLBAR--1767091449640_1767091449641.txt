@@ -1,0 +1,129 @@
+═══════════════════════════════════════════════════════════
+FIX DOWNLOAD FIXED CV TOOLBAR
+═══════════════════════════════════════════════════════════
+
+LOCATION: The "Download Fixed CV" section on CVFixedPage
+
+CURRENT STATE:
+- Shows: PDF, DOCX, TXT buttons
+- PDF and DOCX download unstyled documents
+- TXT is not useful for users
+
+REQUIRED FIXES:
+1. Replace TXT with MD
+2. Connect PDF and DOCX to DocStyler for styled output
+
+───────────────────────────────────────────────────────────
+FIX 1: REPLACE TXT WITH MD
+───────────────────────────────────────────────────────────
+
+FILE: client/src/components/CVFixedPage.tsx (or similar name)
+
+Find the download buttons section. It probably looks like:
+
+<button>PDF</button>
+<button>DOCX</button>
+<button>TXT</button>
+
+CHANGE TXT to MD:
+
+<button>PDF</button>
+<button>DOCX</button>
+<button>MD</button>
+
+Also update the click handler from handleDownloadTXT to handleDownloadMD
+
+───────────────────────────────────────────────────────────
+FIX 2: CONNECT TO DOCSTYLER
+───────────────────────────────────────────────────────────
+
+First, check if DocStyler exists:
+Location: client/src/components/common/DocStyler/
+
+If DocStyler EXISTS, add import at top of CVFixedPage.tsx:
+
+import { DocStyler } from '@/components/common/DocStyler';
+
+Then update the download handlers:
+
+CURRENT (probably):
+const handleDownloadPDF = () => {
+  // Direct download without styling
+  downloadFile(fixedCvContent, 'fixed_cv.pdf');
+};
+
+NEW:
+const handleDownloadPDF = async () => {
+  try {
+    await DocStyler.pdf(fixedCvContent, {
+      title: 'Your Optimized CV',
+      service: 'cv-optimizer',
+      fileName: 'CV_Optimized',
+      metadata: {
+        score: afterScore,
+        improvement: improvement
+      }
+    });
+  } catch (error) {
+    console.error('PDF generation error:', error);
+    alert('Error generating PDF. Please try again.');
+  }
+};
+
+const handleDownloadWord = async () => {
+  try {
+    await DocStyler.word(fixedCvContent, {
+      title: 'Your Optimized CV',
+      service: 'cv-optimizer',
+      fileName: 'CV_Optimized',
+      metadata: {
+        score: afterScore,
+        improvement: improvement
+      }
+    });
+  } catch (error) {
+    console.error('Word generation error:', error);
+    alert('Error generating Word document. Please try again.');
+  }
+};
+
+const handleDownloadMD = () => {
+  DocStyler.md(fixedCvContent, {
+    title: 'Your Optimized CV',
+    service: 'cv-optimizer',
+    fileName: 'CV_Optimized',
+    metadata: {
+      score: afterScore,
+      improvement: improvement
+    }
+  });
+};
+
+───────────────────────────────────────────────────────────
+IF DOCSTYLER DOES NOT EXIST YET
+───────────────────────────────────────────────────────────
+
+If DocStyler is not implemented yet, report back and we will:
+1. First implement DocStyler (9 prompts)
+2. Then connect it to this page
+
+For now, just do Fix 1 (TXT → MD) and leave PDF/DOCX as is.
+
+───────────────────────────────────────────────────────────
+VERIFICATION
+───────────────────────────────────────────────────────────
+
+After changes:
+1. Download section shows: PDF, DOCX, MD (not TXT)
+2. PDF download creates styled document with header/footer
+3. DOCX download creates styled document with header/footer
+4. MD download creates markdown with header/footer
+
+───────────────────────────────────────────────────────────
+REPORT BACK
+───────────────────────────────────────────────────────────
+
+Tell me:
+1. Does DocStyler exist in the project?
+2. What changes did you make?
+3. Any errors?

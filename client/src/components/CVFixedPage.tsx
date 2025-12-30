@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import { 
   ArrowLeft, CheckCircle, FileText, File, 
-  FileType, Home, Columns, ArrowRight
+  FileCode, Home, Columns, ArrowRight
 } from 'lucide-react'
 import { isAuthenticated, getAuthToken } from '@/lib/auth'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import CVScoreCircle from './cv-optimizer/CVScoreCircle'
 import ScoreComparison from './cv-optimizer/ScoreComparison'
+import DocStyler from './common/DocStyler/DocStyler'
 
 interface FixedData {
   scan_id: string
@@ -28,6 +29,10 @@ interface FixedData {
   original_score?: number
   fixed_score?: number
   improvement?: number
+  category_improvements?: Record<string, { before: number; after: number; improvement: number }>
+  changes?: Array<{ category: string; before: string; after: string; explanation: string }>
+  changes_summary?: { total_changes: number; by_category: Record<string, number> }
+  total_changes?: number
 }
 
 const VIEW_MODES = [
@@ -74,27 +79,61 @@ export function CVFixedPage() {
     fetchData()
   }, [scanId, navigate])
 
-  const handleDownload = async (format: string) => {
+  const handleDownloadPDF = async () => {
     setIsDownloading(true)
-
     try {
-      const token = getAuthToken()
-      const response = await fetch(`/api/cv-optimizer/download/${scanId}?format=${format}&token=${token}`)
+      await DocStyler.pdf(data?.fixed_cv_content || '', {
+        title: 'Your Optimized CV',
+        service: 'cv-optimizer',
+        fileName: 'CV_Optimized',
+        metadata: {
+          score: data?.fixed_score,
+          improvement: data?.improvement
+        }
+      })
+    } catch (error) {
+      console.error('PDF generation error:', error)
+      alert('Error generating PDF. Please try again.')
+    } finally {
+      setIsDownloading(false)
+    }
+  }
 
-      if (!response.ok) throw new Error('Download failed')
+  const handleDownloadWord = async () => {
+    setIsDownloading(true)
+    try {
+      await DocStyler.word(data?.fixed_cv_content || '', {
+        title: 'Your Optimized CV',
+        service: 'cv-optimizer',
+        fileName: 'CV_Optimized',
+        metadata: {
+          score: data?.fixed_score,
+          improvement: data?.improvement
+        }
+      })
+    } catch (error) {
+      console.error('Word generation error:', error)
+      alert('Error generating Word document. Please try again.')
+    } finally {
+      setIsDownloading(false)
+    }
+  }
 
-      const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `fixed_cv.${format}`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      window.URL.revokeObjectURL(url)
-
-    } catch (err) {
-      alert('Download failed. Please try again.')
+  const handleDownloadMD = async () => {
+    setIsDownloading(true)
+    try {
+      await DocStyler.md(data?.fixed_cv_content || '', {
+        title: 'Your Optimized CV',
+        service: 'cv-optimizer',
+        fileName: 'CV_Optimized',
+        metadata: {
+          score: data?.fixed_score,
+          improvement: data?.improvement
+        }
+      })
+    } catch (error) {
+      console.error('MD generation error:', error)
+      alert('Error generating Markdown. Please try again.')
     } finally {
       setIsDownloading(false)
     }
@@ -265,19 +304,19 @@ export function CVFixedPage() {
             <DownloadButton
               label="PDF"
               icon={FileText}
-              onClick={() => handleDownload('pdf')}
+              onClick={handleDownloadPDF}
               disabled={isDownloading}
             />
             <DownloadButton
               label="DOCX"
               icon={File}
-              onClick={() => handleDownload('docx')}
+              onClick={handleDownloadWord}
               disabled={isDownloading}
             />
             <DownloadButton
-              label="TXT"
-              icon={FileType}
-              onClick={() => handleDownload('txt')}
+              label="MD"
+              icon={FileCode}
+              onClick={handleDownloadMD}
               disabled={isDownloading}
             />
           </div>
