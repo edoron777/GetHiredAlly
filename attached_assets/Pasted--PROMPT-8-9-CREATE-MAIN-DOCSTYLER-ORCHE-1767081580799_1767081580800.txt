@@ -1,0 +1,246 @@
+═══════════════════════════════════════════════════════════
+PROMPT 8#9: CREATE MAIN DOCSTYLER ORCHESTRATOR
+═══════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify files not explicitly mentioned
+3. Copy content EXACTLY as provided
+
+───────────────────────────────────────────────────────────
+TASK: Create main DocStyler orchestrator and connect to ActionBar
+───────────────────────────────────────────────────────────
+
+OBJECTIVE:
+Create the main DocStyler function and update ActionBar to use it.
+
+───────────────────────────────────────────────────────────
+INSTRUCTIONS:
+───────────────────────────────────────────────────────────
+
+Step 1: Replace client/src/components/common/DocStyler/DocStyler.js with:
+
+/**
+ * DocStyler - Main orchestrator for document generation
+ * 
+ * Usage:
+ * DocStyler.generate({
+ *   content: markdownContent,
+ *   format: 'pdf' | 'word' | 'md',
+ *   options: { title, service, fileName, metadata }
+ * });
+ */
+
+import { generatePDF } from './generators/generatePDF';
+import { generateWord } from './generators/generateWord';
+import { downloadMD } from './generators/generateMD';
+
+const DocStyler = {
+  /**
+   * Generate and download document
+   * @param {Object} params - Generation parameters
+   * @param {string} params.content - Content to format (markdown)
+   * @param {string} params.format - Output format: 'pdf', 'word', 'md'
+   * @param {Object} params.options - Document options
+   */
+  generate: async ({ content, format, options = {} }) => {
+    if (!content) {
+      console.error('DocStyler: No content provided');
+      return false;
+    }
+    
+    const validFormats = ['pdf', 'word', 'md'];
+    if (!validFormats.includes(format)) {
+      console.error(`DocStyler: Invalid format "${format}". Use: ${validFormats.join(', ')}`);
+      return false;
+    }
+    
+    try {
+      switch (format) {
+        case 'pdf':
+          await generatePDF(content, options);
+          break;
+        case 'word':
+          await generateWord(content, options);
+          break;
+        case 'md':
+          downloadMD(content, options);
+          break;
+        default:
+          throw new Error(`Unknown format: ${format}`);
+      }
+      
+      console.log(`DocStyler: ${format.toUpperCase()} generated successfully`);
+      return true;
+    } catch (error) {
+      console.error(`DocStyler: Error generating ${format}:`, error);
+      throw error;
+    }
+  },
+  
+  /**
+   * Generate PDF document
+   */
+  pdf: async (content, options) => {
+    return DocStyler.generate({ content, format: 'pdf', options });
+  },
+  
+  /**
+   * Generate Word document
+   */
+  word: async (content, options) => {
+    return DocStyler.generate({ content, format: 'word', options });
+  },
+  
+  /**
+   * Generate Markdown document
+   */
+  md: (content, options) => {
+    return DocStyler.generate({ content, format: 'md', options });
+  },
+};
+
+export default DocStyler;
+
+───────────────────────────────────────────────────────────
+
+Step 2: Update ActionBar to use DocStyler
+
+Find file: client/src/components/common/ActionBar/ActionBar.jsx
+
+Add import at top (after other imports):
+
+import { DocStyler } from '../DocStyler';
+
+Step 3: Replace the PDF handler (find handlePDF function):
+
+CHANGE FROM:
+  const handlePDF = () => {
+    if (onPDF) {
+      return onPDF(content);
+    }
+    alert('PDF export coming soon!');
+  };
+
+CHANGE TO:
+  const handlePDF = async () => {
+    if (onPDF) {
+      return onPDF(content);
+    }
+    try {
+      await DocStyler.pdf(content, {
+        title: emailSubject || 'Document',
+        fileName: fileName,
+        service: contentType || '',
+        metadata: contentMetadata || {},
+      });
+    } catch (error) {
+      alert('Error generating PDF. Please try again.');
+    }
+  };
+
+Step 4: Replace the WORD handler:
+
+CHANGE FROM:
+  const handleWord = () => {
+    if (onWord) {
+      return onWord(content);
+    }
+    alert('Word export coming soon!');
+  };
+
+CHANGE TO:
+  const handleWord = async () => {
+    if (onWord) {
+      return onWord(content);
+    }
+    try {
+      await DocStyler.word(content, {
+        title: emailSubject || 'Document',
+        fileName: fileName,
+        service: contentType || '',
+        metadata: contentMetadata || {},
+      });
+    } catch (error) {
+      alert('Error generating Word document. Please try again.');
+    }
+  };
+
+Step 5: Replace the Markdown handler:
+
+CHANGE FROM:
+  const handleMarkdown = () => {
+    if (onMarkdown) {
+      return onMarkdown(content);
+    }
+    const blob = new Blob([content], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${fileName}.md`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+CHANGE TO:
+  const handleMarkdown = () => {
+    if (onMarkdown) {
+      return onMarkdown(content);
+    }
+    DocStyler.md(content, {
+      title: emailSubject || 'Document',
+      fileName: fileName,
+      service: contentType || '',
+      metadata: contentMetadata || {},
+    });
+  };
+
+Step 6: Add new props to ActionBar component (in the destructuring):
+
+ADD these props:
+  contentType = '',
+  contentMetadata = {},
+
+The full props should now include:
+const ActionBar = ({
+  content = '',
+  fileName = 'document',
+  emailSubject = 'Shared from GetHiredAlly',
+  hiddenButtons = [],
+  disabledButtons = [],
+  contentType = '',        // NEW
+  contentMetadata = {},    // NEW
+  onCopy,
+  onEmail,
+  onWhatsApp,
+  onPDF,
+  onWord,
+  onMarkdown,
+}) => {
+
+───────────────────────────────────────────────────────────
+FILES TO MODIFY:
+───────────────────────────────────────────────────────────
+
+- client/src/components/common/DocStyler/DocStyler.js - Replace content
+- client/src/components/common/ActionBar/ActionBar.jsx - Update handlers
+
+DO NOT TOUCH:
+- All other files
+
+───────────────────────────────────────────────────────────
+WHEN COMPLETE:
+───────────────────────────────────────────────────────────
+
+Confirm:
+□ DocStyler.js created with generate function
+□ ActionBar imports DocStyler
+□ handlePDF uses DocStyler.pdf()
+□ handleWord uses DocStyler.word()
+□ handleMarkdown uses DocStyler.md()
+□ New props added: contentType, contentMetadata
+
+Type "COMPLETE - READY FOR PROMPT 9#9" when done.

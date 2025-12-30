@@ -7,6 +7,7 @@ import {
   stripMarkdown,
   formatContent 
 } from './utils';
+import { DocStyler } from '../DocStyler';
 
 /**
  * ActionBar - Reusable toolbar for share/export actions
@@ -30,6 +31,8 @@ const ActionBar = ({
   emailSubject = 'Shared from GetHiredAlly',
   hiddenButtons = [],
   disabledButtons = [],
+  contentType = '',
+  contentMetadata = {},
   onCopy,
   onEmail,
   onWhatsApp,
@@ -72,20 +75,38 @@ const ActionBar = ({
     shareToWhatsApp(plainText);
   };
 
-  // PDF handler (placeholder - will show coming soon)
-  const handlePDF = () => {
+  // PDF handler
+  const handlePDF = async () => {
     if (onPDF) {
       return onPDF(content);
     }
-    alert('PDF export coming soon!');
+    try {
+      await DocStyler.pdf(content, {
+        title: emailSubject || 'Document',
+        fileName: fileName,
+        service: contentType || '',
+        metadata: contentMetadata || {},
+      });
+    } catch (error) {
+      alert('Error generating PDF. Please try again.');
+    }
   };
 
-  // WORD handler (placeholder - will show coming soon)
-  const handleWord = () => {
+  // WORD handler
+  const handleWord = async () => {
     if (onWord) {
       return onWord(content);
     }
-    alert('Word export coming soon!');
+    try {
+      await DocStyler.word(content, {
+        title: emailSubject || 'Document',
+        fileName: fileName,
+        service: contentType || '',
+        metadata: contentMetadata || {},
+      });
+    } catch (error) {
+      alert('Error generating Word document. Please try again.');
+    }
   };
 
   // MARKDOWN handler
@@ -93,16 +114,12 @@ const ActionBar = ({
     if (onMarkdown) {
       return onMarkdown(content);
     }
-    // Create and download .md file
-    const blob = new Blob([content], { type: 'text/markdown' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${fileName}.md`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    DocStyler.md(content, {
+      title: emailSubject || 'Document',
+      fileName: fileName,
+      service: contentType || '',
+      metadata: contentMetadata || {},
+    });
   };
 
   // Container style
