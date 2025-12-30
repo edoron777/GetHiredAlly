@@ -232,13 +232,16 @@ export function CVFixedPage() {
                 <span className="text-sm text-gray-600 mt-1">Improvement</span>
               </div>
             </div>
-            <div className="text-center mt-6">
-              <p className="text-lg font-medium text-gray-800">
-                {data.improvement && data.improvement > 20 
-                  ? 'Your CV improved significantly!' 
-                  : data.improvement && data.improvement > 10 
-                    ? 'Nice improvement!' 
-                    : 'Your CV has been polished'}
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-6 text-center mt-6">
+              <div className="text-4xl mb-3">🏆</div>
+              <h2 className="text-2xl font-bold text-green-800 mb-2">
+                Optimization Complete!
+              </h2>
+              <p className="text-lg text-green-700 mb-3">
+                We fixed <span className="font-bold text-green-900">{data.total_changes || data.changes?.length || data.total_issues} issues</span> in your CV
+              </p>
+              <p className="text-sm text-green-600">
+                ✨ What would take hours to fix manually, done in one click!
               </p>
             </div>
 
@@ -304,13 +307,13 @@ export function CVFixedPage() {
                   )}
                 </div>
                 <div className="text-center mt-4">
-                  <Link
-                    to={`/service/cv-optimizer/report/${scanId}`}
+                  <button
+                    onClick={() => window.open(`/service/cv-optimizer/report/${scanId}`, '_blank')}
                     className="inline-flex items-center gap-2 px-4 py-2 bg-amber-100 text-amber-800 rounded-lg hover:bg-amber-200 transition-colors text-sm font-medium"
                   >
                     <FileText size={16} />
-                    View Full Report
-                  </Link>
+                    View Analysis Details
+                  </button>
                 </div>
               </div>
             )}
@@ -406,23 +409,44 @@ export function CVFixedPage() {
 
         <div className="flex justify-center gap-4 mt-8">
           <Link
-            to={`/service/cv-optimizer/report/${scanId}`}
-            className="flex items-center gap-2 px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
-          >
-            <ArrowLeft size={20} />
-            Back to Report
-          </Link>
-          <Link
             to="/dashboard"
             className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
             <Home size={20} />
-            Go to Dashboard
+            Back to Dashboard
           </Link>
         </div>
       </div>
     </div>
   )
+}
+
+const HIGHLIGHT_COLORS: Record<string, string> = {
+  quantification: 'bg-green-200 border-b-2 border-green-500',
+  language: 'bg-blue-200 border-b-2 border-blue-500',
+  grammar: 'bg-yellow-200 border-b-2 border-yellow-500',
+  formatting: 'bg-purple-200 border-b-2 border-purple-500',
+  default: 'bg-yellow-200 border-b-2 border-yellow-500'
+}
+
+function highlightChangesInContent(content: string, changes?: Array<{ category: string; before: string; after: string; explanation: string }>): string {
+  if (!changes || changes.length === 0) return content
+  
+  let highlightedContent = content
+  
+  changes.forEach(change => {
+    if (change.after && change.after.length > 3) {
+      const colorClass = HIGHLIGHT_COLORS[change.category.toLowerCase()] || HIGHLIGHT_COLORS.default
+      const escapedAfter = change.after.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      const regex = new RegExp(escapedAfter, 'g')
+      highlightedContent = highlightedContent.replace(
+        regex,
+        `<mark class="${colorClass} px-1 rounded">${change.after}</mark>`
+      )
+    }
+  })
+  
+  return highlightedContent
 }
 
 function CVPanel({ 
@@ -438,6 +462,9 @@ function CVPanel({
   fullWidth?: boolean
   changes?: Array<{ category: string; before: string; after: string; explanation: string }>
 }) {
+  const highlightedContent = type === 'fixed' && changes ? highlightChangesInContent(content, changes) : content
+  const hasHighlights = type === 'fixed' && changes && changes.length > 0
+
   return (
     <div className={`${fullWidth ? 'max-w-3xl mx-auto' : ''}`}>
       <div className={`flex items-center gap-2 px-4 py-3 rounded-t-lg ${
@@ -465,15 +492,30 @@ function CVPanel({
           ? 'bg-red-50/30 border-red-200'
           : 'bg-green-50/30 border-green-200'
       }`}>
-        <div className="prose prose-sm max-w-none text-gray-800 leading-relaxed">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-            {content}
-          </ReactMarkdown>
-        </div>
+        {hasHighlights ? (
+          <div 
+            className="prose prose-sm max-w-none text-gray-800 leading-relaxed whitespace-pre-wrap"
+            dangerouslySetInnerHTML={{ __html: highlightedContent }}
+          />
+        ) : (
+          <div className="prose prose-sm max-w-none text-gray-800 leading-relaxed">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {content}
+            </ReactMarkdown>
+          </div>
+        )}
         
         {type === 'fixed' && changes && changes.length > 0 && (
           <div className="mt-6 pt-4 border-t border-green-200">
-            <p className="text-xs font-medium text-green-700 mb-3">Changes Made:</p>
+            <div className="flex items-center gap-4 mb-3">
+              <p className="text-xs font-medium text-green-700">Changes Made:</p>
+              <div className="flex gap-2 text-xs">
+                <span className="flex items-center gap-1">
+                  <span className="w-3 h-3 bg-yellow-200 border-b-2 border-yellow-500 rounded"></span>
+                  Changed
+                </span>
+              </div>
+            </div>
             <div className="space-y-2 max-h-48 overflow-y-auto">
               {changes.slice(0, 8).map((change, idx) => (
                 <div key={idx} className="text-xs bg-green-50 border border-green-200 rounded p-2">
