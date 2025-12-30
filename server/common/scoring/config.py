@@ -1,0 +1,141 @@
+"""
+Scoring Configuration - Weights and Thresholds
+Version: 4.0
+
+CRITICAL: These values are the SINGLE SOURCE OF TRUTH for scoring.
+Do NOT modify without updating documentation.
+"""
+
+# Score bounds
+SCORE_MIN = 10
+SCORE_MAX = 95
+
+# Category weights (MUST sum to 100)
+CATEGORY_WEIGHTS = {
+    'content_quality': 40,      # Quantification, Action Verbs, Narrative, Depth
+    'language_clarity': 18,     # Grammar, Writing Quality, Vagueness
+    'formatting': 18,           # Visual Structure, Organization, Consistency, ATS
+    'completeness': 12,         # Contact, Required Sections, Keywords, Job Standards
+    'professional': 8,          # Length, Recency, Certifications
+    'red_flags': 4              # Repetition, Critical Issues
+}
+
+# Verify weights sum to 100
+assert sum(CATEGORY_WEIGHTS.values()) == 100, "Category weights must sum to 100"
+
+# Grade thresholds
+GRADE_THRESHOLDS = {
+    'excellent': 90,
+    'good': 75,
+    'fair': 60,
+    'needs_work': 45,
+    'poor': 0
+}
+
+# Sub-category weights within Content Quality (40 points)
+CONTENT_QUALITY_WEIGHTS = {
+    'quantification': 20,       # QNT-001 to QNT-007
+    'action_verbs': 8,          # AVB-001 to AVB-004
+    'career_narrative': 6,      # NAR-001 to NAR-004
+    'content_depth': 6          # DEP-001 to DEP-006
+}
+
+# Sub-category weights within Language & Clarity (18 points)
+LANGUAGE_CLARITY_WEIGHTS = {
+    'grammar_spelling': 8,      # GRM-001 to GRM-005
+    'writing_quality': 5,       # WRT-001 to WRT-006
+    'vagueness': 5              # VAG-001 to VAG-005
+}
+
+# Sub-category weights within Formatting (18 points)
+FORMATTING_WEIGHTS = {
+    'visual_structure': 6,      # FMT-001 to FMT-004
+    'section_organization': 5,  # SEC-001 to SEC-004
+    'consistency': 3,           # CON-001 to CON-003
+    'ats_compatibility': 4      # ATS-001 to ATS-010
+}
+
+# Sub-category weights within Completeness (12 points)
+COMPLETENESS_WEIGHTS = {
+    'contact_info': 4,          # CNT-001 to CNT-005
+    'required_sections': 3,     # REQ-001 to REQ-003
+    'keywords_skills': 2,       # KEY-001 to KEY-003
+    'job_entry_standards': 3    # JOB-001 to JOB-008
+}
+
+# Sub-category weights within Professional Standards (8 points)
+PROFESSIONAL_WEIGHTS = {
+    'length': 2,                # LEN-001 to LEN-003
+    'recency_relevance': 3,     # REC-001 to REC-007
+    'certifications': 3         # CRT-001 to CRT-005
+}
+
+# Sub-category weights within Red Flags (4 points)
+RED_FLAGS_WEIGHTS = {
+    'repetition': 2,            # REP-001 to REP-005
+    'critical_flags': 2         # RED-001 to RED-008
+}
+
+# Fixability rates (for after-fix score projection)
+FIXABILITY_RATES = {
+    'grammar': 0.95,
+    'spelling': 0.95,
+    'action_verbs': 0.85,
+    'formatting': 0.70,
+    'language': 0.80,
+    'quantification': 0.40,
+    'contact': 0.10,
+    'gaps': 0.00
+}
+
+# Strong action verbs list
+STRONG_VERBS = [
+    'Led', 'Directed', 'Managed', 'Supervised', 'Headed', 'Oversaw',
+    'Coordinated', 'Orchestrated', 'Spearheaded', 'Championed',
+    'Achieved', 'Accomplished', 'Attained', 'Exceeded', 'Surpassed',
+    'Outperformed', 'Delivered', 'Completed',
+    'Created', 'Developed', 'Designed', 'Built', 'Established',
+    'Founded', 'Initiated', 'Launched', 'Pioneered', 'Introduced',
+    'Improved', 'Enhanced', 'Optimized', 'Streamlined', 'Transformed',
+    'Revitalized', 'Modernized', 'Upgraded', 'Refined',
+    'Increased', 'Expanded', 'Grew', 'Scaled', 'Accelerated',
+    'Amplified', 'Boosted', 'Maximized',
+    'Analyzed', 'Assessed', 'Evaluated', 'Researched', 'Investigated',
+    'Examined', 'Audited', 'Diagnosed',
+    'Presented', 'Negotiated', 'Persuaded', 'Influenced', 'Advocated',
+    'Articulated', 'Communicated',
+    'Engineered', 'Programmed', 'Architected', 'Implemented',
+    'Integrated', 'Automated', 'Configured', 'Deployed'
+]
+
+# Weak verbs list
+WEAK_VERBS = [
+    'Helped', 'Assisted', 'Supported', 'Worked on', 'Was responsible for',
+    'Participated in', 'Contributed to', 'Involved in', 'Handled',
+    'Dealt with', 'Did', 'Made', 'Got', 'Tried to', 'Was part of'
+]
+
+# Redundant phrases to detect
+REDUNDANT_PHRASES = [
+    'in order to',
+    'due to the fact that',
+    'at this point in time',
+    'for the purpose of',
+    'in the event that',
+    'a total of',
+    'each and every'
+]
+
+# Filler words to detect
+FILLER_WORDS = [
+    'very', 'really', 'basically', 'actually',
+    'just', 'quite', 'somewhat', 'rather'
+]
+
+# Vague phrases to flag
+VAGUE_PHRASES = [
+    'various', 'multiple', 'numerous', 'several',
+    'significant', 'substantial', 'considerable',
+    'helped improve', 'assisted with', 'was involved in',
+    'played a role', 'contributed to success'
+]
