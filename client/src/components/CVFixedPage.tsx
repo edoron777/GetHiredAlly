@@ -8,6 +8,7 @@ import { isAuthenticated, getAuthToken } from '@/lib/auth'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import CVScoreCircle from './cv-optimizer/CVScoreCircle'
+import ScoreComparison from './cv-optimizer/ScoreComparison'
 
 interface FixedData {
   scan_id: string
@@ -185,6 +186,16 @@ export function CVFixedPage() {
               </p>
             </div>
           </div>
+        )}
+
+        {data.category_improvements && (
+          <ScoreComparison
+            beforeScore={data.original_score}
+            afterScore={data.fixed_score}
+            improvement={data.improvement}
+            message={data.improvement && data.improvement > 15 ? "Significant improvement! Your CV will be much stronger." : data.improvement && data.improvement > 8 ? "Nice improvement! Your CV will be noticeably better." : "Your CV has been polished."}
+            categoryImprovements={data.category_improvements}
+          />
         )}
 
         <div className="bg-gray-100 rounded-lg p-1 inline-flex mb-6">

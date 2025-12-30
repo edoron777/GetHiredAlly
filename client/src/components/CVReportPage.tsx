@@ -14,6 +14,7 @@ import ViewModeToggle from './cv-optimizer/ViewModeToggle'
 import EffortGroupView from './cv-optimizer/EffortGroupView'
 import WorkTypeGroupView from './cv-optimizer/WorkTypeGroupView'
 import CVScoreCircle from './cv-optimizer/CVScoreCircle'
+import ScoreDashboard from './cv-optimizer/ScoreDashboard'
 import { mapIssueCategoryToId } from '../config/cvCategories'
 import { detectStrengths } from '../utils/strengthsDetector'
 import { playStartSound, playCompleteSound } from '../utils/sounds'
@@ -372,6 +373,15 @@ export function CVReportPage() {
               message={reportData.score_message}
             />
           </div>
+        )}
+
+        {reportData.score_breakdown && 'quantification' in reportData.score_breakdown && (
+          <ScoreDashboard
+            breakdown={reportData.score_breakdown}
+            totalScore={reportData.cv_score}
+            grade={reportData.score_status}
+            message={reportData.score_message}
+          />
         )}
 
         <StrengthsSection strengths={strengths} />
