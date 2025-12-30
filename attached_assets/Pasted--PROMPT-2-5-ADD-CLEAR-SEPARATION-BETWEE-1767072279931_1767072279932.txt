@@ -1,0 +1,101 @@
+═══════════════════════════════════════════════════════════
+PROMPT 2#5: ADD CLEAR SEPARATION BETWEEN PART A AND PART B
+═══════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify files not explicitly mentioned
+3. Do NOT refactor or "improve" existing code
+4. Make MINIMAL, SURGICAL changes only
+5. If unclear, STOP and ask - do not assume
+
+───────────────────────────────────────────────────────────
+PROBLEM:
+───────────────────────────────────────────────────────────
+
+The page has no clear visual separation between:
+- PART A: The CV Score (score circle + breakdown)
+- PART B: The Analysis & Recommendations (filters, suggestions)
+
+Users need to understand these are two different sections.
+
+───────────────────────────────────────────────────────────
+TASK: Add section header before the analysis/suggestions area
+───────────────────────────────────────────────────────────
+
+INSTRUCTIONS:
+
+Step 1: Find the CV Report page component
+
+Step 2: Identify where PART A ends and PART B begins:
+        - PART A ends after: Score Breakdown (the progress bars)
+        - PART B starts at: "Filter Results by Category" section
+
+Step 3: Add a section divider and header BETWEEN Part A and Part B:
+
+        Insert this JSX/HTML between the two parts:
+
+        {/* Section Divider */}
+        <div style={{
+          marginTop: '40px',
+          marginBottom: '24px',
+          borderTop: '2px solid #e5e7eb',
+          paddingTop: '32px'
+        }}>
+          <h2 style={{
+            fontSize: '24px',
+            fontWeight: '600',
+            color: '#1f2937',
+            marginBottom: '8px'
+          }}>
+            Detailed Analysis & Recommendations
+          </h2>
+          <p style={{
+            fontSize: '14px',
+            color: '#6b7280'
+          }}>
+            Review the suggestions below to improve your CV and increase your interview chances.
+          </p>
+        </div>
+
+Step 4: Do NOT move any existing components
+        Only ADD the divider/header between them
+
+───────────────────────────────────────────────────────────
+VISUAL RESULT:
+───────────────────────────────────────────────────────────
+
+BEFORE:
+Score → Breakdown → Filters → Suggestions (no separation)
+
+AFTER:
+Score → Breakdown 
+─────────────────────────────────
+Detailed Analysis & Recommendations
+Review the suggestions below...
+─────────────────────────────────
+Filters → Suggestions
+
+───────────────────────────────────────────────────────────
+FILES TO MODIFY:
+───────────────────────────────────────────────────────────
+
+- CV Report page component only
+
+DO NOT TOUCH:
+- Any other files
+- Existing component order (don't move anything)
+
+───────────────────────────────────────────────────────────
+WHEN COMPLETE:
+───────────────────────────────────────────────────────────
+
+Confirm:
+□ Section header added: "Detailed Analysis & Recommendations"
+□ Visual divider (border) added between sections
+□ Subtitle text added
+□ No components were moved or removed
+□ Page still works correctly
+
+Report which file was changed.

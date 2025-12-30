@@ -386,6 +386,28 @@ export function CVReportPage() {
 
         <StrengthsSection strengths={strengths} />
 
+        <div style={{
+          marginTop: '40px',
+          marginBottom: '24px',
+          borderTop: '2px solid #e5e7eb',
+          paddingTop: '32px'
+        }}>
+          <h2 style={{
+            fontSize: '24px',
+            fontWeight: '600',
+            color: '#1f2937',
+            marginBottom: '8px'
+          }}>
+            Detailed Analysis & Recommendations
+          </h2>
+          <p style={{
+            fontSize: '14px',
+            color: '#6b7280'
+          }}>
+            Review the suggestions below to improve your CV and increase your interview chances.
+          </p>
+        </div>
+
         <CategoryFilterPanel
           categoryCounts={categoryCounts}
           enabledCategories={enabledCategories}
