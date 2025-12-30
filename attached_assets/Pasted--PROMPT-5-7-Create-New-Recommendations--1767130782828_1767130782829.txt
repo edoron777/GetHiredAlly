@@ -1,0 +1,139 @@
+═══════════════════════════════════════════════════════════
+PROMPT 5#7: Create New Recommendations Header
+═══════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify files not explicitly mentioned
+3. Do NOT add features not explicitly requested
+4. Do NOT refactor or "improve" existing code
+5. Do NOT make autonomous decisions
+6. If unclear, STOP and ask - do not assume
+7. Make MINIMAL, SURGICAL changes only
+
+FORBIDDEN ACTIONS:
+- Modifying the recommendations list itself
+- Changing how recommendations are grouped
+- Adding features not specified
+- Modifying the ExportDropdown component
+
+───────────────────────────────────────────────────────────
+
+TASK: Replace old Action Bar with new Recommendations header containing controls
+
+OBJECTIVE:
+Create a clean header for the recommendations section with title, count, expand/collapse buttons, and export dropdown
+
+CONTEXT:
+The old Action Bar with 7 buttons is being replaced. The new header combines: section title, suggestion count, expand/collapse controls, and the new export dropdown.
+
+───────────────────────────────────────────────────────────
+
+INSTRUCTIONS:
+
+Step 1: In the CV Report page component, find the old Action Bar
+- Search for: "Email", "WhatsApp", "PDF", "WORD", "MD", "Copy" buttons
+- Or the container div holding these buttons
+
+Step 2: DELETE the entire old Action Bar section
+
+Step 3: Find where the recommendations list starts (after filters)
+
+Step 4: ADD the new header structure BEFORE the recommendations list:
+```tsx
+import ExportDropdown from '@/components/cv-optimizer/ExportDropdown';
+
+// ... inside the component, add this before recommendations list:
+
+{/* Recommendations Section Header */}
+<div className="bg-white rounded-lg border border-gray-200 p-6 mt-6">
+  
+  {/* Header Row */}
+  <div className="flex items-center justify-between mb-4">
+    <div>
+      <h3 className="text-xl font-semibold text-gray-900">
+        Your Recommendations
+      </h3>
+      <p className="text-sm text-gray-500 mt-1">
+        {totalSuggestions || filteredRecommendations?.length || 0} suggestions to review
+      </p>
+    </div>
+    
+    <div className="flex items-center gap-3">
+      {/* Expand/Collapse Buttons */}
+      <div className="flex gap-2">
+        <button
+          onClick={handleExpandAll}
+          className="px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+        >
+          + Expand All
+        </button>
+        <button
+          onClick={handleCollapseAll}
+          className="px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+        >
+          - Collapse All
+        </button>
+      </div>
+      
+      {/* Export Dropdown */}
+      <ExportDropdown />
+    </div>
+  </div>
+  
+  {/* Divider */}
+  <hr className="border-gray-200 mb-4" />
+  
+  {/* Recommendations List renders here */}
+  {/* ... existing recommendations content ... */}
+  
+</div>
+```
+
+Step 5: Ensure the import for ExportDropdown is added at the top of the file
+
+Step 6: Verify handleExpandAll and handleCollapseAll functions exist
+- If they exist, use them
+- If not, add empty placeholder functions:
+```tsx
+const handleExpandAll = () => {
+  // TODO: Implement expand all logic
+  console.log('Expand all clicked');
+};
+
+const handleCollapseAll = () => {
+  // TODO: Implement collapse all logic  
+  console.log('Collapse all clicked');
+};
+```
+
+───────────────────────────────────────────────────────────
+
+FILES TO MODIFY:
+- [CV Report page component]
+
+FILES TO CREATE:
+- None
+
+DO NOT TOUCH:
+- ExportDropdown.tsx (created in previous prompt)
+- Individual recommendation cards
+- Priority group components
+- Filter components
+
+───────────────────────────────────────────────────────────
+
+WHEN COMPLETE:
+
+Confirm:
+□ Old Action Bar (7 buttons) is removed
+□ New header shows "Your Recommendations"
+□ Suggestion count displays correctly
+□ Expand All / Collapse All buttons appear
+□ Export dropdown appears and works
+□ ExportDropdown import added
+□ No console errors
+□ Layout looks clean
+
+Report what you changed.

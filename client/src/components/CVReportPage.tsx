@@ -5,7 +5,7 @@ import {
   Zap, Wrench, HardHat, AlertCircle, AlertTriangle, Info, Sparkles, Wand2
 } from 'lucide-react'
 import { isAuthenticated, getAuthToken } from '@/lib/auth'
-import { ActionBar } from './common/ActionBar'
+import ExportDropdown from './cv-optimizer/ExportDropdown'
 import { GHAScanner } from './common/GHAScanner'
 import CategoryFilterPanel from './cv-optimizer/CategoryFilterPanel'
 import EncouragementMessage from './cv-optimizer/EncouragementMessage'
@@ -217,18 +217,6 @@ export function CVReportPage() {
 
   const expandAll = () => setExpandedIssues(new Set(reportData?.issues.map(i => i.id) || []))
   const collapseAll = () => setExpandedIssues(new Set())
-
-  const handleExportPDF = async () => {
-    console.log('Export PDF - TODO')
-  }
-
-  const handleExportWord = async () => {
-    console.log('Export Word - TODO')
-  }
-
-  const handleExportMarkdown = async () => {
-    console.log('Export Markdown - TODO')
-  }
 
   const getFixDifficultyIcon = (difficulty: string) => {
     switch (difficulty) {
@@ -464,47 +452,38 @@ export function CVReportPage() {
           </div>
         </div>
 
-        <div style={{ marginTop: '16px', marginBottom: '16px' }}>
-          <ActionBar
-            content={reportData.cv_content || ''}
-            fileName="CV_Analysis_Report"
-            emailSubject="My CV Analysis Report - GetHiredAlly"
-            hiddenButtons={[]}
-            disabledButtons={[]}
-            onPDF={handleExportPDF}
-            onWord={handleExportWord}
-            onMarkdown={handleExportMarkdown}
-          />
-        </div>
-
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-          <button 
-            onClick={expandAll}
-            style={{
-              padding: '6px 12px',
-              border: '1px solid #d1d5db',
-              borderRadius: '6px',
-              background: '#ffffff',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}
-          >
-            + Expand All
-          </button>
-          <button 
-            onClick={collapseAll}
-            style={{
-              padding: '6px 12px',
-              border: '1px solid #d1d5db',
-              borderRadius: '6px',
-              background: '#ffffff',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}
-          >
-            − Collapse All
-          </button>
-        </div>
+        <div className="bg-white rounded-lg border border-gray-200 p-6 mt-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-xl font-semibold text-gray-900">
+                Your Recommendations
+              </h3>
+              <p className="text-sm text-gray-500 mt-1">
+                {filteredIssues.length} suggestions to review
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <div className="flex gap-2">
+                <button
+                  onClick={expandAll}
+                  className="px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                >
+                  + Expand All
+                </button>
+                <button
+                  onClick={collapseAll}
+                  className="px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                >
+                  - Collapse All
+                </button>
+              </div>
+              
+              <ExportDropdown />
+            </div>
+          </div>
+          
+          <hr className="border-gray-200 mb-4" />
 
         {viewMode === 'severity' ? (
           <div className="space-y-8">
@@ -617,6 +596,8 @@ export function CVReportPage() {
             </button>
           </div>
         )}
+
+        </div>
 
         <div style={{ marginTop: '24px' }}>
           <EncouragementMessage type="completion" />
