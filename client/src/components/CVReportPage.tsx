@@ -6,7 +6,7 @@ import {
 } from 'lucide-react'
 import { isAuthenticated, getAuthToken } from '@/lib/auth'
 import { ActionBar } from './common/ActionBar'
-import { ScannerGrid } from './ScannerGrid'
+import { GHAScanner } from './common/GHAScanner'
 import CategoryFilterPanel from './cv-optimizer/CategoryFilterPanel'
 import StrengthsSection from './cv-optimizer/StrengthsSection'
 import EncouragementMessage from './cv-optimizer/EncouragementMessage'
@@ -17,7 +17,7 @@ import CVScoreCircle from './cv-optimizer/CVScoreCircle'
 import ScoreDashboard from './cv-optimizer/ScoreDashboard'
 import { mapIssueCategoryToId } from '../config/cvCategories'
 import { detectStrengths } from '../utils/strengthsDetector'
-import { playStartSound, playCompleteSound } from '../utils/sounds'
+import { playStartSound, playCompleteSound } from './common/GHAScanner'
 import type { Strength } from '../utils/strengthsDetector'
 
 interface Issue {
@@ -309,10 +309,7 @@ export function CVReportPage() {
           </div>
 
           <div className="mb-8">
-            <ScannerGrid 
-              scanProgress={fixProgress} 
-              issues={{ critical: 0, high: 0, medium: 0, low: 0, total: 0 }} 
-            />
+            <GHAScanner progress={fixProgress} />
           </div>
 
           <div className="text-center mb-6">

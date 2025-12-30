@@ -13,6 +13,10 @@ class ScannerSounds {
     this.enabled = enabled;
   }
 
+  isEnabled(): boolean {
+    return this.enabled;
+  }
+
   playStartSound(): void {
     if (!this.enabled) return;
     
@@ -119,3 +123,4 @@ export const playStartSound = (): void => scannerSounds.playStartSound();
 export const playCompleteSound = (): void => scannerSounds.playCompleteSound();
 export const playErrorSound = (): void => scannerSounds.playErrorSound();
 export const setSoundEnabled = (enabled: boolean): void => scannerSounds.setEnabled(enabled);
+export const isSoundEnabled = (): boolean => scannerSounds.isEnabled();
