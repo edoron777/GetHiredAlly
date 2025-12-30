@@ -1,0 +1,91 @@
+═══════════════════════════════════════════════════════════
+PROMPT 2#7: CREATE ACTIONBAR FOLDER STRUCTURE
+═══════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify files not explicitly mentioned
+3. Do NOT add features not explicitly requested
+4. Do NOT refactor or "improve" existing code
+5. If unclear, STOP and ask - do not assume
+
+FORBIDDEN ACTIONS:
+- Adding any npm packages
+- Modifying existing components
+- Creating files not listed below
+
+───────────────────────────────────────────────────────────
+TASK: Create the ActionBar folder structure
+───────────────────────────────────────────────────────────
+
+OBJECTIVE:
+Set up the folder structure for the reusable ActionBar component.
+
+CONTEXT:
+ActionBar will be a reusable component used across all GetHiredAlly services
+for sharing (Email, WhatsApp) and exporting (PDF, WORD, MD, Copy) content.
+
+───────────────────────────────────────────────────────────
+INSTRUCTIONS:
+───────────────────────────────────────────────────────────
+
+Step 1: Create folder structure:
+        client/src/components/common/ActionBar/
+
+Step 2: Create index.js with this EXACT content:
+
+export { default as ActionBar } from './ActionBar';
+export { default as ActionBarButton } from './ActionBarButton';
+
+Step 3: Create empty placeholder files (we will fill them in next prompts):
+        - ActionBar.jsx (empty, just a comment)
+        - ActionBarButton.jsx (empty, just a comment)
+
+Step 4: Create utils folder:
+        client/src/components/common/ActionBar/utils/
+
+Step 5: Create utils/index.js with this EXACT content:
+
+export { copyToClipboard } from './clipboard';
+export { sendEmail } from './email';
+export { shareToWhatsApp } from './whatsapp';
+export { formatContent, stripMarkdown } from './formatters';
+
+Step 6: Create empty placeholder files in utils/:
+        - clipboard.js (empty, just a comment)
+        - email.js (empty, just a comment)
+        - whatsapp.js (empty, just a comment)
+        - formatters.js (empty, just a comment)
+
+───────────────────────────────────────────────────────────
+FILES TO CREATE:
+───────────────────────────────────────────────────────────
+
+client/src/components/common/ActionBar/
+├── index.js
+├── ActionBar.jsx (placeholder)
+├── ActionBarButton.jsx (placeholder)
+└── utils/
+    ├── index.js
+    ├── clipboard.js (placeholder)
+    ├── email.js (placeholder)
+    ├── whatsapp.js (placeholder)
+    └── formatters.js (placeholder)
+
+DO NOT TOUCH:
+- All other files
+- Do NOT install any packages
+
+───────────────────────────────────────────────────────────
+WHEN COMPLETE:
+───────────────────────────────────────────────────────────
+
+Confirm:
+□ Folder structure created at client/src/components/common/ActionBar/
+□ index.js exports ActionBar and ActionBarButton
+□ utils/index.js exports all utility functions
+□ All placeholder files created
+□ No other files modified
+
+Type "COMPLETE - READY FOR PROMPT 3#7" when done.
