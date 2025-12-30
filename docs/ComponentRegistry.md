@@ -34,6 +34,8 @@ to see if it already exists.
 |------|----------|--------|----------|
 | ActionBar | UI Component | ✅ | `client/src/components/common/ActionBar/` |
 | ActionBarButton | UI Component | ✅ | `client/src/components/common/ActionBar/` |
+| GHAScanner | UI Component | ✅ | `client/src/components/common/GHAScanner/` |
+| scannerSounds | Utility | ✅ | `client/src/components/common/GHAScanner/` |
 | ScoreDashboard | UI Component | ✅ | `client/src/components/cv-optimizer/` |
 | ScoreComparison | UI Component | ✅ | `client/src/components/cv-optimizer/` |
 | copyToClipboard | Utility | ✅ | `client/src/components/common/ActionBar/utils/` |
@@ -140,6 +142,63 @@ to see if it already exists.
 | **Status** | ✅ Complete |
 
 **Props:** `beforeScore`, `afterScore`, `improvement`, `categoryImprovements`
+
+---
+
+### GHAScanner
+
+| Field | Value |
+|-------|-------|
+| **Name** | GHAScanner |
+| **Purpose** | Visual progress indicator with animated grid (Defrag-style) |
+| **Category** | UI Component |
+| **Location** | `client/src/components/common/GHAScanner/` |
+| **Import** | `import { GHAScanner } from '@/components/common/GHAScanner'` |
+| **Status** | ✅ Complete |
+| **Used By** | CVScanningPage, future services |
+| **Added** | December 30, 2025 |
+
+**Props:**
+
+| Prop | Type | Required | Description |
+|------|------|----------|-------------|
+| `isScanning` | boolean | Yes | Controls animation state |
+| `progress` | number | Yes | Progress 0-100 |
+| `statusMessages` | string[] | No | Rotating status texts |
+| `showProgress` | boolean | No | Show progress bar |
+| `showLegend` | boolean | No | Show color legend |
+| `onComplete` | function | No | Callback at 100% |
+
+**Features:**
+- Windows 95 Defrag-style grid animation
+- Color-coded blocks (OK, Minor, Medium, Critical)
+- Rotating status messages
+- Progress bar
+- Pleasant sound effects (Web Audio API)
+
+**Related Files:**
+- `scannerStyles.ts` - Style constants and colors
+- `scannerSounds.ts` - Web Audio API sound effects
+
+**Sound Effects:**
+
+| Sound | Trigger | Character |
+|-------|---------|-----------|
+| Start | Scan begins | Ascending chime |
+| Complete | Scan finishes | 3-note success chord |
+| Error | Problem | Gentle descending tone |
+
+**Example:**
+```tsx
+import { GHAScanner, STATUS_MESSAGES } from '@/components/common/GHAScanner';
+
+<GHAScanner
+  isScanning={true}
+  progress={45}
+  statusMessages={STATUS_MESSAGES.cvOptimizer}
+  onComplete={() => navigate('/results')}
+/>
+```
 
 ---
 
@@ -478,5 +537,5 @@ import { GHATooltip, TOOLTIP_TEXTS } from '@/components/common/Tooltip';
 
 ---
 
-**TOTAL COMPONENTS:** 18  
+**TOTAL COMPONENTS:** 20  
 **Last Updated:** December 30, 2025
