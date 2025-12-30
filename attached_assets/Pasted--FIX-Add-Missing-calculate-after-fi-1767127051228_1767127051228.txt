@@ -1,0 +1,111 @@
+═══════════════════════════════════════════════════════════════
+FIX: Add Missing calculate_after_fix_score Function
+═══════════════════════════════════════════════════════════════
+
+PROBLEM:
+ImportError: cannot import name 'calculate_after_fix_score' from 'common.scoring'
+
+CAUSE:
+The new v4.0 scoring module is missing the calculate_after_fix_score function
+that the existing route needs.
+
+───────────────────────────────────────────────────────────────
+
+TASK: Add the missing function and update exports
+
+───────────────────────────────────────────────────────────────
+
+INSTRUCTIONS:
+
+Step 1: Open backend/common/scoring/calculator.py
+
+Step 2: Add this function at the END of the file (after existing functions):
+
+def calculate_after_fix_score(
+    original_extracted_data: dict,
+    fixed_extracted_data: dict
+) -> dict:
+    """
+    Calculate score for fixed CV and compare with original.
+    
+    Uses the SAME scoring algorithm for both - ensuring fair comparison.
+    
+    Args:
+        original_extracted_data: Extracted data from original CV
+        fixed_extracted_data: Extracted data from fixed CV
+    
+    Returns:
+        Dictionary with before/after scores and improvement
+    """
+    # Score original CV
+    original_result = calculate_cv_score(original_extracted_data)
+    
+    # Score fixed CV (SAME algorithm)
+    fixed_result = calculate_cv_score(fixed_extracted_data)
+    
+    # Calculate improvement
+    improvement_points = fixed_result.total_score - original_result.total_score
+    improvement_percent = round((improvement_points / max(original_result.total_score, 1)) * 100)
+    
+    return {
+        'before_score': original_result.total_score,
+        'after_score': fixed_result.total_score,
+        'improvement_points': improvement_points,
+        'improvement_percent': improvement_percent,
+        'before_breakdown': original_result.breakdown,
+        'after_breakdown': fixed_result.breakdown,
+        'before_grade': original_result.grade_label,
+        'after_grade': fixed_result.grade_label
+    }
+
+Step 3: Open backend/common/scoring/__init__.py
+
+Step 4: Update the imports to include the new function. The file should be:
+
+"""
+CV Scoring Module - Deterministic scoring engine.
+Version: 4.0
+"""
+
+from .calculator import calculate_cv_score, calculate_after_fix_score
+from .calculator import get_score_message, calculate_improvement, ScoreResult
+from .config import CATEGORY_WEIGHTS, SCORE_MIN, SCORE_MAX
+
+__all__ = [
+    'calculate_cv_score',
+    'calculate_after_fix_score',
+    'get_score_message',
+    'calculate_improvement',
+    'ScoreResult',
+    'CATEGORY_WEIGHTS',
+    'SCORE_MIN',
+    'SCORE_MAX'
+]
+
+Step 5: Save both files
+
+Step 6: Restart the backend server
+
+Step 7: Check console for errors
+
+───────────────────────────────────────────────────────────────
+
+FILES TO MODIFY:
+- backend/common/scoring/calculator.py (add function)
+- backend/common/scoring/__init__.py (update exports)
+
+DO NOT TOUCH:
+- backend/app/cv_optimizer.py
+- Any other files
+
+───────────────────────────────────────────────────────────────
+
+WHEN COMPLETE:
+
+Report:
+- Function added to calculator.py
+- Exports updated in __init__.py
+- Server restarted
+- Any errors in console
+
+Test by uploading a CV again.

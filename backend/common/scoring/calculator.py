@@ -146,3 +146,38 @@ def calculate_improvement(before_score: int, after_score: int) -> Dict[str, Any]
         'improvement_points': improvement,
         'improvement_percent': improvement_percent
     }
+
+
+def calculate_after_fix_score(
+    original_extracted_data: dict,
+    fixed_extracted_data: dict
+) -> dict:
+    """
+    Calculate score for fixed CV and compare with original.
+    
+    Uses the SAME scoring algorithm for both - ensuring fair comparison.
+    
+    Args:
+        original_extracted_data: Extracted data from original CV
+        fixed_extracted_data: Extracted data from fixed CV
+    
+    Returns:
+        Dictionary with before/after scores and improvement
+    """
+    original_result = calculate_cv_score(original_extracted_data)
+    
+    fixed_result = calculate_cv_score(fixed_extracted_data)
+    
+    improvement_points = fixed_result.total_score - original_result.total_score
+    improvement_percent = round((improvement_points / max(original_result.total_score, 1)) * 100)
+    
+    return {
+        'before_score': original_result.total_score,
+        'after_score': fixed_result.total_score,
+        'improvement_points': improvement_points,
+        'improvement_percent': improvement_percent,
+        'before_breakdown': original_result.breakdown,
+        'after_breakdown': fixed_result.breakdown,
+        'before_grade': original_result.grade_label,
+        'after_grade': fixed_result.grade_label
+    }
