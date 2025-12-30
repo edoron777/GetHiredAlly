@@ -1,1 +1,142 @@
-// GHATooltip component - placeholder
+/**
+ * GHATooltip - GetHiredAlly Tooltip Component
+ * Reusable tooltip with consistent styling across all services
+ */
+
+import React from 'react';
+import * as TooltipPrimitive from '@radix-ui/react-tooltip';
+import { Info, AlertTriangle, Lightbulb } from 'lucide-react';
+import { TOOLTIP_VARIANTS, TOOLTIP_LAYOUT, TOOLTIP_TIMING, TOOLTIP_TYPOGRAPHY, TooltipVariant } from './tooltipStyles';
+
+// Icon mapping
+const ICONS = {
+  info: Info,
+  warning: AlertTriangle,
+  tip: Lightbulb,
+} as const;
+
+type IconType = keyof typeof ICONS;
+
+interface GHATooltipProps {
+  children: React.ReactNode;
+  text: string;
+  title?: string;
+  variant?: TooltipVariant;
+  side?: 'top' | 'bottom' | 'left' | 'right';
+  delayDuration?: number;
+  icon?: IconType;
+  learnMoreUrl?: string;
+}
+
+export const GHATooltip: React.FC<GHATooltipProps> = ({
+  children,
+  text,
+  title,
+  variant = 'default',
+  side = 'top',
+  delayDuration = TOOLTIP_TIMING.delayDuration,
+  icon,
+  learnMoreUrl,
+}) => {
+  const variantStyles = TOOLTIP_VARIANTS[variant];
+  const IconComponent = icon ? ICONS[icon] : null;
+
+  const contentStyle: React.CSSProperties = {
+    maxWidth: TOOLTIP_LAYOUT.maxWidth,
+    padding: TOOLTIP_LAYOUT.padding,
+    backgroundColor: variantStyles.background,
+    border: `${TOOLTIP_LAYOUT.borderWidth} solid ${variantStyles.border}`,
+    borderRadius: TOOLTIP_LAYOUT.borderRadius,
+    boxShadow: TOOLTIP_LAYOUT.shadow,
+    zIndex: 50,
+  };
+
+  const titleStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    fontSize: TOOLTIP_TYPOGRAPHY.title.size,
+    fontWeight: TOOLTIP_TYPOGRAPHY.title.weight,
+    color: TOOLTIP_TYPOGRAPHY.title.color,
+    marginBottom: title ? '6px' : 0,
+  };
+
+  const textStyle: React.CSSProperties = {
+    fontSize: TOOLTIP_TYPOGRAPHY.text.size,
+    fontWeight: TOOLTIP_TYPOGRAPHY.text.weight,
+    color: TOOLTIP_TYPOGRAPHY.text.color,
+    lineHeight: 1.4,
+  };
+
+  const linkStyle: React.CSSProperties = {
+    display: 'inline-block',
+    marginTop: '8px',
+    fontSize: TOOLTIP_TYPOGRAPHY.link.size,
+    fontWeight: TOOLTIP_TYPOGRAPHY.link.weight,
+    color: TOOLTIP_TYPOGRAPHY.link.color,
+    textDecoration: 'none',
+  };
+
+  const arrowStyle: React.CSSProperties = {
+    fill: variantStyles.background,
+    stroke: variantStyles.border,
+    strokeWidth: 1,
+  };
+
+  return (
+    <TooltipPrimitive.Provider delayDuration={delayDuration}>
+      <TooltipPrimitive.Root>
+        <TooltipPrimitive.Trigger asChild>
+          {children}
+        </TooltipPrimitive.Trigger>
+        <TooltipPrimitive.Portal>
+          <TooltipPrimitive.Content
+            side={side}
+            sideOffset={8}
+            style={contentStyle}
+          >
+            {/* Title with optional icon */}
+            {(title || IconComponent) && (
+              <div style={titleStyle}>
+                {IconComponent && (
+                  <IconComponent 
+                    size={16} 
+                    color={variantStyles.iconColor} 
+                  />
+                )}
+                {title && <span>{title}</span>}
+              </div>
+            )}
+
+            {/* Description text */}
+            <div style={textStyle}>
+              {text}
+            </div>
+
+            {/* Optional Learn More link */}
+            {learnMoreUrl && (
+              <a
+                href={learnMoreUrl}
+                style={linkStyle}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+              >
+                Learn more →
+              </a>
+            )}
+
+            {/* Arrow */}
+            <TooltipPrimitive.Arrow 
+              width={12} 
+              height={6} 
+              style={arrowStyle}
+            />
+          </TooltipPrimitive.Content>
+        </TooltipPrimitive.Portal>
+      </TooltipPrimitive.Root>
+    </TooltipPrimitive.Provider>
+  );
+};
+
+export default GHATooltip;
