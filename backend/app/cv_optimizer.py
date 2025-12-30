@@ -281,7 +281,7 @@ Return ONLY a valid JSON array of issues. No other text. Example:
 
 
 def parse_ai_json_response(response_text: str) -> list:
-    """Robust JSON parsing that handles markdown code fences and extra text."""
+    """Robust JSON parsing that handles markdown code fences, extra text, and truncation."""
     text = response_text.strip()
     
     # Remove markdown code fences if present
@@ -295,7 +295,8 @@ def parse_ai_json_response(response_text: str) -> list:
     
     # Try direct parse first
     try:
-        return json.loads(text)
+        result = json.loads(text)
+        return result
     except json.JSONDecodeError:
         pass
     
@@ -305,11 +306,31 @@ def parse_ai_json_response(response_text: str) -> list:
     if start != -1 and end > start:
         json_text = text[start:end + 1]
         try:
-            return json.loads(json_text)
+            result = json.loads(json_text)
+            return result
         except json.JSONDecodeError:
             # JSON might be truncated - try to fix it
-            json_text = fix_truncated_json(json_text)
-            return json.loads(json_text)
+            logger.info("[CV_SCAN] JSON truncated, attempting to fix...")
+            fixed_json = fix_truncated_json(json_text)
+            try:
+                result = json.loads(fixed_json)
+                logger.info(f"[CV_SCAN] Successfully fixed truncated JSON, recovered {len(result)} issues")
+                return result
+            except json.JSONDecodeError as e:
+                logger.warning(f"[CV_SCAN] Fix attempt failed: {e}")
+                raise
+    
+    # If no closing bracket found, response might be severely truncated
+    if start != -1:
+        json_text = text[start:]
+        logger.info("[CV_SCAN] No closing bracket found, attempting to fix severely truncated JSON...")
+        fixed_json = fix_truncated_json(json_text)
+        try:
+            result = json.loads(fixed_json)
+            logger.info(f"[CV_SCAN] Successfully recovered {len(result)} issues from truncated response")
+            return result
+        except json.JSONDecodeError as e:
+            logger.warning(f"[CV_SCAN] Severe truncation fix failed: {e}")
     
     raise json.JSONDecodeError("No valid JSON array found", text, 0)
 
@@ -355,28 +376,85 @@ def clean_markdown_for_analysis(text: str) -> str:
 
 
 def fix_truncated_json(json_text: str) -> str:
-    """Attempt to fix truncated JSON array by closing open structures."""
+    """Attempt to fix truncated JSON array by finding last complete object."""
     text = json_text.rstrip()
     
-    # Count open braces/brackets
-    open_braces = text.count('{') - text.count('}')
-    open_brackets = text.count('[') - text.count(']')
+    # Strategy: Find all complete JSON objects and keep only those
+    # A complete object ends with } and has balanced quotes before it
     
-    # If we're inside an incomplete object, try to close it gracefully
-    if open_braces > 0 or open_brackets > 0:
-        # Find the last complete object
-        last_complete = text.rfind('},')
-        if last_complete != -1:
-            text = text[:last_complete + 1]
-        else:
-            # Try to find last complete object without comma
-            last_complete = text.rfind('}')
-            if last_complete != -1 and last_complete > text.rfind('{'):
-                text = text[:last_complete + 1]
+    # First, try to find the last complete object by looking for },
+    # but we need to ensure the object before it is actually complete
+    
+    # Find all positions where we have a complete object (ends with })
+    # by iterating backwards and finding properly closed objects
+    
+    complete_objects = []
+    depth = 0
+    in_string = False
+    escape_next = False
+    current_start = -1
+    
+    i = 0
+    while i < len(text):
+        char = text[i]
         
-        # Close the array
-        if not text.endswith(']'):
-            text = text.rstrip(',') + ']'
+        if escape_next:
+            escape_next = False
+            i += 1
+            continue
+            
+        if char == '\\' and in_string:
+            escape_next = True
+            i += 1
+            continue
+            
+        if char == '"' and not escape_next:
+            in_string = not in_string
+            
+        if not in_string:
+            if char == '[' and depth == 0:
+                pass  # Skip the opening bracket
+            elif char == '{':
+                if depth == 0:
+                    current_start = i
+                depth += 1
+            elif char == '}':
+                depth -= 1
+                if depth == 0 and current_start != -1:
+                    # Found a complete object
+                    complete_objects.append((current_start, i + 1))
+                    current_start = -1
+        
+        i += 1
+    
+    # If we found complete objects, reconstruct the array with only those
+    if complete_objects:
+        objects_text = [text[start:end] for start, end in complete_objects]
+        result = '[' + ','.join(objects_text) + ']'
+        return result
+    
+    # Fallback: try the old method
+    # Find the last complete object marker },
+    last_complete = text.rfind('},')
+    if last_complete != -1:
+        text = text[:last_complete + 1]
+    else:
+        # Try to find last complete object without comma
+        last_complete = text.rfind('}')
+        if last_complete != -1:
+            # Make sure this } closes an object, not just any brace
+            text = text[:last_complete + 1]
+    
+    # Ensure we start with [ and end with ]
+    if not text.startswith('['):
+        start_bracket = text.find('[')
+        if start_bracket != -1:
+            text = text[start_bracket:]
+        else:
+            text = '[' + text
+    
+    if not text.endswith(']'):
+        text = text.rstrip(',') + ']'
     
     return text
 
