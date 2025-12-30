@@ -490,7 +490,7 @@ export function CVReportPage() {
             fileName="CV_Analysis_Report"
             emailSubject="My CV Analysis Report - GetHiredAlly"
             hiddenButtons={[]}
-            disabledButtons={['pdf', 'word']}
+            disabledButtons={[]}
             onPDF={handleExportPDF}
             onWord={handleExportWord}
             onMarkdown={handleExportMarkdown}

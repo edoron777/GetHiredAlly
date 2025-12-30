@@ -1,0 +1,85 @@
+═══════════════════════════════════════════════════════════
+FIX PDF AND WORD BUTTON TEXT COLOR
+═══════════════════════════════════════════════════════════
+
+PROBLEM:
+The PDF and WORD button labels appear faded/light gray.
+The MD and Copy buttons have dark, visible text.
+PDF and WORD should have the SAME text color as MD and Copy.
+
+FILE TO MODIFY: client/src/components/common/ActionBar/ActionBar.jsx
+
+───────────────────────────────────────────────────────────
+INVESTIGATION NEEDED
+───────────────────────────────────────────────────────────
+
+First, find WHY PDF and WORD have different styling:
+
+1. Check if PDF and WORD are in the "disabledButtons" array
+2. Check if they have a different "color" prop than MD and Copy
+3. Check if there's conditional styling based on button name
+
+───────────────────────────────────────────────────────────
+THE FIX
+───────────────────────────────────────────────────────────
+
+Find where the buttons are defined. Look for something like:
+
+const buttons = [
+  { name: 'pdf', label: 'PDF', color: '#...', ... },
+  { name: 'word', label: 'WORD', color: '#...', ... },
+  { name: 'md', label: 'MD', color: '#...', ... },
+  { name: 'copy', label: 'Copy', color: '#...', ... },
+];
+
+CHANGE the PDF and WORD colors to match MD and Copy.
+
+Current (WRONG):
+- PDF color: light gray like #9ca3af or similar
+- WORD color: light gray like #9ca3af or similar
+
+Should be (CORRECT):
+- PDF color: #ef4444 (red) - SAME AS SPECIFIED IN DESIGN
+- WORD color: #2563eb (blue) - SAME AS SPECIFIED IN DESIGN
+- Both should have fontWeight: 600 or 'bold'
+
+───────────────────────────────────────────────────────────
+BUTTON COLOR SPECIFICATION
+───────────────────────────────────────────────────────────
+
+Use these EXACT colors for each button:
+
+| Button   | Color Code | Color Name |
+|----------|------------|------------|
+| Copy     | #6b7280    | Gray       |
+| Email    | #3b82f6    | Blue       |
+| WhatsApp | #25D366    | Green      |
+| PDF      | #ef4444    | Red        |
+| WORD     | #2563eb    | Blue       |
+| MD       | #6b7280    | Gray       |
+
+All buttons should have:
+- fontWeight: 600 (semi-bold)
+- opacity: 1 (not faded)
+- NO "disabled" styling unless actually disabled
+
+───────────────────────────────────────────────────────────
+IMPORTANT
+───────────────────────────────────────────────────────────
+
+Even if PDF and WORD functionality shows "coming soon" alert,
+the buttons should LOOK enabled (bold, colored text).
+
+The visual appearance should NOT indicate disabled state.
+Only the click behavior shows the "coming soon" message.
+
+───────────────────────────────────────────────────────────
+VERIFICATION
+───────────────────────────────────────────────────────────
+
+After the fix:
+- PDF should have RED text (#ef4444), bold
+- WORD should have BLUE text (#2563eb), bold
+- All 6 buttons should have equal visual weight (no faded buttons)
+
+Show me the before/after of the button color definitions.
