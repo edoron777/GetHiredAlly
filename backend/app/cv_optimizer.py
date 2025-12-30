@@ -19,7 +19,7 @@ from services.ai_service import generate_completion
 from utils.encryption import decrypt_text
 from utils.file_generators import generate_pdf, generate_docx
 from config.rate_limiter import limiter
-from common.scoring import calculate_cv_score as calculate_cv_score_new
+from common.scoring import calculate_cv_score as calculate_cv_score_new, calculate_after_fix_score
 from common.scoring.extractors import extract_patterns, analyze_text
 
 logger = logging.getLogger(__name__)
@@ -598,7 +598,11 @@ async def get_detailed_report(scan_id: str, token: str):
             'cv_score': score_data['score'],
             'score_message': score_data['message'],
             'score_status': score_data['status'],
-            'score_breakdown': score_data['breakdown']
+            'score_breakdown': score_data['breakdown'],
+            'total_score': score_data['score'],
+            'grade': score_data['status'],
+            'breakdown': score_data['breakdown'],
+            'score_version': score_data.get('version', '3.0.0')
         }
 
     except HTTPException:
@@ -786,7 +790,13 @@ async def get_fixed_cv(scan_id: str, token: str):
         cv_content = scan.get('original_cv_content', '')
         score_data = extract_cv_data_and_score(cv_content) if cv_content else calculate_cv_score_from_issues(issues)
         original_score = score_data['score']
-        fixed_score = 95
+        original_breakdown = score_data.get('breakdown', {})
+        
+        after_fix_result = calculate_after_fix_score(
+            before_score=original_score,
+            issues=issues,
+            breakdown=original_breakdown
+        )
 
         return {
             'scan_id': scan['id'],
@@ -796,8 +806,12 @@ async def get_fixed_cv(scan_id: str, token: str):
             'issues': issues,
             'status': scan['status'],
             'original_score': original_score,
-            'fixed_score': fixed_score,
-            'improvement': fixed_score - original_score
+            'fixed_score': after_fix_result['after_score'],
+            'improvement': after_fix_result['improvement'],
+            'category_improvements': after_fix_result.get('category_improvements', {}),
+            'before_score': after_fix_result['before_score'],
+            'after_score': after_fix_result['after_score'],
+            'score_version': '3.0.0'
         }
 
     except HTTPException:

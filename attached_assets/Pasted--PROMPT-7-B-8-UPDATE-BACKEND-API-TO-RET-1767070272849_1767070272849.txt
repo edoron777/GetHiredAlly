@@ -1,0 +1,79 @@
+═══════════════════════════════════════════════════════════
+PROMPT 7.B#8: UPDATE BACKEND API TO RETURN v3.0 DATA
+═══════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Make MINIMAL changes to existing API endpoints
+3. Do NOT refactor or "improve" existing code
+4. If unclear, STOP and ask - do not assume
+
+───────────────────────────────────────────────────────────
+TASK: Update backend API to use new scoring module and return v3.0 data
+───────────────────────────────────────────────────────────
+
+OBJECTIVE:
+Modify the CV Optimizer API endpoints to:
+1. Import and use the new scoring module
+2. Return breakdown object with category scores
+3. Return category_improvements for fixed CV
+
+───────────────────────────────────────────────────────────
+INSTRUCTIONS:
+───────────────────────────────────────────────────────────
+
+Step 1: Find the CV Optimizer service file that handles /report endpoint
+
+Step 2: Add import at the top:
+from backend.common.scoring import calculate_cv_score, calculate_after_fix_score
+
+Step 3: After AI analysis extracts data, call:
+score_result = calculate_cv_score(extracted_data)
+
+Step 4: Include in API response:
+{
+    "total_score": score_result["total_score"],
+    "breakdown": score_result["breakdown"],
+    "grade": score_result["grade"],
+    "message": score_result["message"],
+    "version": score_result["version"],
+    ... existing fields ...
+}
+
+Step 5: For the /fixed endpoint, call:
+after_fix_result = calculate_after_fix_score(
+    before_score=original_score,
+    issues=detected_issues,
+    breakdown=original_breakdown
+)
+
+Step 6: Include in fixed CV response:
+{
+    "before_score": after_fix_result["before_score"],
+    "after_score": after_fix_result["after_score"],
+    "improvement": after_fix_result["improvement"],
+    "category_improvements": after_fix_result["category_improvements"],
+    ... existing fields ...
+}
+
+───────────────────────────────────────────────────────────
+IMPORTANT:
+───────────────────────────────────────────────────────────
+
+- Preserve ALL existing response fields
+- ADD new fields, do not replace existing ones
+- Maintain backwards compatibility
+
+───────────────────────────────────────────────────────────
+WHEN COMPLETE:
+───────────────────────────────────────────────────────────
+
+Confirm:
+□ Scoring module imported successfully
+□ /report endpoint returns breakdown object
+□ /fixed endpoint returns category_improvements
+□ Existing functionality preserved
+□ Test that frontend components now display
+
+Report any issues.
