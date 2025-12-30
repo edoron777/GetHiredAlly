@@ -1,0 +1,388 @@
+═══════════════════════════════════════════════════════════
+PROMPT 3#8: UPDATE CATEGORY SCORING FUNCTIONS
+═══════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify files not explicitly mentioned
+3. Do NOT add features not explicitly requested
+4. If unclear, STOP and ask - do not assume
+
+───────────────────────────────────────────────────────────
+TASK: Create/update the 8 category scoring functions with v3.0 logic
+───────────────────────────────────────────────────────────
+
+OBJECTIVE:
+Create individual scoring functions for each category with the correct
+max points according to v3.0 weights.
+
+───────────────────────────────────────────────────────────
+INSTRUCTIONS:
+───────────────────────────────────────────────────────────
+
+Step 1: Create folder structure if not exists:
+        backend/common/scoring/categories/
+
+Step 2: Create backend/common/scoring/categories/__init__.py with:
+
+from .quantification import calculate_quantification_score
+from .experience import calculate_experience_score
+from .language import calculate_language_score
+from .grammar import calculate_grammar_score
+from .skills import calculate_skills_score
+from .formatting import calculate_formatting_score
+from .contact import calculate_contact_score
+from .length import calculate_length_score
+
+__all__ = [
+    'calculate_quantification_score',
+    'calculate_experience_score',
+    'calculate_language_score',
+    'calculate_grammar_score',
+    'calculate_skills_score',
+    'calculate_formatting_score',
+    'calculate_contact_score',
+    'calculate_length_score'
+]
+
+Step 3: Create backend/common/scoring/categories/quantification.py with:
+
+"""
+Quantification scoring category.
+Max: 25 points (v3.0)
+THE most important category - achievements with numbers.
+"""
+
+def calculate_quantification_score(data: dict) -> float:
+    """
+    Calculate quantification score based on % of bullets with numbers.
+    
+    Args:
+        data: dict with 'total_bullet_points' and 'bullets_with_numbers'
+        
+    Returns:
+        Score between 5 and 25
+    """
+    total_bullets = data.get('total_bullet_points', 0)
+    bullets_with_numbers = data.get('bullets_with_numbers', 0)
+    
+    if total_bullets == 0:
+        return 12.5  # Neutral if no bullets detected
+    
+    ratio = bullets_with_numbers / total_bullets
+    
+    if ratio >= 0.70:
+        return 25.0
+    elif ratio >= 0.50:
+        return 20.0
+    elif ratio >= 0.35:
+        return 15.0
+    elif ratio >= 0.20:
+        return 10.0
+    else:
+        return 5.0
+
+Step 4: Create backend/common/scoring/categories/experience.py with:
+
+"""
+Experience scoring category.
+Max: 20 points (v3.0)
+"""
+
+def calculate_experience_score(data: dict) -> float:
+    """
+    Calculate experience presentation score.
+    
+    Args:
+        data: dict with experience-related fields
+        
+    Returns:
+        Score between 0 and 20
+    """
+    score = 0.0
+    
+    # Reverse chronological order (5 points)
+    if data.get('is_reverse_chronological', False):
+        score += 5.0
+    
+    # Company names present (4 points)
+    if data.get('has_company_names', False):
+        score += 4.0
+    
+    # Job titles present (4 points)
+    if data.get('has_job_titles', False):
+        score += 4.0
+    
+    # Dates for each role (4 points)
+    if data.get('has_dates_for_each_role', False):
+        score += 4.0
+    
+    # Consistent date format (3 points)
+    if data.get('dates_are_consistent_format', False):
+        score += 3.0
+    
+    return score
+
+Step 5: Create backend/common/scoring/categories/language.py with:
+
+"""
+Language scoring category.
+Max: 15 points (v3.0)
+"""
+
+def calculate_language_score(data: dict) -> float:
+    """
+    Calculate language quality score.
+    
+    Args:
+        data: dict with language metrics
+        
+    Returns:
+        Score between 0 and 15
+    """
+    score = 0.0
+    
+    # Strong action verbs (6 points)
+    strong_count = data.get('strong_action_verbs_count', 0)
+    if strong_count >= 10:
+        score += 6.0
+    elif strong_count >= 7:
+        score += 5.0
+    elif strong_count >= 4:
+        score += 3.5
+    elif strong_count >= 1:
+        score += 2.0
+    
+    # Minimal weak phrases (5 points)
+    weak_count = data.get('weak_phrases_count', 0)
+    if weak_count == 0:
+        score += 5.0
+    elif weak_count <= 2:
+        score += 4.0
+    elif weak_count <= 4:
+        score += 2.0
+    
+    # Minimal passive voice (4 points)
+    passive_count = data.get('passive_voice_count', 0)
+    if passive_count == 0:
+        score += 4.0
+    elif passive_count <= 2:
+        score += 3.0
+    elif passive_count <= 4:
+        score += 1.5
+    
+    return score
+
+Step 6: Create backend/common/scoring/categories/grammar.py with:
+
+"""
+Grammar scoring category.
+Max: 10 points (v3.0)
+Pass/fail hygiene - not a differentiator.
+"""
+
+def calculate_grammar_score(data: dict) -> float:
+    """
+    Calculate grammar and spelling score.
+    
+    Args:
+        data: dict with grammar_errors_count and spelling_errors_count
+        
+    Returns:
+        Score between 0 and 10
+    """
+    grammar_errors = data.get('grammar_errors_count', 0)
+    spelling_errors = data.get('spelling_errors_count', 0)
+    total_errors = grammar_errors + spelling_errors
+    
+    if total_errors == 0:
+        return 10.0
+    elif total_errors <= 2:
+        return 8.0
+    elif total_errors <= 5:
+        return 5.0
+    elif total_errors <= 8:
+        return 2.0
+    else:
+        return 0.0
+
+Step 7: Create backend/common/scoring/categories/skills.py with:
+
+"""
+Skills scoring category.
+Max: 10 points (v3.0)
+"""
+
+def calculate_skills_score(data: dict) -> float:
+    """
+    Calculate skills presentation score.
+    
+    Args:
+        data: dict with skills-related fields
+        
+    Returns:
+        Score between 0 and 10
+    """
+    score = 0.0
+    
+    # Skills section exists (4 points)
+    if data.get('has_skills_section', False):
+        score += 4.0
+    
+    # Skills are categorized (3 points)
+    if data.get('skills_are_categorized', False):
+        score += 3.0
+    
+    # Relevant keywords found (3 points)
+    keywords = data.get('tech_keywords_found', [])
+    keywords_count = len(keywords) if isinstance(keywords, list) else 0
+    if keywords_count >= 8:
+        score += 3.0
+    elif keywords_count >= 5:
+        score += 2.0
+    elif keywords_count >= 2:
+        score += 1.0
+    
+    return score
+
+Step 8: Create backend/common/scoring/categories/formatting.py with:
+
+"""
+Formatting scoring category.
+Max: 10 points (v3.0)
+"""
+
+def calculate_formatting_score(data: dict) -> float:
+    """
+    Calculate formatting and structure score.
+    
+    Args:
+        data: dict with formatting fields
+        
+    Returns:
+        Score between 0 and 10
+    """
+    score = 0.0
+    
+    # Clear section headers (3 points)
+    if data.get('has_section_headers', False):
+        score += 3.0
+    
+    # Uses bullet points (3 points)
+    if data.get('uses_bullet_points', False):
+        score += 3.0
+    
+    # Appropriate word count (2 points)
+    word_count = data.get('word_count', 0)
+    if 400 <= word_count <= 800:
+        score += 2.0
+    elif 300 <= word_count <= 1000:
+        score += 1.0
+    
+    # Consistent date format (2 points)
+    if data.get('dates_are_consistent_format', False):
+        score += 2.0
+    
+    return score
+
+Step 9: Create backend/common/scoring/categories/contact.py with:
+
+"""
+Contact information scoring category.
+Max: 5 points (v3.0)
+Basic hygiene - LinkedIn removed from scoring.
+"""
+
+def calculate_contact_score(data: dict) -> float:
+    """
+    Calculate contact information score.
+    
+    Note: LinkedIn removed - it's optional, not required.
+    
+    Args:
+        data: dict with contact fields
+        
+    Returns:
+        Score between 0 and 5
+    """
+    score = 0.0
+    
+    # Email present (2 points)
+    if data.get('has_email', False):
+        score += 2.0
+    
+    # Phone present (2 points)
+    if data.get('has_phone', False):
+        score += 2.0
+    
+    # Professional email (1 point)
+    if data.get('email_is_professional', False):
+        score += 1.0
+    
+    return score
+
+Step 10: Create backend/common/scoring/categories/length.py with:
+
+"""
+CV length scoring category.
+Max: 5 points (v3.0)
+"""
+
+def calculate_length_score(data: dict) -> float:
+    """
+    Calculate CV length score.
+    
+    Args:
+        data: dict with page_count
+        
+    Returns:
+        Score between 1 and 5
+    """
+    pages = data.get('page_count', 1)
+    
+    if pages == 1:
+        return 5.0
+    elif pages == 2:
+        return 4.0
+    elif pages == 3:
+        return 2.0
+    else:
+        return 1.0
+
+───────────────────────────────────────────────────────────
+FILES TO CREATE:
+───────────────────────────────────────────────────────────
+
+- backend/common/scoring/categories/__init__.py
+- backend/common/scoring/categories/quantification.py
+- backend/common/scoring/categories/experience.py
+- backend/common/scoring/categories/language.py
+- backend/common/scoring/categories/grammar.py
+- backend/common/scoring/categories/skills.py
+- backend/common/scoring/categories/formatting.py
+- backend/common/scoring/categories/contact.py
+- backend/common/scoring/categories/length.py
+
+DO NOT TOUCH:
+- All other files
+
+───────────────────────────────────────────────────────────
+WHEN COMPLETE:
+───────────────────────────────────────────────────────────
+
+Confirm:
+□ All 9 files created in backend/common/scoring/categories/
+□ __init__.py exports all 8 functions
+□ Each function returns correct max points:
+  - quantification: 25
+  - experience: 20
+  - language: 15
+  - grammar: 10
+  - skills: 10
+  - formatting: 10
+  - contact: 5
+  - length: 5
+□ No other files modified
+
+Type "COMPLETE - READY FOR PROMPT 4#8" when done.

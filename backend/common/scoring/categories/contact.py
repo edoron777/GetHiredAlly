@@ -1,47 +1,33 @@
 """
 Contact information scoring category.
-Max: 10 points
+Max: 5 points (v3.0)
+Basic hygiene - LinkedIn removed from scoring.
 """
 
-from ..config import CATEGORY_WEIGHTS
-
-
-def calculate_contact_score(data) -> float:
+def calculate_contact_score(data: dict) -> float:
     """
     Calculate contact information score.
     
-    Scoring breakdown:
-    - Name present: 1.5 points
-    - Email present: 1.5 points
-    - Phone present: 1.0 points
-    - LinkedIn present: 0.5 points
-    - Professional email: 0.5 points
+    Note: LinkedIn removed - it's optional, not required.
+    
+    Args:
+        data: dict with contact fields
+        
+    Returns:
+        Score between 0 and 5
     """
     score = 0.0
     
-    # Handle both dict and dataclass
-    if isinstance(data, dict):
-        has_name = data.get("has_name", False)
-        has_email = data.get("has_email", False)
-        has_phone = data.get("has_phone", False)
-        has_linkedin = data.get("has_linkedin", False)
-        professional_email = data.get("email_is_professional", False)
-    else:
-        has_name = data.has_name
-        has_email = data.has_email
-        has_phone = data.has_phone
-        has_linkedin = data.has_linkedin
-        professional_email = data.email_is_professional
+    # Email present (2 points)
+    if data.get('has_email', False):
+        score += 2.0
     
-    if has_name:
-        score += 1.5
-    if has_email:
-        score += 1.5
-    if has_phone:
+    # Phone present (2 points)
+    if data.get('has_phone', False):
+        score += 2.0
+    
+    # Professional email (1 point)
+    if data.get('email_is_professional', False):
         score += 1.0
-    if has_linkedin:
-        score += 0.5
-    if professional_email:
-        score += 0.5
     
     return score

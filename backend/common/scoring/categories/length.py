@@ -1,32 +1,25 @@
 """
 CV length scoring category.
-Max: 5 points
+Max: 5 points (v3.0)
 """
 
-from ..config import CATEGORY_WEIGHTS
-
-
-def calculate_length_score(data) -> float:
+def calculate_length_score(data: dict) -> float:
     """
     Calculate CV length score.
     
-    Scoring logic:
-    - 1 page: 5 points (optimal for most cases)
-    - 2 pages: 4 points (acceptable)
-    - 3+ pages: 2 points (too long)
-    - Less than 1 page: 1 point (too short)
+    Args:
+        data: dict with page_count
+        
+    Returns:
+        Score between 1 and 5
     """
-    # Handle both dict and dataclass
-    if isinstance(data, dict):
-        pages = data.get("page_count", 1)
-    else:
-        pages = data.page_count
+    pages = data.get('page_count', 1)
     
     if pages == 1:
         return 5.0
     elif pages == 2:
         return 4.0
-    elif pages >= 3:
+    elif pages == 3:
         return 2.0
     else:
         return 1.0
