@@ -138,3 +138,6 @@ attached_assets/Pasted--Replit-Prompt-Google*
 # Secrets and large files
 attached_assets/Pasted--Replit-Prompt-Google-Social-Login-Task-Implement-Googl_1766925450134.txt
 Temp/*.csv
+Temp/*
+*.pyc
+__pycache__/
