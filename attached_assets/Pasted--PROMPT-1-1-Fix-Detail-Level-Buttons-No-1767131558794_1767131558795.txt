@@ -1,0 +1,301 @@
+═══════════════════════════════════════════════════════════
+PROMPT 1#1: Fix Detail Level Buttons Not Working
+═══════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify files not explicitly mentioned
+3. Do NOT add features not explicitly requested
+4. Do NOT refactor or "improve" existing code
+5. Do NOT make autonomous decisions
+6. If unclear, STOP and ask - do not assume
+7. Make MINIMAL, SURGICAL changes only
+
+FORBIDDEN ACTIONS:
+- Changing the button labels or styling
+- Adding new detail levels
+- Modifying other components
+- Changing the recommendation card structure beyond what's specified
+
+───────────────────────────────────────────────────────────
+
+TASK: Fix the Detail Level selector buttons so they control recommendation display
+
+OBJECTIVE:
+Make the 4 detail level buttons (Quick Review, Standard, With Fix, Complete) 
+actually change how much information is shown in each recommendation card
+
+CONTEXT:
+After the layout restructure, the Detail Level buttons stopped working.
+Users can click the buttons but the recommendation display doesn't change.
+
+───────────────────────────────────────────────────────────
+
+SPECIFICATION: What Each Level Should Display
+
+LEVEL 1 - "Quick Review" (Just titles):
+┌─────────────────────────────────────────────────────────┐
+│ ▶ Missing LinkedIn URL                    ⚡ Quick fix   │
+└─────────────────────────────────────────────────────────┘
+Shows ONLY:
+- Issue title
+- Effort indicator (Quick fix / Medium effort / etc.)
+
+LEVEL 2 - "Standard" (+ Category & location):
+┌─────────────────────────────────────────────────────────┐
+│ ▶ Missing LinkedIn URL                    ⚡ Quick fix   │
+│   CATEGORY: Contact Information                         │
+│   LOCATION: Header                                      │
+└─────────────────────────────────────────────────────────┘
+Shows:
+- Issue title
+- Effort indicator
+- Category name
+- Location in CV
+
+LEVEL 3 - "With Fix" (+ How to fix it):
+┌─────────────────────────────────────────────────────────┐
+│ ▶ Missing LinkedIn URL                    ⚡ Quick fix   │
+│   CATEGORY: Contact Information                         │
+│   LOCATION: Header                                      │
+│   SUGGESTED FIX: Add your LinkedIn profile URL          │
+│   Example: linkedin.com/in/yourprofile                  │
+└─────────────────────────────────────────────────────────┘
+Shows:
+- Issue title
+- Effort indicator
+- Category name
+- Location in CV
+- Suggested fix / How to fix it
+
+LEVEL 4 - "Complete" (Full details):
+┌─────────────────────────────────────────────────────────┐
+│ ▶ Missing LinkedIn URL                    ⚡ Quick fix   │
+│   CATEGORY: Contact Information                         │
+│   LOCATION: Header                                      │
+│   FOUND: No LinkedIn URL present in contact section     │
+│   SUGGESTED FIX: Add your LinkedIn profile URL          │
+│   Example: linkedin.com/in/yourprofile                  │
+│   WHY IT MATTERS: Recruiters use LinkedIn to verify...  │
+└─────────────────────────────────────────────────────────┘
+Shows:
+- Issue title
+- Effort indicator
+- Category name
+- Location in CV
+- Found text (what was detected in the CV)
+- Suggested fix
+- Why it matters / explanation
+
+───────────────────────────────────────────────────────────
+
+INSTRUCTIONS:
+
+Step 1: FIND the CV Report page component
+- File: client/src/components/CVReportPage.tsx (or similar)
+
+Step 2: LOCATE the Detail Level state
+- Search for: "detailLevel", "displayLevel", "viewLevel"
+- There should be a useState for tracking selected level
+- Example: const [detailLevel, setDetailLevel] = useState('standard');
+
+If NOT found, ADD it:
+```tsx
+const [detailLevel, setDetailLevel] = useState<string>('standard');
+```
+
+Step 3: LOCATE the Detail Level buttons
+- Search for: "Quick Review", "Standard", "With Fix", "Complete"
+- These 4 buttons should be in a button group
+
+Step 4: VERIFY each button has onClick handler
+- Each button should call setDetailLevel with its value
+
+If NOT working, UPDATE the buttons:
+```tsx
+<div className="flex gap-2">
+  <button
+    onClick={() => setDetailLevel('quick')}
+    className={`px-4 py-2 rounded-lg border ${
+      detailLevel === 'quick' 
+        ? 'bg-blue-600 text-white border-blue-600' 
+        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+    }`}
+  >
+    <div className="font-medium">Quick Review</div>
+    <div className="text-xs opacity-75">Just titles</div>
+  </button>
+  
+  <button
+    onClick={() => setDetailLevel('standard')}
+    className={`px-4 py-2 rounded-lg border ${
+      detailLevel === 'standard' 
+        ? 'bg-blue-600 text-white border-blue-600' 
+        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+    }`}
+  >
+    <div className="font-medium">Standard</div>
+    <div className="text-xs opacity-75">+ Category & location</div>
+  </button>
+  
+  <button
+    onClick={() => setDetailLevel('withfix')}
+    className={`px-4 py-2 rounded-lg border ${
+      detailLevel === 'withfix' 
+        ? 'bg-blue-600 text-white border-blue-600' 
+        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+    }`}
+  >
+    <div className="font-medium">With Fix</div>
+    <div className="text-xs opacity-75">+ How to fix it</div>
+  </button>
+  
+  <button
+    onClick={() => setDetailLevel('complete')}
+    className={`px-4 py-2 rounded-lg border ${
+      detailLevel === 'complete' 
+        ? 'bg-blue-600 text-white border-blue-600' 
+        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+    }`}
+  >
+    <div className="font-medium">Complete</div>
+    <div className="text-xs opacity-75">Full details</div>
+  </button>
+</div>
+```
+
+Step 5: FIND the recommendation card rendering
+- Search for where individual recommendations/issues are rendered
+- Look for: "issue", "recommendation", "suggestion" mapping
+
+Step 6: UPDATE the recommendation card to respect detailLevel
+
+Find the component that renders each recommendation and update it to 
+conditionally show/hide fields based on detailLevel:
+```tsx
+// Inside the recommendation card component or map function:
+
+{/* Always show: Title + Effort */}
+<div className="flex justify-between items-center">
+  <span className="font-medium">{issue.title}</span>
+  <span className="text-sm">{issue.effort}</span>
+</div>
+
+{/* Level 2+ : Show Category & Location */}
+{(detailLevel === 'standard' || detailLevel === 'withfix' || detailLevel === 'complete') && (
+  <div className="mt-2 text-sm text-gray-600">
+    <div><span className="font-medium">CATEGORY:</span> {issue.category}</div>
+    <div><span className="font-medium">LOCATION:</span> {issue.location}</div>
+  </div>
+)}
+
+{/* Level 3+ : Show Suggested Fix */}
+{(detailLevel === 'withfix' || detailLevel === 'complete') && issue.suggestedFix && (
+  <div className="mt-2 text-sm">
+    <div className="font-medium text-green-700">SUGGESTED FIX:</div>
+    <div className="text-gray-700">{issue.suggestedFix}</div>
+  </div>
+)}
+
+{/* Level 4 only: Show Found Text & Why It Matters */}
+{detailLevel === 'complete' && (
+  <>
+    {issue.foundText && (
+      <div className="mt-2 text-sm">
+        <div className="font-medium text-red-700">FOUND:</div>
+        <div className="text-gray-700">{issue.foundText}</div>
+      </div>
+    )}
+    {issue.explanation && (
+      <div className="mt-2 text-sm">
+        <div className="font-medium text-blue-700">WHY IT MATTERS:</div>
+        <div className="text-gray-700">{issue.explanation}</div>
+      </div>
+    )}
+  </>
+)}
+```
+
+Step 7: VERIFY detailLevel is passed to recommendation components
+- If recommendations are in a child component, pass detailLevel as prop
+- Example: <RecommendationCard issue={issue} detailLevel={detailLevel} />
+
+Step 8: TEST each button
+- Click "Quick Review" → Only titles should show
+- Click "Standard" → Titles + Category + Location
+- Click "With Fix" → Above + Suggested Fix
+- Click "Complete" → All fields visible
+
+───────────────────────────────────────────────────────────
+
+FIELD NAME MAPPING:
+
+The issue object may have different field names. Map accordingly:
+
+| Display Name | Possible Field Names |
+|--------------|---------------------|
+| Title | title, name, issue_title, description |
+| Category | category, type, category_name |
+| Location | location, cv_section, section |
+| Found Text | found, found_text, original, current_text |
+| Suggested Fix | fix, suggested_fix, suggestion, how_to_fix |
+| Why It Matters | explanation, why, reason, details |
+| Effort | effort, effort_level, difficulty |
+
+───────────────────────────────────────────────────────────
+
+FILES TO MODIFY:
+- client/src/components/CVReportPage.tsx (or wherever the report page is)
+- Possibly: recommendation card component if it's separate
+
+FILES TO CREATE:
+- None
+
+DO NOT TOUCH:
+- ExportDropdown component
+- Score components
+- Filter components (Category, Priority, View By)
+- Backend files
+
+───────────────────────────────────────────────────────────
+
+DEBUGGING TIPS:
+
+If buttons still don't work after changes:
+
+1. Add console.log to verify state changes:
+```tsx
+   const [detailLevel, setDetailLevel] = useState('standard');
+   console.log('Current detail level:', detailLevel);
+```
+
+2. Check if state is being passed to child components:
+```tsx
+   console.log('Passing detailLevel to cards:', detailLevel);
+```
+
+3. Verify the conditional rendering logic:
+```tsx
+   console.log('Should show category?', detailLevel !== 'quick');
+```
+
+───────────────────────────────────────────────────────────
+
+WHEN COMPLETE:
+
+Confirm:
+□ detailLevel state exists and updates on button click
+□ Clicking "Quick Review" shows ONLY title + effort
+□ Clicking "Standard" shows title + effort + category + location
+□ Clicking "With Fix" shows above + suggested fix
+□ Clicking "Complete" shows ALL fields
+□ Selected button has visual highlight (different style)
+□ No console errors
+□ Other functionality still works (filters, expand/collapse)
+
+Report:
+- What was broken (state not connected? conditional rendering missing?)
+- What you fixed
+- Which fields are available in the issue object
+═══════════════════════════════════════════════════════════

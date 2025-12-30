@@ -1,0 +1,141 @@
+═══════════════════════════════════════════════════════════
+PROMPT 1#1: Convert ScoreDashboard to TypeScript
+═══════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify files not explicitly mentioned
+3. Do NOT add features not explicitly requested
+4. Do NOT refactor or "improve" existing code
+5. Do NOT make autonomous decisions
+6. If unclear, STOP and ask - do not assume
+7. Make MINIMAL, SURGICAL changes only
+
+FORBIDDEN ACTIONS:
+- Changing component logic
+- Adding new features
+- Modifying styling
+- Changing prop names
+
+───────────────────────────────────────────────────────────
+
+TASK: Convert ScoreDashboard.jsx to TypeScript (.tsx)
+
+OBJECTIVE:
+Fix TypeScript errors by converting the JavaScript component to TypeScript with proper type definitions
+
+CONTEXT:
+ScoreDashboard.jsx causes TypeScript warnings because it lacks type declarations. Converting to .tsx with proper interfaces will resolve the errors.
+
+───────────────────────────────────────────────────────────
+
+INSTRUCTIONS:
+
+Step 1: FIND the ScoreDashboard file
+- Likely location: client/src/components/cv-optimizer/ScoreDashboard.jsx
+- Or: client/src/components/ScoreDashboard.jsx
+
+Step 2: READ the current file contents
+- Note all props the component receives
+- Note the structure of the breakdown object
+
+Step 3: RENAME the file from .jsx to .tsx
+- ScoreDashboard.jsx → ScoreDashboard.tsx
+
+Step 4: ADD TypeScript interfaces at the top of the file:
+```tsx
+interface ScoreBreakdown {
+  content_quality: number;
+  language_clarity: number;
+  formatting_structure: number;
+  completeness: number;
+  professional_presentation: number;
+  red_flag_avoidance: number;
+}
+
+interface ScoreDashboardProps {
+  breakdown: ScoreBreakdown;
+  totalScore?: number;
+  grade?: string;
+  message?: string;
+}
+```
+
+Step 5: UPDATE the component definition to use the interface:
+
+BEFORE:
+```jsx
+function ScoreDashboard({ breakdown, totalScore, grade, message }) {
+```
+
+AFTER:
+```tsx
+function ScoreDashboard({ breakdown, totalScore, grade, message }: ScoreDashboardProps) {
+```
+
+Step 6: ADD type annotations to any internal variables if needed:
+```tsx
+const CATEGORY_CONFIG: Array<{key: keyof ScoreBreakdown; label: string; max: number}> = [
+  // ... existing config
+];
+```
+
+Step 7: VERIFY no TypeScript errors remain
+- Check for red underlines
+- Check console for type errors
+
+Step 8: UPDATE any imports in other files if the path changed
+- If you renamed the file, ensure imports still work
+- Usually just removing .jsx extension from imports is enough
+
+───────────────────────────────────────────────────────────
+
+FILES TO MODIFY:
+- client/src/components/cv-optimizer/ScoreDashboard.jsx → ScoreDashboard.tsx
+  (or wherever the file is located)
+
+FILES TO CREATE:
+- None (renaming existing file)
+
+DO NOT TOUCH:
+- CVReportPage.tsx (imports should auto-resolve)
+- Other components
+- Backend files
+
+───────────────────────────────────────────────────────────
+
+EXPECTED INTERFACE STRUCTURE:
+
+Based on the v4.0 scoring system, the breakdown object should have:
+
+| Property | Type | Max Value |
+|----------|------|-----------|
+| content_quality | number | 40 |
+| language_clarity | number | 18 |
+| formatting_structure | number | 18 |
+| completeness | number | 12 |
+| professional_presentation | number | 8 |
+| red_flag_avoidance | number | 4 |
+
+If the actual property names differ, use the ACTUAL names from the code.
+
+───────────────────────────────────────────────────────────
+
+WHEN COMPLETE:
+
+Confirm:
+□ File renamed from .jsx to .tsx
+□ ScoreBreakdown interface added
+□ ScoreDashboardProps interface added
+□ Component function typed with props interface
+□ No TypeScript errors (red underlines)
+□ No console errors
+□ Component still renders correctly
+
+Report:
+- Original file path
+- New file path
+- Interfaces added
+- Any other changes made
+═══════════════════════════════════════════════════════════

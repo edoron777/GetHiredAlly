@@ -1,11 +1,26 @@
-import React from 'react';
+interface ScoreBreakdown {
+  content_quality: number;
+  language_clarity: number;
+  formatting: number;
+  completeness: number;
+  professional: number;
+  red_flags: number;
+}
 
-/**
- * ScoreDashboard - Displays CV score breakdown by category
- * Shows users WHY they received their score
- */
+interface ScoreDashboardProps {
+  breakdown: ScoreBreakdown;
+  totalScore?: number;
+  grade?: string;
+  message?: string;
+}
 
-const CATEGORY_CONFIG = {
+interface CategoryConfig {
+  label: string;
+  max: number;
+  order: number;
+}
+
+const CATEGORY_CONFIG: Record<keyof ScoreBreakdown, CategoryConfig> = {
   content_quality: { label: "Content Quality", max: 40, order: 1 },
   language_clarity: { label: "Language & Clarity", max: 18, order: 2 },
   formatting: { label: "Formatting & Structure", max: 18, order: 3 },
@@ -14,25 +29,24 @@ const CATEGORY_CONFIG = {
   red_flags: { label: "Red Flag Avoidance", max: 4, order: 6 }
 };
 
-const getBarColor = (score, max) => {
+const getBarColor = (score: number, max: number): string => {
   const percentage = (score / max) * 100;
-  if (percentage >= 70) return '#22c55e'; // green
-  if (percentage >= 40) return '#eab308'; // yellow
-  return '#ef4444'; // red
+  if (percentage >= 70) return '#22c55e';
+  if (percentage >= 40) return '#eab308';
+  return '#ef4444';
 };
 
-const getStatusIcon = (score, max) => {
+const getStatusIcon = (score: number, max: number): string => {
   const percentage = (score / max) * 100;
   if (percentage >= 70) return '✓';
   if (percentage >= 40) return '⚠️';
   return '✗';
 };
 
-export default function ScoreDashboard({ breakdown, totalScore, grade, message }) {
+export default function ScoreDashboard({ breakdown, totalScore, grade, message }: ScoreDashboardProps) {
   if (!breakdown) return null;
 
-  // Sort categories by order
-  const sortedCategories = Object.entries(breakdown)
+  const sortedCategories = (Object.entries(breakdown) as [keyof ScoreBreakdown, number][])
     .filter(([key]) => CATEGORY_CONFIG[key])
     .sort((a, b) => CATEGORY_CONFIG[a[0]].order - CATEGORY_CONFIG[b[0]].order);
 
@@ -44,7 +58,6 @@ export default function ScoreDashboard({ breakdown, totalScore, grade, message }
       boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
       marginBottom: '24px'
     }}>
-      {/* Header with total score */}
       <div style={{
         textAlign: 'center',
         marginBottom: '24px',
@@ -61,7 +74,7 @@ export default function ScoreDashboard({ breakdown, totalScore, grade, message }
         <div style={{
           fontSize: '20px',
           fontWeight: '600',
-          color: totalScore >= 68 ? '#22c55e' : totalScore >= 52 ? '#eab308' : '#ef4444',
+          color: totalScore !== undefined && totalScore >= 68 ? '#22c55e' : totalScore !== undefined && totalScore >= 52 ? '#eab308' : '#ef4444',
           marginTop: '8px'
         }}>
           {grade}
@@ -77,7 +90,6 @@ export default function ScoreDashboard({ breakdown, totalScore, grade, message }
         )}
       </div>
 
-      {/* Title */}
       <div style={{
         fontSize: '16px',
         fontWeight: '600',
@@ -87,7 +99,6 @@ export default function ScoreDashboard({ breakdown, totalScore, grade, message }
         Score Breakdown
       </div>
 
-      {/* Category bars */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {sortedCategories.map(([category, score]) => {
           const config = CATEGORY_CONFIG[category];
@@ -95,7 +106,6 @@ export default function ScoreDashboard({ breakdown, totalScore, grade, message }
           
           return (
             <div key={category}>
-              {/* Label row */}
               <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -114,7 +124,6 @@ export default function ScoreDashboard({ breakdown, totalScore, grade, message }
                 </span>
               </div>
               
-              {/* Progress bar */}
               <div style={{
                 height: '8px',
                 backgroundColor: '#e5e7eb',
