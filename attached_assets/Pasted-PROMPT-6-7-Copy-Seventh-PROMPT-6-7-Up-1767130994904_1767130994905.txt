@@ -1,0 +1,101 @@
+PROMPT 6#7 (Copy Seventh)
+═══════════════════════════════════════════════════════════
+PROMPT 6#7: Update Component Order and Integration
+═══════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify files not explicitly mentioned
+3. Do NOT add features not explicitly requested
+4. Do NOT refactor or "improve" existing code
+5. Do NOT make autonomous decisions
+6. If unclear, STOP and ask - do not assume
+7. Make MINIMAL, SURGICAL changes only
+
+FORBIDDEN ACTIONS:
+- Adding new features
+- Changing component styling beyond what's specified
+- Modifying component internal logic
+- Adding animations or transitions not specified
+
+───────────────────────────────────────────────────────────
+
+TASK: Verify and finalize the component order on the page
+
+OBJECTIVE:
+Ensure all components are in the correct order as specified in the new layout
+
+CONTEXT:
+After individual changes, we need to verify the entire page structure matches the specification.
+
+───────────────────────────────────────────────────────────
+
+INSTRUCTIONS:
+
+Step 1: Review the CV Report page component JSX structure
+
+Step 2: Verify the components appear in THIS EXACT ORDER:
+STEP 1: YOUR CV SCORE
+├── Score Circle (48% gauge)
+├── Score Message ("Significant improvements needed...")
+└── Score Breakdown (6 category progress bars)
+─── DIVIDER (hr or visual separator) ───
+STEP 2: ANALYSIS & RECOMMENDATIONS
+├── Section Header ("Step 2: Analysis & Recommendations")
+├── Section Subtitle ("Review the suggestions below...")
+├── Category Filter (9 checkboxes with "Select Categories to Review")
+├── View By Tabs (By Priority / By Effort / By Work Type)
+├── Priority Filter (All / Quick Wins / Important / Consider / Polish)
+│
+├── ─── DIVIDER ───
+│
+├── Detail Level ("How much information..." with 4 buttons)
+│
+└── Recommendations Section
+├── Header ("Your Recommendations" + count)
+├── Controls Row (Expand All / Collapse All / Export Dropdown)
+└── Priority Groups
+├── HIGH-IMPACT QUICK FIXES
+├── IMPORTANT IMPROVEMENTS
+├── WORTH CONSIDERING
+└── OPTIONAL POLISH
+
+Step 3: If any component is OUT OF ORDER, move it to the correct position
+
+Step 4: Ensure proper spacing between sections:
+- Add `mt-6` or `mt-8` class for spacing between major sections
+- Add `mb-4` or `mb-6` for spacing within sections
+
+Step 5: Update any section header text if needed:
+- "Filter Results by Category" → "Select Categories to Review"
+
+───────────────────────────────────────────────────────────
+
+FILES TO MODIFY:
+- [CV Report page component]
+
+FILES TO CREATE:
+- None
+
+DO NOT TOUCH:
+- Individual component files
+- Backend files
+- Other pages
+
+───────────────────────────────────────────────────────────
+
+WHEN COMPLETE:
+
+Confirm:
+□ Component order matches specification exactly
+□ Score section appears first
+□ Divider separates Step 1 and Step 2
+□ Category Filter appears at top of Step 2
+□ Detail Level appears after Priority Filter
+□ Recommendations section appears last
+□ Proper spacing between all sections
+□ No console errors
+□ Page scrolls correctly
+
+Report any reordering you performed.
