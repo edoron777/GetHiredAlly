@@ -132,4 +132,5 @@ dist
 .pnp.*
 
 # Replit debugger
-.breakpoints
+.breakpointsTemp/*.csv
+attached_assets/Pasted--Replit-Prompt-Google*

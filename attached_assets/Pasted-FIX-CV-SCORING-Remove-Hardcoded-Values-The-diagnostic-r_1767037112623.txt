@@ -1,0 +1,85 @@
+FIX CV SCORING - Remove Hardcoded Values
+
+The diagnostic revealed that 7 fields are hardcoded to True, giving all CVs 25+ free points. We need to change these to actually use extracted values.
+
+TASK: Update the extract_and_score function in cv_optimizer.py
+
+CHANGE FROM (hardcoded):
+```python
+extracted_data = {
+    "has_name": True,                      # HARDCODED
+    "has_skills_section": True,            # HARDCODED
+    "has_dates_for_each_role": True,       # HARDCODED
+    "dates_are_consistent_format": True,   # HARDCODED
+    "is_reverse_chronological": True,      # HARDCODED
+    "has_company_names": True,             # HARDCODED
+    "has_job_titles": True,                # HARDCODED
+    ...
+}
+```
+
+CHANGE TO (extracted or conservative defaults):
+```python
+extracted_data = {
+    # Actually check for name (simple heuristic: first line often has name)
+    "has_name": len(cv_text.strip()) > 0,
+    
+    # Check if email was found by extractor
+    "has_email": patterns.get("has_email", False),
+    "has_phone": patterns.get("has_phone", False),
+    "has_linkedin": patterns.get("has_linkedin", False),
+    "email_is_professional": patterns.get("has_email", False),  # Assume professional if exists
+    
+    # Check section headers from extractor
+    "has_section_headers": patterns.get("has_section_headers", False),
+    
+    # Check bullets from extractor
+    "uses_bullet_points": text_metrics.get("total_bullet_points", 0) > 0,
+    
+    # Skills - check if word "skills" appears in text
+    "has_skills_section": "skills" in cv_text.lower(),
+    "skills_are_categorized": False,  # Conservative default
+    
+    # Page/word metrics from extractor
+    "page_count": text_metrics.get("estimated_page_count", 1),
+    "word_count": text_metrics.get("word_count", 0),
+    "total_bullet_points": text_metrics.get("total_bullet_points", 0),
+    "bullets_with_numbers": patterns.get("bullets_with_numbers", 0),
+    
+    # Language from extractor
+    "strong_action_verbs_count": patterns.get("strong_action_verbs_count", 0),
+    "weak_phrases_count": patterns.get("weak_phrases_count", 0),
+    "passive_voice_count": patterns.get("passive_voice_count", 0),
+    
+    # Grammar - keep at 0 until grammar checker is implemented
+    "grammar_errors_count": 0,
+    "spelling_errors_count": 0,
+    
+    # Experience - check for date patterns and keywords
+    "has_dates_for_each_role": bool(re.search(r'\d{4}', cv_text)),  # Has any year
+    "dates_are_consistent_format": bool(re.search(r'\d{4}', cv_text)),
+    "is_reverse_chronological": True,  # Hard to detect, keep True
+    "has_company_names": any(word in cv_text.lower() for word in ['inc', 'corp', 'llc', 'ltd', 'company']),
+    "has_job_titles": any(word in cv_text.lower() for word in ['manager', 'engineer', 'developer', 'analyst', 'director', 'lead', 'senior', 'junior']),
+    
+    # Keywords
+    "tech_keywords_found": []
+}
+```
+
+ALSO: Add import at top if not present:
+```python
+import re
+```
+
+This will:
+1. Stop giving free points for unverified fields
+2. Use simple heuristics instead of hardcoded True
+3. Create more score variation based on actual CV content
+
+After updating, run calibration test again:
+```bash
+python Temp/calibration_test.py
+```
+
+Show me the new score distribution.
