@@ -1,0 +1,203 @@
+==========================================================
+TASK: Update CV Optimizer Naming Conventions Document
+Add Names/Titles for ALL UI Sections
+==========================================================
+
+OBJECTIVE:
+Review the CV Optimizer UI and ensure EVERY section has an 
+official name defined in the Naming Conventions document.
+
+==========================================================
+STEP 1: IDENTIFY ALL UI SECTIONS THAT NEED NAMES
+==========================================================
+
+Review these pages and list ALL sections:
+
+PAGE 1: Upload Page (/service/cv-optimizer)
+├── Page Title
+├── Upload Area
+├── File Format Info
+└── Start Button
+
+PAGE 2: Scanning Page (/service/cv-optimizer/scanning)
+├── Page Title
+├── Progress Animation
+├── Status Messages
+└── Live Counter
+
+PAGE 3: Results Summary (/service/cv-optimizer/results/{id})
+├── Page Title
+├── Score Circle
+├── Score Message
+├── Score Breakdown (category bars)
+└── Action Buttons
+
+PAGE 4: Report Page (/service/cv-optimizer/report/{id})
+├── Page Title: "Step 1: Your CV Score"
+├── Score Display Section
+├── Score Breakdown Section (category progress bars)
+├── Page Title: "Step 2: Analysis & Recommendations"
+├── Category Filter Section (checkboxes grid)
+├── Depth Level Filter Section
+├── Severity Filter Section
+├── [NEEDS NAME] Recommendations List by Severity
+│   ├── Priority Level Headers (e.g., "WORTH CONSIDERING")
+│   └── Individual Recommendation Cards
+└── Action Bar (Export buttons)
+
+PAGE 5: Fix Results (/service/cv-optimizer/fix/{id})
+├── Improvement Summary Section
+├── Before & After Comparison
+└── Download Options
+
+==========================================================
+STEP 2: PROPOSED NAMING ADDITIONS
+==========================================================
+
+Add these sections to the Naming Conventions document:
+
+### Report Page Sections
+
+| Section | Official Name | UI Header Text |
+|---------|---------------|----------------|
+| Score Display | Score Overview | "Your CV Score" |
+| Category Bars | Score Breakdown | "Score Breakdown" |
+| Filter Checkboxes | Category Filter | "Filter Results by Category" |
+| Depth Dropdown | Detail Level | "Choose Detail Level" |
+| Severity Groups | Recommendations by Priority | (use severity names) |
+| Export Bar | Action Bar | (no header, icon buttons) |
+
+### Severity/Priority Level Names
+
+| Priority | Official Name | UI Display | Color |
+|----------|---------------|------------|-------|
+| Critical | Fix Now | "FIX NOW" | Red |
+| High | Should Address | "SHOULD ADDRESS" | Orange |
+| Medium | Worth Considering | "WORTH CONSIDERING" | Yellow |
+| Low | Optional Polish | "OPTIONAL POLISH" | Green |
+
+### Effort Level Names
+
+| Effort | Official Name | UI Display | Icon |
+|--------|---------------|------------|------|
+| Easy | Quick Fix | "Quick fix" | ⚡ |
+| Medium | Medium Effort | "Medium effort" | 🔧 |
+| Hard | Requires Rewrite | "Requires rewrite" | 📝 |
+
+### Recommendation Card Elements
+
+| Element | Official Name | Description |
+|---------|---------------|-------------|
+| Issue Title | Issue Title | Main text (e.g., "Missing LinkedIn URL") |
+| Effort Badge | Effort Indicator | Shows fix difficulty |
+| Expand Arrow | Details Toggle | Expands for more info |
+| Category Tag | Category Badge | Shows which category |
+
+==========================================================
+STEP 3: UPDATE THE DOCUMENT
+==========================================================
+
+Open file: CV_Optimizer_Naming_Conventions.md
+
+ADD this new section after "## UI Element Names":
+
+---
+
+## Report Page Structure
+
+### Section Names
+
+| Section ID | Official Name | UI Header | Description |
+|------------|---------------|-----------|-------------|
+| score_overview | Score Overview | "Step 1: Your CV Score" | Circular gauge + message |
+| score_breakdown | Score Breakdown | "Score Breakdown" | Category progress bars |
+| category_filter | Category Filter | "Filter Results by Category" | Checkbox grid |
+| detail_level | Detail Level | "Choose your detail level" | Depth dropdown |
+| severity_filter | Severity Filter | (integrated with list) | Priority tabs/sections |
+| recommendations_list | Recommendations List | "Step 2: Analysis & Recommendations" | Grouped issues |
+| action_bar | Action Bar | (no header) | Export/share buttons |
+
+### Priority Levels (Severity Groups)
+
+| Level | Code | UI Display | Color Code | Description |
+|-------|------|------------|------------|-------------|
+| 1 | critical | "FIX NOW" | #EF4444 (red) | Must fix before applying |
+| 2 | high | "SHOULD ADDRESS" | #F97316 (orange) | Important improvements |
+| 3 | medium | "WORTH CONSIDERING" | #EAB308 (yellow) | Recommended improvements |
+| 4 | low | "OPTIONAL POLISH" | #22C55E (green) | Nice-to-have refinements |
+
+### Effort Indicators
+
+| Level | Code | UI Display | Icon | Description |
+|-------|------|------------|------|-------------|
+| 1 | quick | "Quick fix" | ⚡ | Less than 2 minutes to fix |
+| 2 | medium | "Medium effort" | 🔧 | 2-10 minutes to fix |
+| 3 | extensive | "Requires rewrite" | 📝 | Significant changes needed |
+
+### Recommendation Card Structure
+
+┌─────────────────────────────────────────────────────────────┐
+│ ▶ [Issue Title]                          [Effort Indicator] │
+│   "Missing LinkedIn URL"                      ⚡ Quick fix   │
+├─────────────────────────────────────────────────────────────┤
+│ (Expanded Content - shown when clicked)                     │
+│                                                             │
+│ [Issue Description]                                         │
+│ "Adding a LinkedIn URL helps recruiters verify your..."     │
+│                                                             │
+│ [Example Section] (if detail level >= 2)                    │
+│ ✅ Correct: "linkedin.com/in/yourname"                      │
+│ ❌ Avoid: (if detail level >= 3)                            │
+│                                                             │
+│ [Category Badge]                                            │
+│ 📋 Contact Information                                       │
+└─────────────────────────────────────────────────────────────┘
+
+| Element | Name | Always Visible |
+|---------|------|----------------|
+| Expand Icon | Toggle Arrow | Yes |
+| Main Text | Issue Title | Yes |
+| Right Badge | Effort Indicator | Yes |
+| Body Text | Issue Description | On expand |
+| Good Example | Correct Example | On expand (level 2+) |
+| Bad Example | Avoid Example | On expand (level 3+) |
+| Bottom Tag | Category Badge | On expand |
+
+---
+
+==========================================================
+STEP 4: UPDATE SECTION HEADERS TABLE
+==========================================================
+
+FIND the existing "### Section Headers" table and REPLACE with:
+
+### Section Headers
+
+| Page | Section | Header Text |
+|------|---------|-------------|
+| Report | Score Display | "Step 1: Your CV Score" |
+| Report | Category Bars | "Score Breakdown" |
+| Report | Recommendations | "Step 2: Analysis & Recommendations" |
+| Report | Category Filter | "Filter Results by Category" |
+| Report | Detail Level | "Choose your detail level" |
+| Report | Priority Group (Critical) | "FIX NOW" |
+| Report | Priority Group (High) | "SHOULD ADDRESS" |
+| Report | Priority Group (Medium) | "WORTH CONSIDERING" |
+| Report | Priority Group (Low) | "OPTIONAL POLISH" |
+| Fix Results | Score Comparison | "Score Improvement" |
+| Fix Results | CV Comparison | "Before & After" |
+| Fix Results | Download Section | "Download Your Improved CV" |
+
+==========================================================
+VERIFICATION:
+==========================================================
+
+After updating, confirm:
+✅ Every visible UI section has an official name
+✅ All priority/severity levels are named
+✅ All effort levels are named
+✅ Recommendation card elements are named
+✅ Color codes are documented
+✅ Code references match actual code
+
+==========================================================
