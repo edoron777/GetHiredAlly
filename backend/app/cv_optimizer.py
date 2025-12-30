@@ -19,7 +19,7 @@ from services.ai_service import generate_completion
 from utils.encryption import decrypt_text
 from utils.file_generators import generate_pdf, generate_docx
 from config.rate_limiter import limiter
-from common.scoring import calculate_cv_score as calculate_cv_score_new, calculate_after_fix_score
+from common.scoring import calculate_cv_score as calculate_cv_score_new, calculate_after_fix_score, get_score_message
 from common.scoring.extractors import extract_patterns, analyze_text
 
 logger = logging.getLogger(__name__)
@@ -134,14 +134,14 @@ def extract_cv_data_and_score(cv_text: str) -> dict:
     
     score_result = calculate_cv_score_new(extracted_data)
     
-    logger.info(f"[CV_SCORE_NEW] Score: {score_result['total_score']}, Grade: {score_result['grade']}, Breakdown: {score_result['breakdown']}")
+    logger.info(f"[CV_SCORE_NEW] Score: {score_result.total_score}, Grade: {score_result.grade_label}, Breakdown: {score_result.breakdown}")
     
     return {
-        'score': score_result['total_score'],
-        'message': score_result['message'],
-        'status': score_result['grade'].lower().replace(' ', '_'),
-        'breakdown': score_result['breakdown'],
-        'version': score_result['version']
+        'score': score_result.total_score,
+        'message': get_score_message(score_result.total_score),
+        'status': score_result.grade_label.lower().replace(' ', '_'),
+        'breakdown': score_result.breakdown,
+        'version': '4.0.0'
     }
 
 

@@ -1,0 +1,88 @@
+==========================================================
+FIX: ScoreResult Object Not Subscriptable
+==========================================================
+
+ERROR MESSAGE:
+"Scan failed: 'ScoreResult' object is not subscriptable"
+
+ROOT CAUSE:
+Code is trying to access ScoreResult like a dictionary:
+   result["total_score"]  ← WRONG
+
+But ScoreResult is a dataclass/object, so it needs dot notation:
+   result.total_score     ← CORRECT
+
+==========================================================
+TASK: Find and fix ALL places where ScoreResult is accessed
+==========================================================
+
+SEARCH in these files for bracket notation on score results:
+- server/cv_optimizer.py (or wherever the scan endpoint is)
+- Any file that imports calculate_cv_score or ScoreResult
+
+LOOK FOR patterns like:
+- result["total_score"]
+- result["breakdown"]
+- result["grade"]
+- result["message"]
+- score["total_score"]
+
+REPLACE WITH:
+- result.total_score
+- result.breakdown
+- result.grade
+- result.message
+- score.total_score
+
+==========================================================
+EXAMPLE FIX:
+==========================================================
+
+BEFORE (WRONG):
+```python
+from common.scoring import calculate_cv_score
+
+def scan_cv():
+    result = calculate_cv_score(extracted_data)
+    return {
+        "score": result["total_score"],      # ❌ ERROR
+        "grade": result["grade"],            # ❌ ERROR
+        "breakdown": result["breakdown"]     # ❌ ERROR
+    }
+```
+
+AFTER (CORRECT):
+```python
+from common.scoring import calculate_cv_score
+
+def scan_cv():
+    result = calculate_cv_score(extracted_data)
+    return {
+        "score": result.total_score,         # ✅ CORRECT
+        "grade": result.grade,               # ✅ CORRECT
+        "breakdown": result.breakdown        # ✅ CORRECT
+    }
+```
+
+==========================================================
+ALSO CHECK: ScoreBreakdown access
+==========================================================
+
+If accessing breakdown values:
+
+WRONG:
+result.breakdown["grammar"]
+
+CORRECT:
+result.breakdown.grammar
+
+==========================================================
+VERIFICATION STEPS:
+==========================================================
+
+1. Search all Python files for: calculate_cv_score
+2. Find where the result is used
+3. Replace all ["key"] with .key
+4. Test by uploading a CV again
+
+==========================================================
