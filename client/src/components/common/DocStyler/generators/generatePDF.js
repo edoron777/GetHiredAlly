@@ -22,6 +22,34 @@ const hexToRgb = (hex) => {
 };
 
 /**
+ * Sanitize text for PDF (remove unsupported characters)
+ * pdf-lib StandardFonts only support WinAnsi encoding (basic Latin)
+ * @param {string} text - Text to sanitize
+ * @returns {string} Sanitized text
+ */
+const sanitizeForPdf = (text) => {
+  if (!text) return '';
+  return text
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u201C\u201D]/g, '"')
+    .replace(/\u2013/g, '-')
+    .replace(/\u2014/g, '--')
+    .replace(/\u2026/g, '...')
+    .replace(/[\u00A0]/g, ' ')
+    .replace(/[^\x00-\x7F]/g, (char) => {
+      const replacements = {
+        'é': 'e', 'è': 'e', 'ê': 'e', 'ë': 'e',
+        'à': 'a', 'á': 'a', 'â': 'a', 'ã': 'a', 'ä': 'a',
+        'ì': 'i', 'í': 'i', 'î': 'i', 'ï': 'i',
+        'ò': 'o', 'ó': 'o', 'ô': 'o', 'õ': 'o', 'ö': 'o',
+        'ù': 'u', 'ú': 'u', 'û': 'u', 'ü': 'u',
+        'ñ': 'n', 'ç': 'c', '•': '-', '–': '-', '—': '-',
+      };
+      return replacements[char] || '';
+    });
+};
+
+/**
  * Generate and download PDF document
  * @param {string} content - Main content (markdown)
  * @param {Object} options - Document options
@@ -58,8 +86,8 @@ export const generatePDF = async (content, options = {}) => {
     // === HEADER ===
     const serviceName = SERVICES[service] || service || 'GetHiredAlly';
     
-    // Title
-    page.drawText(title, {
+    // Title (sanitized)
+    page.drawText(sanitizeForPdf(title), {
       x: margin,
       y: yPosition,
       size: FONTS.sizes.h1,
@@ -110,7 +138,7 @@ export const generatePDF = async (content, options = {}) => {
     yPosition -= 30;
     
     // === CONTENT ===
-    const plainText = markdownToPlainText(content);
+    const plainText = sanitizeForPdf(markdownToPlainText(content));
     const lines = plainText.split('\n');
     
     for (const line of lines) {
