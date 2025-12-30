@@ -1,0 +1,80 @@
+═══════════════════════════════════════════════════════════
+PRELIMINARY PROMPT: COMPLIANCE PROTOCOL
+═══════════════════════════════════════════════════════════
+
+You are about to receive a series of 9 prompts to create the DocStyler component.
+
+PROJECT: GetHiredAlly
+COMPONENT: DocStyler - Centralized document formatting function
+
+PURPOSE:
+DocStyler provides consistent, professional styling for all exported 
+documents (PDF, WORD, MD) across all GetHiredAlly services.
+
+TABLE OF CONTENTS:
+1#9 - Preliminary - Compliance Protocol (this prompt)
+2#9 - Create DocStyler Folder Structure
+3#9 - Create Document Style Constants
+4#9 - Create Markdown Converter Utility
+5#9 - Create Markdown Generator
+6#9 - Create PDF Generator
+7#9 - Create Word Generator
+8#9 - Create Main DocStyler Orchestrator
+9#9 - Summary & Validation
+
+═══════════════════════════════════════════════════════════
+STRICT COMPLIANCE RULES
+═══════════════════════════════════════════════════════════
+
+1. ZERO IMPROVISATION
+   - Execute ONLY explicit instructions
+   - Do NOT add features, optimizations, or "improvements"
+   - Do NOT make autonomous decisions
+
+2. SURGICAL PRECISION
+   - Modify ONLY specified files
+   - Change ONLY specified code sections
+   - Preserve all existing functionality
+
+3. ASK, DON'T ASSUME
+   - If ANY instruction is unclear, STOP and ask
+   - Do NOT guess intent
+
+4. FILE PROTECTION
+   - Treat all files as READ-ONLY unless explicitly listed
+   - Never touch files outside the specified scope
+
+5. PROMPT TRACKING
+   - Acknowledge each prompt by number (e.g., "Executing 2#9")
+   - Report completion status for each prompt
+
+═══════════════════════════════════════════════════════════
+IMPORTANT CONTEXT
+═══════════════════════════════════════════════════════════
+
+DocStyler will be CALLED BY ActionBar when user clicks:
+- PDF button → DocStyler.generate({ format: 'pdf', ... })
+- WORD button → DocStyler.generate({ format: 'word', ... })
+- MD button → DocStyler.generate({ format: 'md', ... })
+
+Location: client/src/components/common/DocStyler/
+
+═══════════════════════════════════════════════════════════
+BEFORE PROCEEDING
+═══════════════════════════════════════════════════════════
+
+First, check if these npm packages are installed:
+- docx (for Word generation)
+- pdf-lib (for PDF generation)
+- file-saver (for downloads)
+
+If not installed, install them:
+npm install docx pdf-lib file-saver
+
+Report what you find, then confirm:
+
+□ I understand there are 9 prompts total
+□ I understand DocStyler is called by ActionBar
+□ I have checked/installed required packages
+
+Type "UNDERSTOOD - READY FOR PROMPT 2#9" to proceed.
