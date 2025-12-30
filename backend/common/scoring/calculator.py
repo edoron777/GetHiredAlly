@@ -1,24 +1,23 @@
 """
-Main CV Scoring Calculator
+Main CV Scoring Calculator v3.0
 DETERMINISTIC: Same input ALWAYS produces same output.
 """
 
-from typing import Dict, Union
+from typing import Dict
 from .config import SCORE_MIN, SCORE_MAX, GRADE_THRESHOLDS, GRADE_MESSAGES, SCORING_VERSION
-from .models import ScoreResult, ScoreBreakdown, ExtractedData
 from .categories import (
-    calculate_grammar_score,
-    calculate_formatting_score,
     calculate_quantification_score,
-    calculate_language_score,
-    calculate_contact_score,
-    calculate_skills_score,
     calculate_experience_score,
+    calculate_language_score,
+    calculate_grammar_score,
+    calculate_skills_score,
+    calculate_formatting_score,
+    calculate_contact_score,
     calculate_length_score
 )
 
 
-def calculate_cv_score(data: Union[Dict, ExtractedData]) -> ScoreResult:
+def calculate_cv_score(data: Dict) -> Dict:
     """
     Calculate CV score from extracted data.
     
@@ -26,25 +25,26 @@ def calculate_cv_score(data: Union[Dict, ExtractedData]) -> ScoreResult:
     Same input will ALWAYS produce same output.
     
     Args:
-        data: Either ExtractedData object or dict with same fields
+        data: Dictionary with extracted CV data
         
     Returns:
-        ScoreResult with total score, breakdown, grade, and message
+        Dictionary with total_score, breakdown, grade, and message
     """
-    # Calculate each category score
-    breakdown = ScoreBreakdown(
-        grammar=calculate_grammar_score(data),
-        formatting=calculate_formatting_score(data),
-        quantification=calculate_quantification_score(data),
-        language=calculate_language_score(data),
-        contact=calculate_contact_score(data),
-        skills=calculate_skills_score(data),
-        experience=calculate_experience_score(data),
-        length=calculate_length_score(data)
-    )
+    
+    # Calculate each category score (ordered by weight)
+    breakdown = {
+        "quantification": calculate_quantification_score(data),  # 25 max
+        "experience": calculate_experience_score(data),          # 20 max
+        "language": calculate_language_score(data),              # 15 max
+        "grammar": calculate_grammar_score(data),                # 10 max
+        "skills": calculate_skills_score(data),                  # 10 max
+        "formatting": calculate_formatting_score(data),          # 10 max
+        "contact": calculate_contact_score(data),                # 5 max
+        "length": calculate_length_score(data)                   # 5 max
+    }
     
     # Calculate total
-    raw_total = breakdown.total()
+    raw_total = sum(breakdown.values())
     
     # Apply bounds
     final_score = int(max(SCORE_MIN, min(SCORE_MAX, raw_total)))
@@ -52,13 +52,14 @@ def calculate_cv_score(data: Union[Dict, ExtractedData]) -> ScoreResult:
     # Determine grade and message
     grade, message = _get_grade_and_message(final_score)
     
-    return ScoreResult(
-        total_score=final_score,
-        breakdown=breakdown,
-        grade=grade,
-        message=message,
-        version=SCORING_VERSION
-    )
+    return {
+        "total_score": final_score,
+        "breakdown": breakdown,
+        "grade": grade,
+        "message": message,
+        "version": SCORING_VERSION,
+        "max_possible": SCORE_MAX
+    }
 
 
 def _get_grade_and_message(score: int) -> tuple:

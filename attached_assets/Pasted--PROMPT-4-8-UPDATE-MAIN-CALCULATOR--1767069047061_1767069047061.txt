@@ -1,0 +1,236 @@
+═══════════════════════════════════════════════════════════
+PROMPT 4#8: UPDATE MAIN CALCULATOR
+═══════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify files not explicitly mentioned
+3. Do NOT add features not explicitly requested
+4. If unclear, STOP and ask - do not assume
+
+───────────────────────────────────────────────────────────
+TASK: Create the main calculator that uses all category functions
+───────────────────────────────────────────────────────────
+
+OBJECTIVE:
+Create the main scoring calculator that combines all category scores
+and returns a complete result with breakdown.
+
+───────────────────────────────────────────────────────────
+INSTRUCTIONS:
+───────────────────────────────────────────────────────────
+
+Step 1: Create backend/common/scoring/__init__.py with:
+
+"""
+CV Scoring Module v3.0
+Deterministic scoring for CV/Resume analysis.
+
+Usage:
+    from backend.common.scoring import calculate_cv_score
+    
+    result = calculate_cv_score(extracted_data)
+    print(f"Score: {result['total_score']}")
+    print(f"Grade: {result['grade']}")
+"""
+
+from .calculator import calculate_cv_score
+from .after_fix import calculate_after_fix_score
+
+__all__ = [
+    'calculate_cv_score',
+    'calculate_after_fix_score'
+]
+
+Step 2: Create backend/common/scoring/calculator.py with:
+
+"""
+Main CV Scoring Calculator v3.0
+DETERMINISTIC: Same input ALWAYS produces same output.
+"""
+
+from typing import Dict
+from .config import SCORE_MIN, SCORE_MAX, GRADE_THRESHOLDS, GRADE_MESSAGES, SCORING_VERSION
+from .categories import (
+    calculate_quantification_score,
+    calculate_experience_score,
+    calculate_language_score,
+    calculate_grammar_score,
+    calculate_skills_score,
+    calculate_formatting_score,
+    calculate_contact_score,
+    calculate_length_score
+)
+
+
+def calculate_cv_score(data: Dict) -> Dict:
+    """
+    Calculate CV score from extracted data.
+    
+    THIS FUNCTION IS DETERMINISTIC.
+    Same input will ALWAYS produce same output.
+    
+    Args:
+        data: Dictionary with extracted CV data
+        
+    Returns:
+        Dictionary with total_score, breakdown, grade, and message
+    """
+    
+    # Calculate each category score (ordered by weight)
+    breakdown = {
+        "quantification": calculate_quantification_score(data),  # 25 max
+        "experience": calculate_experience_score(data),          # 20 max
+        "language": calculate_language_score(data),              # 15 max
+        "grammar": calculate_grammar_score(data),                # 10 max
+        "skills": calculate_skills_score(data),                  # 10 max
+        "formatting": calculate_formatting_score(data),          # 10 max
+        "contact": calculate_contact_score(data),                # 5 max
+        "length": calculate_length_score(data)                   # 5 max
+    }
+    
+    # Calculate total
+    raw_total = sum(breakdown.values())
+    
+    # Apply bounds
+    final_score = int(max(SCORE_MIN, min(SCORE_MAX, raw_total)))
+    
+    # Determine grade and message
+    grade, message = _get_grade_and_message(final_score)
+    
+    return {
+        "total_score": final_score,
+        "breakdown": breakdown,
+        "grade": grade,
+        "message": message,
+        "version": SCORING_VERSION,
+        "max_possible": SCORE_MAX
+    }
+
+
+def _get_grade_and_message(score: int) -> tuple:
+    """Get grade and message based on score."""
+    if score >= GRADE_THRESHOLDS["excellent"]:
+        return "Excellent", GRADE_MESSAGES["excellent"]
+    elif score >= GRADE_THRESHOLDS["good"]:
+        return "Good", GRADE_MESSAGES["good"]
+    elif score >= GRADE_THRESHOLDS["fair"]:
+        return "Fair", GRADE_MESSAGES["fair"]
+    elif score >= GRADE_THRESHOLDS["needs_work"]:
+        return "Needs Work", GRADE_MESSAGES["needs_work"]
+    else:
+        return "Needs Attention", GRADE_MESSAGES["needs_attention"]
+
+Step 3: Create backend/common/scoring/after_fix.py with:
+
+"""
+After-fix score calculation v3.0
+Projects score improvement based on fixable issues.
+"""
+
+from typing import Dict, List
+from .config import SCORE_MAX, FIXABILITY_RATES, CATEGORY_WEIGHTS
+
+
+def calculate_after_fix_score(
+    before_score: int,
+    issues: List[Dict],
+    breakdown: Dict[str, float]
+) -> Dict:
+    """
+    Calculate projected score after fixes.
+    
+    Args:
+        before_score: Original CV score
+        issues: List of detected issues
+        breakdown: Score breakdown by category
+        
+    Returns:
+        Dictionary with before/after scores and improvements
+    """
+    recovery_points = 0.0
+    category_improvements = {}
+    
+    # Group issues by category
+    issues_by_category = {}
+    for issue in issues:
+        cat = issue.get("category", "other")
+        if cat not in issues_by_category:
+            issues_by_category[cat] = []
+        issues_by_category[cat].append(issue)
+    
+    # Calculate recovery for each category
+    for category, cat_issues in issues_by_category.items():
+        if category not in FIXABILITY_RATES:
+            continue
+            
+        fixability = FIXABILITY_RATES[category]
+        max_points = CATEGORY_WEIGHTS.get(category, 10)
+        current_points = breakdown.get(category, 0)
+        points_lost = max_points - current_points
+        
+        # Count auto-fixable issues
+        auto_fixable = sum(1 for i in cat_issues if i.get("is_auto_fixable", False))
+        total_in_cat = len(cat_issues)
+        
+        if total_in_cat > 0:
+            fix_ratio = auto_fixable / total_in_cat
+            recoverable = points_lost * fixability * fix_ratio
+            recovery_points += recoverable
+            
+            category_improvements[category] = {
+                "before": round(current_points, 1),
+                "after": round(min(max_points, current_points + recoverable), 1),
+                "improvement": round(recoverable, 1),
+                "max_possible": max_points
+            }
+    
+    # Calculate after score (capped at 95)
+    after_score = min(SCORE_MAX, before_score + recovery_points)
+    improvement = round(after_score - before_score)
+    
+    # Generate message
+    if improvement >= 15:
+        message = "Significant improvement! Your CV will be much stronger."
+    elif improvement >= 8:
+        message = "Nice improvement! Your CV will be noticeably better."
+    elif improvement > 0:
+        message = "Your CV has been polished."
+    else:
+        message = "Some issues require your input for best results."
+    
+    return {
+        "before_score": before_score,
+        "after_score": round(after_score),
+        "improvement": improvement,
+        "message": message,
+        "category_improvements": category_improvements,
+        "max_possible": SCORE_MAX
+    }
+
+───────────────────────────────────────────────────────────
+FILES TO CREATE:
+───────────────────────────────────────────────────────────
+
+- backend/common/scoring/__init__.py
+- backend/common/scoring/calculator.py
+- backend/common/scoring/after_fix.py
+
+DO NOT TOUCH:
+- All other files
+- The config.py created in Prompt 2#8
+- The categories/ folder created in Prompt 3#8
+
+───────────────────────────────────────────────────────────
+WHEN COMPLETE:
+───────────────────────────────────────────────────────────
+
+Confirm:
+□ __init__.py exports calculate_cv_score and calculate_after_fix_score
+□ calculator.py imports all 8 category functions
+□ calculator.py returns dict with: total_score, breakdown, grade, message, version
+□ after_fix.py calculates projected improvement
+□ No other files modified
+
+Type "COMPLETE - READY FOR PROMPT 5#8" when done.
