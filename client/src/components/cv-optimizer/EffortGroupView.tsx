@@ -240,7 +240,7 @@ function IssueCard({
         </span>
       </button>
 
-      {isExpanded && displayLevel >= 2 && (
+      {(displayLevel >= 2 || isExpanded) && (
         <div className="p-3 bg-gray-50 border-t border-gray-100">
           <div className="grid grid-cols-2 gap-4 mb-3">
             <div>

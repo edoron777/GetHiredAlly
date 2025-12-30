@@ -429,14 +429,7 @@ export function CVReportPage() {
               {DISPLAY_LEVELS.map(level => (
                 <button
                   key={level.id}
-                  onClick={() => {
-                    setDisplayLevel(level.id)
-                    if (level.id >= 2) {
-                      setExpandedIssues(new Set(filteredIssues.map(i => i.id)))
-                    } else {
-                      setExpandedIssues(new Set())
-                    }
-                  }}
+                  onClick={() => setDisplayLevel(level.id)}
                   title={level.tooltip}
                   className={`flex flex-col items-center px-4 py-2 rounded-lg border transition-colors ${
                     displayLevel === level.id
@@ -536,8 +529,8 @@ export function CVReportPage() {
                               </div>
                             </div>
 
-                            {(displayLevel >= 3 || expandedIssues.has(issue.id)) && (
-                              <div className={displayLevel >= 4 || expandedIssues.has(issue.id) ? 'mb-4' : ''}>
+                            {displayLevel >= 3 && (
+                              <div className={displayLevel >= 4 ? 'mb-4' : ''}>
                                 <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Suggested Fix</p>
                                 <div className="bg-green-50 border border-green-200 rounded p-3">
                                   <p className="text-green-800">{issue.suggested_fix}</p>
@@ -545,7 +538,7 @@ export function CVReportPage() {
                               </div>
                             )}
 
-                            {(displayLevel >= 4 || expandedIssues.has(issue.id)) && (
+                            {displayLevel >= 4 && (
                               <div className="mb-4">
                                 <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Found</p>
                                 <div className="bg-red-50 border border-red-200 rounded p-3">
@@ -554,7 +547,7 @@ export function CVReportPage() {
                               </div>
                             )}
 
-                            {(displayLevel >= 4 || expandedIssues.has(issue.id)) && issue.additional_info && (
+                            {displayLevel >= 4 && issue.additional_info && (
                               <div className="mt-4 pt-4 border-t border-gray-100">
                                 <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Additional Information</p>
                                 <p className="text-gray-600 text-sm">{issue.additional_info}</p>
