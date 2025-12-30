@@ -6,6 +6,33 @@ Projects score improvement based on fixable issues.
 from typing import Dict, List
 from .config import SCORE_MAX, FIXABILITY_RATES, CATEGORY_WEIGHTS
 
+# Map AI category names to config category names
+CATEGORY_MAP = {
+    "Lack of Quantification": "quantification",
+    "Weak Presentation": "language",
+    "Formatting & Structure": "formatting",
+    "Missing Information": "contact",
+    "Spelling & Grammar": "grammar",
+    "Grammar & Spelling": "grammar",
+    "Skills": "skills",
+    "Experience": "experience",
+    "Length": "length",
+    "Contact Information": "contact",
+}
+
+
+def normalize_category(category: str) -> str:
+    """Normalize AI category name to config category name."""
+    if category in CATEGORY_MAP:
+        return CATEGORY_MAP[category]
+    lower = category.lower()
+    if lower in FIXABILITY_RATES:
+        return lower
+    for key in FIXABILITY_RATES:
+        if key in lower:
+            return key
+    return category
+
 
 def calculate_after_fix_score(
     before_score: int,
@@ -26,10 +53,11 @@ def calculate_after_fix_score(
     recovery_points = 0.0
     category_improvements = {}
     
-    # Group issues by category
+    # Group issues by normalized category
     issues_by_category = {}
     for issue in issues:
-        cat = issue.get("category", "other")
+        raw_cat = issue.get("category", "other")
+        cat = normalize_category(raw_cat)
         if cat not in issues_by_category:
             issues_by_category[cat] = []
         issues_by_category[cat].append(issue)
