@@ -1,0 +1,121 @@
+═══════════════════════════════════════════════════════════
+PROMPT 4#4: UPDATE COMPONENTREGISTRY + SUMMARY
+═══════════════════════════════════════════════════════════
+
+TASK: Document GHAScanner in ComponentRegistry.md
+
+───────────────────────────────────────────────────────────
+STEP 1: Update Quick Lookup Table
+───────────────────────────────────────────────────────────
+
+File: docs/ComponentRegistry.md
+
+Add to QUICK LOOKUP TABLE:
+
+| GHAScanner | UI Component | Complete | common/GHAScanner/ |
+| scannerSounds | Utility | Complete | common/GHAScanner/ |
+
+───────────────────────────────────────────────────────────
+STEP 2: Add GHAScanner Entry
+───────────────────────────────────────────────────────────
+
+Add to UI COMPONENTS section:
+
+### GHAScanner
+
+| Field | Value |
+|-------|-------|
+| **Name** | GHAScanner |
+| **Purpose** | Visual progress indicator with animated grid (Defrag-style) |
+| **Category** | UI Component |
+| **Location** | `client/src/components/common/GHAScanner/` |
+| **Import** | `import { GHAScanner } from '@/components/common/GHAScanner'` |
+| **Status** | Complete |
+| **Used By** | CVScanningPage, future services |
+| **Added** | December 30, 2025 |
+
+**Props:**
+
+| Prop | Type | Required | Description |
+|------|------|----------|-------------|
+| `isScanning` | boolean | Yes | Controls animation state |
+| `progress` | number | Yes | Progress 0-100 |
+| `statusMessages` | string[] | No | Rotating status texts |
+| `showProgress` | boolean | No | Show progress bar |
+| `showLegend` | boolean | No | Show color legend |
+| `onComplete` | function | No | Callback at 100% |
+
+**Features:**
+- Windows 95 Defrag-style grid animation
+- Color-coded blocks (OK, Minor, Medium, Critical)
+- Rotating status messages
+- Progress bar
+- Pleasant sound effects (Web Audio API)
+
+**Related Files:**
+- `scannerStyles.ts` - Style constants and colors
+- `scannerSounds.ts` - Web Audio API sound effects
+
+**Sound Effects:**
+| Sound | Trigger | Character |
+|-------|---------|-----------|
+| Start | Scan begins | Ascending chime |
+| Complete | Scan finishes | 3-note success chord |
+| Error | Problem | Gentle descending tone |
+
+**Example:**
+```tsx
+import { GHAScanner, STATUS_MESSAGES } from '@/components/common/GHAScanner';
+
+<GHAScanner
+  isScanning={true}
+  progress={45}
+  statusMessages={STATUS_MESSAGES.cvOptimizer}
+  onComplete={() => navigate('/results')}
+/>
+```
+
+───────────────────────────────────────────────────────────
+STEP 3: Update Total Count
+───────────────────────────────────────────────────────────
+
+Update at bottom of ComponentRegistry.md:
+
+TOTAL COMPONENTS: 18 (add 2: GHAScanner, scannerSounds)
+Last Updated: December 30, 2025
+
+───────────────────────────────────────────────────────────
+SUMMARY
+───────────────────────────────────────────────────────────
+
+Files created/modified:
+
+NEW FILES:
+- client/src/components/common/GHAScanner/index.ts
+- client/src/components/common/GHAScanner/GHAScanner.tsx
+- client/src/components/common/GHAScanner/scannerStyles.ts
+- client/src/components/common/GHAScanner/scannerSounds.ts
+
+MODIFIED FILES:
+- CVScanningPage.tsx (now imports from GHAScanner)
+- docs/ComponentRegistry.md (added GHAScanner entry)
+
+FEATURES:
+- Reusable scanner component
+- Pleasant Web Audio API sounds
+- Documented in ComponentRegistry
+- Can be used by any service
+
+───────────────────────────────────────────────────────────
+VERIFICATION CHECKLIST
+───────────────────────────────────────────────────────────
+
+- [ ] GHAScanner folder created
+- [ ] Scanner animation works
+- [ ] Start sound plays (pleasant chime)
+- [ ] Complete sound plays (success chord)
+- [ ] CVScanningPage still works
+- [ ] ComponentRegistry updated
+- [ ] Total count updated to 18
+
+Report completion status.
