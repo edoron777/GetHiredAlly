@@ -394,37 +394,6 @@ export function CVReportPage() {
           visibleSuggestions={categoryFilteredIssues.length}
         />
 
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Filter size={18} className="text-gray-500" />
-            <span className="font-medium text-gray-700">How much information do you want to see?</span>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {DISPLAY_LEVELS.map(level => (
-              <button
-                key={level.id}
-                onClick={() => {
-                  setDisplayLevel(level.id)
-                  if (level.id >= 2) {
-                    setExpandedIssues(new Set(filteredIssues.map(i => i.id)))
-                  } else {
-                    setExpandedIssues(new Set())
-                  }
-                }}
-                title={level.tooltip}
-                className={`flex flex-col items-center px-4 py-2 rounded-lg border transition-colors ${
-                  displayLevel === level.id
-                    ? 'bg-blue-50 border-blue-500 text-blue-700'
-                    : 'border-gray-200 hover:bg-gray-50'
-                }`}
-              >
-                <span className="font-medium">{level.name}</span>
-                <span className="text-xs text-gray-500">{level.shortDesc}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
         <ViewModeToggle
           currentMode={viewMode}
           onModeChange={setViewMode}
@@ -461,6 +430,39 @@ export function CVReportPage() {
             </div>
           </div>
         )}
+
+        <div style={{ borderTop: '1px solid #e5e7eb', marginTop: '16px', marginBottom: '16px', paddingTop: '16px' }}>
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Filter size={18} className="text-gray-500" />
+              <span className="font-medium text-gray-700">How much information do you want to see?</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {DISPLAY_LEVELS.map(level => (
+                <button
+                  key={level.id}
+                  onClick={() => {
+                    setDisplayLevel(level.id)
+                    if (level.id >= 2) {
+                      setExpandedIssues(new Set(filteredIssues.map(i => i.id)))
+                    } else {
+                      setExpandedIssues(new Set())
+                    }
+                  }}
+                  title={level.tooltip}
+                  className={`flex flex-col items-center px-4 py-2 rounded-lg border transition-colors ${
+                    displayLevel === level.id
+                      ? 'bg-blue-50 border-blue-500 text-blue-700'
+                      : 'border-gray-200 hover:bg-gray-50'
+                  }`}
+                >
+                  <span className="font-medium">{level.name}</span>
+                  <span className="text-xs text-gray-500">{level.shortDesc}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
 
         <div style={{ marginTop: '16px', marginBottom: '16px' }}>
           <ActionBar

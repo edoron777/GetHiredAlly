@@ -1,0 +1,86 @@
+═══════════════════════════════════════════════════════════
+PROMPT 3#7: Move Detail Level Selector
+═══════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify files not explicitly mentioned
+3. Do NOT add features not explicitly requested
+4. Do NOT refactor or "improve" existing code
+5. Do NOT make autonomous decisions
+6. If unclear, STOP and ask - do not assume
+7. Make MINIMAL, SURGICAL changes only
+
+FORBIDDEN ACTIONS:
+- Changing the Detail Level component's internal code
+- Modifying how the buttons work
+- Adding new options to the selector
+- Changing the styling of the buttons
+
+───────────────────────────────────────────────────────────
+
+TASK: Move the Detail Level selector to directly above the recommendations list
+
+OBJECTIVE:
+Reposition the Detail Level control so it's next to what it affects (recommendations display)
+
+CONTEXT:
+Currently the Detail Level selector is positioned too high on the page, separated from the recommendations it controls. Users should see the control next to what it controls.
+
+───────────────────────────────────────────────────────────
+
+INSTRUCTIONS:
+
+Step 1: In the CV Report page component, locate the Detail Level section
+- Search for: "How much information do you want to see?"
+- Or: "Quick Review", "Standard", "With Fix", "Complete"
+- Or: "detailLevel", "DetailLevel"
+
+Step 2: IDENTIFY the current position in the JSX structure
+- Note what comes BEFORE it
+- Note what comes AFTER it
+
+Step 3: CUT the entire Detail Level section (the container div with the question and 4 buttons)
+
+Step 4: PASTE it in the NEW position:
+- AFTER the Priority Filter (All / Quick Wins / Important / Consider / Polish)
+- BEFORE the recommendations list
+- Add a divider/separator line above it if there isn't one
+
+Step 5: The new order should be:
+1. Category Filter (checkboxes)
+2. View By (Priority / Effort / Work Type)
+3. Priority Filter (All / Quick Wins / etc.)
+4. --- divider ---
+5. Detail Level (Quick Review / Standard / With Fix / Complete) ← MOVED HERE
+6. Recommendations List
+
+───────────────────────────────────────────────────────────
+
+FILES TO MODIFY:
+- [CV Report page component]
+
+FILES TO CREATE:
+- None
+
+DO NOT TOUCH:
+- Detail Level component internal code
+- Category Filter component
+- View By component
+- Priority Filter component
+- Recommendations List component
+
+───────────────────────────────────────────────────────────
+
+WHEN COMPLETE:
+
+Confirm:
+□ Detail Level selector appears after Priority Filter
+□ Detail Level selector appears before Recommendations
+□ A visual separator exists between Priority Filter and Detail Level
+□ Detail Level buttons still work correctly
+□ Selecting different levels still changes recommendation display
+□ No console errors
+
+Report the before/after positions.
