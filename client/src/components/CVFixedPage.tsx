@@ -332,6 +332,7 @@ export function CVFixedPage() {
                 title="Fixed CV"
                 content={data.fixed_cv_content}
                 type="fixed"
+                changes={data.changes}
               />
             </div>
           )}
@@ -351,6 +352,7 @@ export function CVFixedPage() {
               content={data.fixed_cv_content}
               type="fixed"
               fullWidth
+              changes={data.changes}
             />
           )}
         </div>
@@ -410,12 +412,14 @@ function CVPanel({
   title, 
   content, 
   type, 
-  fullWidth = false 
+  fullWidth = false,
+  changes
 }: { 
   title: string
   content: string
   type: 'original' | 'fixed'
   fullWidth?: boolean
+  changes?: Array<{ category: string; before: string; after: string; explanation: string }>
 }) {
   return (
     <div className={`${fullWidth ? 'max-w-3xl mx-auto' : ''}`}>
@@ -432,6 +436,11 @@ function CVPanel({
         }`}>
           {title}
         </span>
+        {type === 'fixed' && changes && changes.length > 0 && (
+          <span className="ml-auto text-xs bg-green-200 text-green-800 px-2 py-0.5 rounded-full">
+            {changes.length} changes made
+          </span>
+        )}
       </div>
 
       <div className={`p-6 rounded-b-lg border-x border-b min-h-[500px] overflow-auto ${
@@ -444,6 +453,27 @@ function CVPanel({
             {content}
           </ReactMarkdown>
         </div>
+        
+        {type === 'fixed' && changes && changes.length > 0 && (
+          <div className="mt-6 pt-4 border-t border-green-200">
+            <p className="text-xs font-medium text-green-700 mb-3">Changes Made:</p>
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {changes.slice(0, 8).map((change, idx) => (
+                <div key={idx} className="text-xs bg-green-50 border border-green-200 rounded p-2">
+                  <div className="flex items-center gap-1 mb-1">
+                    <span className="text-green-600">✓</span>
+                    <span className="font-medium text-gray-700 capitalize">{change.category}</span>
+                  </div>
+                  <div className="text-gray-500 line-through text-xs truncate">{change.before}</div>
+                  <div className="text-green-700 text-xs truncate">→ {change.after}</div>
+                </div>
+              ))}
+              {changes.length > 8 && (
+                <p className="text-xs text-gray-500 text-center">+{changes.length - 8} more changes</p>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
