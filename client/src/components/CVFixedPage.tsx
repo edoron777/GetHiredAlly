@@ -505,12 +505,12 @@ export function CVFixedPage() {
   )
 }
 
-const HIGHLIGHT_COLORS: Record<string, string> = {
-  quantification: 'bg-green-200 border-b-2 border-green-500',
-  language: 'bg-blue-200 border-b-2 border-blue-500',
-  grammar: 'bg-yellow-200 border-b-2 border-yellow-500',
-  formatting: 'bg-purple-200 border-b-2 border-purple-500',
-  default: 'bg-yellow-200 border-b-2 border-yellow-500'
+const HIGHLIGHT_STYLES: Record<string, string> = {
+  quantification: 'background-color: #bbf7d0; border-bottom: 2px solid #22c55e; padding: 2px 4px; border-radius: 2px;',
+  language: 'background-color: #bfdbfe; border-bottom: 2px solid #3b82f6; padding: 2px 4px; border-radius: 2px;',
+  grammar: 'background-color: #fef08a; border-bottom: 2px solid #eab308; padding: 2px 4px; border-radius: 2px;',
+  formatting: 'background-color: #e9d5ff; border-bottom: 2px solid #a855f7; padding: 2px 4px; border-radius: 2px;',
+  default: 'background-color: #fef08a; border-bottom: 2px solid #eab308; padding: 2px 4px; border-radius: 2px;'
 }
 
 function highlightChangesInContent(content: string, changes?: Array<{ category: string; before: string; after: string; explanation: string }>): string {
@@ -518,24 +518,21 @@ function highlightChangesInContent(content: string, changes?: Array<{ category: 
   
   let highlightedContent = content
   
-  // First, highlight changes from the changes array
   changes.forEach(change => {
     if (change.after && change.after.length > 3) {
-      const colorClass = HIGHLIGHT_COLORS[change.category.toLowerCase()] || HIGHLIGHT_COLORS.default
+      const style = HIGHLIGHT_STYLES[change.category?.toLowerCase()] || HIGHLIGHT_STYLES.default
       const escapedAfter = change.after.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
       const regex = new RegExp(escapedAfter, 'g')
       highlightedContent = highlightedContent.replace(
         regex,
-        `<mark class="${colorClass} px-1 rounded">${change.after}</mark>`
+        `<mark style="${style}">${change.after}</mark>`
       )
     }
   })
   
-  // Then, highlight placeholder text in brackets like [NUMBER], [$AMOUNT], [X%]
-  // This helps users see what they need to fill in
   highlightedContent = highlightedContent.replace(
     /\[([^\]]{2,50})\]/g,
-    '<span class="bg-blue-100 text-blue-800 px-1 rounded border border-dashed border-blue-400 font-medium">[$1]</span>'
+    '<span style="background-color: #dbeafe; color: #1e40af; padding: 2px 4px; border-radius: 2px; border: 1px dashed #60a5fa; font-weight: 500;">[$1]</span>'
   )
   
   return highlightedContent
@@ -599,12 +596,24 @@ function CVPanel({
         
         {type === 'fixed' && changes && changes.length > 0 && (
           <div className="mt-6 pt-4 border-t border-green-200">
-            <div className="flex items-center gap-4 mb-3">
+            <div className="flex flex-wrap items-center gap-4 mb-3">
               <p className="text-xs font-medium text-green-700">Changes Made:</p>
-              <div className="flex gap-2 text-xs">
+              <div className="flex flex-wrap gap-3 text-xs">
                 <span className="flex items-center gap-1">
-                  <span className="w-3 h-3 bg-yellow-200 border-b-2 border-yellow-500 rounded"></span>
-                  Changed
+                  <span className="w-4 h-4 rounded" style={{ backgroundColor: '#fef08a', borderBottom: '2px solid #eab308' }}></span>
+                  Grammar
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-4 h-4 rounded" style={{ backgroundColor: '#bbf7d0', borderBottom: '2px solid #22c55e' }}></span>
+                  Quantification
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-4 h-4 rounded" style={{ backgroundColor: '#bfdbfe', borderBottom: '2px solid #3b82f6' }}></span>
+                  Language
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-4 h-4 rounded" style={{ backgroundColor: '#dbeafe', border: '1px dashed #60a5fa' }}></span>
+                  Needs Input
                 </span>
               </div>
             </div>

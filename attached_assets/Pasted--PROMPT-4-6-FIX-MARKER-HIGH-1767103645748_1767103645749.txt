@@ -1,0 +1,146 @@
+═══════════════════════════════════════════════════════════════════════
+PROMPT 4#6: FIX MARKER HIGHLIGHTING FOR CHANGES
+═══════════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify files not explicitly mentioned
+3. Do NOT add features not explicitly requested
+4. If unclear, STOP and ask - do not assume
+
+THIS HAS BEEN REQUESTED 8 TIMES AND NOT IMPLEMENTED.
+IMPLEMENT IT CORRECTLY THIS TIME.
+
+───────────────────────────────────────────────────────────────────────
+TASK: Implement visual highlighting of changes in side-by-side view
+───────────────────────────────────────────────────────────────────────
+
+OBJECTIVE:
+User must be able to SEE what changed in the Fixed CV.
+Changed text must have a VISIBLE yellow/green background (marker effect).
+
+───────────────────────────────────────────────────────────────────────
+INSTRUCTIONS:
+───────────────────────────────────────────────────────────────────────
+
+Step 1: Verify changes_json is available
+
+Check if the API returns changes in this format:
+{
+  changes: [
+    { before: "old text", after: "new text", category: "language" },
+    { before: "old text 2", after: "new text 2", category: "quantification" },
+  ]
+}
+
+If NOT available, we need to pass it from backend.
+
+Step 2: Create highlighting function in CVFixedPage.tsx
+
+Add this function:
+
+const highlightChanges = (cvText: string, changes: any[]): string => {
+  if (!changes || changes.length === 0) {
+    return cvText;
+  }
+  
+  let highlightedText = cvText;
+  
+  changes.forEach((change) => {
+    if (change.after) {
+      // Escape special regex characters
+      const escapedAfter = change.after.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      
+      // Replace with highlighted version
+      const highlightClass = 'highlighted-change';
+      const highlighted = `<mark class="${highlightClass}">${change.after}</mark>`;
+      
+      highlightedText = highlightedText.replace(
+        new RegExp(escapedAfter, 'g'),
+        highlighted
+      );
+    }
+  });
+  
+  return highlightedText;
+};
+
+Step 3: Add CSS styles
+
+Add to the component or CSS file:
+
+.highlighted-change {
+  background-color: #fef08a; /* Yellow - marker effect */
+  padding: 2px 4px;
+  border-radius: 2px;
+  border-bottom: 2px solid #eab308;
+}
+
+/* Alternative for dark theme */
+.highlighted-change-green {
+  background-color: #bbf7d0; /* Light green */
+  padding: 2px 4px;
+  border-radius: 2px;
+}
+
+Step 4: Apply highlighting to Fixed CV display
+
+In the Side by Side view:
+
+{/* Fixed CV Column */}
+<div className="fixed-cv">
+  <div className="bg-green-50 px-4 py-2 font-semibold text-green-800 rounded-t-lg">
+    ● Fixed CV
+  </div>
+  <div 
+    className="p-4 whitespace-pre-wrap"
+    dangerouslySetInnerHTML={{ 
+      __html: highlightChanges(fixedCvContent, changes) 
+    }}
+  />
+</div>
+
+Step 5: Add legend below comparison
+
+<div className="flex items-center gap-2 mt-4 text-sm text-gray-600">
+  <span className="inline-block w-4 h-4 bg-yellow-200 rounded border border-yellow-400"></span>
+  <span>Highlighted text shows changes made by optimization</span>
+</div>
+
+───────────────────────────────────────────────────────────────────────
+FILES TO MODIFY:
+───────────────────────────────────────────────────────────────────────
+
+- client/src/components/CVFixedPage.tsx - Add highlighting function and styles
+
+DO NOT TOUCH:
+- All other files
+
+───────────────────────────────────────────────────────────────────────
+VERIFICATION (MANDATORY):
+───────────────────────────────────────────────────────────────────────
+
+After making changes:
+
+1. Show me the highlightChanges function
+2. Show me the CSS styles added
+3. Show me where dangerouslySetInnerHTML is used
+4. Verify changes array is being passed correctly
+
+TEST:
+1. Go to Perfect Your CV
+2. Upload a CV
+3. Run scan
+4. Click Fix My CV
+5. View Side by Side
+6. VERIFY: Changed text has YELLOW background
+
+Report:
+□ highlightChanges function added
+□ CSS styles added
+□ Fixed CV uses dangerouslySetInnerHTML with highlighting
+□ Legend added
+□ Changes are VISUALLY highlighted (confirm with screenshot if possible)
+
+Type: "PROMPT 4#6 COMPLETE - READY FOR PROMPT 5#6"
