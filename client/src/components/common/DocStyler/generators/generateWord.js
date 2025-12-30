@@ -1,0 +1,1 @@
+// generateWord.js - placeholder

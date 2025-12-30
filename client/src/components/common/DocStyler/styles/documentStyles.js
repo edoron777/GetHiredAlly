@@ -1,0 +1,1 @@
+// documentStyles.js - placeholder

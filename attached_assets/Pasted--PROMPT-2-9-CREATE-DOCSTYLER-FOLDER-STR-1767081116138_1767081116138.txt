@@ -1,0 +1,79 @@
+═══════════════════════════════════════════════════════════
+PROMPT 2#9: CREATE DOCSTYLER FOLDER STRUCTURE
+═══════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify existing files
+3. Create ONLY the files listed
+
+───────────────────────────────────────────────────────────
+TASK: Create the DocStyler folder structure
+───────────────────────────────────────────────────────────
+
+OBJECTIVE:
+Set up the folder structure for the DocStyler component.
+
+───────────────────────────────────────────────────────────
+INSTRUCTIONS:
+───────────────────────────────────────────────────────────
+
+Step 1: Create folder structure:
+        client/src/components/common/DocStyler/
+
+Step 2: Create index.js with this EXACT content:
+
+export { default as DocStyler } from './DocStyler';
+export { generatePDF } from './generators/generatePDF';
+export { generateWord } from './generators/generateWord';
+export { generateMD } from './generators/generateMD';
+
+Step 3: Create generators folder:
+        client/src/components/common/DocStyler/generators/
+
+Step 4: Create styles folder:
+        client/src/components/common/DocStyler/styles/
+
+Step 5: Create utils folder:
+        client/src/components/common/DocStyler/utils/
+
+Step 6: Create placeholder files (empty with comment):
+        - DocStyler.js (placeholder)
+        - generators/generatePDF.js (placeholder)
+        - generators/generateWord.js (placeholder)
+        - generators/generateMD.js (placeholder)
+        - styles/documentStyles.js (placeholder)
+        - utils/markdownConverter.js (placeholder)
+
+───────────────────────────────────────────────────────────
+FILES TO CREATE:
+───────────────────────────────────────────────────────────
+
+client/src/components/common/DocStyler/
+├── index.js
+├── DocStyler.js (placeholder)
+├── generators/
+│   ├── generatePDF.js (placeholder)
+│   ├── generateWord.js (placeholder)
+│   └── generateMD.js (placeholder)
+├── styles/
+│   └── documentStyles.js (placeholder)
+└── utils/
+    └── markdownConverter.js (placeholder)
+
+DO NOT TOUCH:
+- All other files
+- ActionBar folder
+
+───────────────────────────────────────────────────────────
+WHEN COMPLETE:
+───────────────────────────────────────────────────────────
+
+Confirm:
+□ Folder structure created
+□ index.js exports created
+□ All placeholder files created
+□ No other files modified
+
+Type "COMPLETE - READY FOR PROMPT 3#9" when done.

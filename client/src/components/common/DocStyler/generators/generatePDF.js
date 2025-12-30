@@ -1,0 +1,1 @@
+// generatePDF.js - placeholder
