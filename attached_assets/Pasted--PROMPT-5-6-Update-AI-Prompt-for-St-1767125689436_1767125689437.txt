@@ -1,0 +1,270 @@
+═══════════════════════════════════════════════════════════════
+PROMPT 5#6: Update AI Prompt for Structured JSON Output
+═══════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify files not explicitly mentioned
+3. Do NOT add features not explicitly requested
+4. If unclear, STOP and ask - do not assume
+
+FORBIDDEN ACTIONS:
+- Modifying the scoring module files
+- Changing any other service files
+- Adding new endpoints
+
+───────────────────────────────────────────────────────────────
+
+TASK: Update the CV analyzer to return structured JSON for deterministic scoring
+
+OBJECTIVE:
+Modify the AI prompt so it returns data in the exact format needed by the new scoring engine.
+
+CONTEXT:
+The AI should ONLY extract data - not score. The scoring is done by code.
+
+───────────────────────────────────────────────────────────────
+
+INSTRUCTIONS:
+
+Step 1: Find the CV analyzer file (likely `server/services/cv_optimizer/cv_analyzer.py` or similar)
+
+Step 2: Update or add the analysis prompt to return this EXACT structure:
+
+```python
+CV_ANALYSIS_PROMPT = """
+You are a CV data extraction system. Extract data from the CV in EXACT JSON format.
+
+CRITICAL RULES:
+1. Do NOT score the CV - only extract facts
+2. Do NOT make judgments - only report what you find
+3. Return ONLY valid JSON - no explanations before or after
+4. Count accurately - do not estimate
+
+REQUIRED OUTPUT FORMAT:
+{
+  "contact": {
+    "has_name": true/false,
+    "has_email": true/false,
+    "has_phone": true/false,
+    "has_linkedin": true/false,
+    "email_is_professional": true/false
+  },
+  "structure": {
+    "has_section_headers": true/false,
+    "section_headers_found": ["Experience", "Education", "Skills"],
+    "uses_bullet_points": true/false,
+    "has_summary_section": true/false,
+    "summary_word_count": 0,
+    "word_count": 0,
+    "page_count": 1,
+    "has_adequate_whitespace": true/false,
+    "has_clear_hierarchy": true/false,
+    "contact_at_top": true/false,
+    "experience_prominent": true/false,
+    "logical_order": true/false,
+    "education_positioned": true/false,
+    "has_experience_section": true/false,
+    "has_education_section": true/false,
+    "has_skills_section": true/false
+  },
+  "quantification": {
+    "total_bullet_points": 0,
+    "bullets_with_numbers": 0,
+    "percentages_found": 0,
+    "dollar_amounts_found": 0,
+    "metrics_list": []
+  },
+  "language": {
+    "strong_action_verbs_count": 0,
+    "weak_phrases_count": 0,
+    "passive_voice_count": 0,
+    "strong_verbs_found": [],
+    "weak_phrases_found": []
+  },
+  "experience": {
+    "total_roles": 0,
+    "has_dates_for_each_role": true/false,
+    "is_reverse_chronological": true/false,
+    "has_clear_titles": true/false,
+    "all_have_titles": true/false,
+    "all_have_companies": true/false,
+    "all_have_dates": true/false,
+    "dates_formatted_well": true/false,
+    "gaps_detected": [],
+    "jobs": [
+      {
+        "title": "Job Title",
+        "company": "Company Name",
+        "word_count": 0,
+        "bullet_count": 0
+      }
+    ]
+  },
+  "grammar": {
+    "spelling_errors_count": 0,
+    "grammar_errors_count": 0,
+    "errors_list": []
+  },
+  "writing_quality": {
+    "redundant_phrases_count": 0,
+    "filler_words_count": 0,
+    "avg_sentence_length": 15
+  },
+  "vagueness": {
+    "vague_phrases_count": 0,
+    "buzzword_count": 0,
+    "has_specific_achievements": true/false
+  },
+  "skills": {
+    "tech_keywords_count": 0,
+    "tech_keywords_found": [],
+    "skills_are_categorized": true/false,
+    "has_industry_terms": true/false
+  },
+  "formatting": {
+    "consistent_bullets": true/false,
+    "consistent_dates": true/false,
+    "consistent_spacing": true/false
+  },
+  "ats": {
+    "has_tables": true/false,
+    "has_text_boxes": true/false,
+    "has_images": true/false,
+    "is_multi_column": true/false,
+    "standard_section_names": true/false,
+    "parseable_dates": true/false
+  },
+  "education": {
+    "has_relevant_certifications": true/false,
+    "certifications_have_dates": true/false,
+    "education_complete": true/false,
+    "education_concise": true/false,
+    "gpa_value": null
+  },
+  "repetition": {
+    "has_overused_words": true/false,
+    "has_duplicate_phrases": true/false,
+    "has_redundant_bullets": true/false,
+    "skills_duplicated": true/false,
+    "achievements_restated": true/false
+  },
+  "red_flags": {
+    "ai_content_detected": true/false,
+    "unprofessional_email": true/false,
+    "personal_info_overshare": true/false,
+    "has_photo": true/false,
+    "has_age_dob": true/false,
+    "has_references_line": true/false,
+    "has_salary_info": true/false
+  },
+  "issues": [
+    {
+      "id": "issue_001",
+      "category": "quantification",
+      "severity": "high",
+      "title": "Missing metrics",
+      "description": "This bullet lacks quantifiable results",
+      "location": "Experience > Role 1 > Bullet 3",
+      "current_text": "Managed the development team",
+      "suggested_fix": "Managed a team of [X] developers",
+      "is_auto_fixable": true
+    }
+  ]
+}
+
+COUNTING RULES:
+- Count ONLY bullet points that start with •, -, or * followed by text
+- Count a bullet as "quantified" if it contains numbers, %, or $
+- Strong verbs: Led, Managed, Developed, Built, Increased, Created, Designed, Implemented, Achieved, Delivered, Launched, Optimized, Reduced, Improved, Established, Directed, Coordinated, Spearheaded
+- Weak phrases: "responsible for", "helped with", "worked on", "assisted", "participated in", "was part of", "handled", "dealt with"
+
+CV CONTENT:
+{cv_text}
+"""
+```
+
+Step 3: Create a function to call the AI and parse the JSON response:
+
+```python
+import json
+import re
+
+def extract_cv_data(cv_text: str) -> dict:
+    """
+    Extract structured data from CV using AI.
+    
+    Args:
+        cv_text: Raw CV text
+    
+    Returns:
+        Dictionary with structured CV data for scoring
+    """
+    # Call AI with the prompt
+    prompt = CV_ANALYSIS_PROMPT.format(cv_text=cv_text)
+    
+    # Get AI response (use your existing AI call method)
+    response = call_ai_model(prompt)  # Replace with actual AI call
+    
+    # Parse JSON from response
+    try:
+        # Try to extract JSON from response
+        json_match = re.search(r'\{[\s\S]*\}', response)
+        if json_match:
+            data = json.loads(json_match.group())
+            return data
+    except json.JSONDecodeError:
+        pass
+    
+    # Return empty structure if parsing fails
+    return get_empty_cv_data()
+
+
+def get_empty_cv_data() -> dict:
+    """Return empty CV data structure with defaults."""
+    return {
+        "contact": {"has_name": False, "has_email": False, "has_phone": False, "has_linkedin": False, "email_is_professional": True},
+        "structure": {"has_section_headers": False, "uses_bullet_points": False, "word_count": 0, "page_count": 1},
+        "quantification": {"total_bullet_points": 0, "bullets_with_numbers": 0},
+        "language": {"strong_action_verbs_count": 0, "weak_phrases_count": 0},
+        "experience": {"total_roles": 0, "is_reverse_chronological": True, "jobs": []},
+        "grammar": {"spelling_errors_count": 0, "grammar_errors_count": 0},
+        "writing_quality": {"redundant_phrases_count": 0, "filler_words_count": 0},
+        "vagueness": {"vague_phrases_count": 0, "has_specific_achievements": True},
+        "skills": {"tech_keywords_count": 0},
+        "formatting": {"consistent_bullets": True, "consistent_dates": True},
+        "ats": {"has_tables": False, "is_multi_column": False},
+        "education": {"education_complete": False},
+        "repetition": {"has_overused_words": False},
+        "red_flags": {"unprofessional_email": False},
+        "issues": []
+    }
+```
+
+───────────────────────────────────────────────────────────────
+
+FILES TO MODIFY:
+- server/services/cv_optimizer/cv_analyzer.py (or wherever the AI prompt is)
+
+FILES TO CREATE:
+- None
+
+DO NOT TOUCH:
+- server/common/scoring/* (already created)
+- All other files
+
+───────────────────────────────────────────────────────────────
+
+WHEN COMPLETE:
+
+Confirm these items:
+□ AI prompt updated with exact JSON structure
+□ extract_cv_data function created
+□ get_empty_cv_data function created
+□ JSON parsing handles errors gracefully
+□ No other files modified
+
+Report:
+- Which file was modified
+- Any issues with existing code structure
