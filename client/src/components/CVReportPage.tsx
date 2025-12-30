@@ -313,7 +313,7 @@ export function CVReportPage() {
 
   return (
     <div className="min-h-[calc(100vh-64px)] p-8" style={{ backgroundColor: '#FAF9F7' }}>
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl mx-auto" id="report-content">
         <Link
           to={`/service/cv-optimizer/results/${scanId}`}
           className="flex items-center text-gray-600 hover:text-gray-800 mb-6"
@@ -472,7 +472,11 @@ export function CVReportPage() {
                 </button>
               </div>
               
-              <ExportDropdown />
+              <ExportDropdown 
+                score={reportData.cv_score || 0}
+                breakdown={reportData.score_breakdown || {}}
+                recommendations={categoryFilteredIssues}
+              />
             </div>
           </div>
           
