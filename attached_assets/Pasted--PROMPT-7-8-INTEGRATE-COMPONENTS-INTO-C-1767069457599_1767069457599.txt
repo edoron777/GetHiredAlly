@@ -1,0 +1,92 @@
+═══════════════════════════════════════════════════════════
+PROMPT 7#8: INTEGRATE COMPONENTS INTO CV OPTIMIZER PAGE
+═══════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify files not explicitly mentioned
+3. Do NOT refactor or "improve" existing code
+4. Make MINIMAL changes - only add imports and component usage
+5. If unclear, STOP and ask - do not assume
+
+───────────────────────────────────────────────────────────
+TASK: Add the new components to the CV Optimizer page
+───────────────────────────────────────────────────────────
+
+OBJECTIVE:
+Integrate ScoreDashboard and ScoreComparison components into the existing
+CV Optimizer page, displaying them at appropriate locations.
+
+───────────────────────────────────────────────────────────
+IMPORTANT - READ FIRST:
+───────────────────────────────────────────────────────────
+
+Before making changes:
+1. Identify the main CV Optimizer page component file
+2. Find where the current score is displayed
+3. Report the file path and current structure
+
+DO NOT proceed with changes until you report findings and receive confirmation.
+
+───────────────────────────────────────────────────────────
+INSTRUCTIONS (after identifying the file):
+───────────────────────────────────────────────────────────
+
+Step 1: Add imports at the top of the CV Optimizer page file:
+
+import ScoreDashboard from './ScoreDashboard';
+import ScoreComparison from './ScoreComparison';
+
+Step 2: Add ScoreDashboard component BELOW the main score display:
+
+<ScoreDashboard
+  breakdown={analysisResult?.breakdown}
+  totalScore={analysisResult?.total_score}
+  grade={analysisResult?.grade}
+  message={analysisResult?.message}
+/>
+
+Step 3: Add ScoreComparison component to show AFTER optimization:
+
+{optimizationResult && (
+  <ScoreComparison
+    beforeScore={optimizationResult?.before_score}
+    afterScore={optimizationResult?.after_score}
+    improvement={optimizationResult?.improvement}
+    message={optimizationResult?.message}
+    categoryImprovements={optimizationResult?.category_improvements}
+  />
+)}
+
+Step 4: Make NO other changes to the file
+
+───────────────────────────────────────────────────────────
+FILES TO MODIFY:
+───────────────────────────────────────────────────────────
+
+- [CV Optimizer page file - report path first]
+
+CHANGES ALLOWED:
+- Add 2 import statements
+- Add ScoreDashboard component usage
+- Add ScoreComparison component usage
+
+DO NOT:
+- Modify any existing code
+- Change any styling
+- Refactor anything
+- Add any other features
+
+───────────────────────────────────────────────────────────
+WHEN COMPLETE:
+───────────────────────────────────────────────────────────
+
+Confirm:
+□ Imports added for ScoreDashboard and ScoreComparison
+□ ScoreDashboard displays below main score
+□ ScoreComparison displays after optimization
+□ Existing functionality unchanged
+□ No other modifications made
+
+Type "COMPLETE - READY FOR PROMPT 8#8" when done.
