@@ -5,7 +5,7 @@ import {
   Zap, Wrench, HardHat, AlertCircle, AlertTriangle, Info, Sparkles, Wand2
 } from 'lucide-react'
 import { isAuthenticated, getAuthToken } from '@/lib/auth'
-import { StandardToolbar } from './common'
+import { ActionBar } from './common/ActionBar'
 import { ScannerGrid } from './ScannerGrid'
 import CategoryFilterPanel from './cv-optimizer/CategoryFilterPanel'
 import StrengthsSection from './cv-optimizer/StrengthsSection'
@@ -485,14 +485,45 @@ export function CVReportPage() {
         </div>
 
         <div style={{ marginTop: '16px', marginBottom: '16px' }}>
-          <StandardToolbar
-            onExpandAll={expandAll}
-            onCollapseAll={collapseAll}
+          <ActionBar
+            content={reportData.cv_content || ''}
+            fileName="CV_Analysis_Report"
+            emailSubject="My CV Analysis Report - GetHiredAlly"
+            hiddenButtons={[]}
+            disabledButtons={['pdf', 'word']}
             onPDF={handleExportPDF}
             onWord={handleExportWord}
             onMarkdown={handleExportMarkdown}
-            serviceName="CV Analysis Report"
           />
+        </div>
+
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+          <button 
+            onClick={expandAll}
+            style={{
+              padding: '6px 12px',
+              border: '1px solid #d1d5db',
+              borderRadius: '6px',
+              background: '#ffffff',
+              cursor: 'pointer',
+              fontSize: '14px'
+            }}
+          >
+            + Expand All
+          </button>
+          <button 
+            onClick={collapseAll}
+            style={{
+              padding: '6px 12px',
+              border: '1px solid #d1d5db',
+              borderRadius: '6px',
+              background: '#ffffff',
+              cursor: 'pointer',
+              fontSize: '14px'
+            }}
+          >
+            − Collapse All
+          </button>
         </div>
 
         {viewMode === 'severity' ? (
