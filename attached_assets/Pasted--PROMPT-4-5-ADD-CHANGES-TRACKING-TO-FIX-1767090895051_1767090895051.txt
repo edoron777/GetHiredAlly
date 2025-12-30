@@ -1,0 +1,143 @@
+═══════════════════════════════════════════════════════════
+PROMPT 4#5: ADD CHANGES TRACKING TO FIX OUTPUT
+═══════════════════════════════════════════════════════════
+
+PROBLEM:
+Users cannot see what was actually changed in their CV.
+There is no list of fixes applied.
+
+───────────────────────────────────────────────────────────
+TASK: Create new prompt for changes extraction
+───────────────────────────────────────────────────────────
+
+FILE: backend/app/cv_optimizer.py
+
+ADD this new prompt constant after CV_FIX_PROMPT:
+
+CV_CHANGES_PROMPT = """
+Compare these two CV versions and list the specific changes made.
+
+ORIGINAL CV:
+---
+{original_cv}
+---
+
+FIXED CV:
+---
+{fixed_cv}
+---
+
+List each change in this exact JSON format:
+
+{
+  "changes": [
+    {
+      "category": "quantification|language|grammar|formatting|other",
+      "before": "original text that was changed",
+      "after": "new improved text",
+      "explanation": "brief reason for change"
+    }
+  ],
+  "summary": {
+    "total_changes": number,
+    "by_category": {
+      "quantification": number,
+      "language": number,
+      "grammar": number,
+      "formatting": number,
+      "other": number
+    }
+  }
+}
+
+Return ONLY valid JSON, no explanations or markdown.
+"""
+
+───────────────────────────────────────────────────────────
+TASK: Update generate_fixed_cv function
+───────────────────────────────────────────────────────────
+
+Find the generate_fixed_cv function (around line 642).
+
+AFTER the AI generates the fixed CV, ADD a second AI call to extract changes:
+
+# After getting fixed_cv_content from AI...
+
+# NEW: Extract changes list
+changes_prompt = CV_CHANGES_PROMPT.format(
+    original_cv=original_cv_content,
+    fixed_cv=fixed_cv_content
+)
+
+changes_response = await call_ai(changes_prompt)  # Use same AI call method
+
+# Parse changes JSON
+try:
+    changes_data = json.loads(changes_response)
+except:
+    changes_data = {"changes": [], "summary": {"total_changes": 0}}
+
+# Save changes to database along with fixed_cv_content
+# Add to the database update:
+# changes_json = changes_data
+
+───────────────────────────────────────────────────────────
+TASK: Update database save
+───────────────────────────────────────────────────────────
+
+Find where fixed_cv_content is saved to database.
+
+ADD changes_json to the saved data:
+
+# Current save might look like:
+supabase.table('cv_scan_results').update({
+    'fixed_cv_content': fixed_cv_content,
+    'status': 'fixed'
+}).eq('id', scan_id).execute()
+
+# Change to:
+supabase.table('cv_scan_results').update({
+    'fixed_cv_content': fixed_cv_content,
+    'changes_json': changes_data,  # ADD THIS
+    'status': 'fixed'
+}).eq('id', scan_id).execute()
+
+───────────────────────────────────────────────────────────
+TASK: Update get_fixed_cv to return changes
+───────────────────────────────────────────────────────────
+
+Find the get_fixed_cv function (or endpoint that returns fixed CV).
+
+ADD changes to the returned data:
+
+return {
+    'scan_id': scan['id'],
+    'original_cv_content': ...,
+    'fixed_cv_content': ...,
+    'changes': scan.get('changes_json', {}).get('changes', []),  # ADD
+    'changes_summary': scan.get('changes_json', {}).get('summary', {}),  # ADD
+    'total_changes': len(scan.get('changes_json', {}).get('changes', [])),  # ADD
+    # ... rest of existing fields
+}
+
+───────────────────────────────────────────────────────────
+DATABASE: Add changes_json column if needed
+───────────────────────────────────────────────────────────
+
+If changes_json column doesn't exist in cv_scan_results table:
+
+ALTER TABLE cv_scan_results ADD COLUMN IF NOT EXISTS changes_json JSONB;
+
+───────────────────────────────────────────────────────────
+VERIFICATION
+───────────────────────────────────────────────────────────
+
+After this change:
+- CV fix process makes TWO AI calls (fix + extract changes)
+- Changes are saved to database
+- Frontend receives list of changes made
+- Users can see exactly what was fixed
+
+Show me the updated code sections.
+
+Type "COMPLETE - READY FOR PROMPT 5#5" when done.

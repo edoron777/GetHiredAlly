@@ -687,6 +687,46 @@ FIXED CV:
 """
 
 
+CV_CHANGES_PROMPT = """
+Compare these two CV versions and list the specific changes made.
+
+ORIGINAL CV:
+---
+{original_cv}
+---
+
+FIXED CV:
+---
+{fixed_cv}
+---
+
+List each change in this exact JSON format:
+
+{{
+  "changes": [
+    {{
+      "category": "quantification|language|grammar|formatting|other",
+      "before": "original text that was changed",
+      "after": "new improved text",
+      "explanation": "brief reason for change"
+    }}
+  ],
+  "summary": {{
+    "total_changes": number,
+    "by_category": {{
+      "quantification": number,
+      "language": number,
+      "grammar": number,
+      "formatting": number,
+      "other": number
+    }}
+  }}
+}}
+
+Return ONLY valid JSON, no explanations or markdown.
+"""
+
+
 @router.post("/fix/{scan_id}")
 @limiter.limit("5/hour")
 async def generate_fixed_cv(request: Request, scan_id: str, token: str):
@@ -779,15 +819,51 @@ async def generate_fixed_cv(request: Request, scan_id: str, token: str):
             conn.close()
             raise HTTPException(status_code=500, detail="AI returned empty response")
 
+        # Extract changes list with second AI call
+        logger.info("[CV_FIX] Extracting changes list...")
+        changes_data = {"changes": [], "summary": {"total_changes": 0, "by_category": {}}}
+        
+        try:
+            changes_prompt = CV_CHANGES_PROMPT.format(
+                original_cv=original_content,
+                fixed_cv=fixed_content
+            )
+            
+            changes_response = await generate_completion(
+                prompt=changes_prompt,
+                user_id=str(user["id"]),
+                service_name="cv_fix_changes",
+                provider="gemini",
+                max_tokens=2000
+            )
+            
+            if changes_response and changes_response.content:
+                # Parse the JSON response
+                changes_text = changes_response.content.strip()
+                # Remove markdown code fences if present
+                if changes_text.startswith("```json"):
+                    changes_text = changes_text[7:]
+                elif changes_text.startswith("```"):
+                    changes_text = changes_text[3:]
+                if changes_text.endswith("```"):
+                    changes_text = changes_text[:-3]
+                changes_text = changes_text.strip()
+                
+                changes_data = json.loads(changes_text)
+                logger.info(f"[CV_FIX] Extracted {len(changes_data.get('changes', []))} changes")
+        except Exception as changes_error:
+            logger.warning(f"[CV_FIX] Could not extract changes: {str(changes_error)}")
+            # Continue without changes - not critical
+
         cursor.execute(
-            """UPDATE cv_scan_results SET fixed_cv_content = %s, status = %s, updated_at = %s WHERE id = %s""",
-            (fixed_content, 'fixed', datetime.utcnow().isoformat(), scan_id)
+            """UPDATE cv_scan_results SET fixed_cv_content = %s, changes_json = %s, status = %s, updated_at = %s WHERE id = %s""",
+            (fixed_content, json.dumps(changes_data), 'fixed', datetime.utcnow().isoformat(), scan_id)
         )
         conn.commit()
         cursor.close()
         conn.close()
 
-        logger.info(f"[CV_FIX] Successfully saved fixed CV for scan_id: {scan_id}")
+        logger.info(f"[CV_FIX] Successfully saved fixed CV and changes for scan_id: {scan_id}")
 
         return {
             'success': True,
@@ -846,6 +922,14 @@ async def get_fixed_cv(scan_id: str, token: str):
             breakdown=original_breakdown
         )
 
+        # Get changes data
+        changes_json = scan.get('changes_json', {})
+        if isinstance(changes_json, str):
+            try:
+                changes_json = json.loads(changes_json)
+            except:
+                changes_json = {}
+
         return {
             'scan_id': scan['id'],
             'original_cv_content': scan.get('original_cv_content', ''),
@@ -859,7 +943,10 @@ async def get_fixed_cv(scan_id: str, token: str):
             'category_improvements': after_fix_result.get('category_improvements', {}),
             'before_score': after_fix_result['before_score'],
             'after_score': after_fix_result['after_score'],
-            'score_version': '3.0.0'
+            'score_version': '3.0.0',
+            'changes': changes_json.get('changes', []),
+            'changes_summary': changes_json.get('summary', {}),
+            'total_changes': len(changes_json.get('changes', []))
         }
 
     except HTTPException:

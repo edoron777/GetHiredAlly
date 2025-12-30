@@ -1,0 +1,105 @@
+═══════════════════════════════════════════════════════════
+PROMPT 5#5: SUMMARY AND TESTING
+═══════════════════════════════════════════════════════════
+
+All changes have been made. Now verify everything works.
+
+───────────────────────────────────────────────────────────
+CHANGES SUMMARY
+───────────────────────────────────────────────────────────
+
+Part A: is_auto_fixable flag
+- Updated CV_ANALYSIS_PROMPT with rules for setting flag
+- Most issues should now be marked as auto-fixable
+- After-fix score should show improvement
+
+Part B: Improved CV_FIX_PROMPT
+- More aggressive transformation rules
+- Specific instructions for quantification
+- Verb replacement guidelines
+- Should produce noticeably different CV
+
+Part C: Changes tracking
+- Added CV_CHANGES_PROMPT
+- Added second AI call to extract changes
+- Saving changes_json to database
+- Returning changes list to frontend
+
+───────────────────────────────────────────────────────────
+VERIFICATION CHECKLIST
+───────────────────────────────────────────────────────────
+
+Check each item:
+
+1. CV_ANALYSIS_PROMPT includes is_auto_fixable rules?
+   [ ] Yes / [ ] No
+
+2. CV_FIX_PROMPT has aggressive transformation rules?
+   [ ] Yes / [ ] No
+
+3. CV_CHANGES_PROMPT is defined?
+   [ ] Yes / [ ] No
+
+4. generate_fixed_cv makes two AI calls?
+   [ ] Yes / [ ] No
+
+5. changes_json is saved to database?
+   [ ] Yes / [ ] No
+
+6. get_fixed_cv returns changes list?
+   [ ] Yes / [ ] No
+
+───────────────────────────────────────────────────────────
+TEST INSTRUCTIONS
+───────────────────────────────────────────────────────────
+
+To test the fix:
+
+1. Go to Perfect Your CV service
+2. Upload a test CV
+3. Run analysis
+4. Note the "before" score
+5. Click "Fix My CV"
+6. Check:
+   - After score should be HIGHER than before
+   - Fixed CV should have VISIBLE changes
+   - API response should include changes list
+
+───────────────────────────────────────────────────────────
+EXPECTED RESULTS
+───────────────────────────────────────────────────────────
+
+Before fix:
+- Score: 64 → After: 64 (no change)
+- CV: almost identical
+- Changes: none shown
+
+After fix:
+- Score: 64 → After: 75-85 (improvement!)
+- CV: noticeably improved with metrics
+- Changes: list of 10-20 specific changes
+
+───────────────────────────────────────────────────────────
+IF SOMETHING DOESN'T WORK
+───────────────────────────────────────────────────────────
+
+Report:
+1. Which step failed
+2. Error message (if any)
+3. What you see vs what you expected
+
+Do NOT try to fix on your own without reporting first.
+
+───────────────────────────────────────────────────────────
+FINAL CONFIRMATION
+───────────────────────────────────────────────────────────
+
+All 5 prompts executed successfully: [ ] Yes / [ ] No
+
+Files modified:
+- backend/app/cv_optimizer.py
+
+New features added:
+- is_auto_fixable flag rules
+- Aggressive CV fix prompt
+- Changes tracking and display
