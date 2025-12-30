@@ -1,0 +1,540 @@
+═══════════════════════════════════════════════════════════════
+PROMPT 4#6: Create Category Scoring Functions (Formatting & Completeness)
+═══════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify files not explicitly mentioned
+3. Do NOT add features not explicitly requested
+4. If unclear, STOP and ask - do not assume
+
+FORBIDDEN ACTIONS:
+- Modifying previously created files
+- Adding new categories
+- Changing weight values
+
+───────────────────────────────────────────────────────────────
+
+TASK: Create scoring functions for Formatting, Completeness, Professional, and Red Flags
+
+OBJECTIVE:
+Complete the remaining 4 category scoring functions (18 + 12 + 8 + 4 = 42 points)
+
+───────────────────────────────────────────────────────────────
+
+INSTRUCTIONS:
+
+Step 1: Create `server/common/scoring/categories/formatting.py` with:
+```python
+"""
+Formatting & Structure Scoring (18 points)
+- Visual Structure: 6 points
+- Section Organization: 5 points
+- Consistency: 3 points
+- ATS Compatibility: 4 points
+
+DETERMINISTIC: Same input = Same score.
+"""
+
+from typing import Dict, Any
+from ..config import FORMATTING_WEIGHTS
+
+
+def score_formatting(extracted_data: Dict[str, Any]) -> float:
+    """
+    Calculate Formatting & Structure score (max 18 points).
+    
+    DETERMINISTIC: Same extracted_data = Same score.
+    """
+    score = 0.0
+    
+    score += _score_visual_structure(extracted_data)
+    score += _score_section_organization(extracted_data)
+    score += _score_consistency(extracted_data)
+    score += _score_ats_compatibility(extracted_data)
+    
+    return max(0, min(18, score))
+
+
+def _score_visual_structure(data: Dict[str, Any]) -> float:
+    """Score visual structure (max 6 points)."""
+    max_points = FORMATTING_WEIGHTS['visual_structure']
+    score = 0.0
+    
+    structure = data.get('structure', {})
+    
+    # Has section headers (2 points)
+    if structure.get('has_section_headers', False):
+        score += 2.0
+    
+    # Uses bullet points (1.5 points)
+    if structure.get('uses_bullet_points', False):
+        score += 1.5
+    
+    # Adequate whitespace (1 point)
+    if structure.get('has_adequate_whitespace', True):
+        score += 1.0
+    
+    # Clear visual hierarchy (1.5 points)
+    if structure.get('has_clear_hierarchy', True):
+        score += 1.5
+    
+    return min(max_points, score)
+
+
+def _score_section_organization(data: Dict[str, Any]) -> float:
+    """Score section organization (max 5 points)."""
+    max_points = FORMATTING_WEIGHTS['section_organization']
+    score = 0.0
+    
+    structure = data.get('structure', {})
+    
+    # Contact at top (1.5 points)
+    if structure.get('contact_at_top', True):
+        score += 1.5
+    
+    # Experience prominent (1.5 points)
+    if structure.get('experience_prominent', True):
+        score += 1.5
+    
+    # Logical section order (1 point)
+    if structure.get('logical_order', True):
+        score += 1.0
+    
+    # Education positioned correctly (1 point)
+    if structure.get('education_positioned', True):
+        score += 1.0
+    
+    return min(max_points, score)
+
+
+def _score_consistency(data: Dict[str, Any]) -> float:
+    """Score consistency (max 3 points)."""
+    max_points = FORMATTING_WEIGHTS['consistency']
+    score = max_points  # Start with full, deduct for issues
+    
+    formatting = data.get('formatting', {})
+    
+    # Inconsistent bullet style (-1)
+    if not formatting.get('consistent_bullets', True):
+        score -= 1.0
+    
+    # Inconsistent date format (-1)
+    if not formatting.get('consistent_dates', True):
+        score -= 1.0
+    
+    # Inconsistent spacing (-1)
+    if not formatting.get('consistent_spacing', True):
+        score -= 1.0
+    
+    return max(0, score)
+
+
+def _score_ats_compatibility(data: Dict[str, Any]) -> float:
+    """Score ATS compatibility (max 4 points)."""
+    max_points = FORMATTING_WEIGHTS['ats_compatibility']
+    score = max_points  # Start with full, deduct for issues
+    
+    ats = data.get('ats', {})
+    
+    # Has tables (-0.5)
+    if ats.get('has_tables', False):
+        score -= 0.5
+    
+    # Has text boxes (-0.5)
+    if ats.get('has_text_boxes', False):
+        score -= 0.5
+    
+    # Has images (-0.3)
+    if ats.get('has_images', False):
+        score -= 0.3
+    
+    # Multi-column layout (-0.5)
+    if ats.get('is_multi_column', False):
+        score -= 0.5
+    
+    # Non-standard section names (-0.5)
+    if not ats.get('standard_section_names', True):
+        score -= 0.5
+    
+    # Non-parseable dates (-0.3)
+    if not ats.get('parseable_dates', True):
+        score -= 0.3
+    
+    return max(0, score)
+```
+
+Step 2: Create `server/common/scoring/categories/completeness.py` with:
+```python
+"""
+Completeness Scoring (12 points)
+- Contact Information: 4 points
+- Required Sections: 3 points
+- Keywords & Skills: 2 points
+- Job Entry Standards: 3 points
+
+DETERMINISTIC: Same input = Same score.
+"""
+
+from typing import Dict, Any
+from ..config import COMPLETENESS_WEIGHTS
+
+
+def score_completeness(extracted_data: Dict[str, Any]) -> float:
+    """
+    Calculate Completeness score (max 12 points).
+    
+    DETERMINISTIC: Same extracted_data = Same score.
+    """
+    score = 0.0
+    
+    score += _score_contact_info(extracted_data)
+    score += _score_required_sections(extracted_data)
+    score += _score_keywords_skills(extracted_data)
+    score += _score_job_entry_standards(extracted_data)
+    
+    return max(0, min(12, score))
+
+
+def _score_contact_info(data: Dict[str, Any]) -> float:
+    """Score contact information (max 4 points)."""
+    max_points = COMPLETENESS_WEIGHTS['contact_info']
+    score = 0.0
+    
+    contact = data.get('contact', {})
+    
+    # Has name (1 point)
+    if contact.get('has_name', False):
+        score += 1.0
+    
+    # Has email (1 point)
+    if contact.get('has_email', False):
+        score += 1.0
+    
+    # Has phone (0.8 points)
+    if contact.get('has_phone', False):
+        score += 0.8
+    
+    # Has LinkedIn (0.7 points)
+    if contact.get('has_linkedin', False):
+        score += 0.7
+    
+    # Professional email (0.5 points) - deduct if unprofessional
+    if contact.get('has_email', False) and not contact.get('email_is_professional', True):
+        score -= 0.5
+    
+    return min(max_points, max(0, score))
+
+
+def _score_required_sections(data: Dict[str, Any]) -> float:
+    """Score required sections (max 3 points)."""
+    max_points = COMPLETENESS_WEIGHTS['required_sections']
+    score = 0.0
+    
+    structure = data.get('structure', {})
+    
+    # Has Experience section (1.5 points)
+    if structure.get('has_experience_section', False):
+        score += 1.5
+    
+    # Has Education section (0.8 points)
+    if structure.get('has_education_section', False):
+        score += 0.8
+    
+    # Has Skills section (0.7 points)
+    if structure.get('has_skills_section', False):
+        score += 0.7
+    
+    return min(max_points, score)
+
+
+def _score_keywords_skills(data: Dict[str, Any]) -> float:
+    """Score keywords and skills (max 2 points)."""
+    max_points = COMPLETENESS_WEIGHTS['keywords_skills']
+    score = 0.0
+    
+    skills = data.get('skills', {})
+    
+    # Has technical keywords (1 point if >= 10)
+    keyword_count = skills.get('tech_keywords_count', 0)
+    if keyword_count >= 10:
+        score += 1.0
+    elif keyword_count >= 5:
+        score += 0.5
+    
+    # Skills are categorized (0.5 points)
+    if skills.get('skills_are_categorized', False):
+        score += 0.5
+    
+    # Has industry-relevant terms (0.5 points)
+    if skills.get('has_industry_terms', False):
+        score += 0.5
+    
+    return min(max_points, score)
+
+
+def _score_job_entry_standards(data: Dict[str, Any]) -> float:
+    """Score job entry standards (max 3 points)."""
+    max_points = COMPLETENESS_WEIGHTS['job_entry_standards']
+    
+    experience = data.get('experience', {})
+    
+    # Start with full points, deduct for missing elements
+    score = max_points
+    
+    # Missing job titles (-0.5)
+    if not experience.get('all_have_titles', True):
+        score -= 0.5
+    
+    # Missing company names (-0.5)
+    if not experience.get('all_have_companies', True):
+        score -= 0.5
+    
+    # Missing dates (-0.4)
+    if not experience.get('all_have_dates', True):
+        score -= 0.4
+    
+    # Dates not on same line (-0.3)
+    if not experience.get('dates_formatted_well', True):
+        score -= 0.3
+    
+    return max(0, score)
+```
+
+Step 3: Create `server/common/scoring/categories/professional.py` with:
+```python
+"""
+Professional Standards Scoring (8 points)
+- Length Appropriateness: 2 points
+- Recency & Relevance: 3 points
+- Certifications & Education: 3 points
+
+DETERMINISTIC: Same input = Same score.
+"""
+
+from typing import Dict, Any
+from ..config import PROFESSIONAL_WEIGHTS
+
+
+def score_professional(extracted_data: Dict[str, Any]) -> float:
+    """
+    Calculate Professional Standards score (max 8 points).
+    
+    DETERMINISTIC: Same extracted_data = Same score.
+    """
+    score = 0.0
+    
+    score += _score_length(extracted_data)
+    score += _score_recency_relevance(extracted_data)
+    score += _score_certifications(extracted_data)
+    
+    return max(0, min(8, score))
+
+
+def _score_length(data: Dict[str, Any]) -> float:
+    """Score CV length appropriateness (max 2 points)."""
+    max_points = PROFESSIONAL_WEIGHTS['length']
+    
+    structure = data.get('structure', {})
+    word_count = structure.get('word_count', 0)
+    page_count = structure.get('page_count', 1)
+    
+    score = max_points
+    
+    # Word count check
+    if word_count < 200:
+        score -= 1.0  # Too short
+    elif word_count > 1200:
+        score -= 0.5  # Too long
+    
+    # Page count check
+    if page_count > 2:
+        score -= 0.5  # Too many pages
+    
+    return max(0, score)
+
+
+def _score_recency_relevance(data: Dict[str, Any]) -> float:
+    """Score recency and relevance (max 3 points)."""
+    max_points = PROFESSIONAL_WEIGHTS['recency_relevance']
+    score = max_points
+    
+    experience = data.get('experience', {})
+    
+    # Employment gaps > 6 months (-0.8)
+    gaps = experience.get('gaps_detected', [])
+    significant_gaps = [g for g in gaps if g.get('months', 0) > 6]
+    if significant_gaps:
+        score -= 0.8
+    
+    # Not in reverse chronological order (-0.5)
+    if not experience.get('is_reverse_chronological', True):
+        score -= 0.5
+    
+    # Experience older than 10 years emphasized (-0.4)
+    if experience.get('old_experience_emphasized', False):
+        score -= 0.4
+    
+    # Outdated technologies listed (-0.3)
+    if experience.get('has_outdated_tech', False):
+        score -= 0.3
+    
+    return max(0, score)
+
+
+def _score_certifications(data: Dict[str, Any]) -> float:
+    """Score certifications and education (max 3 points)."""
+    max_points = PROFESSIONAL_WEIGHTS['certifications']
+    score = 0.0
+    
+    education = data.get('education', {})
+    
+    # Has relevant certifications (0.8 points)
+    if education.get('has_relevant_certifications', False):
+        score += 0.8
+    
+    # Certifications have dates (0.5 points)
+    if education.get('certifications_have_dates', True):
+        score += 0.5
+    
+    # Education complete (degree, school, year) (0.6 points)
+    if education.get('education_complete', False):
+        score += 0.6
+    
+    # Education not over-detailed (0.4 points)
+    if education.get('education_concise', True):
+        score += 0.4
+    
+    # GPA only if strong or omitted (0.3 points)
+    gpa = education.get('gpa_value', None)
+    if gpa is None or gpa >= 3.5:
+        score += 0.3
+    
+    return min(max_points, score)
+```
+
+Step 4: Create `server/common/scoring/categories/red_flags.py` with:
+```python
+"""
+Red Flags & Issues Scoring (4 points)
+- Repetition & Redundancy: 2 points
+- Critical Red Flags: 2 points
+
+DETERMINISTIC: Same input = Same score.
+"""
+
+from typing import Dict, Any
+from ..config import RED_FLAGS_WEIGHTS
+
+
+def score_red_flags(extracted_data: Dict[str, Any]) -> float:
+    """
+    Calculate Red Flags score (max 4 points).
+    
+    This is a PENALTY category - start with max, deduct for issues.
+    
+    DETERMINISTIC: Same extracted_data = Same score.
+    """
+    score = 4.0  # Start with full points
+    
+    score -= _calculate_repetition_penalty(extracted_data)
+    score -= _calculate_critical_flags_penalty(extracted_data)
+    
+    return max(0, min(4, score))
+
+
+def _calculate_repetition_penalty(data: Dict[str, Any]) -> float:
+    """Calculate penalty for repetition (max 2 points penalty)."""
+    penalty = 0.0
+    
+    repetition = data.get('repetition', {})
+    
+    # Words repeated 5+ times (-0.5)
+    if repetition.get('has_overused_words', False):
+        penalty += 0.5
+    
+    # Same phrases across jobs (-0.4)
+    if repetition.get('has_duplicate_phrases', False):
+        penalty += 0.4
+    
+    # Redundant bullet points (-0.4)
+    if repetition.get('has_redundant_bullets', False):
+        penalty += 0.4
+    
+    # Skills repeated in multiple sections (-0.3)
+    if repetition.get('skills_duplicated', False):
+        penalty += 0.3
+    
+    # Same achievements restated (-0.4)
+    if repetition.get('achievements_restated', False):
+        penalty += 0.4
+    
+    return min(2.0, penalty)
+
+
+def _calculate_critical_flags_penalty(data: Dict[str, Any]) -> float:
+    """Calculate penalty for critical red flags (max 2 points penalty)."""
+    penalty = 0.0
+    
+    red_flags = data.get('red_flags', {})
+    
+    # Obvious AI-generated content (-0.5)
+    if red_flags.get('ai_content_detected', False):
+        penalty += 0.5
+    
+    # Unprofessional email (-0.3)
+    if red_flags.get('unprofessional_email', False):
+        penalty += 0.3
+    
+    # Personal info overshare (-0.2)
+    if red_flags.get('personal_info_overshare', False):
+        penalty += 0.2
+    
+    # Photo included (US/UK) (-0.1)
+    if red_flags.get('has_photo', False):
+        penalty += 0.1
+    
+    # Age/DOB included (-0.1)
+    if red_flags.get('has_age_dob', False):
+        penalty += 0.1
+    
+    # "References available" (-0.1)
+    if red_flags.get('has_references_line', False):
+        penalty += 0.1
+    
+    # Salary information (-0.2)
+    if red_flags.get('has_salary_info', False):
+        penalty += 0.2
+    
+    return min(2.0, penalty)
+```
+
+───────────────────────────────────────────────────────────────
+
+FILES TO CREATE:
+- server/common/scoring/categories/formatting.py
+- server/common/scoring/categories/completeness.py
+- server/common/scoring/categories/professional.py
+- server/common/scoring/categories/red_flags.py
+
+FILES TO MODIFY:
+- None
+
+DO NOT TOUCH:
+- All previously created files
+- All other files
+
+───────────────────────────────────────────────────────────────
+
+WHEN COMPLETE:
+
+Confirm these items:
+□ All 4 category files created
+□ Each file has correct max points matching config
+□ All functions return float within expected range
+□ Red flags is penalty-based (starts at max, deducts)
+□ No syntax errors
+□ No other files modified
+
+Report any issues or uncertainties.
