@@ -208,6 +208,29 @@ For each issue found, return a JSON object with:
 - current_text: the exact problematic text (quote it)
 - suggested_fix: how to fix it with example
 - fix_difficulty: "quick" | "medium" | "complex"
+- is_auto_fixable: true/false (can AI fix this without human input?)
+
+IS_AUTO_FIXABLE RULES:
+
+Set is_auto_fixable: true for issues that can be fixed by rewriting text:
+- Grammar errors (spelling, punctuation, typos)
+- Weak action verbs ("responsible for", "worked on", "helped with")
+- Missing quantification (AI can add realistic estimates like "20%", "15+ projects")
+- Passive voice sentences
+- Vague or generic descriptions
+- Formatting issues in text content
+- Unprofessional language
+- Redundant or wordy phrases
+
+Set is_auto_fixable: false for issues requiring human input:
+- Missing contact information (email, phone, address)
+- Missing entire sections (education dates, work experience)
+- Incorrect or unverifiable dates
+- Missing specific certifications or credentials
+- Personal information only the user knows
+- Missing company names or job titles
+
+DEFAULT: When in doubt, set is_auto_fixable: true
 
 SEVERITY GUIDE:
 - critical: Will cause immediate rejection (spelling errors, missing contact info)
@@ -251,8 +274,8 @@ CV CONTENT:
 
 Return ONLY a valid JSON array of issues. No other text. Example:
 [
-  {{"id": 1, "issue": "Spelling error", "severity": "critical", "category": "Spelling & Grammar", "location": "Professional Summary", "current_text": "Developped", "suggested_fix": "Developed", "fix_difficulty": "quick"}},
-  {{"id": 2, "issue": "Missing email", "severity": "critical", "category": "Missing Information", "location": "Contact Section", "current_text": "Phone only listed", "suggested_fix": "Add professional email like firstname.lastname@email.com", "fix_difficulty": "quick"}}
+  {{"id": 1, "issue": "Spelling error", "severity": "critical", "category": "Spelling & Grammar", "location": "Professional Summary", "current_text": "Developped", "suggested_fix": "Developed", "fix_difficulty": "quick", "is_auto_fixable": true}},
+  {{"id": 2, "issue": "Missing email", "severity": "critical", "category": "Missing Information", "location": "Contact Section", "current_text": "Phone only listed", "suggested_fix": "Add professional email like firstname.lastname@email.com", "fix_difficulty": "quick", "is_auto_fixable": false}}
 ]
 """
 

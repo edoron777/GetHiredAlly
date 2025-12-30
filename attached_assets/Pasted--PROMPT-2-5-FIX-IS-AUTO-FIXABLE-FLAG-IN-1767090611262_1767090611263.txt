@@ -1,0 +1,77 @@
+═══════════════════════════════════════════════════════════
+PROMPT 2#5: FIX IS_AUTO_FIXABLE FLAG IN CV ANALYSIS
+═══════════════════════════════════════════════════════════
+
+PROBLEM:
+The is_auto_fixable flag is FALSE or MISSING on issues.
+This causes the after-fix score calculation to return 0 improvement.
+
+Formula: recovery = points_lost * rate * (auto_fixable / total)
+If auto_fixable = 0, then recovery = 0
+
+───────────────────────────────────────────────────────────
+TASK: Update CV_ANALYSIS_PROMPT
+───────────────────────────────────────────────────────────
+
+FILE: backend/app/cv_optimizer.py
+
+Find the CV_ANALYSIS_PROMPT (or similar name for the analysis prompt).
+
+ADD these rules to the prompt for setting is_auto_fixable:
+
+RULES FOR is_auto_fixable FLAG:
+
+Set is_auto_fixable: true for issues that can be fixed by rewriting text:
+- Grammar errors (spelling, punctuation) = TRUE
+- Weak action verbs = TRUE
+- Missing quantification (can add estimates) = TRUE
+- Passive voice = TRUE
+- Formatting issues in text = TRUE
+- Vague descriptions = TRUE
+
+Set is_auto_fixable: false for issues requiring human input:
+- Missing contact info (need real data) = FALSE
+- Missing work experience (need real data) = FALSE
+- Wrong dates (need verification) = FALSE
+- Missing skills section (need real skills) = FALSE
+
+DEFAULT: If unsure, set is_auto_fixable: true
+
+───────────────────────────────────────────────────────────
+EXAMPLE ADDITION TO PROMPT
+───────────────────────────────────────────────────────────
+
+Add this section to the analysis prompt:
+
+For each issue, set "is_auto_fixable" based on these rules:
+
+TRUE (can be fixed by AI):
+- grammar errors, spelling errors
+- weak verbs like "responsible for", "worked on", "helped with"
+- missing metrics (AI can add realistic estimates)
+- passive voice sentences
+- vague or generic descriptions
+- formatting issues in text content
+- unprofessional language
+
+FALSE (requires human input):
+- missing contact information (email, phone)
+- missing entire sections (education, experience)
+- incorrect dates or company names
+- missing specific certifications
+- personal information that only user knows
+
+When in doubt, set is_auto_fixable: true
+
+───────────────────────────────────────────────────────────
+VERIFICATION
+───────────────────────────────────────────────────────────
+
+After this change:
+- Most issues should have is_auto_fixable: true
+- Only issues requiring real user data should be false
+- The after-fix score should now show improvement
+
+Show me the updated prompt section.
+
+Type "COMPLETE - READY FOR PROMPT 3#5" when done.
