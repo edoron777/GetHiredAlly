@@ -1,0 +1,139 @@
+═══════════════════════════════════════════════════════════
+PROMPT 4#7: Create Export Dropdown Component
+═══════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify files not explicitly mentioned
+3. Do NOT add features not explicitly requested
+4. Do NOT refactor or "improve" existing code
+5. Do NOT make autonomous decisions
+6. If unclear, STOP and ask - do not assume
+7. Make MINIMAL, SURGICAL changes only
+
+FORBIDDEN ACTIONS:
+- Adding additional export options beyond the 3 specified
+- Implementing actual export functionality (just placeholders for now)
+- Modifying existing components
+- Adding external libraries
+
+───────────────────────────────────────────────────────────
+
+TASK: Create a new ExportDropdown component to replace the multiple action buttons
+
+OBJECTIVE:
+Replace 7 separate export buttons with a single dropdown containing 3 options
+
+CONTEXT:
+The current Action Bar has too many buttons (Email, WhatsApp, PDF, WORD, MD, Copy) that don't work and clutter the UI. A single dropdown is cleaner.
+
+───────────────────────────────────────────────────────────
+
+INSTRUCTIONS:
+
+Step 1: Create new file: src/components/cv-optimizer/ExportDropdown.tsx
+
+Step 2: Implement the component with this EXACT code:
+```tsx
+import { useState, useRef, useEffect } from 'react';
+
+interface ExportDropdownProps {
+  onExport?: (type: string) => void;
+}
+
+export default function ExportDropdown({ onExport }: ExportDropdownProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleExport = (type: string) => {
+    setIsOpen(false);
+    if (onExport) {
+      onExport(type);
+    } else {
+      // Placeholder - functionality to be implemented later
+      console.log(`Export as: ${type}`);
+      alert(`${type} export coming soon`);
+    }
+  };
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+      >
+        <span>📥</span>
+        <span>Export Report</span>
+        <span className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
+          ▼
+        </span>
+      </button>
+      
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+          <button
+            onClick={() => handleExport('pdf')}
+            className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-3 rounded-t-lg text-sm"
+          >
+            <span>📄</span>
+            <span>Download as PDF</span>
+          </button>
+          <button
+            onClick={() => handleExport('copy')}
+            className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-3 border-t border-gray-100 text-sm"
+          >
+            <span>📋</span>
+            <span>Copy to Clipboard</span>
+          </button>
+          <button
+            onClick={() => handleExport('email')}
+            className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-3 border-t border-gray-100 rounded-b-lg text-sm"
+          >
+            <span>📧</span>
+            <span>Send to Email</span>
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+Step 3: Verify the file is created correctly
+
+───────────────────────────────────────────────────────────
+
+FILES TO CREATE:
+- src/components/cv-optimizer/ExportDropdown.tsx
+
+FILES TO MODIFY:
+- None in this prompt
+
+DO NOT TOUCH:
+- Any existing components
+- CV Report page (will integrate in next prompt)
+
+───────────────────────────────────────────────────────────
+
+WHEN COMPLETE:
+
+Confirm:
+□ ExportDropdown.tsx created in correct location
+□ Component has 3 export options (PDF, Copy, Email)
+□ Dropdown opens/closes on click
+□ Clicking outside closes dropdown
+□ No TypeScript errors
+□ No console errors
+
+Report file creation status.
