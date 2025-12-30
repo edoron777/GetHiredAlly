@@ -1,0 +1,88 @@
+═══════════════════════════════════════════════════════════
+PROMPT A: MOVE TOOLBAR LOWER (NEAR SUGGESTION BOXES)
+═══════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify files not explicitly mentioned
+3. Do NOT refactor or "improve" existing code
+4. Make MINIMAL, SURGICAL changes only
+5. If unclear, STOP and ask - do not assume
+
+───────────────────────────────────────────────────────────
+PROBLEM:
+───────────────────────────────────────────────────────────
+
+The toolbar is currently positioned too HIGH - right after the 
+"Detailed Analysis & Recommendations" header.
+
+It should be positioned LOWER - right before the expand/collapse 
+suggestion boxes (Important Improvements, Consider, Polish sections).
+
+───────────────────────────────────────────────────────────
+CURRENT LAYOUT (WRONG):
+───────────────────────────────────────────────────────────
+
+Detailed Analysis & Recommendations
+[TOOLBAR] ← Wrong position (too high)
+Filter Results by Category (checkboxes)
+Showing: 20 of 20 suggestions
+IMPORTANT IMPROVEMENTS (expand/collapse)
+CONSIDER (expand/collapse)
+POLISH (expand/collapse)
+
+───────────────────────────────────────────────────────────
+REQUIRED LAYOUT (CORRECT):
+───────────────────────────────────────────────────────────
+
+Detailed Analysis & Recommendations
+Filter Results by Category (checkboxes)
+Showing: 20 of 20 suggestions
+[TOOLBAR] ← Correct position (above suggestion boxes)
+IMPORTANT IMPROVEMENTS (expand/collapse)
+CONSIDER (expand/collapse)
+POLISH (expand/collapse)
+
+───────────────────────────────────────────────────────────
+TASK: Move toolbar to correct position
+───────────────────────────────────────────────────────────
+
+INSTRUCTIONS:
+
+Step 1: Find the CV Report page component
+
+Step 2: Locate the toolbar element (contains Email, WhatsApp, PDF, WORD buttons)
+
+Step 3: Locate the suggestion sections (IMPORTANT IMPROVEMENTS, etc.)
+        These are the expand/collapse boxes
+
+Step 4: MOVE the toolbar JSX to appear:
+        - AFTER the "Showing: X of X suggestions" text
+        - BEFORE the first suggestion section (IMPORTANT IMPROVEMENTS)
+
+Step 5: Add margin for spacing if needed:
+        style={{ marginTop: '16px', marginBottom: '16px' }}
+
+───────────────────────────────────────────────────────────
+FILES TO MODIFY:
+───────────────────────────────────────────────────────────
+
+- CV Report page component only
+
+DO NOT TOUCH:
+- Toolbar styling or functionality
+- Any other components
+- Filter checkboxes section
+
+───────────────────────────────────────────────────────────
+WHEN COMPLETE:
+───────────────────────────────────────────────────────────
+
+Confirm:
+□ Toolbar moved below "Showing X of X suggestions"
+□ Toolbar appears above IMPORTANT IMPROVEMENTS section
+□ Toolbar still works correctly
+□ Layout looks clean with proper spacing
+
+Report which file was changed.

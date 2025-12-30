@@ -397,15 +397,6 @@ export function CVReportPage() {
           </p>
         </div>
 
-        <StandardToolbar
-          onExpandAll={expandAll}
-          onCollapseAll={collapseAll}
-          onPDF={handleExportPDF}
-          onWord={handleExportWord}
-          onMarkdown={handleExportMarkdown}
-          serviceName="CV Analysis Report"
-        />
-
         <CategoryFilterPanel
           categoryCounts={categoryCounts}
           enabledCategories={enabledCategories}
@@ -487,6 +478,17 @@ export function CVReportPage() {
           filterType={severityFilter}
           count={filteredIssues.length}
         />
+
+        <div style={{ marginTop: '16px', marginBottom: '16px' }}>
+          <StandardToolbar
+            onExpandAll={expandAll}
+            onCollapseAll={collapseAll}
+            onPDF={handleExportPDF}
+            onWord={handleExportWord}
+            onMarkdown={handleExportMarkdown}
+            serviceName="CV Analysis Report"
+          />
+        </div>
 
         {viewMode === 'severity' ? (
           <div className="space-y-8">
