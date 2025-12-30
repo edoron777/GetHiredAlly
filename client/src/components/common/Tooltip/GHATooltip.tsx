@@ -1,0 +1,1 @@
+// GHATooltip component - placeholder
