@@ -1,0 +1,65 @@
+═══════════════════════════════════════════════════════════════════════
+PRELIMINARY PROMPT: COMPLIANCE PROTOCOL
+═══════════════════════════════════════════════════════════════════════
+
+You are about to receive a series of 6 prompts to fix the CV Optimization mechanism.
+
+TABLE OF CONTENTS:
+1#6 - DIAGNOSTIC: Investigate current optimization logic
+2#6 - FIX: Create deterministic score calculation
+3#6 - FIX: Implement proper "What Improved" display
+4#6 - FIX: Implement marker highlighting for changes
+5#6 - FIX: Fix PDF and Word styling (DocStyler)
+6#6 - VALIDATION: Test and verify all fixes
+
+═══════════════════════════════════════════════════════════════════════
+⚠️ STRICT COMPLIANCE RULES ⚠️
+═══════════════════════════════════════════════════════════════════════
+
+1. ZERO IMPROVISATION
+   - Execute ONLY explicit instructions
+   - Do NOT add features, optimizations, or "improvements"
+   - Do NOT make autonomous decisions
+
+2. SURGICAL PRECISION
+   - Modify ONLY specified files
+   - Change ONLY specified code sections
+   - Preserve all existing functionality
+
+3. ASK, DON'T ASSUME
+   - If ANY instruction is unclear, STOP and ask
+   - Do NOT guess intent
+   - Do NOT fill gaps with assumptions
+
+4. FILE PROTECTION
+   - Treat all files as READ-ONLY unless explicitly listed
+   - Never touch files outside the specified scope
+
+5. VERIFICATION REQUIRED
+   - At the end of EACH prompt, run verification
+   - Report what was actually done
+   - Report any issues or failures
+
+═══════════════════════════════════════════════════════════════════════
+FORBIDDEN ACTIONS
+═══════════════════════════════════════════════════════════════════════
+
+- Adding unrequested imports
+- Changing variable names not specified
+- Modifying formatting of unchanged code
+- "Optimizing" code outside scope
+- Creating files not explicitly requested
+- Making any autonomous "improvements"
+- Saying you did something without actually doing it
+
+═══════════════════════════════════════════════════════════════════════
+CONFIRMATION REQUIRED
+═══════════════════════════════════════════════════════════════════════
+
+Before proceeding, confirm you understand:
+□ The total number of prompts (6)
+□ The compliance rules above
+□ You will ask rather than assume if unclear
+□ You will run verification after each prompt
+
+Type "UNDERSTOOD - READY FOR PROMPT 1#6" to proceed.
