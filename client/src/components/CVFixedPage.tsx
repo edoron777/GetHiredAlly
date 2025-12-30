@@ -274,28 +274,33 @@ export function CVFixedPage() {
             {data.issues && data.issues.filter(i => i.is_auto_fixable === false).length > 0 && (
               <div className="mt-8 pt-6 border-t border-gray-200">
                 <div className="flex items-center gap-2 justify-center mb-4">
-                  <span className="text-amber-500 text-xl">⚠️</span>
+                  <span className="text-blue-500 text-xl">✏️</span>
                   <h3 className="text-lg font-semibold text-gray-800">Needs Your Input</h3>
                 </div>
-                <p className="text-sm text-gray-600 text-center mb-4">
-                  These items require your personal information to fix:
-                </p>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 max-w-xl mx-auto">
+                  <p className="text-sm text-blue-700">
+                    <span className="font-semibold">Look for blue placeholders</span> in your Fixed CV below. 
+                    Replace them with your actual numbers and achievements, then re-upload for another analysis.
+                  </p>
+                </div>
                 <div className="space-y-3 max-w-xl mx-auto">
                   {data.issues
                     .filter(i => i.is_auto_fixable === false)
                     .slice(0, 5)
                     .map((issue) => (
-                      <div key={issue.id} className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                      <div key={issue.id} className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                         <div className="flex items-start gap-2">
-                          <span className="text-amber-600 mt-0.5">📝</span>
+                          <span className="text-blue-600 mt-0.5">📝</span>
                           <div className="flex-1">
                             <p className="font-medium text-gray-800 text-sm">{issue.issue}</p>
                             <p className="text-xs text-gray-600 mt-1">
                               <span className="font-medium">Location:</span> {issue.location}
                             </p>
-                            <p className="text-xs text-gray-600 mt-1">
-                              <span className="font-medium">Action:</span> {issue.suggested_fix}
-                            </p>
+                            <div className="mt-2 bg-white border border-dashed border-blue-300 rounded p-2">
+                              <p className="text-xs text-blue-800">
+                                <span className="font-medium">Example:</span> {issue.suggested_fix}
+                              </p>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -309,14 +314,32 @@ export function CVFixedPage() {
                 <div className="text-center mt-4">
                   <button
                     onClick={() => window.open(`/service/cv-optimizer/report/${scanId}`, '_blank')}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-amber-100 text-amber-800 rounded-lg hover:bg-amber-200 transition-colors text-sm font-medium"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 transition-colors text-sm font-medium"
                   >
                     <FileText size={16} />
-                    View Analysis Details
+                    View All Details
                   </button>
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {data.issues && data.issues.filter(i => i.is_auto_fixable === false).length > 0 && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">✏️</span>
+              <div>
+                <h4 className="font-semibold text-blue-800">Items Marked in Blue Need Your Input</h4>
+                <p className="text-sm text-blue-700 mt-1">
+                  Look for <span className="bg-blue-100 text-blue-800 px-1 rounded border border-dashed border-blue-400 text-xs">[PLACEHOLDER]</span> text in your Fixed CV. 
+                  Replace these with your actual numbers and achievements.
+                </p>
+                <p className="text-xs text-blue-600 mt-2">
+                  Examples: <span className="bg-blue-100 px-1 rounded">[15 engineers]</span>, <span className="bg-blue-100 px-1 rounded">[$2.5M]</span>, <span className="bg-blue-100 px-1 rounded">[40% improvement]</span>
+                </p>
+              </div>
+            </div>
           </div>
         )}
 
@@ -434,6 +457,7 @@ function highlightChangesInContent(content: string, changes?: Array<{ category: 
   
   let highlightedContent = content
   
+  // First, highlight changes from the changes array
   changes.forEach(change => {
     if (change.after && change.after.length > 3) {
       const colorClass = HIGHLIGHT_COLORS[change.category.toLowerCase()] || HIGHLIGHT_COLORS.default
@@ -445,6 +469,13 @@ function highlightChangesInContent(content: string, changes?: Array<{ category: 
       )
     }
   })
+  
+  // Then, highlight placeholder text in brackets like [NUMBER], [$AMOUNT], [X%]
+  // This helps users see what they need to fill in
+  highlightedContent = highlightedContent.replace(
+    /\[([^\]]{2,50})\]/g,
+    '<span class="bg-blue-100 text-blue-800 px-1 rounded border border-dashed border-blue-400 font-medium">[$1]</span>'
+  )
   
   return highlightedContent
 }

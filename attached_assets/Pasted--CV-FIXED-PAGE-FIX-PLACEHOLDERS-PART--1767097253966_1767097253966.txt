@@ -1,0 +1,94 @@
+═══════════════════════════════════════════════════════════
+CV FIXED PAGE - FIX PLACEHOLDERS (PART 2)
+═══════════════════════════════════════════════════════════
+
+FILE: client/src/components/CVFixedPage.tsx
+
+───────────────────────────────────────────────────────────
+FIX 4: ADD PLACEHOLDERS FOR MANUAL FIX ITEMS
+───────────────────────────────────────────────────────────
+
+PROBLEM:
+- Items that can't be auto-fixed (like job achievements) have no guidance
+- User doesn't know what to add
+- No examples or instructions
+
+SOLUTION:
+For items that need user input, add placeholder text WITH examples.
+
+STEP 1: Identify manual fix items
+Items where is_auto_fixable = false need placeholders.
+
+STEP 2: In the Fixed CV, add placeholder blocks
+
+Example for achievements:
+
+Instead of:
+"Managed development team"
+
+Show:
+"Managed development team of [NUMBER] engineers, delivering [NUMBER] projects worth $[AMOUNT]"
+
+With styling:
+<span className="bg-blue-100 text-blue-800 px-1 rounded border border-blue-300">
+  [YOUR NUMBER HERE]
+</span>
+
+STEP 3: Create placeholder template
+
+const PLACEHOLDER_TEMPLATES = {
+  achievement_numbers: '[NUMBER - e.g., 15, 50, 100]',
+  dollar_amount: '[$AMOUNT - e.g., $500K, $2M]',
+  percentage: '[X% - e.g., 25%, 40%]',
+  team_size: '[TEAM SIZE - e.g., 5, 12, 20]',
+  time_period: '[TIME - e.g., 6 months, 2 years]',
+};
+
+STEP 4: Style placeholders distinctly
+
+.placeholder-text {
+  background-color: #dbeafe; /* Light blue */
+  color: #1e40af;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px dashed #3b82f6;
+  font-style: italic;
+}
+
+STEP 5: Add instruction box
+
+<div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+  <h4 className="font-semibold text-blue-800 flex items-center gap-2">
+    ✏️ Items Marked in Blue Need Your Input
+  </h4>
+  <p className="text-sm text-blue-700 mt-1">
+    Replace the placeholder text with your actual numbers and achievements.
+    After updating, you can re-upload your CV for another analysis.
+  </p>
+</div>
+
+───────────────────────────────────────────────────────────
+EXAMPLE RESULT
+───────────────────────────────────────────────────────────
+
+Before (current - no help):
+"Managed development team"
+
+After (with placeholders):
+"Managed development team of [12 engineers] delivering [15 projects] worth [$2.5M]"
+                            ↑ BLUE BOX      ↑ BLUE BOX       ↑ BLUE BOX
+                            (user fills)    (user fills)     (user fills)
+
+User sees exactly what to fill in!
+
+───────────────────────────────────────────────────────────
+VERIFICATION
+───────────────────────────────────────────────────────────
+
+After fix:
+1. Items needing user input have blue placeholder boxes
+2. Placeholders include example values
+3. Instruction box explains what to do
+4. User understands they need to fill these in
+
+Type "COMPLETE - READY FOR PROMPT 3#3" when done.
