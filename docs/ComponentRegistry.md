@@ -47,6 +47,9 @@ to see if it already exists.
 | generatePDF | Utility | ✅ | `client/src/components/common/DocStyler/generators/` |
 | generateWord | Utility | ✅ | `client/src/components/common/DocStyler/generators/` |
 | generateMD | Utility | ✅ | `client/src/components/common/DocStyler/generators/` |
+| GHATooltip | UI Component | ✅ | `client/src/components/common/Tooltip/` |
+| TOOLTIP_TEXTS | Utility | ✅ | `client/src/components/common/Tooltip/` |
+| TOOLTIP_STYLES | Utility | ✅ | `client/src/components/common/Tooltip/` |
 
 ---
 
@@ -209,6 +212,42 @@ to see if it already exists.
 
 ---
 
+### GHATooltip
+
+| Field | Value |
+|-------|-------|
+| **Purpose** | Reusable tooltip with consistent styling |
+| **Location** | `client/src/components/common/Tooltip/` |
+| **Import** | `import { GHATooltip } from '@/components/common/Tooltip'` |
+| **Status** | ✅ Complete |
+
+**Props:** `text`, `title`, `variant`, `side`, `delayDuration`, `icon`, `learnMoreUrl`
+
+**Variants:** `default` (light blue), `warning` (yellow), `info` (sky blue)
+
+**Icons:** `info`, `warning`, `tip`
+
+**Example:**
+```tsx
+// Basic
+<GHATooltip text="Copy to clipboard">
+  <Button>Copy</Button>
+</GHATooltip>
+
+// With title and icon
+<GHATooltip title="PDF Export" text="Download as PDF" icon="info">
+  <Button>PDF</Button>
+</GHATooltip>
+
+// Using central texts
+import { TOOLTIP_TEXTS } from '@/components/common/Tooltip';
+<GHATooltip {...TOOLTIP_TEXTS.actionBar.pdf}>
+  <Button>PDF</Button>
+</GHATooltip>
+```
+
+---
+
 ## CATEGORY: DOCUMENT GENERATION
 
 ### DocStyler
@@ -293,5 +332,5 @@ await DocStyler.pdf(content, {
 
 ---
 
-**TOTAL COMPONENTS:** 15  
+**TOTAL COMPONENTS:** 18  
 **Last Updated:** December 30, 2025
