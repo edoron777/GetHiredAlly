@@ -1,84 +1,150 @@
 """
-Regex patterns for CV text analysis.
+Pattern Matcher - Deterministic regex-based detection
+Version: 4.0
+
+All pattern matching is DETERMINISTIC - same text = same results.
 """
 
 import re
-from typing import Dict
-
-# Email pattern
-EMAIL_PATTERN = re.compile(r'[\w\.-]+@[\w\.-]+\.\w+')
-
-# Phone patterns (various formats)
-PHONE_PATTERN = re.compile(
-    r'[\+]?[(]?[0-9]{1,3}[)]?[-\s\.]?[(]?[0-9]{1,4}[)]?[-\s\.]?[0-9]{1,4}[-\s\.]?[0-9]{1,9}'
-)
-
-# LinkedIn URL pattern
-LINKEDIN_PATTERN = re.compile(r'linkedin\.com/in/[\w-]+', re.IGNORECASE)
-
-# Number pattern (for quantification)
-NUMBER_PATTERN = re.compile(
-    r'\d+%|\$\d+[\d,]*|\d+\s*(users|customers|employees|projects|years|months|clients|members|people|team)'
-)
-
-# Weak phrases to detect
-WEAK_PHRASES = [
-    r'responsible for',
-    r'duties included',
-    r'worked on',
-    r'helped with',
-    r'was part of',
-    r'assisted in',
-    r'involved in'
-]
-WEAK_PHRASES_PATTERN = re.compile('|'.join(WEAK_PHRASES), re.IGNORECASE)
-
-# Strong action verbs
-STRONG_VERBS = [
-    'led', 'managed', 'developed', 'created', 'built', 'designed',
-    'implemented', 'launched', 'increased', 'decreased', 'reduced',
-    'improved', 'optimized', 'achieved', 'delivered', 'established',
-    'generated', 'negotiated', 'streamlined', 'transformed', 'spearheaded',
-    'orchestrated', 'pioneered', 'accelerated', 'maximized', 'minimized'
-]
-STRONG_VERBS_PATTERN = re.compile(r'\b(' + '|'.join(STRONG_VERBS) + r')\b', re.IGNORECASE)
-
-# Passive voice indicators
-PASSIVE_INDICATORS = [
-    r'was\s+\w+ed\b',
-    r'were\s+\w+ed\b',
-    r'been\s+\w+ed\b',
-    r'being\s+\w+ed\b'
-]
-PASSIVE_PATTERN = re.compile('|'.join(PASSIVE_INDICATORS), re.IGNORECASE)
-
-# Section headers
-SECTION_HEADERS = [
-    'experience', 'education', 'skills', 'summary', 'objective',
-    'projects', 'certifications', 'achievements', 'awards',
-    'work history', 'employment', 'professional experience'
-]
-SECTION_PATTERN = re.compile(
-    r'^(' + '|'.join(SECTION_HEADERS) + r')\s*:?\s*$',
-    re.IGNORECASE | re.MULTILINE
-)
+from typing import List, Dict, Any
 
 
-def extract_patterns(text: str) -> Dict:
-    """
-    Extract various patterns from CV text.
+class PatternMatcher:
+    """Deterministic pattern detection for CV analysis."""
     
-    Returns:
-        Dictionary with detected patterns and counts
-    """
-    return {
-        "has_email": bool(EMAIL_PATTERN.search(text)),
-        "has_phone": bool(PHONE_PATTERN.search(text)),
-        "has_linkedin": bool(LINKEDIN_PATTERN.search(text)),
-        "bullets_with_numbers": len(NUMBER_PATTERN.findall(text)),
-        "weak_phrases_count": len(WEAK_PHRASES_PATTERN.findall(text)),
-        "strong_action_verbs_count": len(STRONG_VERBS_PATTERN.findall(text)),
-        "passive_voice_count": len(PASSIVE_PATTERN.findall(text)),
-        "has_section_headers": bool(SECTION_PATTERN.search(text)),
-        "section_headers_found": SECTION_PATTERN.findall(text)
+    # Regex patterns for detection
+    PATTERNS = {
+        # Contact information
+        'email': r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}',
+        'phone': r'\+?\d{1,3}[-.\s]?\(?\d{2,3}\)?[-.\s]?\d{3}[-.\s]?\d{4}',
+        'linkedin': r'linkedin\.com/in/[\w-]+',
+        'github': r'github\.com/[\w-]+',
+        
+        # Quantification
+        'percentage': r'\d+%',
+        'currency': r'\$[\d,]+[KMB]?',
+        'team_size': r'team of \d+|\d+\s*(team members|engineers|developers|people|reports)',
+        'time_metric': r'\d+\s*(months?|years?|weeks?|days?)',
+        'project_count': r'\d+\s*projects?',
+        'user_count': r'\d+[,\d]*\s*(users?|customers?|clients?|patients?|students?)',
+        'any_number': r'\b\d+\b',
+        
+        # Structure
+        'section_header': r'^(About|Summary|Profile|Experience|Work Experience|Education|Skills|Technical Skills|Certifications|Projects|Awards|Languages|Interests)',
+        'bullet_point': r'^[\•\-\*\○\►]\s',
+        'date_format': r'\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{4}\b|\b\d{1,2}/\d{4}\b|\b\d{4}\s*[-–]\s*(Present|\d{4})\b',
+        
+        # Red flags
+        'unprofessional_email': r'(sexy|hot|babe|party|420|princess|gangster|killer|xoxo|cutie|lover|ninja|pimp)\d*@',
+        'personal_info': r'\b(age|date of birth|dob|marital status|religion|nationality)\b',
+        'salary_mention': r'\$([\d,]+)\s*(per|/)\s*(year|month|hour|annum)|salary|compensation',
     }
+    
+    @classmethod
+    def find_all(cls, pattern_name: str, text: str) -> List[str]:
+        """
+        Find all matches for a named pattern.
+        
+        DETERMINISTIC: Same text = Same results.
+        
+        Args:
+            pattern_name: Key from PATTERNS dict
+            text: Text to search
+        
+        Returns:
+            List of all matches
+        """
+        pattern = cls.PATTERNS.get(pattern_name)
+        if not pattern:
+            return []
+        return re.findall(pattern, text, re.IGNORECASE | re.MULTILINE)
+    
+    @classmethod
+    def count(cls, pattern_name: str, text: str) -> int:
+        """
+        Count matches for a pattern.
+        
+        DETERMINISTIC: Same text = Same count.
+        """
+        return len(cls.find_all(pattern_name, text))
+    
+    @classmethod
+    def has_match(cls, pattern_name: str, text: str) -> bool:
+        """
+        Check if pattern exists in text.
+        
+        DETERMINISTIC: Same text = Same boolean.
+        """
+        return cls.count(pattern_name, text) > 0
+    
+    @classmethod
+    def count_words(cls, text: str) -> int:
+        """Count words in text. DETERMINISTIC."""
+        return len(text.split())
+    
+    @classmethod
+    def count_bullets(cls, text: str) -> int:
+        """Count bullet points. DETERMINISTIC."""
+        # Count lines starting with bullet characters
+        lines = text.split('\n')
+        count = 0
+        for line in lines:
+            stripped = line.strip()
+            if stripped and stripped[0] in '•-*○►':
+                count += 1
+        return count
+    
+    @classmethod
+    def find_word_frequency(cls, text: str, min_count: int = 5) -> Dict[str, int]:
+        """
+        Find words that appear frequently.
+        
+        Args:
+            text: Text to analyze
+            min_count: Minimum occurrences to include
+        
+        Returns:
+            Dictionary of word -> count for frequent words
+        """
+        # Simple word extraction
+        words = re.findall(r'\b[a-zA-Z]{4,}\b', text.lower())
+        
+        # Count occurrences
+        freq = {}
+        for word in words:
+            freq[word] = freq.get(word, 0) + 1
+        
+        # Filter by min_count
+        return {w: c for w, c in freq.items() if c >= min_count}
+    
+    @classmethod
+    def check_verb_at_start(cls, bullet_text: str, verb_list: List[str]) -> bool:
+        """
+        Check if bullet starts with a verb from the list.
+        
+        DETERMINISTIC.
+        """
+        # Get first word
+        words = bullet_text.strip().split()
+        if not words:
+            return False
+        
+        first_word = words[0].strip('•-*○► ').capitalize()
+        return first_word in verb_list
+    
+    @classmethod
+    def extract_all_metrics(cls, text: str) -> Dict[str, List[str]]:
+        """
+        Extract all quantification metrics from text.
+        
+        Returns:
+            Dictionary with metric types and their values
+        """
+        return {
+            'percentages': cls.find_all('percentage', text),
+            'currency': cls.find_all('currency', text),
+            'team_sizes': cls.find_all('team_size', text),
+            'time_metrics': cls.find_all('time_metric', text),
+            'project_counts': cls.find_all('project_count', text),
+            'user_counts': cls.find_all('user_count', text)
+        }

@@ -1,19 +1,17 @@
-from .quantification import calculate_quantification_score
-from .experience import calculate_experience_score
-from .language import calculate_language_score
-from .grammar import calculate_grammar_score
-from .skills import calculate_skills_score
-from .formatting import calculate_formatting_score
-from .contact import calculate_contact_score
-from .length import calculate_length_score
+"""Category scoring functions."""
+
+from .content_quality import score_content_quality
+from .language_clarity import score_language_clarity
+from .formatting import score_formatting
+from .completeness import score_completeness
+from .professional import score_professional
+from .red_flags import score_red_flags
 
 __all__ = [
-    'calculate_quantification_score',
-    'calculate_experience_score',
-    'calculate_language_score',
-    'calculate_grammar_score',
-    'calculate_skills_score',
-    'calculate_formatting_score',
-    'calculate_contact_score',
-    'calculate_length_score'
+    'score_content_quality',
+    'score_language_clarity',
+    'score_formatting',
+    'score_completeness',
+    'score_professional',
+    'score_red_flags'
 ]

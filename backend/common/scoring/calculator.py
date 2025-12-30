@@ -1,76 +1,148 @@
 """
-Main CV Scoring Calculator v3.0
-DETERMINISTIC: Same input ALWAYS produces same output.
+Main CV Score Calculator - DETERMINISTIC
+Version: 4.0
+
+CRITICAL: Same input MUST produce same output EVERY TIME.
+No randomness, no AI interpretation in scoring.
 """
 
-from typing import Dict
-from .config import SCORE_MIN, SCORE_MAX, GRADE_THRESHOLDS, GRADE_MESSAGES, SCORING_VERSION
+from dataclasses import dataclass
+from typing import Dict, List, Any, Optional
+
+from .config import (
+    CATEGORY_WEIGHTS,
+    SCORE_MIN,
+    SCORE_MAX,
+    GRADE_THRESHOLDS
+)
 from .categories import (
-    calculate_quantification_score,
-    calculate_experience_score,
-    calculate_language_score,
-    calculate_grammar_score,
-    calculate_skills_score,
-    calculate_formatting_score,
-    calculate_contact_score,
-    calculate_length_score
+    score_content_quality,
+    score_language_clarity,
+    score_formatting,
+    score_completeness,
+    score_professional,
+    score_red_flags
 )
 
 
-def calculate_cv_score(data: Dict) -> Dict:
+@dataclass
+class ScoreResult:
+    """Result of CV score calculation."""
+    total_score: int
+    breakdown: Dict[str, float]
+    grade: str
+    grade_label: str
+    issues_count: int
+    auto_fixable_count: int
+
+
+def calculate_cv_score(extracted_data: Dict[str, Any]) -> ScoreResult:
     """
     Calculate CV score from extracted data.
     
-    THIS FUNCTION IS DETERMINISTIC.
-    Same input will ALWAYS produce same output.
+    DETERMINISTIC: Same input = Same output, ALWAYS.
     
     Args:
-        data: Dictionary with extracted CV data
-        
+        extracted_data: Dictionary containing structured CV data
+                       (from AI extraction or pattern matching)
+    
     Returns:
-        Dictionary with total_score, breakdown, grade, and message
+        ScoreResult with total score, breakdown, and grade
     """
+    breakdown = {}
     
-    # Calculate each category score (ordered by weight)
-    breakdown = {
-        "quantification": calculate_quantification_score(data),  # 25 max
-        "experience": calculate_experience_score(data),          # 20 max
-        "language": calculate_language_score(data),              # 15 max
-        "grammar": calculate_grammar_score(data),                # 10 max
-        "skills": calculate_skills_score(data),                  # 10 max
-        "formatting": calculate_formatting_score(data),          # 10 max
-        "contact": calculate_contact_score(data),                # 5 max
-        "length": calculate_length_score(data)                   # 5 max
-    }
+    # Calculate each category score
+    breakdown['content_quality'] = score_content_quality(extracted_data)
+    breakdown['language_clarity'] = score_language_clarity(extracted_data)
+    breakdown['formatting'] = score_formatting(extracted_data)
+    breakdown['completeness'] = score_completeness(extracted_data)
+    breakdown['professional'] = score_professional(extracted_data)
+    breakdown['red_flags'] = score_red_flags(extracted_data)
     
-    # Calculate total
-    raw_total = sum(breakdown.values())
+    # Calculate total (sum of all categories)
+    total = sum(breakdown.values())
     
     # Apply bounds
-    final_score = int(max(SCORE_MIN, min(SCORE_MAX, raw_total)))
+    total = max(SCORE_MIN, min(SCORE_MAX, total))
     
-    # Determine grade and message
-    grade, message = _get_grade_and_message(final_score)
+    # Get grade
+    grade, grade_label = get_grade(total)
+    
+    # Count issues
+    issues = extracted_data.get('issues', [])
+    issues_count = len(issues)
+    auto_fixable_count = sum(1 for i in issues if i.get('is_auto_fixable', False))
+    
+    return ScoreResult(
+        total_score=round(total),
+        breakdown={k: round(v, 1) for k, v in breakdown.items()},
+        grade=grade,
+        grade_label=grade_label,
+        issues_count=issues_count,
+        auto_fixable_count=auto_fixable_count
+    )
+
+
+def get_grade(score: float) -> tuple:
+    """
+    Convert numeric score to grade.
+    
+    Returns:
+        Tuple of (grade_key, grade_label)
+    """
+    if score >= GRADE_THRESHOLDS['excellent']:
+        return ('excellent', 'Excellent')
+    elif score >= GRADE_THRESHOLDS['good']:
+        return ('good', 'Good')
+    elif score >= GRADE_THRESHOLDS['fair']:
+        return ('fair', 'Fair')
+    elif score >= GRADE_THRESHOLDS['needs_work']:
+        return ('needs_work', 'Needs Work')
+    else:
+        return ('poor', 'Poor')
+
+
+def get_score_message(score: int) -> str:
+    """
+    Get user-friendly message for score.
+    
+    Args:
+        score: Total CV score (0-100)
+    
+    Returns:
+        Encouraging message appropriate for score level
+    """
+    if score >= 90:
+        return "Outstanding! Your CV is highly polished and job-ready."
+    elif score >= 80:
+        return "Great CV! Minor polish will make it perfect."
+    elif score >= 70:
+        return "Good foundation! A few improvements will help you stand out."
+    elif score >= 60:
+        return "Decent CV. Several improvements recommended."
+    elif score >= 50:
+        return "Your CV needs attention in multiple areas."
+    else:
+        return "Significant improvements needed. Focus on critical issues first."
+
+
+def calculate_improvement(before_score: int, after_score: int) -> Dict[str, Any]:
+    """
+    Calculate improvement between before and after scores.
+    
+    Args:
+        before_score: Original CV score
+        after_score: Fixed CV score
+    
+    Returns:
+        Dictionary with improvement details
+    """
+    improvement = after_score - before_score
+    improvement_percent = round((improvement / max(before_score, 1)) * 100)
     
     return {
-        "total_score": final_score,
-        "breakdown": breakdown,
-        "grade": grade,
-        "message": message,
-        "version": SCORING_VERSION,
-        "max_possible": SCORE_MAX
+        'before_score': before_score,
+        'after_score': after_score,
+        'improvement_points': improvement,
+        'improvement_percent': improvement_percent
     }
-
-
-def _get_grade_and_message(score: int) -> tuple:
-    """Get grade and message based on score."""
-    if score >= GRADE_THRESHOLDS["excellent"]:
-        return "Excellent", GRADE_MESSAGES["excellent"]
-    elif score >= GRADE_THRESHOLDS["good"]:
-        return "Good", GRADE_MESSAGES["good"]
-    elif score >= GRADE_THRESHOLDS["fair"]:
-        return "Fair", GRADE_MESSAGES["fair"]
-    elif score >= GRADE_THRESHOLDS["needs_work"]:
-        return "Needs Work", GRADE_MESSAGES["needs_work"]
-    else:
-        return "Needs Attention", GRADE_MESSAGES["needs_attention"]

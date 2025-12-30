@@ -1,87 +1,141 @@
 """
-Scoring Configuration v3.0
-=========================
-Recalibrated weights based on recruiter priorities.
+Scoring Configuration - Weights and Thresholds
+Version: 4.0
 
-Key changes from v2.0:
-- Quantification: 20% → 25% (most important factor)
-- Experience: 10% → 20% (relevance matters)
-- Grammar: 15% → 10% (pass/fail, not differentiator)
-- Formatting: 15% → 10% (overvalued before)
-- Contact: 10% → 5% (LinkedIn was overweighted)
+CRITICAL: These values are the SINGLE SOURCE OF TRUTH for scoring.
+Do NOT modify without updating documentation.
 """
 
-# Version - increment when changing weights
-SCORING_VERSION = "3.0.0"
+# Score bounds
+SCORE_MIN = 10
+SCORE_MAX = 95
 
-# Score boundaries
-SCORE_MIN = 10   # Never show 0 (too demoralizing)
-SCORE_MAX = 95   # Never show 100 (no CV is perfect)
-
-# ============================================================
-# CATEGORY WEIGHTS v3.0 (must sum to 100)
-# ============================================================
-
+# Category weights (MUST sum to 100)
 CATEGORY_WEIGHTS = {
-    # TIER 1: CRITICAL (60%)
-    "quantification": 25,   # THE most important - achievements with numbers
-    "experience": 20,       # Relevance and quality of work history
-    "language": 15,         # Action verbs, professional tone
-    
-    # TIER 2: IMPORTANT (25%)
-    "grammar": 10,          # Basic professionalism (pass/fail)
-    "skills": 10,           # Clear skills presentation
-    "formatting": 10,       # Structure, readability
-    
-    # TIER 3: BASIC HYGIENE (10%)
-    "contact": 5,           # Email, phone (LinkedIn optional)
-    "length": 5             # 1-2 pages ideal
+    'content_quality': 40,      # Quantification, Action Verbs, Narrative, Depth
+    'language_clarity': 18,     # Grammar, Writing Quality, Vagueness
+    'formatting': 18,           # Visual Structure, Organization, Consistency, ATS
+    'completeness': 12,         # Contact, Required Sections, Keywords, Job Standards
+    'professional': 8,          # Length, Recency, Certifications
+    'red_flags': 4              # Repetition, Critical Issues
 }
 
-# Validate weights sum to 100
-assert sum(CATEGORY_WEIGHTS.values()) == 100, f"Weights must sum to 100, got {sum(CATEGORY_WEIGHTS.values())}"
+# Verify weights sum to 100
+assert sum(CATEGORY_WEIGHTS.values()) == 100, "Category weights must sum to 100"
 
-# ============================================================
-# GRADE THRESHOLDS
-# ============================================================
-
+# Grade thresholds
 GRADE_THRESHOLDS = {
-    "excellent": 82,
-    "good": 68,
-    "fair": 52,
-    "needs_work": 35
+    'excellent': 90,
+    'good': 75,
+    'fair': 60,
+    'needs_work': 45,
+    'poor': 0
 }
 
-# Grade messages (User Lens - supportive, not judgmental)
-GRADE_MESSAGES = {
-    "excellent": "Outstanding! Your CV effectively showcases your achievements and is ready to impress recruiters.",
-    "good": "Strong CV! A few targeted improvements will make it even more competitive.",
-    "fair": "Good foundation! Focusing on quantified achievements will significantly strengthen your impact.",
-    "needs_work": "Your CV has potential. Let's add some concrete numbers and results to make it shine.",
-    "needs_attention": "Let's work together to strengthen your CV. Start with adding measurable achievements."
+# Sub-category weights within Content Quality (40 points)
+CONTENT_QUALITY_WEIGHTS = {
+    'quantification': 20,       # QNT-001 to QNT-007
+    'action_verbs': 8,          # AVB-001 to AVB-004
+    'career_narrative': 6,      # NAR-001 to NAR-004
+    'content_depth': 6          # DEP-001 to DEP-006
 }
 
-# ============================================================
-# FIXABILITY RATES (for after-fix calculation)
-# ============================================================
+# Sub-category weights within Language & Clarity (18 points)
+LANGUAGE_CLARITY_WEIGHTS = {
+    'grammar_spelling': 8,      # GRM-001 to GRM-005
+    'writing_quality': 5,       # WRT-001 to WRT-006
+    'vagueness': 5              # VAG-001 to VAG-005
+}
 
+# Sub-category weights within Formatting (18 points)
+FORMATTING_WEIGHTS = {
+    'visual_structure': 6,      # FMT-001 to FMT-004
+    'section_organization': 5,  # SEC-001 to SEC-004
+    'consistency': 3,           # CON-001 to CON-003
+    'ats_compatibility': 4      # ATS-001 to ATS-010
+}
+
+# Sub-category weights within Completeness (12 points)
+COMPLETENESS_WEIGHTS = {
+    'contact_info': 4,          # CNT-001 to CNT-005
+    'required_sections': 3,     # REQ-001 to REQ-003
+    'keywords_skills': 2,       # KEY-001 to KEY-003
+    'job_entry_standards': 3    # JOB-001 to JOB-008
+}
+
+# Sub-category weights within Professional Standards (8 points)
+PROFESSIONAL_WEIGHTS = {
+    'length': 2,                # LEN-001 to LEN-003
+    'recency_relevance': 3,     # REC-001 to REC-007
+    'certifications': 3         # CRT-001 to CRT-005
+}
+
+# Sub-category weights within Red Flags (4 points)
+RED_FLAGS_WEIGHTS = {
+    'repetition': 2,            # REP-001 to REP-005
+    'critical_flags': 2         # RED-001 to RED-008
+}
+
+# Fixability rates (for after-fix score projection)
 FIXABILITY_RATES = {
-    "grammar": 0.90,        # AI can fix most grammar/spelling
-    "language": 0.80,       # AI can improve verbs/phrasing
-    "formatting": 0.70,     # Some structural fixes possible
-    "skills": 0.60,         # Can reorganize, but content limited
-    "quantification": 0.40, # Harder - needs real data from user
-    "contact": 0.30,        # Can suggest, user must provide
-    "experience": 0.20,     # Content mostly fixed
-    "length": 0.30          # Can trim, harder to expand
+    'grammar': 0.95,
+    'spelling': 0.95,
+    'action_verbs': 0.85,
+    'formatting': 0.70,
+    'language': 0.80,
+    'quantification': 0.40,
+    'contact': 0.10,
+    'gaps': 0.00
 }
 
-# ============================================================
-# PLACEHOLDER STYLING (for draft CV with placeholders)
-# ============================================================
+# Strong action verbs list
+STRONG_VERBS = [
+    'Led', 'Directed', 'Managed', 'Supervised', 'Headed', 'Oversaw',
+    'Coordinated', 'Orchestrated', 'Spearheaded', 'Championed',
+    'Achieved', 'Accomplished', 'Attained', 'Exceeded', 'Surpassed',
+    'Outperformed', 'Delivered', 'Completed',
+    'Created', 'Developed', 'Designed', 'Built', 'Established',
+    'Founded', 'Initiated', 'Launched', 'Pioneered', 'Introduced',
+    'Improved', 'Enhanced', 'Optimized', 'Streamlined', 'Transformed',
+    'Revitalized', 'Modernized', 'Upgraded', 'Refined',
+    'Increased', 'Expanded', 'Grew', 'Scaled', 'Accelerated',
+    'Amplified', 'Boosted', 'Maximized',
+    'Analyzed', 'Assessed', 'Evaluated', 'Researched', 'Investigated',
+    'Examined', 'Audited', 'Diagnosed',
+    'Presented', 'Negotiated', 'Persuaded', 'Influenced', 'Advocated',
+    'Articulated', 'Communicated',
+    'Engineered', 'Programmed', 'Architected', 'Implemented',
+    'Integrated', 'Automated', 'Configured', 'Deployed'
+]
 
-PLACEHOLDER_STYLE = {
-    "background_color": "#FFF8E1",  # Light yellow
-    "text_color": "#800020",         # Bordeaux
-    "font_weight": "bold"
-}
+# Weak verbs list
+WEAK_VERBS = [
+    'Helped', 'Assisted', 'Supported', 'Worked on', 'Was responsible for',
+    'Participated in', 'Contributed to', 'Involved in', 'Handled',
+    'Dealt with', 'Did', 'Made', 'Got', 'Tried to', 'Was part of'
+]
+
+# Redundant phrases to detect
+REDUNDANT_PHRASES = [
+    'in order to',
+    'due to the fact that',
+    'at this point in time',
+    'for the purpose of',
+    'in the event that',
+    'a total of',
+    'each and every'
+]
+
+# Filler words to detect
+FILLER_WORDS = [
+    'very', 'really', 'basically', 'actually',
+    'just', 'quite', 'somewhat', 'rather'
+]
+
+# Vague phrases to flag
+VAGUE_PHRASES = [
+    'various', 'multiple', 'numerous', 'several',
+    'significant', 'substantial', 'considerable',
+    'helped improve', 'assisted with', 'was involved in',
+    'played a role', 'contributed to success'
+]
