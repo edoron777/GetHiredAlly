@@ -376,10 +376,10 @@ export function CVReportPage() {
         )}
 
         <div style={{
-          marginTop: '40px',
+          marginTop: '48px',
           marginBottom: '24px',
-          borderTop: '2px solid #e5e7eb',
-          paddingTop: '32px'
+          borderTop: '3px solid #d1d5db',
+          paddingTop: '40px'
         }}>
           <h2 style={{
             fontSize: '24px',
