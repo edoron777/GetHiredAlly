@@ -347,8 +347,9 @@ export function CVReportPage() {
         </Link>
 
         <div className="mb-6">
-          <h1 className="text-2xl font-bold mb-2" style={{ color: '#1E3A5F' }}>
-            CV Analysis Report
+          <h1 className="text-2xl font-bold mb-2">
+            <span style={{ color: '#6b7280', fontWeight: '500' }}>Step 1: </span>
+            <span style={{ color: '#1E3A5F' }}>Your CV Score</span>
           </h1>
           <p className="text-gray-600">
             {reportData.total_issues} improvement opportunities found across {uniqueCategories.size} categories
@@ -384,10 +385,10 @@ export function CVReportPage() {
           <h2 style={{
             fontSize: '24px',
             fontWeight: '600',
-            color: '#1f2937',
             marginBottom: '8px'
           }}>
-            Detailed Analysis & Recommendations
+            <span style={{ color: '#6b7280', fontWeight: '500' }}>Step 2: </span>
+            <span style={{ color: '#1f2937' }}>Analysis & Recommendations</span>
           </h2>
           <p style={{
             fontSize: '14px',
@@ -478,6 +479,10 @@ export function CVReportPage() {
           filterType={severityFilter}
           count={filteredIssues.length}
         />
+
+        <div style={{ marginTop: '24px' }}>
+          <StrengthsSection strengths={strengths} />
+        </div>
 
         <div style={{ marginTop: '16px', marginBottom: '16px' }}>
           <StandardToolbar
@@ -602,16 +607,25 @@ export function CVReportPage() {
           </div>
         )}
 
-        <EncouragementMessage type="completion" />
-
-        <div style={{ marginTop: '32px' }}>
-          <StrengthsSection strengths={strengths} />
+        <div style={{ marginTop: '24px' }}>
+          <EncouragementMessage type="completion" />
         </div>
 
-        <div className="mt-12 pt-8 border-t border-gray-200 text-center">
-          <p className="text-gray-700 text-lg mb-4">
-            Would you like me to fix your CV automatically?
-          </p>
+        <div style={{
+          marginTop: '48px',
+          marginBottom: '24px',
+          borderTop: '3px solid #d1d5db',
+          paddingTop: '40px',
+          textAlign: 'center'
+        }}>
+          <h2 style={{
+            fontSize: '24px',
+            fontWeight: '600',
+            marginBottom: '16px'
+          }}>
+            <span style={{ color: '#6b7280', fontWeight: '500' }}>Step 3: </span>
+            <span style={{ color: '#1f2937' }}>Fix Your CV</span>
+          </h2>
           <button
             onClick={async () => {
               setIsGeneratingFix(true)

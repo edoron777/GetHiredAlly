@@ -1,0 +1,103 @@
+═══════════════════════════════════════════════════════════
+PROMPT: THREE UI FIXES - NUMBERS, SPACING, POSITION
+═══════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Make MINIMAL, SURGICAL changes only
+3. If unclear, STOP and ask
+
+═══════════════════════════════════════════════════════════
+FIX 1: ADD STEP NUMBERS TO SECTION HEADERS
+═══════════════════════════════════════════════════════════
+
+Add step numbers to the three main sections:
+
+CURRENT:
+- "CV Analysis Report"
+- "Detailed Analysis & Recommendations"
+- "Would you like me to fix your CV automatically?" (or similar)
+
+CHANGE TO:
+- "Step 1: Your CV Score"
+- "Step 2: Analysis & Recommendations"
+- "Step 3: Fix Your CV"
+
+Style the step number:
+- "Step 1:" should be in a slightly lighter color (#6b7280)
+- The title after it in normal dark color (#1f2937)
+
+Example:
+<h2>
+  <span style={{ color: '#6b7280', fontWeight: '500' }}>Step 1: </span>
+  <span style={{ color: '#1f2937' }}>Your CV Score</span>
+</h2>
+
+═══════════════════════════════════════════════════════════
+FIX 2: ADD SPACING ABOVE "GREAT JOB!" BOX
+═══════════════════════════════════════════════════════════
+
+The "Great Job!" encouragement box is stuck to the element above it.
+
+Find the "Great Job!" box and add top margin:
+
+style={{ marginTop: '24px', ... existing styles }}
+
+═══════════════════════════════════════════════════════════
+FIX 3: MOVE "WHAT'S WORKING WELL" ABOVE SUGGESTIONS
+═══════════════════════════════════════════════════════════
+
+CURRENT POSITION:
+Filter by Category
+Toolbar
+IMPORTANT IMPROVEMENTS
+CONSIDER
+POLISH
+Great Job!
+What's Working Well  ← Currently here (bottom)
+
+NEW POSITION:
+Filter by Category
+What's Working Well  ← Move here (above toolbar)
+Toolbar
+IMPORTANT IMPROVEMENTS
+CONSIDER
+POLISH
+Great Job!
+
+Move the "What's Working Well" section to appear:
+- AFTER "Filter Results by Category"
+- BEFORE the toolbar
+
+═══════════════════════════════════════════════════════════
+ALSO ADD: DIVIDER BETWEEN STEP 2 AND STEP 3
+═══════════════════════════════════════════════════════════
+
+Add the same thick divider before "Step 3: Fix Your CV":
+
+<div style={{
+  marginTop: '48px',
+  marginBottom: '24px',
+  borderTop: '3px solid #d1d5db',
+  paddingTop: '40px'
+}}>
+  <h2>
+    <span style={{ color: '#6b7280', fontWeight: '500' }}>Step 3: </span>
+    <span style={{ color: '#1f2937' }}>Fix Your CV</span>
+  </h2>
+  ...
+</div>
+
+═══════════════════════════════════════════════════════════
+WHEN COMPLETE:
+═══════════════════════════════════════════════════════════
+
+Confirm:
+□ Step 1, Step 2, Step 3 labels added to headers
+□ Spacing added above "Great Job!" box
+□ "What's Working Well" moved above toolbar
+□ Divider added between Step 2 and Step 3
+□ Page flow is now correct
+
+Report which files were changed.
