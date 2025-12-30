@@ -29,7 +29,7 @@ interface FixedData {
   original_score?: number
   fixed_score?: number
   improvement?: number
-  category_improvements?: Record<string, { before: number; after: number; improvement: number }>
+  category_improvements?: Record<string, { before: number; after: number; improvement: number; max_possible: number }>
   changes?: Array<{ category: string; before: string; after: string; explanation: string }>
   changes_summary?: { total_changes: number; by_category: Record<string, number> }
   total_changes?: number
