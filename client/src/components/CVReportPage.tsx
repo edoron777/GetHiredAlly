@@ -462,12 +462,6 @@ export function CVReportPage() {
           </div>
         )}
 
-        <EncouragementMessage 
-          type="filter" 
-          filterType={severityFilter}
-          count={filteredIssues.length}
-        />
-
         <div style={{ marginTop: '16px', marginBottom: '16px' }}>
           <ActionBar
             content={reportData.cv_content || ''}
