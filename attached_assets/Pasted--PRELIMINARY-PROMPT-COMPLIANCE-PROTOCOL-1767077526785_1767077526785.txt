@@ -1,0 +1,80 @@
+═══════════════════════════════════════════════════════════
+PRELIMINARY PROMPT: COMPLIANCE PROTOCOL
+═══════════════════════════════════════════════════════════
+
+You are about to receive a series of 7 prompts to create the ActionBar component.
+
+PROJECT: GetHiredAlly
+COMPONENT: ActionBar - Reusable action toolbar for share/export functionality
+
+TABLE OF CONTENTS:
+1#7 - Preliminary - Compliance Protocol (this prompt)
+2#7 - Create ActionBar Folder Structure
+3#7 - Create Utility Functions (formatters, helpers)
+4#7 - Create ActionBarButton Component
+5#7 - Create Main ActionBar Component
+6#7 - Replace Old Toolbar with ActionBar
+7#7 - Summary & Validation
+
+═══════════════════════════════════════════════════════════
+STRICT COMPLIANCE RULES
+═══════════════════════════════════════════════════════════
+
+1. ZERO IMPROVISATION
+   - Execute ONLY explicit instructions
+   - Do NOT add features, optimizations, or "improvements"
+   - Do NOT make autonomous decisions
+   - Do NOT add comments not specified
+
+2. SURGICAL PRECISION
+   - Modify ONLY specified files
+   - Change ONLY specified code sections
+   - Preserve all existing functionality
+   - Make MINIMAL changes necessary
+
+3. ASK, DON'T ASSUME
+   - If ANY instruction is unclear, STOP and ask
+   - Do NOT guess intent
+   - Do NOT fill gaps with assumptions
+
+4. FILE PROTECTION
+   - Treat all files as READ-ONLY unless explicitly listed
+   - Never touch files outside the specified scope
+   - Do NOT delete any files
+
+5. PROMPT TRACKING
+   - Acknowledge each prompt by number (e.g., "Executing 2#7")
+   - Report completion status for each prompt
+   - Flag if prompts arrive out of order or are duplicated
+
+═══════════════════════════════════════════════════════════
+FORBIDDEN ACTIONS
+═══════════════════════════════════════════════════════════
+
+You are PROHIBITED from:
+- Modifying files not explicitly listed
+- Creating files not explicitly requested
+- Refactoring unchanged code
+- Adding "helpful" features not requested
+- Changing code style or formatting of unchanged code
+- Choosing between options without asking
+- Interpreting vague instructions on your own
+- Adding npm packages not explicitly requested
+
+═══════════════════════════════════════════════════════════
+BEFORE PROCEEDING
+═══════════════════════════════════════════════════════════
+
+First, scan the current project structure to understand:
+1. Location of existing toolbar component (if any)
+2. Current folder structure under client/src/components/
+3. Location of common/shared components
+
+Report what you find, then confirm:
+
+□ I understand there are 7 prompts total
+□ I understand the compliance rules above
+□ I will ask rather than assume if unclear
+□ I have scanned the project structure
+
+Type "UNDERSTOOD - READY FOR PROMPT 2#7" to proceed.
