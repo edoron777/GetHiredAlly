@@ -1,0 +1,83 @@
+═══════════════════════════════════════════════════════════
+PROMPT 1#7: Remove "What's Working Well" Section
+═══════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify files not explicitly mentioned
+3. Do NOT add features not explicitly requested
+4. Do NOT refactor or "improve" existing code
+5. Do NOT make autonomous decisions
+6. If unclear, STOP and ask - do not assume
+7. Make MINIMAL, SURGICAL changes only
+
+FORBIDDEN ACTIONS:
+- Adding unrequested imports
+- Changing variable names not specified
+- Modifying formatting of unchanged code
+- "Optimizing" code outside scope
+- Creating files not explicitly requested
+
+───────────────────────────────────────────────────────────
+
+TASK: Remove the "What's Working Well" section from the CV Report page
+
+OBJECTIVE:
+Delete the entire strengths/positive feedback section to streamline the user experience
+
+CONTEXT:
+Users are focused on FIXING their CV, not celebrating what's good. This section adds cognitive load without providing actionable value.
+
+───────────────────────────────────────────────────────────
+
+INSTRUCTIONS:
+
+Step 1: Find the CV Report page component
+- Likely location: src/pages/cv-optimizer/CVReportPage.tsx
+- Or similar path containing the report display
+
+Step 2: Search for these terms to locate the section:
+- "What's Working Well"
+- "Working Well"
+- "strengths"
+- "StrengthsSection"
+- "solid foundation"
+
+Step 3: DELETE the entire component/section that displays:
+- "What's Working Well" header
+- List of strengths (Clear job titles, Includes quantified achievements, etc.)
+- The blue encouragement box with text like "Your CV has a solid foundation..."
+
+Step 4: Remove any related imports at the top of the file
+- If there's an import for StrengthsSection or similar, remove it
+
+Step 5: Remove any related state or data fetching for strengths
+- If there's useState or data for strengths that's no longer used, remove it
+
+───────────────────────────────────────────────────────────
+
+FILES TO MODIFY:
+- [CV Report page component - find exact path first]
+
+FILES TO CREATE:
+- None
+
+DO NOT TOUCH:
+- All other files not listed above
+- Score display components
+- Filter components
+- Recommendations list components
+
+───────────────────────────────────────────────────────────
+
+WHEN COMPLETE:
+
+Confirm:
+□ "What's Working Well" section is completely removed from UI
+□ Related imports are removed
+□ No console errors appear
+□ Page still renders correctly
+□ Other sections (Score, Filters, Recommendations) still work
+
+Report the exact file path you modified.

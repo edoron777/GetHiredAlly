@@ -8,7 +8,6 @@ import { isAuthenticated, getAuthToken } from '@/lib/auth'
 import { ActionBar } from './common/ActionBar'
 import { GHAScanner } from './common/GHAScanner'
 import CategoryFilterPanel from './cv-optimizer/CategoryFilterPanel'
-import StrengthsSection from './cv-optimizer/StrengthsSection'
 import EncouragementMessage from './cv-optimizer/EncouragementMessage'
 import ViewModeToggle from './cv-optimizer/ViewModeToggle'
 import EffortGroupView from './cv-optimizer/EffortGroupView'
@@ -16,9 +15,7 @@ import WorkTypeGroupView from './cv-optimizer/WorkTypeGroupView'
 import CVScoreCircle from './cv-optimizer/CVScoreCircle'
 import ScoreDashboard from './cv-optimizer/ScoreDashboard'
 import { mapIssueCategoryToId } from '../config/cvCategories'
-import { detectStrengths } from '../utils/strengthsDetector'
 import { playStartSound, playCompleteSound } from './common/GHAScanner'
-import type { Strength } from '../utils/strengthsDetector'
 
 interface Issue {
   id: number
@@ -122,12 +119,6 @@ export function CVReportPage() {
       [categoryId]: enabled
     }))
   }
-
-  const strengths = useMemo<Strength[]>(() => {
-    if (!reportData?.cv_content || !reportData?.issues) return []
-    return detectStrengths(reportData.cv_content, reportData.issues)
-  }, [reportData?.cv_content, reportData?.issues])
-
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -476,10 +467,6 @@ export function CVReportPage() {
           filterType={severityFilter}
           count={filteredIssues.length}
         />
-
-        <div style={{ marginTop: '24px' }}>
-          <StrengthsSection strengths={strengths} />
-        </div>
 
         <div style={{ marginTop: '16px', marginBottom: '16px' }}>
           <ActionBar

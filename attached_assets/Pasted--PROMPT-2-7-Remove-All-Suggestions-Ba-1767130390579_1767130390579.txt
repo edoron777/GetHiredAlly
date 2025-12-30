@@ -1,0 +1,75 @@
+═══════════════════════════════════════════════════════════
+PROMPT 2#7: Remove "All Suggestions" Banner
+═══════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify files not explicitly mentioned
+3. Do NOT add features not explicitly requested
+4. Do NOT refactor or "improve" existing code
+5. Do NOT make autonomous decisions
+6. If unclear, STOP and ask - do not assume
+7. Make MINIMAL, SURGICAL changes only
+
+FORBIDDEN ACTIONS:
+- Adding unrequested imports
+- Changing the recommendations list itself
+- Modifying filter components
+- Creating new components in this prompt
+
+───────────────────────────────────────────────────────────
+
+TASK: Remove the standalone "All Suggestions" banner
+
+OBJECTIVE:
+Delete the redundant banner showing suggestion count (will be merged into recommendations header in a later prompt)
+
+CONTEXT:
+The suggestion count is already visible in filter buttons. This banner wastes space and will be integrated into the recommendations header.
+
+───────────────────────────────────────────────────────────
+
+INSTRUCTIONS:
+
+Step 1: In the same CV Report page component from Prompt 1#7
+
+Step 2: Search for these terms:
+- "All Suggestions"
+- "total suggestions"
+- "suggestions to review"
+
+Step 3: DELETE the banner/section that displays:
+- "All Suggestions" header (usually with a document icon)
+- Text like "You have 67 total suggestions to review"
+- The colored background box containing this text
+
+Step 4: Do NOT delete the actual recommendations list
+- Only remove the header banner above it
+
+───────────────────────────────────────────────────────────
+
+FILES TO MODIFY:
+- [Same CV Report page component from Prompt 1#7]
+
+FILES TO CREATE:
+- None
+
+DO NOT TOUCH:
+- Recommendations list component
+- Individual recommendation cards
+- Filter components
+- Priority groupings
+
+───────────────────────────────────────────────────────────
+
+WHEN COMPLETE:
+
+Confirm:
+□ "All Suggestions" banner is removed
+□ Recommendations list still displays correctly
+□ Priority groups (HIGH-IMPACT, IMPORTANT, etc.) still show
+□ No console errors
+□ Page layout doesn't break
+
+Report what you removed.
