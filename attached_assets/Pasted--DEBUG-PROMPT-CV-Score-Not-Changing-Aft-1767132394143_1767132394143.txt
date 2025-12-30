@@ -1,0 +1,193 @@
+═══════════════════════════════════════════════════════════
+DEBUG PROMPT: CV Score Not Changing After Fix
+═══════════════════════════════════════════════════════════
+
+⚠️ CRITICAL: This is a DEBUG task, not a fix task.
+DO NOT change any code until the root cause is found.
+
+───────────────────────────────────────────────────────────
+
+PROBLEM STATEMENT:
+
+Screenshot shows:
+- Before Score: 48%
+- After Score: 48%
+- Improvement: +0%
+- But UI says "30 issues fixed automatically"
+
+This is impossible. If 30 issues were fixed, the score MUST change.
+
+───────────────────────────────────────────────────────────
+
+DEBUG STEP 1: Verify the fix_cv flow
+
+Find the fix_cv function in backend/app/cv_optimizer.py
+
+Answer these questions:
+1. What variable holds the ORIGINAL CV content?
+2. What variable holds the FIXED CV content after AI generates it?
+3. Are they DIFFERENT variables or the same variable?
+
+Add this logging code:
+
+    logger.info(f"[DEBUG] Original CV length: {len(original_cv_content)}")
+    logger.info(f"[DEBUG] Fixed CV length: {len(fixed_cv_content)}")
+    logger.info(f"[DEBUG] Are they equal: {original_cv_content == fixed_cv_content}")
+
+REPORT:
+- Original CV variable name: ________
+- Fixed CV variable name: ________
+- Are they the same object? YES/NO
+- Are contents identical? YES/NO
+
+───────────────────────────────────────────────────────────
+
+DEBUG STEP 2: Verify scoring function is called on FIXED content
+
+Find where extract_cv_data_and_score() is called for the AFTER score.
+
+Show me the EXACT line of code that calculates after_score.
+
+REPORT:
+- Line number where after_score is calculated: ________
+- Variable passed to scoring function: ________
+- Is it the FIXED content? YES/NO
+
+───────────────────────────────────────────────────────────
+
+DEBUG STEP 3: Test scoring function in isolation
+
+Run this test:
+
+    from common.scoring import extract_cv_data_and_score
+
+    test_bad_cv = """
+    john doe
+    email me
+    i worked at company
+    i did stuff
+    """
+
+    test_good_cv = """
+    John Doe
+    john.doe@email.com | (555) 123-4567 | linkedin.com/in/johndoe
+
+    PROFESSIONAL SUMMARY
+    Results-driven Software Engineer with 5+ years experience.
+
+    WORK EXPERIENCE
+    Senior Developer | Tech Corp | 2020-Present
+    - Increased system performance by 40% through optimization
+    - Led team of 5 engineers delivering $2M project on time
+    """
+
+    score_bad = extract_cv_data_and_score(test_bad_cv)
+    score_good = extract_cv_data_and_score(test_good_cv)
+
+    print(f"Bad CV score: {score_bad['score']}")
+    print(f"Good CV score: {score_good['score']}")
+
+REPORT:
+- Bad CV score: ________
+- Good CV score: ________
+- Are they different? YES/NO
+
+───────────────────────────────────────────────────────────
+
+DEBUG STEP 4: Check what scoring function measures
+
+Open the scoring function file.
+
+List ALL criteria it uses to calculate score:
+
+| Criteria | How Detected | Points |
+|----------|--------------|--------|
+| Email    | regex        | ?      |
+| Phone    | regex        | ?      |
+| LinkedIn | regex        | ?      |
+| etc.     | etc.         | ?      |
+
+CRITICAL QUESTION:
+Does the scoring function detect TEXT QUALITY improvements?
+Or does it only detect STRUCTURAL elements?
+
+───────────────────────────────────────────────────────────
+
+DEBUG STEP 5: Add comprehensive logging
+
+Add this logging to fix_cv function:
+
+    # After getting original CV
+    logger.info(f"[FIX_DEBUG] ORIGINAL CV length: {len(original_content)}")
+    
+    # Score original
+    original_score_data = extract_cv_data_and_score(original_content)
+    logger.info(f"[FIX_DEBUG] ORIGINAL SCORE: {original_score_data['score']}")
+    logger.info(f"[FIX_DEBUG] ORIGINAL BREAKDOWN: {original_score_data.get('breakdown', {})}")
+    
+    # After AI generates fixed CV
+    logger.info(f"[FIX_DEBUG] FIXED CV length: {len(fixed_content)}")
+    
+    # Score fixed
+    fixed_score_data = extract_cv_data_and_score(fixed_content)
+    logger.info(f"[FIX_DEBUG] FIXED SCORE: {fixed_score_data['score']}")
+    logger.info(f"[FIX_DEBUG] FIXED BREAKDOWN: {fixed_score_data.get('breakdown', {})}")
+    
+    # Comparison
+    logger.info(f"[FIX_DEBUG] DIFFERENCE: {fixed_score_data['score'] - original_score_data['score']}")
+
+Run a fix operation and provide the FULL log output.
+
+───────────────────────────────────────────────────────────
+
+DEBUG STEP 6: Compare breakdown details
+
+After running with logs, show me BOTH breakdowns side by side:
+
+ORIGINAL CV BREAKDOWN:
+| Category              | Score | Max |
+|-----------------------|-------|-----|
+| content_quality       | ?     | 40  |
+| language_clarity      | ?     | 18  |
+| formatting            | ?     | 18  |
+| completeness          | ?     | 12  |
+| professional          | ?     | 8   |
+| red_flags             | ?     | 4   |
+
+FIXED CV BREAKDOWN:
+| Category              | Score | Max |
+|-----------------------|-------|-----|
+| content_quality       | ?     | 40  |
+| language_clarity      | ?     | 18  |
+| formatting            | ?     | 18  |
+| completeness          | ?     | 12  |
+| professional          | ?     | 8   |
+| red_flags             | ?     | 4   |
+
+Which categories are IDENTICAL?
+Which categories CHANGED?
+
+───────────────────────────────────────────────────────────
+
+FINAL REPORT FORMAT:
+
+ROOT CAUSE IDENTIFIED:
+
+[ ] A. Fixed content not passed to scoring function
+[ ] B. Scoring function doesn't detect text improvements  
+[ ] C. Fixed CV content is identical to original
+[ ] D. Scoring function bug - always returns same score
+[ ] E. Other: ______________
+
+EVIDENCE:
+[Paste relevant logs/code]
+
+RECOMMENDED FIX:
+[What needs to change]
+
+───────────────────────────────────────────────────────────
+
+DO NOT FIX ANYTHING YET.
+First complete all debug steps and report findings.
+
+═══════════════════════════════════════════════════════════

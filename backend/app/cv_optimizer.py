@@ -934,6 +934,27 @@ async def generate_fixed_cv(request: Request, scan_id: str, token: str):
             # Continue without changes - not critical
 
         # STEP A: Get the ORIGINAL score (already calculated during scan)
+        # DEBUG: Log content lengths and first/last 200 chars to verify they're different
+        logger.info(f"[CV_FIX_DEBUG] Original content length: {len(original_content)} chars")
+        logger.info(f"[CV_FIX_DEBUG] Fixed content length: {len(fixed_content)} chars")
+        logger.info(f"[CV_FIX_DEBUG] Original first 200: {original_content[:200]}")
+        logger.info(f"[CV_FIX_DEBUG] Fixed first 200: {fixed_content[:200]}")
+        logger.info(f"[CV_FIX_DEBUG] Contents are identical: {original_content == fixed_content}")
+        
+        # DEBUG: Extract patterns separately to compare
+        from backend.common.scoring.extractors.pattern_matcher_v31 import extract_patterns
+        from backend.common.scoring.extractors.text_analyzer import analyze_text
+        
+        orig_patterns = extract_patterns(original_content)
+        fixed_patterns = extract_patterns(fixed_content)
+        orig_metrics = analyze_text(original_content)
+        fixed_metrics = analyze_text(fixed_content)
+        
+        logger.info(f"[CV_FIX_DEBUG] Original patterns: {orig_patterns}")
+        logger.info(f"[CV_FIX_DEBUG] Fixed patterns: {fixed_patterns}")
+        logger.info(f"[CV_FIX_DEBUG] Original metrics: {orig_metrics}")
+        logger.info(f"[CV_FIX_DEBUG] Fixed metrics: {fixed_metrics}")
+        
         before_score_data = extract_cv_data_and_score(original_content)
         before_score = before_score_data['score']
         logger.info(f"[CV_FIX] Original CV score: {before_score}")
