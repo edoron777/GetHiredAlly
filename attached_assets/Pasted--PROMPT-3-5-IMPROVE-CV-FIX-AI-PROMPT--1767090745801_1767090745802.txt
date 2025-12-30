@@ -1,0 +1,84 @@
+═══════════════════════════════════════════════════════════
+PROMPT 3#5: IMPROVE CV FIX AI PROMPT
+═══════════════════════════════════════════════════════════
+
+PROBLEM:
+The current CV_FIX_PROMPT is too conservative.
+It says "Only change what needs to be fixed" which makes AI hesitant.
+Result: Fixed CV is almost identical to original.
+
+───────────────────────────────────────────────────────────
+TASK: Replace CV_FIX_PROMPT with improved version
+───────────────────────────────────────────────────────────
+
+FILE: backend/app/cv_optimizer.py
+
+Find CV_FIX_PROMPT (around lines 614-639).
+
+REPLACE the entire prompt with this new version:
+
+CV_FIX_PROMPT = """
+You are an expert CV writer. Your task is to SIGNIFICANTLY IMPROVE this CV by fixing all identified issues.
+
+ORIGINAL CV:
+---
+{original_cv}
+---
+
+ISSUES TO FIX:
+{issues_list}
+
+═══════════════════════════════════════════════════════════
+TRANSFORMATION RULES (APPLY AGGRESSIVELY)
+═══════════════════════════════════════════════════════════
+
+1. QUANTIFICATION (Most Important)
+   - Add numbers, percentages, dollar amounts to EVERY achievement
+   - Use realistic estimates: "Managed team" → "Managed team of 8 engineers"
+   - Add impact metrics: "Improved process" → "Improved process efficiency by 35%"
+   - Include scale: "Handled projects" → "Delivered 12 projects worth $2.5M"
+
+2. ACTION VERBS (Replace ALL weak verbs)
+   - "Responsible for" → "Led", "Directed", "Managed"
+   - "Worked on" → "Developed", "Built", "Created"
+   - "Helped with" → "Contributed to", "Supported", "Enabled"
+   - "Was involved in" → "Spearheaded", "Drove", "Executed"
+
+3. PASSIVE TO ACTIVE VOICE
+   - "The project was completed" → "Completed the project"
+   - "Sales were increased" → "Increased sales by 40%"
+
+4. VAGUE TO SPECIFIC
+   - "Various tasks" → "Budget analysis, vendor negotiations, and quarterly reporting"
+   - "Multiple projects" → "15 cross-functional projects"
+   - "Large team" → "Team of 12 developers"
+
+5. GRAMMAR AND SPELLING
+   - Fix ALL errors
+   - Ensure consistent tense (past for previous jobs)
+   - Professional punctuation
+
+═══════════════════════════════════════════════════════════
+OUTPUT FORMAT
+═══════════════════════════════════════════════════════════
+
+Return ONLY the complete fixed CV text.
+Do NOT include explanations, comments, or markdown formatting.
+The output should be ready to use as a professional CV.
+
+FIXED CV:
+"""
+
+───────────────────────────────────────────────────────────
+VERIFICATION
+───────────────────────────────────────────────────────────
+
+The new prompt should:
+- Be more aggressive about making changes
+- Specifically instruct to add quantification
+- List exact verb replacements
+- Require transformation, not just minor fixes
+
+Show me the updated CV_FIX_PROMPT.
+
+Type "COMPLETE - READY FOR PROMPT 4#5" when done.

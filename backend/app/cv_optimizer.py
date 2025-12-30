@@ -634,7 +634,8 @@ async def get_detailed_report(scan_id: str, token: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-CV_FIX_PROMPT = """You are a CV/Resume expert. Your task is to fix this CV based on the issues identified.
+CV_FIX_PROMPT = """
+You are an expert CV writer. Your task is to SIGNIFICANTLY IMPROVE this CV by fixing all identified issues.
 
 ORIGINAL CV:
 ---
@@ -644,19 +645,43 @@ ORIGINAL CV:
 ISSUES TO FIX:
 {issues_list}
 
-INSTRUCTIONS:
-1. Fix ALL the issues listed above
-2. Maintain the original structure and format of the CV
-3. Keep the same sections and order
-4. Only change what needs to be fixed
-5. Improve weak language to strong action verbs
-6. Add quantification where possible (use realistic estimates if needed)
-7. Fix all spelling and grammar errors
-8. Ensure professional tone throughout
+═══════════════════════════════════════════════════════════
+TRANSFORMATION RULES (APPLY AGGRESSIVELY)
+═══════════════════════════════════════════════════════════
 
-OUTPUT:
-Return the complete fixed CV. Do NOT include any explanations or comments.
-Just output the corrected CV text, ready to be used.
+1. QUANTIFICATION (Most Important)
+   - Add numbers, percentages, dollar amounts to EVERY achievement
+   - Use realistic estimates: "Managed team" → "Managed team of 8 engineers"
+   - Add impact metrics: "Improved process" → "Improved process efficiency by 35%"
+   - Include scale: "Handled projects" → "Delivered 12 projects worth $2.5M"
+
+2. ACTION VERBS (Replace ALL weak verbs)
+   - "Responsible for" → "Led", "Directed", "Managed"
+   - "Worked on" → "Developed", "Built", "Created"
+   - "Helped with" → "Contributed to", "Supported", "Enabled"
+   - "Was involved in" → "Spearheaded", "Drove", "Executed"
+
+3. PASSIVE TO ACTIVE VOICE
+   - "The project was completed" → "Completed the project"
+   - "Sales were increased" → "Increased sales by 40%"
+
+4. VAGUE TO SPECIFIC
+   - "Various tasks" → "Budget analysis, vendor negotiations, and quarterly reporting"
+   - "Multiple projects" → "15 cross-functional projects"
+   - "Large team" → "Team of 12 developers"
+
+5. GRAMMAR AND SPELLING
+   - Fix ALL errors
+   - Ensure consistent tense (past for previous jobs)
+   - Professional punctuation
+
+═══════════════════════════════════════════════════════════
+OUTPUT FORMAT
+═══════════════════════════════════════════════════════════
+
+Return ONLY the complete fixed CV text.
+Do NOT include explanations, comments, or markdown formatting.
+The output should be ready to use as a professional CV.
 
 FIXED CV:
 """
