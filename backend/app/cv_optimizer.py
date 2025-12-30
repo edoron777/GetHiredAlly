@@ -134,14 +134,14 @@ def extract_cv_data_and_score(cv_text: str) -> dict:
     
     score_result = calculate_cv_score_new(extracted_data)
     
-    logger.info(f"[CV_SCORE_NEW] Score: {score_result.total_score}, Grade: {score_result.grade}, Breakdown: {score_result.breakdown.to_dict()}")
+    logger.info(f"[CV_SCORE_NEW] Score: {score_result['total_score']}, Grade: {score_result['grade']}, Breakdown: {score_result['breakdown']}")
     
     return {
-        'score': score_result.total_score,
-        'message': score_result.message,
-        'status': score_result.grade.lower().replace(' ', '_'),
-        'breakdown': score_result.breakdown.to_dict(),
-        'version': score_result.version
+        'score': score_result['total_score'],
+        'message': score_result['message'],
+        'status': score_result['grade'].lower().replace(' ', '_'),
+        'breakdown': score_result['breakdown'],
+        'version': score_result['version']
     }
 
 
