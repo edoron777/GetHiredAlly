@@ -1,0 +1,268 @@
+# CV Optimization Fix - Updated Prompt 2#6
+
+**Based on Diagnostic Findings**  
+**Date:** December 30, 2025
+
+---
+
+## DIAGNOSTIC SUMMARY (What We Found)
+
+| Finding | Impact |
+|---------|--------|
+| Score is PROJECTIVE | After score is a guess, not real |
+| Fixed CV never re-scored | No actual comparison |
+| CATEGORY_MAP incomplete | Some issues = 0 points |
+
+## THE CORRECT SOLUTION
+
+**Don't predict the score. Actually RE-SCORE the fixed CV.**
+
+---
+
+# ═══════════════════════════════════════════════════════════════════════
+# PROMPT 2#6: FIX SCORE CALCULATION - RE-SCORE THE FIXED CV
+# ═══════════════════════════════════════════════════════════════════════
+
+```
+═══════════════════════════════════════════════════════════════════════
+PROMPT 2#6: FIX SCORE CALCULATION - ACTUALLY RE-SCORE THE FIXED CV
+═══════════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify files not explicitly mentioned
+3. Do NOT add features not explicitly requested
+4. If unclear, STOP and ask - do not assume
+
+───────────────────────────────────────────────────────────────────────
+PROBLEM (From Diagnostic)
+───────────────────────────────────────────────────────────────────────
+
+The current system PREDICTS the after-score using fixability rates.
+This is why:
+- Same CV gets different improvement % each time
+- 65 issues fixed = only 4% improvement (makes no sense)
+- Results feel random and unreliable
+
+CURRENT FLOW (WRONG):
+1. Score original CV → before_score = 64
+2. PREDICT after_score using fixability rates → 68 (GUESS!)
+3. Show improvement = 4%
+
+CORRECT FLOW:
+1. Score original CV → before_score = 64
+2. Generate fixed CV content
+3. ACTUALLY SCORE the fixed CV → after_score = 78 (REAL!)
+4. Show improvement = 14%
+
+───────────────────────────────────────────────────────────────────────
+TASK: Actually re-score the fixed CV content
+───────────────────────────────────────────────────────────────────────
+
+OBJECTIVE:
+- After fixing the CV, run the SAME scoring function on the fixed content
+- Compare before and after scores to get REAL improvement
+- No more predictions, no more fixability rates for score calculation
+
+───────────────────────────────────────────────────────────────────────
+INSTRUCTIONS:
+───────────────────────────────────────────────────────────────────────
+
+Step 1: Find the fix_cv function in backend/app/cv_optimizer.py
+
+Locate where the fixed CV content is generated.
+
+Step 2: After generating fixed_cv_content, RE-SCORE IT
+
+Add this code after the fixed CV is generated:
+
+# Import the scoring function (if not already imported)
+from common.scoring import extract_cv_data_and_score
+
+# STEP A: Score the ORIGINAL CV (already done, stored in scan)
+before_score = scan_result['score']  # e.g., 64
+
+# STEP B: Score the FIXED CV (NEW - actually calculate it!)
+fixed_cv_data = extract_cv_data_and_score(fixed_cv_content)
+after_score = fixed_cv_data['score']  # e.g., 78 (REAL score!)
+
+# STEP C: Calculate REAL improvement
+improvement_percent = after_score - before_score  # e.g., 14%
+
+# STEP D: Store the real scores
+update_data = {
+    'fixed_cv_content': fixed_cv_content,
+    'fixed_score': after_score,           # REAL score, not prediction
+    'improvement_percent': improvement_percent,
+    'fixed_cv_data': fixed_cv_data,       # Store full scoring data
+    # ... other fields
+}
+
+Step 3: Update calculate_after_fix_score to use REAL scores
+
+In backend/common/scoring/after_fix.py, modify the function:
+
+def calculate_after_fix_score(before_score, after_score, issues):
+    """
+    Calculate improvement based on ACTUAL before and after scores.
+    No more predictions!
+    
+    Args:
+        before_score: Score of original CV (from extract_cv_data_and_score)
+        after_score: Score of fixed CV (from extract_cv_data_and_score)
+        issues: List of issues (for category tracking only)
+    
+    Returns:
+        Dict with real scores and improvements
+    """
+    
+    # REAL improvement calculation
+    improvement_percent = after_score - before_score
+    
+    # Count issues by category (for "What Improved" display)
+    category_counts = {}
+    for issue in issues:
+        cat = normalize_category(issue.get('category', 'other'))
+        is_fixable = issue.get('is_auto_fixable', False)
+        
+        if cat not in category_counts:
+            category_counts[cat] = {'total': 0, 'fixable': 0}
+        
+        category_counts[cat]['total'] += 1
+        if is_fixable:
+            category_counts[cat]['fixable'] += 1
+    
+    # Build category improvements for display
+    category_improvements = {}
+    total_issues_fixed = 0
+    
+    for cat, counts in category_counts.items():
+        if counts['fixable'] > 0:
+            total_issues_fixed += counts['fixable']
+            category_improvements[cat] = {
+                'issues_fixed': counts['fixable'],
+                'total_issues': counts['total'],
+            }
+    
+    return {
+        'before_score': before_score,
+        'after_score': after_score,
+        'improvement_percent': improvement_percent,
+        'category_improvements': category_improvements,
+        'total_issues_fixed': total_issues_fixed,
+        'total_issues': sum(c['total'] for c in category_counts.values()),
+    }
+
+Step 4: Update the API endpoint to return real scores
+
+In get_fixed_cv endpoint, ensure it returns:
+
+return {
+    'scan_id': scan['id'],
+    'original_cv_content': scan['cv_content'],
+    'fixed_cv_content': scan['fixed_cv_content'],
+    'before_score': scan['score'],          # Original score
+    'after_score': scan['fixed_score'],     # REAL fixed score
+    'improvement_percent': scan['improvement_percent'],
+    'total_issues_fixed': scores_data['total_issues_fixed'],
+    'changes': scan.get('changes_json', {}).get('changes', []),
+}
+
+Step 5: Remove or simplify fixability rate logic
+
+The FIXABILITY_RATES are no longer needed for score calculation.
+Keep them ONLY if needed for other purposes (like estimating fix time).
+
+DO NOT DELETE the file, just remove the prediction logic from the main flow.
+
+───────────────────────────────────────────────────────────────────────
+WHY THIS WORKS
+───────────────────────────────────────────────────────────────────────
+
+| Before (Wrong) | After (Correct) |
+|----------------|-----------------|
+| Predict score using rates | Actually score the fixed CV |
+| Score varies randomly | Same CV = Same score ALWAYS |
+| 65 fixes = 4% (wrong) | 65 fixes = real % (maybe 15-20%) |
+| User doesn't trust results | User sees real improvement |
+
+DETERMINISTIC:
+- extract_cv_data_and_score() is deterministic
+- Same input → Same output
+- Before CV: 64 (always)
+- Fixed CV: 78 (always, for same fixed content)
+- Improvement: 14% (always)
+
+───────────────────────────────────────────────────────────────────────
+FILES TO MODIFY:
+───────────────────────────────────────────────────────────────────────
+
+- backend/app/cv_optimizer.py - Add re-scoring of fixed CV
+- backend/common/scoring/after_fix.py - Simplify to use real scores
+
+DO NOT TOUCH:
+- backend/common/scoring/__init__.py (scoring functions work fine)
+- All other files
+
+───────────────────────────────────────────────────────────────────────
+VERIFICATION (MANDATORY):
+───────────────────────────────────────────────────────────────────────
+
+After making changes:
+
+1. Show me where extract_cv_data_and_score is called on fixed_cv_content
+2. Show me how after_score is now calculated
+3. Verify the flow:
+   □ Original CV scored → before_score
+   □ Fixed CV scored → after_score  
+   □ Improvement = after_score - before_score
+
+TEST:
+Run the fix process on a CV and verify:
+- before_score comes from original CV
+- after_score comes from ACTUALLY scoring the fixed CV
+- Same CV produces same results every time
+
+Report:
+□ Fixed CV is now re-scored using extract_cv_data_and_score()
+□ after_score is REAL, not predicted
+□ improvement_percent is calculated from real scores
+□ No fixability rates used for score calculation
+□ No other files modified
+
+Type: "PROMPT 2#6 COMPLETE - READY FOR PROMPT 3#6"
+```
+
+---
+
+# KEY CHANGE SUMMARY
+
+## Before (Wrong Approach)
+```
+after_score = before_score + (predicted_recovery_points)
+            = 64 + (guessed based on fixability rates)
+            = 68 (unreliable)
+```
+
+## After (Correct Approach)
+```
+fixed_cv_data = extract_cv_data_and_score(fixed_cv_content)
+after_score = fixed_cv_data['score']
+            = 78 (ACTUAL score of the fixed CV!)
+```
+
+---
+
+# WHY THIS SOLVES ALL PROBLEMS
+
+| Problem | How This Fixes It |
+|---------|-------------------|
+| Score inconsistent | Same fixed CV = Same score (deterministic) |
+| 65 fixes = 4% | Real score shows real improvement |
+| Categories change | Based on actual scoring breakdown |
+| Results feel fake | Results are REAL |
+
+---
+
+# END OF UPDATED PROMPT 2#6

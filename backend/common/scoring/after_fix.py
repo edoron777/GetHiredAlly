@@ -1,10 +1,10 @@
 """
-After-fix score calculation v3.0
-Projects score improvement based on fixable issues.
+After-fix score calculation v3.1
+Uses REAL scores from actual CV scoring, not predictions.
 """
 
 from typing import Dict, List
-from .config import SCORE_MAX, FIXABILITY_RATES, CATEGORY_WEIGHTS
+from .config import CATEGORY_WEIGHTS
 
 # Map AI category names to config category names
 CATEGORY_MAP = {
@@ -18,6 +18,11 @@ CATEGORY_MAP = {
     "Experience": "experience",
     "Length": "length",
     "Contact Information": "contact",
+    "Tech-Specific": "skills",
+    "Tailoring": "experience",
+    "Career Narrative": "experience",
+    "Employment Gaps": "experience",
+    "Personal Information": "contact",
 }
 
 
@@ -26,87 +31,80 @@ def normalize_category(category: str) -> str:
     if category in CATEGORY_MAP:
         return CATEGORY_MAP[category]
     lower = category.lower()
-    if lower in FIXABILITY_RATES:
+    if lower in CATEGORY_WEIGHTS:
         return lower
-    for key in FIXABILITY_RATES:
+    for key in CATEGORY_WEIGHTS:
         if key in lower:
             return key
-    return category
+    return "other"
 
 
 def calculate_after_fix_score(
     before_score: int,
-    issues: List[Dict],
-    breakdown: Dict[str, float]
+    after_score: int,
+    issues: List[Dict]
 ) -> Dict:
     """
-    Calculate projected score after fixes.
+    Calculate improvement based on ACTUAL before and after scores.
+    No more predictions - uses real scores from extract_cv_data_and_score().
     
     Args:
-        before_score: Original CV score
-        issues: List of detected issues
-        breakdown: Score breakdown by category
-        
+        before_score: Score of original CV (from extract_cv_data_and_score)
+        after_score: Score of fixed CV (from extract_cv_data_and_score)
+        issues: List of issues (for category tracking only)
+    
     Returns:
-        Dictionary with before/after scores and improvements
+        Dict with real scores and category improvements for display
     """
-    recovery_points = 0.0
-    category_improvements = {}
+    # REAL improvement calculation
+    improvement = after_score - before_score
     
-    # Group issues by normalized category
-    issues_by_category = {}
+    # Count issues by category (for "What Improved" display)
+    category_counts = {}
     for issue in issues:
-        raw_cat = issue.get("category", "other")
-        cat = normalize_category(raw_cat)
-        if cat not in issues_by_category:
-            issues_by_category[cat] = []
-        issues_by_category[cat].append(issue)
+        cat = normalize_category(issue.get('category', 'other'))
+        is_fixable = issue.get('is_auto_fixable', False)
+        
+        if cat not in category_counts:
+            category_counts[cat] = {'total': 0, 'fixable': 0}
+        
+        category_counts[cat]['total'] += 1
+        if is_fixable:
+            category_counts[cat]['fixable'] += 1
     
-    # Calculate recovery for each category
-    for category, cat_issues in issues_by_category.items():
-        if category not in FIXABILITY_RATES:
-            continue
-            
-        fixability = FIXABILITY_RATES[category]
-        max_points = CATEGORY_WEIGHTS.get(category, 10)
-        current_points = breakdown.get(category, 0)
-        points_lost = max_points - current_points
-        
-        # Count auto-fixable issues
-        auto_fixable = sum(1 for i in cat_issues if i.get("is_auto_fixable", False))
-        total_in_cat = len(cat_issues)
-        
-        if total_in_cat > 0:
-            fix_ratio = auto_fixable / total_in_cat
-            recoverable = points_lost * fixability * fix_ratio
-            recovery_points += recoverable
-            
-            category_improvements[category] = {
-                "before": round(current_points, 1),
-                "after": round(min(max_points, current_points + recoverable), 1),
-                "improvement": round(recoverable, 1),
-                "max_possible": max_points
+    # Build category improvements for display
+    category_improvements = {}
+    total_issues_fixed = 0
+    
+    for cat, counts in category_counts.items():
+        if counts['fixable'] > 0:
+            total_issues_fixed += counts['fixable']
+            max_points = CATEGORY_WEIGHTS.get(cat, 10)
+            category_improvements[cat] = {
+                'issues_fixed': counts['fixable'],
+                'total_issues': counts['total'],
+                'improvement': counts['fixable'],
+                'max_possible': max_points,
+                'before': 0,
+                'after': counts['fixable']
             }
     
-    # Calculate after score (capped at 95)
-    after_score = min(SCORE_MAX, before_score + recovery_points)
-    improvement = round(after_score - before_score)
-    
-    # Generate message
+    # Generate message based on REAL improvement
     if improvement >= 15:
-        message = "Significant improvement! Your CV will be much stronger."
+        message = "Excellent improvement! Your CV is now much stronger."
     elif improvement >= 8:
-        message = "Nice improvement! Your CV will be noticeably better."
+        message = "Great improvement! Your CV is noticeably better."
     elif improvement > 0:
-        message = "Your CV has been polished."
+        message = "Your CV has been improved and polished."
     else:
         message = "Some issues require your input for best results."
     
     return {
-        "before_score": before_score,
-        "after_score": round(after_score),
-        "improvement": improvement,
-        "message": message,
-        "category_improvements": category_improvements,
-        "max_possible": SCORE_MAX
+        'before_score': before_score,
+        'after_score': after_score,
+        'improvement': improvement,
+        'message': message,
+        'category_improvements': category_improvements,
+        'total_issues_fixed': total_issues_fixed,
+        'total_issues': sum(c['total'] for c in category_counts.values()),
     }

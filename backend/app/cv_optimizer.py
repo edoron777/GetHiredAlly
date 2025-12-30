@@ -933,15 +933,33 @@ async def generate_fixed_cv(request: Request, scan_id: str, token: str):
             logger.warning(f"[CV_FIX] Could not extract changes: {str(changes_error)}")
             # Continue without changes - not critical
 
+        # STEP A: Get the ORIGINAL score (already calculated during scan)
+        before_score_data = extract_cv_data_and_score(original_content)
+        before_score = before_score_data['score']
+        logger.info(f"[CV_FIX] Original CV score: {before_score}")
+
+        # STEP B: Score the FIXED CV (NEW - actually calculate it!)
+        fixed_score_data = extract_cv_data_and_score(fixed_content)
+        after_score = fixed_score_data['score']
+        logger.info(f"[CV_FIX] Fixed CV score: {after_score}")
+
+        # STEP C: Calculate REAL improvement
+        improvement = after_score - before_score
+        logger.info(f"[CV_FIX] Real improvement: {improvement} points ({before_score} → {after_score})")
+
         cursor.execute(
-            """UPDATE cv_scan_results SET fixed_cv_content = %s, changes_json = %s, status = %s, updated_at = %s WHERE id = %s""",
-            (fixed_content, json.dumps(changes_data), 'fixed', datetime.utcnow().isoformat(), scan_id)
+            """UPDATE cv_scan_results 
+               SET fixed_cv_content = %s, changes_json = %s, status = %s, updated_at = %s,
+                   fixed_score = %s, improvement_percent = %s
+               WHERE id = %s""",
+            (fixed_content, json.dumps(changes_data), 'fixed', datetime.utcnow().isoformat(),
+             after_score, improvement, scan_id)
         )
         conn.commit()
         cursor.close()
         conn.close()
 
-        logger.info(f"[CV_FIX] Successfully saved fixed CV and changes for scan_id: {scan_id}")
+        logger.info(f"[CV_FIX] Successfully saved fixed CV with REAL scores for scan_id: {scan_id}")
 
         return {
             'success': True,
@@ -989,15 +1007,29 @@ async def get_fixed_cv(scan_id: str, token: str):
         if isinstance(issues, str):
             issues = json.loads(issues)
 
-        cv_content = scan.get('original_cv_content', '')
-        score_data = extract_cv_data_and_score(cv_content) if cv_content else calculate_cv_score_from_issues(issues)
-        original_score = score_data['score']
-        original_breakdown = score_data.get('breakdown', {})
+        # Get REAL scores from database (calculated during fix generation)
+        original_content = scan.get('original_cv_content', '')
+        fixed_content = scan.get('fixed_cv_content', '')
         
-        after_fix_result = calculate_after_fix_score(
-            before_score=original_score,
-            issues=issues,
-            breakdown=original_breakdown
+        # Use stored scores if available, otherwise recalculate
+        if scan.get('fixed_score') is not None:
+            before_score_data = extract_cv_data_and_score(original_content)
+            before_score = before_score_data['score']
+            after_score = scan['fixed_score']
+            improvement = scan.get('improvement_percent', after_score - before_score)
+        else:
+            # Fallback: recalculate both scores (for old records)
+            before_score_data = extract_cv_data_and_score(original_content)
+            after_score_data = extract_cv_data_and_score(fixed_content)
+            before_score = before_score_data['score']
+            after_score = after_score_data['score']
+            improvement = after_score - before_score
+
+        # Build category improvements from issues (for display only)
+        category_improvements = calculate_after_fix_score(
+            before_score=before_score,
+            after_score=after_score,
+            issues=issues
         )
 
         # Get changes data
@@ -1010,21 +1042,22 @@ async def get_fixed_cv(scan_id: str, token: str):
 
         return {
             'scan_id': scan['id'],
-            'original_cv_content': scan.get('original_cv_content', ''),
-            'fixed_cv_content': scan['fixed_cv_content'],
+            'original_cv_content': original_content,
+            'fixed_cv_content': fixed_content,
             'total_issues': scan['total_issues'],
             'issues': issues,
             'status': scan['status'],
-            'original_score': original_score,
-            'fixed_score': after_fix_result['after_score'],
-            'improvement': after_fix_result['improvement'],
-            'category_improvements': after_fix_result.get('category_improvements', {}),
-            'before_score': after_fix_result['before_score'],
-            'after_score': after_fix_result['after_score'],
+            'original_score': before_score,
+            'fixed_score': after_score,
+            'improvement': improvement,
+            'category_improvements': category_improvements.get('category_improvements', {}),
+            'before_score': before_score,
+            'after_score': after_score,
             'score_version': '3.0.0',
             'changes': changes_json.get('changes', []),
             'changes_summary': changes_json.get('summary', {}),
-            'total_changes': len(changes_json.get('changes', []))
+            'total_changes': len(changes_json.get('changes', [])),
+            'total_issues_fixed': category_improvements.get('total_issues_fixed', 0)
         }
 
     except HTTPException:
