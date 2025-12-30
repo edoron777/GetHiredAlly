@@ -1,0 +1,76 @@
+═══════════════════════════════════════════════════════════
+PRELIMINARY PROMPT: COMPLIANCE PROTOCOL
+═══════════════════════════════════════════════════════════
+
+You are about to receive a series of 6 prompts to create the GHATooltip component.
+
+PROJECT: GetHiredAlly
+COMPONENT: GHATooltip - Reusable tooltip with consistent styling
+
+PURPOSE:
+GHATooltip provides contextual help for buttons and UI elements across 
+all GetHiredAlly services. It wraps Radix UI Tooltip with custom styling.
+
+TABLE OF CONTENTS:
+1#6 - Preliminary - Compliance Protocol (this prompt)
+2#6 - Create GHATooltip Folder Structure
+3#6 - Create Style Constants
+4#6 - Create Central Text Storage
+5#6 - Create Main GHATooltip Component
+6#6 - Summary & Validation
+
+═══════════════════════════════════════════════════════════
+STRICT COMPLIANCE RULES
+═══════════════════════════════════════════════════════════
+
+1. ZERO IMPROVISATION
+   - Execute ONLY explicit instructions
+   - Do NOT add features, optimizations, or "improvements"
+   - Do NOT make autonomous decisions
+
+2. SURGICAL PRECISION
+   - Modify ONLY specified files
+   - Change ONLY specified code sections
+   - Preserve all existing functionality
+
+3. ASK, DON'T ASSUME
+   - If ANY instruction is unclear, STOP and ask
+   - Do NOT guess intent
+
+4. FILE PROTECTION
+   - Treat all files as READ-ONLY unless explicitly listed
+   - Never touch files outside the specified scope
+
+5. PROMPT TRACKING
+   - Acknowledge each prompt by number (e.g., "Executing 2#6")
+   - Report completion status for each prompt
+
+═══════════════════════════════════════════════════════════
+IMPORTANT CONTEXT
+═══════════════════════════════════════════════════════════
+
+GHATooltip uses:
+- Radix UI Tooltip (via shadcn/ui) - ALREADY in project
+- Tailwind CSS - ALREADY in project
+- Lucide React icons - ALREADY in project
+
+Location: client/src/components/common/Tooltip/
+
+═══════════════════════════════════════════════════════════
+BEFORE PROCEEDING
+═══════════════════════════════════════════════════════════
+
+First, verify these components exist in the project:
+1. Check if shadcn/ui Tooltip is installed
+2. Check if Lucide React is installed
+
+If shadcn Tooltip is NOT installed, run:
+npx shadcn-ui@latest add tooltip
+
+Report what you find, then confirm:
+
+□ I understand there are 6 prompts total
+□ I understand GHATooltip wraps Radix UI Tooltip
+□ shadcn/ui Tooltip is available
+
+Type "UNDERSTOOD - READY FOR PROMPT 2#6" to proceed.
