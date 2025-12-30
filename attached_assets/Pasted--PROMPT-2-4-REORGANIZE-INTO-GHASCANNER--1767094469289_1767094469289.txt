@@ -1,0 +1,123 @@
+═══════════════════════════════════════════════════════════
+PROMPT 2#4: REORGANIZE INTO GHASCANNER FOLDER
+═══════════════════════════════════════════════════════════
+
+TASK: Create proper GHAScanner component structure
+
+───────────────────────────────────────────────────────────
+STEP 1: Create Folder Structure
+───────────────────────────────────────────────────────────
+
+Create this folder structure:
+
+client/src/components/common/GHAScanner/
+├── index.ts              # Exports
+├── GHAScanner.tsx        # Main component
+├── scannerStyles.ts      # Style constants
+└── scannerSounds.ts      # Sound effects (will add in next prompt)
+
+───────────────────────────────────────────────────────────
+STEP 2: Create index.ts
+───────────────────────────────────────────────────────────
+
+export { GHAScanner } from './GHAScanner';
+export { SCANNER_STYLES, SCANNER_COLORS } from './scannerStyles';
+export { scannerSounds, playStartSound, playCompleteSound } from './scannerSounds';
+
+───────────────────────────────────────────────────────────
+STEP 3: Extract Scanner Component
+───────────────────────────────────────────────────────────
+
+From the existing code (CVScanningPage or wherever it is):
+
+1. COPY (not move) the scanner animation logic to GHAScanner.tsx
+2. Make it a reusable component with props:
+
+interface GHAScannerProps {
+  isScanning: boolean;
+  progress: number;
+  statusMessages?: string[];
+  showProgress?: boolean;
+  showLegend?: boolean;
+  onComplete?: () => void;
+}
+
+3. Keep the original CVScanningPage working (it will import from GHAScanner)
+
+───────────────────────────────────────────────────────────
+STEP 4: Create scannerStyles.ts
+───────────────────────────────────────────────────────────
+
+/**
+ * GHAScanner Style Constants
+ */
+
+export const SCANNER_COLORS = {
+  ok: '#22c55e',        // Green - no issues
+  minor: '#eab308',     // Yellow - minor issues
+  medium: '#f97316',    // Orange - medium issues
+  critical: '#ef4444',  // Red - critical issues
+  scanning: '#3b82f6',  // Blue - currently scanning
+  waiting: '#6b7280',   // Gray - waiting
+  background: '#1e293b', // Dark background
+  grid: '#334155',      // Grid lines
+};
+
+export const SCANNER_STYLES = {
+  gridRows: 10,
+  gridCols: 40,
+  blockSize: 16,
+  gap: 2,
+  animationSpeed: 50,  // ms per block
+};
+
+export const STATUS_MESSAGES = {
+  cvOptimizer: [
+    'Analyzing document structure...',
+    'Checking spelling and grammar...',
+    'Evaluating experience section...',
+    'Reviewing skills presentation...',
+    'Assessing quantified achievements...',
+    'Checking formatting consistency...',
+    'Finalizing analysis...',
+  ],
+  xrayAnalyzer: [
+    'Parsing job description...',
+    'Identifying key requirements...',
+    'Analyzing company culture signals...',
+    'Extracting skill requirements...',
+    'Generating insights...',
+  ],
+};
+
+───────────────────────────────────────────────────────────
+STEP 5: Update CVScanningPage to Use GHAScanner
+───────────────────────────────────────────────────────────
+
+Update the import in CVScanningPage.tsx:
+
+// OLD (inline code)
+// ... scanner animation code directly in page
+
+// NEW (import reusable component)
+import { GHAScanner } from '@/components/common/GHAScanner';
+
+// In render:
+<GHAScanner
+  isScanning={isScanning}
+  progress={scanProgress}
+  statusMessages={STATUS_MESSAGES.cvOptimizer}
+  onComplete={handleScanComplete}
+/>
+
+───────────────────────────────────────────────────────────
+VERIFICATION
+───────────────────────────────────────────────────────────
+
+After changes:
+1. GHAScanner folder exists with all files
+2. CVScanningPage still works exactly as before
+3. Scanner animation displays correctly
+4. No functionality lost
+
+Type "COMPLETE - READY FOR PROMPT 3#4" when done.
