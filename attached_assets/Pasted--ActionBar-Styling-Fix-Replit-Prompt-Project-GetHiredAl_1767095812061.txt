@@ -1,0 +1,113 @@
+# ActionBar Styling Fix - Replit Prompt
+
+**Project:** GetHiredAlly  
+**Component:** ActionBar  
+**Issue:** Button text styling  
+**Date:** December 30, 2025
+
+---
+
+# ═══════════════════════════════════════════════════════════
+# PROMPT: FIX ACTIONBAR BUTTON STYLING
+# ═══════════════════════════════════════════════════════════
+
+```
+═══════════════════════════════════════════════════════════
+FIX ACTIONBAR BUTTON STYLING
+═══════════════════════════════════════════════════════════
+
+TASK: Update ALL ActionBar button labels to have consistent styling.
+
+FILE: client/src/components/common/ActionBar/ActionBar.tsx (or .jsx)
+
+───────────────────────────────────────────────────────────
+REQUIRED STYLING FOR ALL BUTTONS
+───────────────────────────────────────────────────────────
+
+ALL buttons (Email, WhatsApp, PDF, WORD, MD, Copy) must have:
+
+1. Font Weight: Bold (600 or 700)
+2. Color: #1E5A85 (Brand blue)
+
+───────────────────────────────────────────────────────────
+IMPLEMENTATION
+───────────────────────────────────────────────────────────
+
+Find where button labels are styled and update:
+
+OPTION A - If using inline styles:
+
+const buttonStyle = {
+  color: '#1E5A85',
+  fontWeight: 600,
+};
+
+OPTION B - If using Tailwind classes:
+
+className="text-[#1E5A85] font-semibold"
+
+OPTION C - If using CSS file, add:
+
+.actionbar-button {
+  color: #1E5A85;
+  font-weight: 600;
+}
+
+───────────────────────────────────────────────────────────
+APPLY TO ALL BUTTONS
+───────────────────────────────────────────────────────────
+
+Make sure ALL 6 buttons have the same styling:
+
+| Button | Color | Font Weight |
+|--------|-------|-------------|
+| Email | #1E5A85 | Bold (600) |
+| WhatsApp | #1E5A85 | Bold (600) |
+| PDF | #1E5A85 | Bold (600) |
+| WORD | #1E5A85 | Bold (600) |
+| MD | #1E5A85 | Bold (600) |
+| Copy | #1E5A85 | Bold (600) |
+
+───────────────────────────────────────────────────────────
+REMOVE OLD COLORS
+───────────────────────────────────────────────────────────
+
+If buttons currently have different colors (green for WhatsApp, red for PDF, etc.),
+REMOVE those individual colors and apply the uniform #1E5A85 to ALL.
+
+───────────────────────────────────────────────────────────
+VERIFICATION
+───────────────────────────────────────────────────────────
+
+After fix:
+- All 6 buttons have the same blue color (#1E5A85)
+- All 6 buttons have bold text
+- No faded/light gray buttons
+- Consistent professional look
+
+Show me the updated styling code.
+```
+
+---
+
+# EXPECTED RESULT
+
+Before:
+```
+[Email] [WhatsApp] [PDF] [WORD] [MD] [Copy]
+ gray    green     light light bold  gray
+                   gray  gray
+```
+
+After:
+```
+[Email] [WhatsApp] [PDF] [WORD] [MD] [Copy]
+ BLUE    BLUE      BLUE  BLUE  BLUE  BLUE
+ BOLD    BOLD      BOLD  BOLD  BOLD  BOLD
+```
+
+All buttons: **#1E5A85** + **Bold**
+
+---
+
+# END OF PROMPT

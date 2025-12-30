@@ -1,0 +1,195 @@
+═══════════════════════════════════════════════════════════
+FIX CV ANALYSIS PARSING ERROR
+═══════════════════════════════════════════════════════════
+
+PROBLEM:
+The CV Report page shows "Analysis parsing error" instead of actual suggestions.
+This means the AI response is not being parsed correctly.
+
+───────────────────────────────────────────────────────────
+TASK 1: INVESTIGATE - Find where error occurs
+───────────────────────────────────────────────────────────
+
+Search for "Analysis parsing error" or "parsing error" in the codebase.
+
+Check these files:
+1. backend/app/cv_optimizer.py - Where AI response is parsed
+2. CVReportPage.tsx - Where results are displayed
+3. Any file handling issues_json parsing
+
+Show me:
+1. Where is this error message defined?
+2. What triggers this error?
+3. What is the actual AI response that failed to parse?
+
+───────────────────────────────────────────────────────────
+TASK 2: ADD DEBUG LOGGING
+───────────────────────────────────────────────────────────
+
+In the backend where AI response is parsed, add logging:
+
+# Before parsing
+print("=== AI RESPONSE DEBUG ===")
+print(f"Raw AI response type: {type(ai_response)}")
+print(f"Raw AI response (first 500 chars): {str(ai_response)[:500]}")
+
+# Try to parse
+try:
+    # If response has markdown code blocks, strip them
+    cleaned_response = ai_response
+    if "```json" in cleaned_response:
+        cleaned_response = cleaned_response.split("```json")[1].split("```")[0]
+    elif "```" in cleaned_response:
+        cleaned_response = cleaned_response.split("```")[1].split("```")[0]
+    
+    parsed_data = json.loads(cleaned_response.strip())
+    print(f"Parsed successfully: {len(parsed_data.get('issues', []))} issues")
+except json.JSONDecodeError as e:
+    print(f"JSON Parse Error: {e}")
+    print(f"Failed at position: {e.pos}")
+    print(f"Problematic area: {cleaned_response[max(0, e.pos-50):e.pos+50]}")
+
+───────────────────────────────────────────────────────────
+TASK 3: IMPROVE JSON PARSING ROBUSTNESS
+───────────────────────────────────────────────────────────
+
+Update the parsing logic to handle common AI response issues:
+
+def parse_ai_response(ai_response: str) -> dict:
+    """
+    Robustly parse AI response, handling common formatting issues.
+    """
+    if not ai_response:
+        return {"issues": [], "error": "Empty response"}
+    
+    # Step 1: Clean the response
+    cleaned = ai_response.strip()
+    
+    # Step 2: Remove markdown code blocks if present
+    if "```json" in cleaned:
+        try:
+            cleaned = cleaned.split("```json")[1].split("```")[0]
+        except IndexError:
+            pass
+    elif "```" in cleaned:
+        try:
+            cleaned = cleaned.split("```")[1].split("```")[0]
+        except IndexError:
+            pass
+    
+    # Step 3: Remove any leading/trailing whitespace
+    cleaned = cleaned.strip()
+    
+    # Step 4: Try to find JSON object boundaries
+    if not cleaned.startswith("{"):
+        # Find first { 
+        start_idx = cleaned.find("{")
+        if start_idx != -1:
+            cleaned = cleaned[start_idx:]
+    
+    if not cleaned.endswith("}"):
+        # Find last }
+        end_idx = cleaned.rfind("}")
+        if end_idx != -1:
+            cleaned = cleaned[:end_idx + 1]
+    
+    # Step 5: Try to parse
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError as e:
+        print(f"JSON parsing failed: {e}")
+        
+        # Step 6: Try to fix common issues
+        # Fix trailing commas
+        import re
+        cleaned = re.sub(r',\s*}', '}', cleaned)
+        cleaned = re.sub(r',\s*]', ']', cleaned)
+        
+        try:
+            return json.loads(cleaned)
+        except json.JSONDecodeError:
+            # Return error structure instead of crashing
+            return {
+                "issues": [],
+                "extracted_data": {},
+                "parse_error": str(e),
+                "raw_response_preview": ai_response[:200]
+            }
+
+───────────────────────────────────────────────────────────
+TASK 4: UPDATE FRONTEND ERROR HANDLING
+───────────────────────────────────────────────────────────
+
+In CVReportPage.tsx, improve error display:
+
+// Instead of showing generic "Analysis parsing error"
+// Show more helpful message
+
+{parseError && (
+  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+    <h3 className="font-semibold text-yellow-800">
+      ⚠️ Some results could not be loaded
+    </h3>
+    <p className="text-yellow-700 text-sm mt-1">
+      We encountered an issue processing your CV. 
+      Please try scanning again or contact support if the problem persists.
+    </p>
+    <button 
+      onClick={handleRescan}
+      className="mt-2 text-sm text-blue-600 hover:underline"
+    >
+      Try Again
+    </button>
+  </div>
+)}
+
+───────────────────────────────────────────────────────────
+TASK 5: CHECK DATABASE FOR CORRUPTED DATA
+───────────────────────────────────────────────────────────
+
+Run this SQL to find scans with parsing issues:
+
+SELECT 
+  id,
+  created_at,
+  LEFT(issues_json::text, 100) as issues_preview
+FROM cv_scan_results
+WHERE issues_json IS NULL 
+   OR issues_json::text = '{}'
+   OR issues_json::text LIKE '%parse_error%'
+ORDER BY created_at DESC
+LIMIT 10;
+
+───────────────────────────────────────────────────────────
+LIKELY CAUSES
+───────────────────────────────────────────────────────────
+
+| Cause | Solution |
+|-------|----------|
+| AI returns markdown-wrapped JSON | Strip ```json blocks |
+| AI returns extra text before/after JSON | Extract JSON boundaries |
+| Trailing commas in JSON | Regex to remove |
+| AI returns partial/truncated response | Validate structure |
+| Special characters in CV content | Sanitize input |
+
+───────────────────────────────────────────────────────────
+VERIFICATION
+───────────────────────────────────────────────────────────
+
+After fix:
+1. Upload a CV
+2. Run scan
+3. View report
+4. Should see actual suggestions, NOT "Analysis parsing error"
+
+If error still appears, check console logs for debug output.
+
+───────────────────────────────────────────────────────────
+REPORT FINDINGS
+───────────────────────────────────────────────────────────
+
+Tell me:
+1. Where was the error triggered?
+2. What was the actual AI response that failed?
+3. What fix did you apply?
+4. Does it work now?
