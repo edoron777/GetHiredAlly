@@ -1,0 +1,95 @@
+═══════════════════════════════════════════════════════════════════════
+PROMPT 1#6: DIAGNOSTIC - INVESTIGATE CURRENT OPTIMIZATION LOGIC
+═══════════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the investigation below - do NOT fix anything yet
+2. Do NOT modify any files in this prompt
+3. Do NOT make autonomous decisions
+4. Report findings exactly as requested
+
+───────────────────────────────────────────────────────────────────────
+TASK: Investigate and document the current optimization logic
+───────────────────────────────────────────────────────────────────────
+
+OBJECTIVE:
+Understand exactly how the optimization score is calculated so we can fix it.
+
+───────────────────────────────────────────────────────────────────────
+INSTRUCTIONS:
+───────────────────────────────────────────────────────────────────────
+
+Step 1: Find and read these files:
+- backend/common/scoring/after_fix.py
+- backend/app/cv_optimizer.py (the fix_cv function and CV_FIX_PROMPT)
+
+Step 2: Document the current score calculation logic:
+- How is "before score" calculated?
+- How is "after score" calculated?
+- What is the formula for "improvement %"?
+- What are the FIXABILITY_RATES for each category?
+
+Step 3: Document the "What Improved" logic:
+- Where is this data generated?
+- What categories are tracked?
+- How are the improvement percentages calculated?
+
+Step 4: Document the changes tracking:
+- Where is changes_json stored?
+- What data does it contain?
+- Is it being passed to the frontend?
+
+───────────────────────────────────────────────────────────────────────
+REPORT FORMAT (Fill this out):
+───────────────────────────────────────────────────────────────────────
+
+FINDING 1: SCORE CALCULATION
+- Before score formula: [describe]
+- After score formula: [describe]
+- Improvement formula: [describe]
+- Is it deterministic? [YES/NO - explain why]
+
+FINDING 2: FIXABILITY RATES
+| Category | Rate | Weight |
+|----------|------|--------|
+| grammar | ? | ? |
+| language | ? | ? |
+| formatting | ? | ? |
+| quantification | ? | ? |
+| ... | ? | ? |
+
+FINDING 3: "WHAT IMPROVED" LOGIC
+- File location: [path]
+- Categories tracked: [list]
+- How percentages calculated: [describe]
+- Why it might be inconsistent: [explain]
+
+FINDING 4: CHANGES TRACKING
+- changes_json location: [path]
+- Data structure: [describe]
+- Passed to frontend: [YES/NO]
+- If NO, this explains why marker highlighting doesn't work
+
+FINDING 5: IDENTIFIED PROBLEMS
+List specific issues found:
+1. [Problem 1]
+2. [Problem 2]
+3. [Problem 3]
+
+───────────────────────────────────────────────────────────────────────
+FILES TO READ (NOT MODIFY):
+───────────────────────────────────────────────────────────────────────
+
+- backend/common/scoring/after_fix.py
+- backend/app/cv_optimizer.py
+- client/src/components/CVFixedPage.tsx (or similar)
+
+DO NOT MODIFY ANY FILES IN THIS PROMPT.
+
+───────────────────────────────────────────────────────────────────────
+WHEN COMPLETE:
+───────────────────────────────────────────────────────────────────────
+
+Provide the complete report with all findings.
+Then type: "DIAGNOSTIC COMPLETE - READY FOR PROMPT 2#6"
