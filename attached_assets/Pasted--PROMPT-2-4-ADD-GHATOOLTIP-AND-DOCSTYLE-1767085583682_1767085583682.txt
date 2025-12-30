@@ -1,0 +1,135 @@
+═══════════════════════════════════════════════════════════
+PROMPT 2#4: ADD GHATOOLTIP AND DOCSTYLER ENTRIES
+═══════════════════════════════════════════════════════════
+
+⚠️ CRITICAL: Do NOT delete existing content. ADD only.
+
+───────────────────────────────────────────────────────────
+TASK 1: Update QUICK LOOKUP TABLE
+───────────────────────────────────────────────────────────
+
+Find the QUICK LOOKUP TABLE in docs/ComponentRegistry.md.
+ADD these rows to the table:
+
+| GHATooltip | UI Component | ✅ | `common/Tooltip/` |
+| DocStyler | Utility | ✅ | `common/DocStyler/` |
+| generatePDF | Utility | ✅ | `common/DocStyler/generators/` |
+| generateWord | Utility | ✅ | `common/DocStyler/generators/` |
+| generateMD | Utility | ✅ | `common/DocStyler/generators/` |
+
+───────────────────────────────────────────────────────────
+TASK 2: Add GHATooltip Entry
+───────────────────────────────────────────────────────────
+
+In the CATEGORY: UI COMPONENTS section, ADD this entry:
+
+### GHATooltip
+
+| Field | Value |
+|-------|-------|
+| **Name** | GHATooltip |
+| **Purpose** | Reusable tooltip with consistent styling for contextual help |
+| **Category** | UI Component |
+| **Location** | `client/src/components/common/Tooltip/` |
+| **Import** | `import { GHATooltip } from '@/components/common/Tooltip'` |
+| **Status** | ✅ Complete |
+| **Used By** | ActionBar, All Service Pages |
+| **Added** | December 30, 2025 |
+
+**Props:**
+
+| Prop | Type | Required | Description |
+|------|------|----------|-------------|
+| `children` | ReactNode | Yes | Trigger element |
+| `text` | string | Yes | Tooltip description |
+| `title` | string | No | Optional bold title |
+| `variant` | 'default' \| 'warning' \| 'info' | No | Color variant |
+| `side` | 'top' \| 'bottom' \| 'left' \| 'right' | No | Position |
+| `icon` | 'info' \| 'warning' \| 'tip' | No | Optional icon |
+| `learnMoreUrl` | string | No | Optional help link |
+
+**Related Files:**
+- `tooltipTexts.ts` - Central text storage for all tooltips
+- `tooltipStyles.ts` - Style constants and variants
+
+**Example:**
+```tsx
+import { GHATooltip, TOOLTIP_TEXTS } from '@/components/common/Tooltip';
+
+// Basic usage
+<GHATooltip text="Copy to clipboard">
+  <Button>Copy</Button>
+</GHATooltip>
+
+// Using central texts
+<GHATooltip {...TOOLTIP_TEXTS.actionBar.pdf}>
+  <Button>PDF</Button>
+</GHATooltip>
+```
+
+───────────────────────────────────────────────────────────
+TASK 3: Add DocStyler Entry
+───────────────────────────────────────────────────────────
+
+In the CATEGORY: UTILITIES section, ADD this entry:
+
+### DocStyler
+
+| Field | Value |
+|-------|-------|
+| **Name** | DocStyler |
+| **Purpose** | Centralized document formatting for PDF, Word, Markdown exports |
+| **Category** | Utility |
+| **Location** | `client/src/components/common/DocStyler/` |
+| **Import** | `import { DocStyler } from '@/components/common/DocStyler'` |
+| **Status** | ✅ Complete |
+| **Used By** | ActionBar |
+| **Added** | December 30, 2025 |
+
+**Main Methods:**
+
+| Method | Description |
+|--------|-------------|
+| `DocStyler.generate({ content, format, options })` | Generate document |
+| `DocStyler.pdf(content, options)` | Generate PDF |
+| `DocStyler.word(content, options)` | Generate Word document |
+| `DocStyler.md(content, options)` | Generate Markdown |
+
+**Options Object:**
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `title` | string | Document title |
+| `service` | string | Service name |
+| `fileName` | string | Download filename |
+| `metadata` | object | Additional data (score, grade) |
+
+**Example:**
+```javascript
+import { DocStyler } from '@/components/common/DocStyler';
+
+await DocStyler.pdf(content, {
+  title: 'CV Analysis Report',
+  service: 'cv-optimizer',
+  fileName: 'CV_Report',
+  metadata: { score: 72, grade: 'Good' }
+});
+```
+
+**Document Styling Includes:**
+- Header with title, service name, date
+- Footer with page numbers (Page X of Y)
+- Footer links to GetHiredAlly App and Blog
+- Brand color: #1E5A85
+
+───────────────────────────────────────────────────────────
+WHEN COMPLETE:
+───────────────────────────────────────────────────────────
+
+Confirm:
+□ Quick Lookup Table updated with 5 new rows
+□ GHATooltip entry added to UI Components
+□ DocStyler entry added to Utilities
+□ No existing content deleted
+
+Type "COMPLETE - READY FOR PROMPT 3#4" when done.
