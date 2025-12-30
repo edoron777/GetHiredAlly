@@ -23,6 +23,7 @@ interface FixedData {
     location: string
     current_text: string
     suggested_fix: string
+    is_auto_fixable?: boolean
   }>
   status: string
   original_score?: number
@@ -246,6 +247,53 @@ export function CVFixedPage() {
                         </div>
                       )
                     })}
+                </div>
+              </div>
+            )}
+
+            {data.issues && data.issues.filter(i => i.is_auto_fixable === false).length > 0 && (
+              <div className="mt-8 pt-6 border-t border-gray-200">
+                <div className="flex items-center gap-2 justify-center mb-4">
+                  <span className="text-amber-500 text-xl">⚠️</span>
+                  <h3 className="text-lg font-semibold text-gray-800">Needs Your Input</h3>
+                </div>
+                <p className="text-sm text-gray-600 text-center mb-4">
+                  These items require your personal information to fix:
+                </p>
+                <div className="space-y-3 max-w-xl mx-auto">
+                  {data.issues
+                    .filter(i => i.is_auto_fixable === false)
+                    .slice(0, 5)
+                    .map((issue) => (
+                      <div key={issue.id} className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                        <div className="flex items-start gap-2">
+                          <span className="text-amber-600 mt-0.5">📝</span>
+                          <div className="flex-1">
+                            <p className="font-medium text-gray-800 text-sm">{issue.issue}</p>
+                            <p className="text-xs text-gray-600 mt-1">
+                              <span className="font-medium">Location:</span> {issue.location}
+                            </p>
+                            <p className="text-xs text-gray-600 mt-1">
+                              <span className="font-medium">Action:</span> {issue.suggested_fix}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  {data.issues.filter(i => i.is_auto_fixable === false).length > 5 && (
+                    <p className="text-center text-sm text-gray-500">
+                      +{data.issues.filter(i => i.is_auto_fixable === false).length - 5} more items
+                    </p>
+                  )}
+                </div>
+                <div className="text-center mt-4">
+                  <Link
+                    to={`/service/cv-optimizer/report/${scanId}`}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-amber-100 text-amber-800 rounded-lg hover:bg-amber-200 transition-colors text-sm font-medium"
+                  >
+                    <FileText size={16} />
+                    View Full Report
+                  </Link>
                 </div>
               </div>
             )}
