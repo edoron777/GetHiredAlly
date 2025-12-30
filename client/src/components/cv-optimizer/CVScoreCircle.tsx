@@ -87,8 +87,7 @@ export default function CVScoreCircle({
       </p>
       {showMessage && (
         <p 
-          className="text-sm mt-1 text-center max-w-xs"
-          style={{ color }}
+          className="text-sm mt-1 text-center max-w-xs text-gray-700"
         >
           {displayMessage}
         </p>

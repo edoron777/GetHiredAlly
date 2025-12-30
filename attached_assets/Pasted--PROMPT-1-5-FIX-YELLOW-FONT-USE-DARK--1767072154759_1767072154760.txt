@@ -1,0 +1,79 @@
+═══════════════════════════════════════════════════════════
+PROMPT 1#5: FIX YELLOW FONT - USE DARK TEXT COLOR
+═══════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify files not explicitly mentioned
+3. Do NOT refactor or "improve" existing code
+4. Make MINIMAL, SURGICAL changes only
+5. If unclear, STOP and ask - do not assume
+
+───────────────────────────────────────────────────────────
+PROBLEM:
+───────────────────────────────────────────────────────────
+
+The score message text uses yellow color when score is "Fair".
+Yellow text on white background is very hard to read.
+
+CURRENT (WRONG):
+- Score circle: Yellow
+- Message text: Yellow (matches score)
+- Result: Unreadable text
+
+REQUIRED (CORRECT):
+- Score circle: Yellow (keep as is)
+- Message text: ALWAYS dark gray (#374151)
+- Result: Readable text
+
+───────────────────────────────────────────────────────────
+TASK: Fix message text to always use dark color
+───────────────────────────────────────────────────────────
+
+INSTRUCTIONS:
+
+Step 1: Find the CV Report page component that displays the score message
+        (the text under the score that says "Good foundation! Focusing on...")
+
+Step 2: Find where the message text color is set
+        It's likely using conditional color based on score/grade
+
+Step 3: Change the message text color to ALWAYS be dark:
+        
+        REMOVE any conditional coloring like:
+        color: score >= 68 ? '#22c55e' : score >= 52 ? '#eab308' : '#ef4444'
+        
+        REPLACE WITH fixed dark color:
+        color: '#374151'
+        
+        OR if using Tailwind:
+        className="text-gray-700"
+
+Step 4: Do NOT change the score number or grade label colors
+        Only change the MESSAGE text color
+
+───────────────────────────────────────────────────────────
+FILES TO MODIFY:
+───────────────────────────────────────────────────────────
+
+- The CV Report page component (find exact file first)
+- Only the message text color styling
+
+DO NOT TOUCH:
+- Score circle color
+- Grade label color
+- Any other files
+
+───────────────────────────────────────────────────────────
+WHEN COMPLETE:
+───────────────────────────────────────────────────────────
+
+Confirm:
+□ Found the message text element
+□ Changed color to dark (#374151 or text-gray-700)
+□ Score circle color unchanged
+□ Grade label color unchanged
+□ Message text is now readable
+
+Report which file was changed and what line.
