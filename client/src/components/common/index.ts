@@ -22,3 +22,4 @@ export { SecondaryNav } from './SecondaryNav';
 export { Footer } from './Footer';
 export { GoogleSignInButton } from './GoogleSignInButton';
 export { OrDivider } from './OrDivider';
+export { GHAScanner, playStartSound, playCompleteSound, playErrorSound, STATUS_MESSAGES, SCANNER_STYLES, SCANNER_COLORS } from './GHAScanner';

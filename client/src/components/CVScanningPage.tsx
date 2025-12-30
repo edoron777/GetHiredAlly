@@ -2,22 +2,9 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { Search } from 'lucide-react'
 import { isAuthenticated, getAuthToken } from '@/lib/auth'
-import { ScannerGrid } from './ScannerGrid'
-import { playStartSound, playCompleteSound } from '@/utils/sounds'
+import { GHAScanner, playStartSound, playCompleteSound, STATUS_MESSAGES } from '@/components/common/GHAScanner'
 
-const STATUS_MESSAGES = [
-  "Checking spelling and grammar...",
-  "Analyzing document formatting...",
-  "Detecting employment gaps...",
-  "Evaluating quantified achievements...",
-  "Reviewing technical skills presentation...",
-  "Checking career narrative flow...",
-  "Analyzing contact information...",
-  "Reviewing professional summary...",
-  "Checking for passive language...",
-  "Evaluating CV length and structure...",
-  "Finalizing analysis..."
-]
+const CV_STATUS_MESSAGES = STATUS_MESSAGES.cvOptimizer
 
 interface Issues {
   critical: number
@@ -57,7 +44,7 @@ export function CVScanningPage() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentMessage(prev => (prev + 1) % STATUS_MESSAGES.length)
+      setCurrentMessage(prev => (prev + 1) % CV_STATUS_MESSAGES.length)
     }, 2500)
     return () => clearInterval(interval)
   }, [])
@@ -168,12 +155,12 @@ export function CVScanningPage() {
         </div>
 
         <div className="mb-8">
-          <ScannerGrid scanProgress={progress} issues={issues} />
+          <GHAScanner progress={progress} />
         </div>
 
         <div className="text-center mb-6">
           <p className="text-gray-600 text-lg transition-opacity duration-300">
-            {scanComplete ? 'Analysis complete! Preparing results...' : STATUS_MESSAGES[currentMessage]}
+            {scanComplete ? 'Analysis complete! Preparing results...' : CV_STATUS_MESSAGES[currentMessage]}
           </p>
         </div>
 
