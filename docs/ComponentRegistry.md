@@ -43,6 +43,10 @@ to see if it already exists.
 | formatContent | Utility | ✅ | `client/src/components/common/ActionBar/utils/` |
 | calculate_cv_score | Backend | ✅ | `backend/common/scoring/` |
 | calculate_after_fix_score | Backend | ✅ | `backend/common/scoring/` |
+| DocStyler | Utility | ✅ | `client/src/components/common/DocStyler/` |
+| generatePDF | Utility | ✅ | `client/src/components/common/DocStyler/generators/` |
+| generateWord | Utility | ✅ | `client/src/components/common/DocStyler/generators/` |
+| generateMD | Utility | ✅ | `client/src/components/common/DocStyler/generators/` |
 
 ---
 
@@ -55,9 +59,9 @@ to see if it already exists.
 | **Purpose** | Reusable toolbar for share/export actions |
 | **Location** | `client/src/components/common/ActionBar/` |
 | **Import** | `import { ActionBar } from '@/components/common/ActionBar'` |
-| **Status** | ✅ Complete (Copy, Email, WhatsApp, MD) / ⏳ (PDF, WORD) |
+| **Status** | ✅ Complete (Copy, Email, WhatsApp, PDF, WORD, MD) |
 
-**Props:** `content`, `fileName`, `emailSubject`, `hiddenButtons`, `disabledButtons`
+**Props:** `content`, `fileName`, `emailSubject`, `hiddenButtons`, `disabledButtons`, `contentType`, `contentMetadata`
 
 **Example:**
 ```jsx
@@ -205,6 +209,67 @@ to see if it already exists.
 
 ---
 
+## CATEGORY: DOCUMENT GENERATION
+
+### DocStyler
+
+| Field | Value |
+|-------|-------|
+| **Purpose** | Orchestrator for generating styled documents (PDF, Word, MD) |
+| **Location** | `client/src/components/common/DocStyler/DocStyler.js` |
+| **Import** | `import { DocStyler } from '@/components/common/DocStyler'` |
+| **Status** | ✅ Complete |
+
+**Methods:** `generate({ content, format, options })`, `pdf(content, options)`, `word(content, options)`, `md(content, options)`
+
+**Example:**
+```jsx
+await DocStyler.pdf(content, {
+  title: 'CV Analysis Report',
+  fileName: 'cv_report',
+  service: 'cv-optimizer',
+  metadata: { score: 75, grade: 'Good' }
+});
+```
+
+---
+
+### generatePDF
+
+| Field | Value |
+|-------|-------|
+| **Purpose** | Generate styled PDF document using pdf-lib |
+| **Location** | `client/src/components/common/DocStyler/generators/generatePDF.js` |
+| **Import** | `import { generatePDF } from '@/components/common/DocStyler'` |
+| **Parameters** | `content` (string), `options` (object) |
+| **Status** | ✅ Complete |
+
+---
+
+### generateWord
+
+| Field | Value |
+|-------|-------|
+| **Purpose** | Generate styled Word document using docx library |
+| **Location** | `client/src/components/common/DocStyler/generators/generateWord.js` |
+| **Import** | `import { generateWord } from '@/components/common/DocStyler'` |
+| **Parameters** | `content` (string), `options` (object) |
+| **Status** | ✅ Complete |
+
+---
+
+### generateMD
+
+| Field | Value |
+|-------|-------|
+| **Purpose** | Generate styled Markdown document with header/footer |
+| **Location** | `client/src/components/common/DocStyler/generators/generateMD.js` |
+| **Import** | `import { generateMD, downloadMD } from '@/components/common/DocStyler'` |
+| **Parameters** | `content` (string), `options` (object) |
+| **Status** | ✅ Complete |
+
+---
+
 ## HOW TO UPDATE THIS REGISTRY
 
 ### Adding New Entry:
@@ -228,5 +293,5 @@ to see if it already exists.
 
 ---
 
-**TOTAL COMPONENTS:** 11  
+**TOTAL COMPONENTS:** 15  
 **Last Updated:** December 30, 2025
