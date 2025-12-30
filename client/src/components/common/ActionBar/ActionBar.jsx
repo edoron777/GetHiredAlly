@@ -126,7 +126,7 @@ const ActionBar = ({
   const containerStyle = {
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
     gap: '4px',
     padding: '8px 16px',
     backgroundColor: '#ffffff',
@@ -146,26 +146,7 @@ const ActionBar = ({
   return (
     <div style={containerStyle}>
       
-      {/* GROUP 1: Quick Actions */}
-      {isVisible('copy') && (
-        <ActionBarButton
-          label="Copy"
-          icon="📋"
-          tooltip="Copy content to clipboard"
-          color="#6b7280"
-          hoverBg="#f3f4f6"
-          onClick={handleCopy}
-          disabled={isDisabled('copy')}
-          successLabel="Copied!"
-        />
-      )}
-
-      {/* Separator */}
-      {isVisible('copy') && (isVisible('email') || isVisible('whatsapp')) && (
-        <div style={separatorStyle} />
-      )}
-
-      {/* GROUP 2: Share */}
+      {/* GROUP 1: Share */}
       {isVisible('email') && (
         <ActionBarButton
           label="Email"
@@ -196,7 +177,7 @@ const ActionBar = ({
         <div style={separatorStyle} />
       )}
 
-      {/* GROUP 3: Export */}
+      {/* GROUP 2: Export */}
       {isVisible('pdf') && (
         <ActionBarButton
           label="PDF"
@@ -230,6 +211,25 @@ const ActionBar = ({
           hoverBg="#f3f4f6"
           onClick={handleMarkdown}
           disabled={isDisabled('md')}
+        />
+      )}
+
+      {/* Separator */}
+      {(isVisible('pdf') || isVisible('word') || isVisible('md')) && isVisible('copy') && (
+        <div style={separatorStyle} />
+      )}
+
+      {/* GROUP 3: Copy (Last) */}
+      {isVisible('copy') && (
+        <ActionBarButton
+          label="Copy"
+          icon="📋"
+          tooltip="Copy content to clipboard"
+          color="#6b7280"
+          hoverBg="#f3f4f6"
+          onClick={handleCopy}
+          disabled={isDisabled('copy')}
+          successLabel="Copied!"
         />
       )}
     </div>

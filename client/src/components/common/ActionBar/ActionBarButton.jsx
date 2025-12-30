@@ -54,7 +54,7 @@ const ActionBarButton = ({
     background: isHovered && !disabled ? hoverBg : 'transparent',
     color: disabled ? '#9ca3af' : color,
     fontSize: '14px',
-    fontWeight: '500',
+    fontWeight: '600',
     cursor: disabled ? 'not-allowed' : 'pointer',
     transition: 'background-color 0.2s, opacity 0.2s',
     opacity: disabled || loading ? 0.5 : 1,

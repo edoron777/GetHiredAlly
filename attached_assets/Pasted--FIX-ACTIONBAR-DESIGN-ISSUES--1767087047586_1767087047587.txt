@@ -1,0 +1,100 @@
+═══════════════════════════════════════════════════════════
+FIX ACTIONBAR DESIGN ISSUES
+═══════════════════════════════════════════════════════════
+
+TASK: Fix 3 design issues in the ActionBar component
+
+FILE TO MODIFY: client/src/components/common/ActionBar/ActionBar.jsx
+
+───────────────────────────────────────────────────────────
+FIX 1: CENTER THE BUTTONS
+───────────────────────────────────────────────────────────
+
+PROBLEM: Buttons are aligned to the right side of the toolbar.
+SOLUTION: Center the buttons with equal margins on both sides.
+
+Find the container/wrapper div that holds all the buttons.
+Change its style from right-aligned to centered.
+
+Look for styles like:
+- justifyContent: 'flex-end' or 'right'
+- Change to: justifyContent: 'center'
+
+Or if using Tailwind classes:
+- Remove: justify-end
+- Add: justify-center
+
+───────────────────────────────────────────────────────────
+FIX 2: MAKE PDF AND WORD LABELS BOLD
+───────────────────────────────────────────────────────────
+
+PROBLEM: PDF and WORD button labels appear faded/light gray.
+         MD label is bold but PDF and WORD are not.
+SOLUTION: Make PDF and WORD labels bold with same styling as MD.
+
+Find where the PDF and WORD buttons are defined.
+They might have:
+- A "disabled" state making them appear faded
+- Different color or fontWeight than MD
+
+Ensure PDF, WORD, and MD all have:
+- fontWeight: 600 or 'bold'
+- Same text color (not gray/faded)
+
+If PDF and WORD are "disabled" because DocStyler is not implemented yet,
+they should still LOOK enabled (bold text) but show an alert when clicked.
+
+───────────────────────────────────────────────────────────
+FIX 3: MOVE COPY BUTTON TO THE RIGHT
+───────────────────────────────────────────────────────────
+
+PROBLEM: Copy button is currently the FIRST button (leftmost).
+SOLUTION: Copy button should be the LAST button (rightmost).
+
+CORRECT BUTTON ORDER (left to right):
+1. Email
+2. WhatsApp
+3. [separator]
+4. PDF
+5. WORD
+6. MD
+7. [separator]
+8. Copy (LAST)
+
+Find the array or JSX where buttons are rendered.
+Move the Copy button to be rendered LAST.
+
+───────────────────────────────────────────────────────────
+EXPECTED RESULT
+───────────────────────────────────────────────────────────
+
+After fixes, ActionBar should look like:
+
+         [Email] [WhatsApp] | [PDF] [WORD] [MD] | [Copy]
+         
+                    (centered in toolbar)
+
+- All buttons centered
+- PDF, WORD, MD all have bold/visible text
+- Copy is the rightmost button
+
+───────────────────────────────────────────────────────────
+VERIFICATION
+───────────────────────────────────────────────────────────
+
+After making changes, verify:
+1. Buttons are horizontally centered in the toolbar
+2. PDF and WORD labels are bold (not faded)
+3. Button order is: Email, WhatsApp, PDF, WORD, MD, Copy
+4. All existing functionality still works
+
+───────────────────────────────────────────────────────────
+DO NOT:
+───────────────────────────────────────────────────────────
+
+- Do NOT change button click handlers
+- Do NOT modify other files
+- Do NOT add new buttons
+- Do NOT remove separators between button groups
+
+Report what changes you made when complete.
