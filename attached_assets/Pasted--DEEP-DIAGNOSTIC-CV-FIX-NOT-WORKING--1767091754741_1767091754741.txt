@@ -1,0 +1,139 @@
+═══════════════════════════════════════════════════════════
+DEEP DIAGNOSTIC - CV FIX NOT WORKING
+═══════════════════════════════════════════════════════════
+
+PROBLEM:
+After all code changes, the CV Fix still shows:
+- Score: 64 → 64 (0% improvement)
+- This was tested with a NEW scan after the code update
+
+I need you to investigate and find the REAL problem.
+
+───────────────────────────────────────────────────────────
+DIAGNOSTIC TASK 1: Check the latest scan issues
+───────────────────────────────────────────────────────────
+
+Run this SQL query in Supabase:
+
+SELECT 
+  id,
+  created_at,
+  issues_json
+FROM cv_scan_results 
+ORDER BY created_at DESC 
+LIMIT 1;
+
+Then analyze the issues_json:
+1. Count total issues
+2. Count how many have "is_auto_fixable": true
+3. Count how many have "is_auto_fixable": false
+4. Count how many have NO is_auto_fixable field
+
+Report the counts.
+
+───────────────────────────────────────────────────────────
+DIAGNOSTIC TASK 2: Check the AI prompt being used
+───────────────────────────────────────────────────────────
+
+In backend/app/cv_optimizer.py, find where the CV analysis happens.
+
+Show me:
+1. The exact prompt being sent to AI
+2. Does it include the is_auto_fixable rules we added?
+
+If the rules are NOT in the prompt, the changes were not saved correctly.
+
+───────────────────────────────────────────────────────────
+DIAGNOSTIC TASK 3: Add debug logging to after_fix calculation
+───────────────────────────────────────────────────────────
+
+In backend/common/scoring/after_fix.py, find calculate_after_fix_score function.
+
+ADD this debug logging at the START of the function:
+
+def calculate_after_fix_score(before_score, issues, breakdown):
+    # DEBUG START
+    print("=" * 50)
+    print("DEBUG: calculate_after_fix_score called")
+    print(f"DEBUG: before_score = {before_score}")
+    print(f"DEBUG: total issues = {len(issues)}")
+    
+    auto_fixable_count = 0
+    not_fixable_count = 0
+    missing_flag_count = 0
+    
+    for issue in issues:
+        if 'is_auto_fixable' not in issue:
+            missing_flag_count += 1
+        elif issue.get('is_auto_fixable') == True:
+            auto_fixable_count += 1
+        else:
+            not_fixable_count += 1
+    
+    print(f"DEBUG: is_auto_fixable=true: {auto_fixable_count}")
+    print(f"DEBUG: is_auto_fixable=false: {not_fixable_count}")
+    print(f"DEBUG: missing flag: {missing_flag_count}")
+    print("=" * 50)
+    # DEBUG END
+    
+    # ... rest of function continues
+
+───────────────────────────────────────────────────────────
+DIAGNOSTIC TASK 4: Test and check console
+───────────────────────────────────────────────────────────
+
+After adding the debug logging:
+
+1. Go to Perfect Your CV
+2. Upload a CV
+3. Click "Start Scan"
+4. Click "Fix My CV"
+5. Check the Replit CONSOLE for the debug output
+
+Report what the console shows:
+- before_score = ?
+- total issues = ?
+- is_auto_fixable=true = ?
+- is_auto_fixable=false = ?
+- missing flag = ?
+
+───────────────────────────────────────────────────────────
+POSSIBLE PROBLEMS AND SOLUTIONS
+───────────────────────────────────────────────────────────
+
+PROBLEM A: AI is not returning is_auto_fixable in the response
+SOLUTION: The prompt needs to be stronger, or we need to add post-processing
+
+PROBLEM B: The prompt changes were not saved
+SOLUTION: Verify the prompt in the code matches what we specified
+
+PROBLEM C: The after_fix function is not being called
+SOLUTION: Check the code flow
+
+PROBLEM D: The issues are being stored without is_auto_fixable
+SOLUTION: Check where issues are saved to database
+
+───────────────────────────────────────────────────────────
+REPORT FORMAT
+───────────────────────────────────────────────────────────
+
+After investigation, report:
+
+1. ISSUES IN DATABASE:
+   - Total: X
+   - is_auto_fixable=true: X
+   - is_auto_fixable=false: X
+   - Missing flag: X
+
+2. PROMPT CHECK:
+   - Does prompt include is_auto_fixable rules? YES/NO
+   - Show the relevant section
+
+3. CONSOLE DEBUG OUTPUT:
+   - Paste the debug output here
+
+4. YOUR DIAGNOSIS:
+   - What is the actual problem?
+   - What needs to be fixed?
+
+DO NOT FIX ANYTHING YET - just report findings.
