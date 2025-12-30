@@ -10,6 +10,15 @@ import remarkGfm from 'remark-gfm'
 import CVScoreCircle from './cv-optimizer/CVScoreCircle'
 import DocStyler from './common/DocStyler/DocStyler'
 
+interface CategoryImprovement {
+  issues_fixed: number
+  total_issues: number
+  improvement: number
+  max_possible: number
+  before: number
+  after: number
+}
+
 interface FixedData {
   scan_id: string
   original_cv_content: string
@@ -29,7 +38,8 @@ interface FixedData {
   original_score?: number
   fixed_score?: number
   improvement?: number
-  category_improvements?: Record<string, { before: number; after: number; improvement: number; max_possible: number }>
+  category_improvements?: Record<string, CategoryImprovement>
+  total_issues_fixed?: number
   changes?: Array<{ category: string; before: string; after: string; explanation: string }>
   changes_summary?: { total_changes: number; by_category: Record<string, number> }
   total_changes?: number
@@ -288,26 +298,37 @@ export function CVFixedPage() {
             {data.category_improvements && Object.keys(data.category_improvements).length > 0 && (
               <div className="mt-8 pt-6 border-t border-gray-200">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">What Improved</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-w-2xl mx-auto">
+                <div className="flex flex-wrap justify-center gap-4">
                   {Object.entries(data.category_improvements)
-                    .filter(([_, v]) => v.improvement > 0)
-                    .sort((a, b) => b[1].improvement - a[1].improvement)
+                    .filter(([_, v]) => v.issues_fixed > 0)
+                    .sort((a, b) => b[1].issues_fixed - a[1].issues_fixed)
                     .map(([category, values]) => {
-                      const improvementPercent = Math.round((values.improvement / values.max_possible) * 100)
-                      const isBigWin = improvementPercent >= 20
+                      const isBigWin = values.issues_fixed >= 5
                       const categoryLabel = category.charAt(0).toUpperCase() + category.slice(1)
                       return (
-                        <div key={category} className="flex items-center gap-2 bg-green-50 rounded-lg px-3 py-2">
-                          <CheckCircle size={16} className="text-green-600 flex-shrink-0" />
-                          <span className="text-sm text-gray-700">{categoryLabel}</span>
-                          <span className="text-sm font-semibold text-green-600 ml-auto">
-                            +{improvementPercent}%
-                            {isBigWin && ' ⭐'}
+                        <div 
+                          key={category} 
+                          className="flex items-center gap-2 px-3 py-2 bg-green-50 rounded-lg"
+                        >
+                          <span className="text-green-600">✓</span>
+                          <span className="capitalize text-gray-700">{categoryLabel}</span>
+                          <span className={`font-semibold ${
+                            values.issues_fixed >= 5 ? 'text-green-600' : 'text-green-500'
+                          }`}>
+                            {values.issues_fixed} fixed
                           </span>
+                          {isBigWin && (
+                            <span className="text-yellow-500">⭐</span>
+                          )}
                         </div>
                       )
                     })}
                 </div>
+                {data.total_issues_fixed && data.total_issues_fixed > 0 && (
+                  <p className="text-center text-sm text-gray-500 mt-3">
+                    Total: {data.total_issues_fixed} issues fixed automatically
+                  </p>
+                )}
               </div>
             )}
 

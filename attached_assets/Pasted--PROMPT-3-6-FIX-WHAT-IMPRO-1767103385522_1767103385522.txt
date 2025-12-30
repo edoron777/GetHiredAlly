@@ -1,0 +1,114 @@
+═══════════════════════════════════════════════════════════════════════
+PROMPT 3#6: FIX "WHAT IMPROVED" DISPLAY
+═══════════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify files not explicitly mentioned
+3. Do NOT add features not explicitly requested
+4. If unclear, STOP and ask - do not assume
+
+───────────────────────────────────────────────────────────────────────
+TASK: Make "What Improved" display consistent and accurate
+───────────────────────────────────────────────────────────────────────
+
+OBJECTIVE:
+- Display should show SAME categories each time (based on what was actually fixed)
+- Percentages should match the calculation from Prompt 2#6
+- Display should be clear and professional
+
+───────────────────────────────────────────────────────────────────────
+INSTRUCTIONS:
+───────────────────────────────────────────────────────────────────────
+
+Step 1: Update the API response to include category_improvements
+
+In backend/app/cv_optimizer.py, find the get_fixed_cv endpoint.
+
+Make sure it returns the category_improvements from calculate_after_fix_score:
+
+return {
+    'scan_id': scan['id'],
+    'original_cv_content': scan['cv_content'],
+    'fixed_cv_content': scan['fixed_cv_content'],
+    'before_score': scores['before_score'],
+    'after_score': scores['after_score'],
+    'improvement_percent': scores['improvement_percent'],
+    'category_improvements': scores['category_improvements'],  # ADD THIS
+    'total_issues_fixed': scores['total_issues_fixed'],        # ADD THIS
+    'changes': scan.get('changes_json', {}).get('changes', []),
+}
+
+Step 2: Update CVFixedPage.tsx to use category_improvements
+
+Find the "What Improved" section and update it:
+
+{/* What Improved Section */}
+<div className="mt-6">
+  <h3 className="text-lg font-semibold text-center mb-4">What Improved</h3>
+  <div className="flex flex-wrap justify-center gap-4">
+    {Object.entries(categoryImprovements)
+      .filter(([_, data]) => data.improvement_percent > 0)
+      .sort((a, b) => b[1].improvement_percent - a[1].improvement_percent)
+      .map(([category, data]) => (
+        <div 
+          key={category}
+          className="flex items-center gap-2 px-3 py-2 bg-green-50 rounded-lg"
+        >
+          <span className="text-green-600">✓</span>
+          <span className="capitalize">{category}</span>
+          <span className={`font-semibold ${
+            data.improvement_percent >= 20 ? 'text-green-600' : 'text-green-500'
+          }`}>
+            +{data.improvement_percent}%
+          </span>
+          {data.improvement_percent >= 30 && (
+            <span className="text-yellow-500">⭐</span>
+          )}
+        </div>
+      ))
+    }
+  </div>
+</div>
+
+Step 3: Ensure data is fetched correctly
+
+In the useEffect or fetch call, extract category_improvements:
+
+const fetchFixedCV = async () => {
+  const response = await fetch(`/api/cv-optimizer/fixed/${scanId}`);
+  const data = await response.json();
+  
+  setCategoryImprovements(data.category_improvements || {});
+  setTotalIssuesFixed(data.total_issues_fixed || 0);
+  // ... other state updates
+};
+
+───────────────────────────────────────────────────────────────────────
+FILES TO MODIFY:
+───────────────────────────────────────────────────────────────────────
+
+- backend/app/cv_optimizer.py - Update get_fixed_cv response
+- client/src/components/CVFixedPage.tsx - Update What Improved display
+
+DO NOT TOUCH:
+- All other files
+
+───────────────────────────────────────────────────────────────────────
+VERIFICATION (MANDATORY):
+───────────────────────────────────────────────────────────────────────
+
+After making changes:
+
+1. Show me the updated API response structure
+2. Show me the updated "What Improved" JSX
+3. Verify the data flow: API → Frontend
+
+Report:
+□ API returns category_improvements
+□ Frontend displays category_improvements
+□ Categories are sorted by improvement %
+□ No other files modified
+
+Type: "PROMPT 3#6 COMPLETE - READY FOR PROMPT 4#6"
