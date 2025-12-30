@@ -51,6 +51,23 @@ export function CVFixedPage() {
   const [viewMode, setViewMode] = useState('sidebyside')
   const [isDownloading, setIsDownloading] = useState(false)
 
+  const extractNameFromCV = (cvContent: string): string => {
+    if (!cvContent) return ''
+    const firstLine = cvContent.split('\n')[0] || ''
+    const name = firstLine.replace(/CV|Resume|קורות חיים|#|\*\*/gi, '').trim()
+    if (name && name.split(' ').length <= 4 && /^[a-zA-Z\s-]+$/.test(name)) {
+      return name
+    }
+    return ''
+  }
+
+  const getFileName = (): string => {
+    const userName = extractNameFromCV(data?.fixed_cv_content || '')
+    return userName 
+      ? `${userName} Optimized CV - GetHiredAlly.com`
+      : 'Optimized CV - GetHiredAlly.com'
+  }
+
   useEffect(() => {
     if (!isAuthenticated()) {
       navigate('/login')
@@ -85,7 +102,7 @@ export function CVFixedPage() {
       await DocStyler.pdf(data?.fixed_cv_content || '', {
         title: 'Your Optimized CV',
         service: 'cv-optimizer',
-        fileName: 'CV_Optimized',
+        fileName: getFileName(),
         metadata: {
           score: data?.fixed_score,
           improvement: data?.improvement
@@ -105,7 +122,7 @@ export function CVFixedPage() {
       await DocStyler.word(data?.fixed_cv_content || '', {
         title: 'Your Optimized CV',
         service: 'cv-optimizer',
-        fileName: 'CV_Optimized',
+        fileName: getFileName(),
         metadata: {
           score: data?.fixed_score,
           improvement: data?.improvement
@@ -125,7 +142,7 @@ export function CVFixedPage() {
       await DocStyler.md(data?.fixed_cv_content || '', {
         title: 'Your Optimized CV',
         service: 'cv-optimizer',
-        fileName: 'CV_Optimized',
+        fileName: getFileName(),
         metadata: {
           score: data?.fixed_score,
           improvement: data?.improvement
