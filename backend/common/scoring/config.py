@@ -1,33 +1,50 @@
 """
-CV Scoring Configuration
-All weights, thresholds, and constants.
-Version: 1.1.0
+Scoring Configuration v3.0
+=========================
+Recalibrated weights based on recruiter priorities.
+
+Key changes from v2.0:
+- Quantification: 20% → 25% (most important factor)
+- Experience: 10% → 20% (relevance matters)
+- Grammar: 15% → 10% (pass/fail, not differentiator)
+- Formatting: 15% → 10% (overvalued before)
+- Contact: 10% → 5% (LinkedIn was overweighted)
 """
 
 # Version - increment when changing weights
-SCORING_VERSION = "1.1.0"
+SCORING_VERSION = "3.0.0"
 
 # Score boundaries
-SCORE_MIN = 15   # Never show 0 (too demoralizing)
+SCORE_MIN = 10   # Never show 0 (too demoralizing)
 SCORE_MAX = 95   # Never show 100 (no CV is perfect)
-AFTER_FIX_MAX = 88  # Cap for after-fix score (realistic improvement)
 
-# Category weights (must sum to 100)
+# ============================================================
+# CATEGORY WEIGHTS v3.0 (must sum to 100)
+# ============================================================
+
 CATEGORY_WEIGHTS = {
-    "grammar": 10,
-    "formatting": 12,
-    "quantification": 25,
-    "language": 15,
-    "contact": 5,
-    "skills": 13,
-    "experience": 15,
-    "length": 5
+    # TIER 1: CRITICAL (60%)
+    "quantification": 25,   # THE most important - achievements with numbers
+    "experience": 20,       # Relevance and quality of work history
+    "language": 15,         # Action verbs, professional tone
+    
+    # TIER 2: IMPORTANT (25%)
+    "grammar": 10,          # Basic professionalism (pass/fail)
+    "skills": 10,           # Clear skills presentation
+    "formatting": 10,       # Structure, readability
+    
+    # TIER 3: BASIC HYGIENE (10%)
+    "contact": 5,           # Email, phone (LinkedIn optional)
+    "length": 5             # 1-2 pages ideal
 }
 
 # Validate weights sum to 100
-assert sum(CATEGORY_WEIGHTS.values()) == 100, "Weights must sum to 100"
+assert sum(CATEGORY_WEIGHTS.values()) == 100, f"Weights must sum to 100, got {sum(CATEGORY_WEIGHTS.values())}"
 
-# Grade thresholds
+# ============================================================
+# GRADE THRESHOLDS
+# ============================================================
+
 GRADE_THRESHOLDS = {
     "excellent": 82,
     "good": 68,
@@ -35,23 +52,36 @@ GRADE_THRESHOLDS = {
     "needs_work": 35
 }
 
-# Grade messages
+# Grade messages (User Lens - supportive, not judgmental)
 GRADE_MESSAGES = {
-    "excellent": "Outstanding! Your CV is highly polished and ready to impress recruiters.",
-    "good": "Great CV! A few small improvements will make it even stronger.",
-    "fair": "Good foundation. Addressing the suggestions below will help you stand out.",
-    "needs_work": "Your CV has room for improvement. Focus on the high-priority items.",
-    "needs_attention": "Let's strengthen your CV. Start with the critical issues for maximum impact."
+    "excellent": "Outstanding! Your CV effectively showcases your achievements and is ready to impress recruiters.",
+    "good": "Strong CV! A few targeted improvements will make it even more competitive.",
+    "fair": "Good foundation! Focusing on quantified achievements will significantly strengthen your impact.",
+    "needs_work": "Your CV has potential. Let's add some concrete numbers and results to make it shine.",
+    "needs_attention": "Let's work together to strengthen your CV. Start with adding measurable achievements."
 }
 
-# Fixability rates for after-fix calculation
+# ============================================================
+# FIXABILITY RATES (for after-fix calculation)
+# ============================================================
+
 FIXABILITY_RATES = {
-    "grammar": 0.70,
-    "formatting": 0.60,
-    "language": 0.65,
-    "quantification": 0.35,
-    "skills": 0.40,
-    "contact": 0.80,
-    "experience": 0.15,
-    "length": 0.50
+    "grammar": 0.90,        # AI can fix most grammar/spelling
+    "language": 0.80,       # AI can improve verbs/phrasing
+    "formatting": 0.70,     # Some structural fixes possible
+    "skills": 0.60,         # Can reorganize, but content limited
+    "quantification": 0.40, # Harder - needs real data from user
+    "contact": 0.30,        # Can suggest, user must provide
+    "experience": 0.20,     # Content mostly fixed
+    "length": 0.30          # Can trim, harder to expand
+}
+
+# ============================================================
+# PLACEHOLDER STYLING (for draft CV with placeholders)
+# ============================================================
+
+PLACEHOLDER_STYLE = {
+    "background_color": "#FFF8E1",  # Light yellow
+    "text_color": "#800020",         # Bordeaux
+    "font_weight": "bold"
 }
