@@ -1,0 +1,84 @@
+═══════════════════════════════════════════════════════════
+PROMPT 1#1: Delete Orphaned Component Files
+═══════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify files not explicitly mentioned
+3. Do NOT add features not explicitly requested
+4. Do NOT refactor or "improve" existing code
+5. Do NOT make autonomous decisions
+6. If unclear, STOP and ask - do not assume
+7. Make MINIMAL, SURGICAL changes only
+
+FORBIDDEN ACTIONS:
+- Deleting files not explicitly listed
+- Modifying any other files
+- Creating new files
+- Making any code changes
+
+───────────────────────────────────────────────────────────
+
+TASK: Delete orphaned component files that are no longer used
+
+OBJECTIVE:
+Remove files that were part of the old layout and are no longer 
+imported anywhere in the codebase
+
+CONTEXT:
+After the CV Optimizer Report page restructure, these components 
+are no longer used:
+- StrengthsSection (removed "What's Working Well" feature)
+- ActionBar (replaced with ExportDropdown)
+
+───────────────────────────────────────────────────────────
+
+INSTRUCTIONS:
+
+Step 1: VERIFY these files are not imported anywhere
+- Search entire codebase for: "StrengthsSection"
+- Search entire codebase for: "ActionBar"
+- If either IS still imported somewhere, STOP and report
+
+Step 2: DELETE the following files (if verification passed):
+
+FILE 1: client/src/components/cv-optimizer/StrengthsSection.tsx
+
+FILE 2: client/src/components/common/ActionBar/
+- Delete the entire ActionBar folder and all files inside it
+- This includes: index.tsx, ActionBar.tsx, or any other files in that folder
+
+Step 3: Verify no import errors appear after deletion
+- Check console for errors
+- Check for red underlines in other files
+
+───────────────────────────────────────────────────────────
+
+FILES TO DELETE:
+- client/src/components/cv-optimizer/StrengthsSection.tsx
+- client/src/components/common/ActionBar/ (entire folder)
+
+FILES TO MODIFY:
+- None
+
+DO NOT TOUCH:
+- All other files
+- CVReportPage.tsx (already cleaned up)
+- ExportDropdown.tsx (new component, keep it)
+
+───────────────────────────────────────────────────────────
+
+WHEN COMPLETE:
+
+Confirm:
+□ Verified StrengthsSection is not imported anywhere
+□ Verified ActionBar is not imported anywhere
+□ StrengthsSection.tsx deleted
+□ ActionBar folder deleted
+□ No import errors in console
+□ No red underlines in other files
+□ Application still runs correctly
+
+Report what was deleted.
+═══════════════════════════════════════════════════════════
