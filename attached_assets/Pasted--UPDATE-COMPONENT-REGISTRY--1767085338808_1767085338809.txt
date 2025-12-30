@@ -1,0 +1,230 @@
+═══════════════════════════════════════════════════════════
+UPDATE COMPONENT REGISTRY
+═══════════════════════════════════════════════════════════
+
+TASK: Add/Update entries for GHATooltip, DocStyler, and ActionBar 
+in docs/ComponentRegistry.md
+
+⚠️ IMPORTANT: Do NOT delete existing content. ADD the new entries.
+
+───────────────────────────────────────────────────────────
+INSTRUCTIONS:
+───────────────────────────────────────────────────────────
+
+Step 1: Open docs/ComponentRegistry.md
+
+Step 2: Find the QUICK LOOKUP TABLE and ADD these rows:
+
+| GHATooltip | UI Component | ✅ | `common/Tooltip/` |
+| DocStyler | Utility | ✅ | `common/DocStyler/` |
+| generatePDF | Utility | ✅ | `common/DocStyler/generators/` |
+| generateWord | Utility | ✅ | `common/DocStyler/generators/` |
+| generateMD | Utility | ✅ | `common/DocStyler/generators/` |
+
+Step 3: In CATEGORY: UI COMPONENTS section, ADD this entry:
+
+───────────────────────────────────────────────────────────
+ADD TO COMPONENT REGISTRY - GHATooltip
+───────────────────────────────────────────────────────────
+
+### GHATooltip
+
+| Field | Value |
+|-------|-------|
+| **Name** | GHATooltip |
+| **Purpose** | Reusable tooltip with consistent styling for contextual help |
+| **Category** | UI Component |
+| **Location** | `client/src/components/common/Tooltip/` |
+| **Import** | `import { GHATooltip } from '@/components/common/Tooltip'` |
+| **Status** | ✅ Complete |
+| **Used By** | ActionBar, All Service Pages |
+| **Added** | December 30, 2025 |
+
+**Props:**
+
+| Prop | Type | Required | Description |
+|------|------|----------|-------------|
+| `children` | ReactNode | Yes | Trigger element |
+| `text` | string | Yes | Tooltip description |
+| `title` | string | No | Optional bold title |
+| `variant` | 'default' \| 'warning' \| 'info' | No | Color variant |
+| `side` | 'top' \| 'bottom' \| 'left' \| 'right' | No | Position |
+| `icon` | 'info' \| 'warning' \| 'tip' | No | Optional icon |
+| `learnMoreUrl` | string | No | Optional help link |
+
+**Related Files:**
+- `tooltipTexts.ts` - Central text storage for all tooltips
+- `tooltipStyles.ts` - Style constants and variants
+
+**Example:**
+```tsx
+import { GHATooltip, TOOLTIP_TEXTS } from '@/components/common/Tooltip';
+
+// Basic usage
+<GHATooltip text="Copy to clipboard">
+  <Button>Copy</Button>
+</GHATooltip>
+
+// Using central texts
+<GHATooltip {...TOOLTIP_TEXTS.actionBar.pdf}>
+  <Button>PDF</Button>
+</GHATooltip>
+```
+
+**Integration Points:**
+- Wrap ANY button/element to add tooltip
+- Use with ActionBar buttons for export explanations
+- Use TOOLTIP_TEXTS for consistent messaging
+
+───────────────────────────────────────────────────────────
+ADD TO COMPONENT REGISTRY - DocStyler
+───────────────────────────────────────────────────────────
+
+### DocStyler
+
+| Field | Value |
+|-------|-------|
+| **Name** | DocStyler |
+| **Purpose** | Centralized document formatting for PDF, Word, Markdown exports |
+| **Category** | Utility |
+| **Location** | `client/src/components/common/DocStyler/` |
+| **Import** | `import { DocStyler } from '@/components/common/DocStyler'` |
+| **Status** | ✅ Complete |
+| **Used By** | ActionBar |
+| **Added** | December 30, 2025 |
+
+**Main Methods:**
+
+| Method | Description |
+|--------|-------------|
+| `DocStyler.generate({ content, format, options })` | Generate document in specified format |
+| `DocStyler.pdf(content, options)` | Generate PDF |
+| `DocStyler.word(content, options)` | Generate Word document |
+| `DocStyler.md(content, options)` | Generate Markdown |
+
+**Options Object:**
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `title` | string | Document title |
+| `service` | string | Service name (cv-optimizer, xray-analyzer, etc.) |
+| `fileName` | string | Download filename |
+| `metadata` | object | Additional data (score, grade, etc.) |
+
+**Related Files:**
+- `generators/generatePDF.js` - PDF generation with pdf-lib
+- `generators/generateWord.js` - Word generation with docx
+- `generators/generateMD.js` - Markdown with header/footer
+- `styles/documentStyles.js` - Brand colors, fonts, company info
+
+**Example:**
+```javascript
+import { DocStyler } from '@/components/common/DocStyler';
+
+// Generate PDF
+await DocStyler.pdf(content, {
+  title: 'CV Analysis Report',
+  service: 'cv-optimizer',
+  fileName: 'CV_Report',
+  metadata: { score: 72, grade: 'Good' }
+});
+```
+
+**Document Styling Includes:**
+- Professional header with title, service name, date
+- Footer with page numbers (Page X of Y)
+- Footer links: GetHiredAlly App | GetHiredAlly Blog
+- Brand color: #1E5A85
+- Markdown to styled text conversion
+
+**Integration Points:**
+- Called by ActionBar when user clicks PDF/WORD/MD buttons
+- Can be called directly from any service page
+
+───────────────────────────────────────────────────────────
+UPDATE EXISTING - ActionBar
+───────────────────────────────────────────────────────────
+
+Find the existing ActionBar entry and UPDATE it to include relationships:
+
+### ActionBar
+
+| Field | Value |
+|-------|-------|
+| **Name** | ActionBar |
+| **Purpose** | Reusable toolbar for share/export actions |
+| **Category** | UI Component |
+| **Location** | `client/src/components/common/ActionBar/` |
+| **Import** | `import { ActionBar } from '@/components/common/ActionBar'` |
+| **Status** | ✅ Complete |
+| **Used By** | CV Optimizer, X-Ray Analyzer, Interview Questions |
+| **Added** | December 30, 2025 |
+
+**Props:**
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `content` | string | Text/markdown content to act on |
+| `fileName` | string | Default filename for downloads |
+| `emailSubject` | string | Email subject line |
+| `contentType` | string | Service identifier (for DocStyler) |
+| `contentMetadata` | object | Additional metadata (score, grade) |
+| `hiddenButtons` | array | Buttons to hide |
+| `disabledButtons` | array | Buttons to disable |
+
+**Buttons:**
+
+| Button | Function | Calls |
+|--------|----------|-------|
+| Copy | Copy to clipboard | Internal clipboard.js |
+| Email | Open email client | Internal email.js |
+| WhatsApp | Share via WhatsApp | Internal whatsapp.js |
+| PDF | Download styled PDF | **DocStyler.pdf()** |
+| WORD | Download styled DOCX | **DocStyler.word()** |
+| MD | Download Markdown | **DocStyler.md()** |
+
+**Integration with DocStyler:**
+```jsx
+// ActionBar calls DocStyler when export buttons are clicked
+const handlePDF = async () => {
+  await DocStyler.pdf(content, {
+    title: emailSubject,
+    fileName: fileName,
+    service: contentType,
+    metadata: contentMetadata,
+  });
+};
+```
+
+**Integration with GHATooltip:**
+```jsx
+// Wrap ActionBar buttons with tooltips for user guidance
+import { GHATooltip, TOOLTIP_TEXTS } from '@/components/common/Tooltip';
+
+<GHATooltip {...TOOLTIP_TEXTS.actionBar.pdf}>
+  <ActionBarButton label="PDF" onClick={handlePDF} />
+</GHATooltip>
+```
+
+**Example Usage:**
+```jsx
+<ActionBar
+  content={reportContent}
+  fileName="CV_Analysis_Report"
+  emailSubject="My CV Analysis - GetHiredAlly"
+  contentType="cv-optimizer"
+  contentMetadata={{ score: 72, grade: 'Good' }}
+/>
+```
+
+───────────────────────────────────────────────────────────
+ADD NEW SECTION: COMPONENT RELATIONSHIPS
+───────────────────────────────────────────────────────────
+
+Add this new section AFTER the "HOW TO UPDATE THIS REGISTRY" section:
+
+## COMPONENT RELATIONSHIPS
+
+This section documents how components work together.
+
+### ActionBar → DocStyler (Document Export)

@@ -59,12 +59,37 @@ to see if it already exists.
 
 | Field | Value |
 |-------|-------|
+| **Name** | ActionBar |
 | **Purpose** | Reusable toolbar for share/export actions |
+| **Category** | UI Component |
 | **Location** | `client/src/components/common/ActionBar/` |
 | **Import** | `import { ActionBar } from '@/components/common/ActionBar'` |
-| **Status** | ✅ Complete (Copy, Email, WhatsApp, PDF, WORD, MD) |
+| **Status** | ✅ Complete |
+| **Used By** | CV Optimizer, X-Ray Analyzer, Interview Questions |
+| **Added** | December 30, 2025 |
 
-**Props:** `content`, `fileName`, `emailSubject`, `hiddenButtons`, `disabledButtons`, `contentType`, `contentMetadata`
+**Props:**
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `content` | string | Text/markdown content to act on |
+| `fileName` | string | Default filename for downloads |
+| `emailSubject` | string | Email subject line |
+| `contentType` | string | Service identifier (for DocStyler) |
+| `contentMetadata` | object | Additional metadata (score, grade) |
+| `hiddenButtons` | array | Buttons to hide |
+| `disabledButtons` | array | Buttons to disable |
+
+**Buttons:**
+
+| Button | Function | Calls |
+|--------|----------|-------|
+| Copy | Copy to clipboard | Internal clipboard.js |
+| Email | Open email client | Internal email.js |
+| WhatsApp | Share via WhatsApp | Internal whatsapp.js |
+| PDF | Download styled PDF | **DocStyler.pdf()** |
+| WORD | Download styled DOCX | **DocStyler.word()** |
+| MD | Download Markdown | **DocStyler.md()** |
 
 **Example:**
 ```jsx
@@ -72,7 +97,8 @@ to see if it already exists.
   content={reportContent}
   fileName="CV_Analysis_Report"
   emailSubject="My CV Analysis - GetHiredAlly"
-  disabledButtons={['pdf', 'word']}
+  contentType="cv-optimizer"
+  contentMetadata={{ score: 72, grade: 'Good' }}
 />
 ```
 
@@ -216,31 +242,41 @@ to see if it already exists.
 
 | Field | Value |
 |-------|-------|
-| **Purpose** | Reusable tooltip with consistent styling |
+| **Name** | GHATooltip |
+| **Purpose** | Reusable tooltip with consistent styling for contextual help |
+| **Category** | UI Component |
 | **Location** | `client/src/components/common/Tooltip/` |
 | **Import** | `import { GHATooltip } from '@/components/common/Tooltip'` |
 | **Status** | ✅ Complete |
+| **Used By** | ActionBar, All Service Pages |
+| **Added** | December 30, 2025 |
 
-**Props:** `text`, `title`, `variant`, `side`, `delayDuration`, `icon`, `learnMoreUrl`
+**Props:**
 
-**Variants:** `default` (light blue), `warning` (yellow), `info` (sky blue)
+| Prop | Type | Required | Description |
+|------|------|----------|-------------|
+| `children` | ReactNode | Yes | Trigger element |
+| `text` | string | Yes | Tooltip description |
+| `title` | string | No | Optional bold title |
+| `variant` | 'default' \| 'warning' \| 'info' | No | Color variant |
+| `side` | 'top' \| 'bottom' \| 'left' \| 'right' | No | Position |
+| `icon` | 'info' \| 'warning' \| 'tip' | No | Optional icon |
+| `learnMoreUrl` | string | No | Optional help link |
 
-**Icons:** `info`, `warning`, `tip`
+**Related Files:**
+- `tooltipTexts.ts` - Central text storage for all tooltips
+- `tooltipStyles.ts` - Style constants and variants
 
 **Example:**
 ```tsx
-// Basic
+import { GHATooltip, TOOLTIP_TEXTS } from '@/components/common/Tooltip';
+
+// Basic usage
 <GHATooltip text="Copy to clipboard">
   <Button>Copy</Button>
 </GHATooltip>
 
-// With title and icon
-<GHATooltip title="PDF Export" text="Download as PDF" icon="info">
-  <Button>PDF</Button>
-</GHATooltip>
-
 // Using central texts
-import { TOOLTIP_TEXTS } from '@/components/common/Tooltip';
 <GHATooltip {...TOOLTIP_TEXTS.actionBar.pdf}>
   <Button>PDF</Button>
 </GHATooltip>
@@ -254,20 +290,55 @@ import { TOOLTIP_TEXTS } from '@/components/common/Tooltip';
 
 | Field | Value |
 |-------|-------|
-| **Purpose** | Orchestrator for generating styled documents (PDF, Word, MD) |
-| **Location** | `client/src/components/common/DocStyler/DocStyler.js` |
+| **Name** | DocStyler |
+| **Purpose** | Centralized document formatting for PDF, Word, Markdown exports |
+| **Category** | Utility |
+| **Location** | `client/src/components/common/DocStyler/` |
 | **Import** | `import { DocStyler } from '@/components/common/DocStyler'` |
 | **Status** | ✅ Complete |
+| **Used By** | ActionBar |
+| **Added** | December 30, 2025 |
 
-**Methods:** `generate({ content, format, options })`, `pdf(content, options)`, `word(content, options)`, `md(content, options)`
+**Main Methods:**
+
+| Method | Description |
+|--------|-------------|
+| `DocStyler.generate({ content, format, options })` | Generate document in specified format |
+| `DocStyler.pdf(content, options)` | Generate PDF |
+| `DocStyler.word(content, options)` | Generate Word document |
+| `DocStyler.md(content, options)` | Generate Markdown |
+
+**Options Object:**
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `title` | string | Document title |
+| `service` | string | Service name (cv-optimizer, xray-analyzer, etc.) |
+| `fileName` | string | Download filename |
+| `metadata` | object | Additional data (score, grade, etc.) |
+
+**Related Files:**
+- `generators/generatePDF.js` - PDF generation with pdf-lib
+- `generators/generateWord.js` - Word generation with docx
+- `generators/generateMD.js` - Markdown with header/footer
+- `styles/documentStyles.js` - Brand colors, fonts, company info
+
+**Document Styling Includes:**
+- Professional header with title, service name, date
+- Footer with page numbers (Page X of Y)
+- Footer links: GetHiredAlly App | GetHiredAlly Blog
+- Brand color: #1E5A85
+- Markdown to styled text conversion
 
 **Example:**
-```jsx
+```javascript
+import { DocStyler } from '@/components/common/DocStyler';
+
 await DocStyler.pdf(content, {
   title: 'CV Analysis Report',
-  fileName: 'cv_report',
   service: 'cv-optimizer',
-  metadata: { score: 75, grade: 'Good' }
+  fileName: 'CV_Report',
+  metadata: { score: 72, grade: 'Good' }
 });
 ```
 
@@ -329,6 +400,39 @@ await DocStyler.pdf(content, {
 
 **Props/Parameters:** [List]
 ```
+
+---
+
+## COMPONENT RELATIONSHIPS
+
+This section documents how components work together.
+
+### ActionBar → DocStyler (Document Export)
+
+When user clicks PDF/WORD/MD buttons in ActionBar:
+```
+ActionBar.handlePDF() → DocStyler.pdf(content, options) → Downloads styled PDF
+ActionBar.handleWord() → DocStyler.word(content, options) → Downloads styled DOCX
+ActionBar.handleMD() → DocStyler.md(content, options) → Downloads Markdown
+```
+
+### ActionBar → GHATooltip (User Guidance)
+
+Wrap ActionBar buttons with GHATooltip for contextual help:
+```tsx
+<GHATooltip {...TOOLTIP_TEXTS.actionBar.pdf}>
+  <ActionBarButton label="PDF" onClick={handlePDF} />
+</GHATooltip>
+```
+
+### TOOLTIP_TEXTS Central Storage
+
+All tooltip content organized by service:
+- `TOOLTIP_TEXTS.actionBar` - ActionBar button tooltips
+- `TOOLTIP_TEXTS.cvOptimizer` - CV Optimizer tooltips
+- `TOOLTIP_TEXTS.xrayAnalyzer` - X-Ray Analyzer tooltips
+- `TOOLTIP_TEXTS.interviewQuestions` - Interview Questions tooltips
+- `TOOLTIP_TEXTS.general` - Shared tooltips (delete, save, etc.)
 
 ---
 
