@@ -1,0 +1,87 @@
+═══════════════════════════════════════════════════════════════════════
+PROMPT 6#6: FINAL VALIDATION - TEST AND VERIFY ALL FIXES
+═══════════════════════════════════════════════════════════════════════
+
+All prompts have been executed. Provide a detailed summary and verification.
+
+───────────────────────────────────────────────────────────────────────
+1. EXECUTION LOG
+───────────────────────────────────────────────────────────────────────
+
+Report status for each prompt:
+
+□ 1#6 - Diagnostic Investigation - [COMPLETE/PARTIAL/FAILED]
+□ 2#6 - Deterministic Score Calculation - [COMPLETE/PARTIAL/FAILED]
+□ 3#6 - What Improved Display - [COMPLETE/PARTIAL/FAILED]
+□ 4#6 - Marker Highlighting - [COMPLETE/PARTIAL/FAILED]
+□ 5#6 - PDF and Word Styling - [COMPLETE/PARTIAL/FAILED]
+
+───────────────────────────────────────────────────────────────────────
+2. FILES MODIFIED
+───────────────────────────────────────────────────────────────────────
+
+List all files that were changed:
+- [filepath] - [what changed]
+- [filepath] - [what changed]
+
+───────────────────────────────────────────────────────────────────────
+3. FULL SYSTEM TEST
+───────────────────────────────────────────────────────────────────────
+
+Perform this test and report results:
+
+Step 1: Go to Perfect Your CV
+Step 2: Upload a test CV
+Step 3: Run scan
+Step 4: Note the before score
+Step 5: Click "Fix My CV"
+Step 6: Check results:
+
+□ After score is DIFFERENT from before score
+□ Improvement % makes sense (not always same number)
+□ "What Improved" shows consistent categories
+□ Side-by-side shows YELLOW highlights on changed text
+□ PDF downloads successfully with styling
+□ Word downloads successfully with styling
+
+Report any failures.
+
+───────────────────────────────────────────────────────────────────────
+4. CONSISTENCY TEST
+───────────────────────────────────────────────────────────────────────
+
+Run the fix process TWICE on the same CV:
+
+Test 1 Results:
+- Before score: ___
+- After score: ___
+- Improvement %: ___
+
+Test 2 Results:
+- Before score: ___
+- After score: ___
+- Improvement %: ___
+
+Are they the SAME? □ YES □ NO
+
+If NO, the fix is not deterministic - report what's different.
+
+───────────────────────────────────────────────────────────────────────
+5. ISSUES & WARNINGS
+───────────────────────────────────────────────────────────────────────
+
+List any problems encountered:
+- [Issue 1]
+- [Issue 2]
+
+───────────────────────────────────────────────────────────────────────
+6. FINAL CONFIRMATION
+───────────────────────────────────────────────────────────────────────
+
+All 6 prompts executed successfully: □ YES □ NO
+
+If NO, explain what failed and why.
+
+═══════════════════════════════════════════════════════════════════════
+END OF PROMPT SERIES
+═══════════════════════════════════════════════════════════════════════
