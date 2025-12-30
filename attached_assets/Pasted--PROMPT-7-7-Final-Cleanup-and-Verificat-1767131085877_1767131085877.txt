@@ -1,0 +1,109 @@
+═══════════════════════════════════════════════════════════
+PROMPT 7#7: Final Cleanup and Verification
+═══════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify files not explicitly mentioned
+3. Do NOT add features not explicitly requested
+4. Do NOT refactor or "improve" existing code
+5. Do NOT make autonomous decisions
+6. If unclear, STOP and ask - do not assume
+7. Make MINIMAL, SURGICAL changes only
+
+FORBIDDEN ACTIONS:
+- Adding new features
+- "Improving" code
+- Changing things that work
+- Making style changes not requested
+
+───────────────────────────────────────────────────────────
+
+TASK: Final cleanup and verification of all changes
+
+OBJECTIVE:
+Remove any dead code, verify all components work, and ensure clean implementation
+
+CONTEXT:
+After restructuring, we need to clean up any orphaned code and verify everything works.
+
+───────────────────────────────────────────────────────────
+
+INSTRUCTIONS:
+
+Step 1: REMOVE dead code from CV Report page:
+- Remove any unused imports (related to removed components)
+- Remove any unused state variables (related to removed features)
+- Remove any unused functions (related to removed features)
+
+Step 2: Verify NO console errors:
+- Check browser console
+- Fix any errors found
+
+Step 3: Verify NO TypeScript/ESLint errors:
+- Check for red underlines in code
+- Fix any type errors
+
+Step 4: Test these interactions:
+- Category Filter checkboxes work
+- View By tabs switch correctly
+- Priority Filter buttons work
+- Detail Level buttons change recommendation display
+- Expand All / Collapse All work (or show placeholder)
+- Export dropdown opens and closes
+
+Step 5: Check for removed component files:
+- If there's a standalone StrengthsSection component file, note it (don't delete unless confirmed)
+- If there's a standalone ActionBar component file, note it (don't delete unless confirmed)
+
+───────────────────────────────────────────────────────────
+
+FILES TO MODIFY:
+- [CV Report page component] - remove dead code only
+
+FILES TO CREATE:
+- None
+
+DO NOT TOUCH:
+- Working components
+- Backend files
+- Database
+
+───────────────────────────────────────────────────────────
+
+WHEN COMPLETE:
+
+Provide FULL SUMMARY:
+
+1. EXECUTION LOG
+   □ 1#7 - Remove "What's Working Well" - [Status]
+   □ 2#7 - Remove "All Suggestions" Banner - [Status]
+   □ 3#7 - Move Detail Level Selector - [Status]
+   □ 4#7 - Create Export Dropdown Component - [Status]
+   □ 5#7 - Create New Recommendations Header - [Status]
+   □ 6#7 - Update Component Order - [Status]
+   □ 7#7 - Final Cleanup - [Status]
+
+2. FILES MODIFIED
+   - [List all files changed]
+
+3. FILES CREATED
+   - [List all new files]
+
+4. DEAD CODE REMOVED
+   - [List imports/variables/functions removed]
+
+5. ISSUES FOUND
+   - [List any problems]
+
+6. VERIFICATION
+   □ Page loads without errors
+   □ All filters work
+   □ Export dropdown works
+   □ Layout matches specification
+   □ No console errors
+   □ No TypeScript errors
+
+FINAL CONFIRMATION:
+All 7 prompts executed successfully: [YES/NO]
