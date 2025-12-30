@@ -364,7 +364,7 @@ export function CVReportPage() {
           </div>
         )}
 
-        {reportData.score_breakdown && 'quantification' in reportData.score_breakdown && (
+        {reportData.score_breakdown && 'content_quality' in reportData.score_breakdown && (
           <ScoreDashboard
             breakdown={reportData.score_breakdown}
             totalScore={reportData.cv_score}

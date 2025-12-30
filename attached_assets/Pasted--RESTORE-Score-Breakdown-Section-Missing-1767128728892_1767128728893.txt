@@ -1,0 +1,242 @@
+==========================================================
+RESTORE: Score Breakdown Section Missing from CV Report
+==========================================================
+
+PROBLEM:
+The Score Breakdown section (showing individual category scores 
+with progress bars) disappeared after the ScoreResult fix.
+
+CURRENT STATE (BROKEN):
+- Page shows only the circular 48% gauge
+- Message "Significant improvements needed..." appears
+- NO category breakdown bars visible
+
+EXPECTED STATE (WORKING):
+Below the circular score gauge, there should be a section showing
+progress bars for each scoring category:
+
+┌─────────────────────────────────────────────────────────────┐
+│ Action Verbs            ████████████████████░░░  14/15 ✓   │
+│ Grammar & Spelling      ████████████████████████  10/10 ✓   │
+│ Skills Presentation     ████████░░░░░░░░░░░░░░░   4/10 ⚠   │
+│ Formatting              ██████████░░░░░░░░░░░░░   5/10 ⚠   │
+│ Contact Information     ████████████████████████   5/5 ✓   │
+│ CV Length               ████░░░░░░░░░░░░░░░░░░░   1/5 ✗   │
+└─────────────────────────────────────────────────────────────┘
+
+Each bar shows:
+- Category name (left)
+- Colored progress bar (green=good, yellow=warning, red=poor)
+- Score fraction like "14/15" (right)
+- Status icon: ✓ (good), ⚠ (warning), ✗ (needs work)
+
+==========================================================
+TASK 1: CHECK BACKEND - Is breakdown data being sent?
+==========================================================
+
+FILE: backend/app/cv_optimizer.py
+
+Find the endpoint that returns report data (likely /report/{scan_id})
+
+VERIFY it returns breakdown data like:
+{
+    "score": 48,
+    "grade": "needs_work",
+    "breakdown": {
+        "grammar": 10,
+        "formatting": 5,
+        "quantification": 3,
+        "language": 14,
+        "contact": 5,
+        "skills": 4,
+        "experience": 6,
+        "length": 1
+    }
+}
+
+If breakdown is missing from response, ADD IT:
+```python
+return {
+    "score": score_result.total_score,
+    "grade": score_result.grade_label,
+    "message": score_result.message,
+    "breakdown": {
+        "grammar": score_result.breakdown.grammar,
+        "formatting": score_result.breakdown.formatting,
+        "quantification": score_result.breakdown.quantification,
+        "language": score_result.breakdown.language,
+        "contact": score_result.breakdown.contact,
+        "skills": score_result.breakdown.skills,
+        "experience": score_result.breakdown.experience,
+        "length": score_result.breakdown.length
+    }
+}
+```
+
+==========================================================
+TASK 2: CHECK FRONTEND - Is breakdown being rendered?
+==========================================================
+
+FILE: Look in frontend for CV report page component
+(likely: src/pages/cv-optimizer/CVReportPage.tsx or similar)
+
+SEARCH FOR:
+- "breakdown" 
+- "ScoreBreakdown"
+- "progress" 
+- "category"
+
+CHECK if there's a component that renders the breakdown bars.
+It may have been:
+1. Commented out
+2. Deleted accidentally
+3. Condition preventing render (like: {breakdown && <ScoreBreakdown />})
+
+==========================================================
+TASK 3: RESTORE BREAKDOWN COMPONENT (if missing)
+==========================================================
+
+If the ScoreBreakdown component is missing or broken, 
+restore/create it:
+```tsx
+// ScoreBreakdown component for CV Report
+
+interface BreakdownProps {
+  breakdown: {
+    grammar: number;
+    formatting: number;
+    quantification: number;
+    language: number;
+    contact: number;
+    skills: number;
+    experience: number;
+    length: number;
+  };
+}
+
+const CATEGORY_CONFIG = [
+  { key: 'language', label: 'Action Verbs', max: 15 },
+  { key: 'grammar', label: 'Grammar & Spelling', max: 10 },
+  { key: 'skills', label: 'Skills Presentation', max: 10 },
+  { key: 'formatting', label: 'Formatting', max: 10 },
+  { key: 'contact', label: 'Contact Information', max: 5 },
+  { key: 'length', label: 'CV Length', max: 5 },
+  { key: 'quantification', label: 'Quantified Achievements', max: 25 },
+  { key: 'experience', label: 'Experience Quality', max: 20 },
+];
+
+function ScoreBreakdown({ breakdown }: BreakdownProps) {
+  const getBarColor = (score: number, max: number) => {
+    const percentage = (score / max) * 100;
+    if (percentage >= 80) return 'bg-green-500';
+    if (percentage >= 50) return 'bg-yellow-500';
+    return 'bg-red-500';
+  };
+
+  const getStatusIcon = (score: number, max: number) => {
+    const percentage = (score / max) * 100;
+    if (percentage >= 80) return '✓';
+    if (percentage >= 50) return '⚠';
+    return '✗';
+  };
+
+  return (
+    <div className="mt-6 space-y-3">
+      <h3 className="text-lg font-semibold mb-4">Score Breakdown</h3>
+      {CATEGORY_CONFIG.map(({ key, label, max }) => {
+        const score = breakdown[key as keyof typeof breakdown] || 0;
+        const percentage = (score / max) * 100;
+        
+        return (
+          <div key={key} className="flex items-center gap-4">
+            <span className="w-48 text-sm text-gray-700">{label}</span>
+            <div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden">
+              <div
+                className={`h-full ${getBarColor(score, max)} transition-all`}
+                style={{ width: `${percentage}%` }}
+              />
+            </div>
+            <span className="w-16 text-sm text-right">
+              {score}/{max} {getStatusIcon(score, max)}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+export default ScoreBreakdown;
+```
+
+==========================================================
+TASK 4: ADD BREAKDOWN TO REPORT PAGE
+==========================================================
+
+In the report page component, ensure breakdown is rendered
+BELOW the circular score gauge:
+```tsx
+{/* Circular Score Gauge */}
+<div className="...">
+  <CircularProgress value={score} />
+  <p>Your CV Score</p>
+  <p>{message}</p>
+</div>
+
+{/* ADD THIS - Score Breakdown Section */}
+{breakdown && (
+  <div className="mt-8">
+    <ScoreBreakdown breakdown={breakdown} />
+  </div>
+)}
+
+{/* Divider */}
+<hr className="my-8" />
+
+{/* Step 2: Analysis & Recommendations */}
+```
+
+==========================================================
+TASK 5: VERIFY DATA FLOW
+==========================================================
+
+Ensure the data flows correctly:
+
+1. Backend calculates breakdown in calculate_cv_score()
+2. Backend returns breakdown in API response
+3. Frontend fetches and stores breakdown in state
+4. Frontend passes breakdown to ScoreBreakdown component
+
+Check the useEffect or data fetching logic:
+```tsx
+const [reportData, setReportData] = useState(null);
+
+useEffect(() => {
+  const fetchReport = async () => {
+    const response = await fetch(`/api/cv-optimizer/report/${scanId}`);
+    const data = await response.json();
+    setReportData(data);
+    console.log('Report data:', data); // DEBUG: Check if breakdown exists
+  };
+  fetchReport();
+}, [scanId]);
+```
+
+==========================================================
+VERIFICATION:
+==========================================================
+
+After fix, the report page should show:
+1. ✅ Circular gauge with percentage (48%)
+2. ✅ Message below gauge
+3. ✅ "Score Breakdown" header
+4. ✅ 6-8 category progress bars with labels
+5. ✅ Each bar shows score/max and status icon
+6. ✅ Colors: green (good), yellow (warning), red (poor)
+7. ✅ Divider line
+8. ✅ Step 2: Analysis & Recommendations section below
+
+Test by viewing an existing CV report at:
+/service/cv-optimizer/report/{id}
+
+==========================================================
