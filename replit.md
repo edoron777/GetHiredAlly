@@ -28,6 +28,11 @@ client/src/
 │   │   ├── SectionSeparator.tsx   # Visual separator line
 │   │   ├── GoogleSignInButton.tsx # Google OAuth sign-in button
 │   │   ├── OrDivider.tsx          # "or" divider between auth options
+│   │   ├── UserSessionKeep/       # Session resume banner component
+│   │   │   ├── UserSessionKeep.tsx
+│   │   │   ├── useServiceSession.ts
+│   │   │   ├── sessionTypes.ts
+│   │   │   └── index.ts
 │   │   └── index.ts               # Exports all common components
 │   │
 │   ├── cv-optimizer/              # CV Optimizer specific
@@ -105,6 +110,7 @@ import StandardToolbar from '../components/common/StandardToolbar';
 | SectionSeparator | Navy gradient horizontal separator line | Dashboard between sections |
 | GoogleSignInButton | Google OAuth sign-in with loading state and error handling | LoginPage, RegisterPage |
 | OrDivider | "or" text divider between auth methods | LoginPage, RegisterPage |
+| UserSessionKeep | "Continue work" banner with session resume/archive | CV Optimizer, X-Ray, Smart Questions |
 
 ---
 

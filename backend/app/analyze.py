@@ -394,8 +394,11 @@ async def analyze_job(request: Request, data: AnalyzeJobRequest):
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
 
+import hashlib
+from fastapi import Query as FQuery
+
 @router.get("/xray/latest")
-async def get_latest_xray_session(token: str):
+async def get_latest_xray_session(token: str = FQuery(...)):
     """Get the most recent completed X-Ray analysis for current user"""
     supabase = get_supabase_client()
     if not supabase:
@@ -434,7 +437,7 @@ async def get_latest_xray_session(token: str):
 
 
 @router.post("/xray/sessions/{session_id}/archive")
-async def archive_xray_session(session_id: str, token: str):
+async def archive_xray_session(session_id: str, token: str = FQuery(...)):
     """Archive an X-Ray session"""
     supabase = get_supabase_client()
     if not supabase:
