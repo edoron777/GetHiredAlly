@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { isAuthenticated, getAuthToken } from '@/lib/auth'
 import ExportDropdown from './cv-optimizer/ExportDropdown'
+import SwitchPathBanner from './cv-optimizer/SwitchPathBanner'
 import { GHAScanner } from './common/GHAScanner'
 import CategoryFilterPanel from './cv-optimizer/CategoryFilterPanel'
 import EncouragementMessage from './cv-optimizer/EncouragementMessage'
@@ -118,6 +119,10 @@ export function CVReportPage() {
       ...prev,
       [categoryId]: enabled
     }))
+  }
+
+  const handleSwitchToAutoFix = () => {
+    navigate(`/service/cv-optimizer/fix/${scanId}`)
   }
 
   useEffect(() => {
@@ -445,6 +450,12 @@ export function CVReportPage() {
           </div>
         </div>
 
+        <SwitchPathBanner
+          remainingIssues={filteredIssues?.length || 0}
+          onSwitchToAutoFix={handleSwitchToAutoFix}
+          position="top"
+        />
+
         <div className="bg-white rounded-lg border border-gray-200 p-6 mt-6">
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -593,6 +604,12 @@ export function CVReportPage() {
             </button>
           </div>
         )}
+
+        <SwitchPathBanner
+          remainingIssues={filteredIssues?.length || 0}
+          onSwitchToAutoFix={handleSwitchToAutoFix}
+          position="bottom"
+        />
 
         </div>
 

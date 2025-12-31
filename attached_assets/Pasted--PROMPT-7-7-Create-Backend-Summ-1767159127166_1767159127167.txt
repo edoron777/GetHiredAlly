@@ -1,0 +1,116 @@
+═══════════════════════════════════════════════════════════════════
+PROMPT 7#7: Create Backend Summary Endpoint
+═══════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify files not explicitly mentioned
+3. Do NOT add features not explicitly requested
+4. Do NOT refactor or "improve" existing code
+5. If unclear, STOP and ask - do not assume
+6. Make MINIMAL, SURGICAL changes only
+
+FORBIDDEN ACTIONS:
+- Modifying existing endpoints
+- Changing database schema
+- Altering scoring logic
+
+───────────────────────────────────────────────────────────────────
+
+TASK: Create API endpoint for Crossroads page data
+
+OBJECTIVE:
+Create an endpoint that returns the summary data needed for the 
+Crossroads page (score, issue counts, breakdown).
+
+CONTEXT:
+The Crossroads page needs:
+- CV score
+- Total issues count
+- Issues breakdown by priority (critical, high, medium, low)
+
+───────────────────────────────────────────────────────────────────
+
+INSTRUCTIONS:
+
+Step 1: Open file: backend/app/cv_optimizer.py (or wherever CV routes are)
+
+Step 2: Add a new endpoint for report summary:
+
+@cv_optimizer_bp.route('/report/<int:report_id>/summary', methods=['GET'])
+def get_report_summary(report_id):
+    """Get summary data for Crossroads page"""
+    try:
+        # Get the CV scan from database
+        scan = CVScan.query.get(report_id)
+        
+        if not scan:
+            return jsonify({'error': 'Report not found'}), 404
+        
+        # Get issues/recommendations from the scan
+        issues = scan.issues or []
+        
+        # Count by priority
+        breakdown = {
+            'critical': 0,
+            'high': 0,
+            'medium': 0,
+            'low': 0
+        }
+        
+        for issue in issues:
+            priority = issue.get('priority', 'low').lower()
+            if priority in ['critical', 'quick_wins']:
+                breakdown['critical'] += 1
+            elif priority in ['high', 'important']:
+                breakdown['high'] += 1
+            elif priority in ['medium', 'consider']:
+                breakdown['medium'] += 1
+            else:
+                breakdown['low'] += 1
+        
+        return jsonify({
+            'score': scan.score or 0,
+            'total_issues': len(issues),
+            'breakdown': breakdown
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting report summary: {e}")
+        return jsonify({'error': 'Failed to get summary'}), 500
+
+Step 3: Verify the endpoint is accessible
+
+NOTE: Adjust the code based on your actual:
+- Blueprint name (cv_optimizer_bp or similar)
+- Model name (CVScan or similar)
+- How issues/recommendations are stored in the database
+
+───────────────────────────────────────────────────────────────────
+
+FILES TO MODIFY:
+- backend/app/cv_optimizer.py (add new endpoint)
+
+FILES TO CREATE:
+- None
+
+DO NOT TOUCH:
+- Existing endpoints
+- Database models
+- Scoring logic
+- Other backend files
+
+───────────────────────────────────────────────────────────────────
+
+WHEN COMPLETE:
+
+Confirm:
+□ Endpoint /report/<id>/summary created
+□ Returns score, total_issues, breakdown
+□ Breakdown includes critical, high, medium, low counts
+□ Error handling included
+□ No existing endpoints modified
+□ No server errors
+
+Type "PROMPT 7#7 COMPLETE - READY FOR FINAL SUMMARY" when done.
