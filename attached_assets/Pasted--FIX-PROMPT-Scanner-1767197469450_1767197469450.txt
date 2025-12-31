@@ -1,0 +1,78 @@
+═══════════════════════════════════════════════════════════════════════════════
+FIX PROMPT: Scanner Severity Labels
+═══════════════════════════════════════════════════════════════════════════════
+
+PROBLEM:
+The scanning animation page shows wrong severity labels:
+- Critical (correct)
+- High (WRONG)
+- Medium (WRONG)
+- Low (WRONG)
+
+CORRECT LABELS:
+- Critical
+- Important
+- Consider
+- Polish
+
+═══════════════════════════════════════════════════════════════════════════════
+TASK: Find and Fix Scanner Labels
+═══════════════════════════════════════════════════════════════════════════════
+
+FILE TO CHECK: client/src/components/CVScanningPage.tsx
+OR: client/src/components/common/GHAScanner/ folder
+
+FIND the "Issues found" counter section that shows:
+- 0 Critical
+- 0 High
+- 0 Medium
+- 0 Low
+
+CHANGE TO:
+- 0 Critical
+- 0 Important
+- 0 Consider
+- 0 Polish
+
+───────────────────────────────────────────────────────────────────────────────
+
+SPECIFIC CHANGES:
+
+Find text "High" -> Change to "Important"
+Find text "Medium" -> Change to "Consider"
+Find text "Low" -> Change to "Polish"
+
+Also check for any related color mappings:
+- Critical = Red
+- Important = Orange
+- Consider = Yellow
+- Polish = Green
+
+═══════════════════════════════════════════════════════════════════════════════
+VERIFICATION
+═══════════════════════════════════════════════════════════════════════════════
+
+1. Go to CV Optimizer
+2. Upload a CV
+3. Watch scanning animation
+4. Check "Issues found" section shows:
+   - Critical (red)
+   - Important (orange)
+   - Consider (yellow)
+   - Polish (green)
+
+Result: PASS / FAIL
+
+═══════════════════════════════════════════════════════════════════════════════
+REPORT
+═══════════════════════════════════════════════════════════════════════════════
+
+File updated: [filename]
+Labels changed:
+- High -> Important: YES/NO
+- Medium -> Consider: YES/NO
+- Low -> Polish: YES/NO
+
+Verification: PASS/FAIL
+
+═══════════════════════════════════════════════════════════════════════════════

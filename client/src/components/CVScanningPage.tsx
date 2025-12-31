@@ -191,17 +191,17 @@ export function CVScanningPage() {
             <div className="flex items-center gap-2">
               <span className="w-4 h-4 rounded-full bg-orange-500"></span>
               <span className="text-gray-700 font-medium">{issues.high}</span>
-              <span className="text-gray-400 text-sm">High</span>
+              <span className="text-gray-400 text-sm">Important</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-4 h-4 rounded-full bg-yellow-400"></span>
               <span className="text-gray-700 font-medium">{issues.medium}</span>
-              <span className="text-gray-400 text-sm">Medium</span>
+              <span className="text-gray-400 text-sm">Consider</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-4 h-4 rounded-full bg-green-400"></span>
               <span className="text-gray-700 font-medium">{issues.low}</span>
-              <span className="text-gray-400 text-sm">Low</span>
+              <span className="text-gray-400 text-sm">Polish</span>
             </div>
           </div>
         </div>
