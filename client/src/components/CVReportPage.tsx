@@ -53,13 +53,6 @@ interface ReportData {
   }
 }
 
-const DISPLAY_LEVELS = [
-  { id: 1, name: 'Quick Review', description: 'Suggestion titles only', shortDesc: 'Just titles', tooltip: 'Show only issue titles - fastest overview' },
-  { id: 2, name: 'Standard', description: 'With category and location', shortDesc: '+ Category & location', tooltip: 'Show titles with category and location' },
-  { id: 3, name: 'With Fix', description: 'Including suggested fixes', shortDesc: '+ How to fix it', tooltip: 'Show titles, location, and how to fix each issue' },
-  { id: 4, name: 'Complete', description: 'Full details', shortDesc: 'Full details', tooltip: 'Show all details including original text and suggested fix' }
-]
-
 const SEVERITY_FILTERS = [
   { id: 'all', label: 'All', icon: '' },
   { id: 'critical', label: 'Quick Wins', icon: '🔴' },
@@ -94,7 +87,7 @@ export function CVReportPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const [displayLevel, setDisplayLevel] = useState(1)
+  const displayLevel = 4 // Always show complete details
   const [severityFilter, setSeverityFilter] = useState('all')
   const [expandedIssues, setExpandedIssues] = useState<Set<number>>(new Set())
   const [isGeneratingFix, setIsGeneratingFix] = useState(false)
@@ -434,32 +427,6 @@ export function CVReportPage() {
             </div>
           </div>
         )}
-
-        <div style={{ borderTop: '1px solid #e5e7eb', marginTop: '16px', marginBottom: '16px', paddingTop: '16px' }}>
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Filter size={18} className="text-gray-500" />
-              <span className="font-medium text-gray-700">How much information do you want to see?</span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {DISPLAY_LEVELS.map(level => (
-                <button
-                  key={level.id}
-                  onClick={() => setDisplayLevel(level.id)}
-                  title={level.tooltip}
-                  className={`flex flex-col items-center px-4 py-2 rounded-lg border transition-colors ${
-                    displayLevel === level.id
-                      ? 'bg-blue-50 border-blue-500 text-blue-700'
-                      : 'border-gray-200 hover:bg-gray-50'
-                  }`}
-                >
-                  <span className="font-medium">{level.name}</span>
-                  <span className="text-xs text-gray-500">{level.shortDesc}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
 
         <SwitchPathBanner
           remainingIssues={filteredIssues?.length || 0}
