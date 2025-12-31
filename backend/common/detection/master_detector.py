@@ -1,0 +1,123 @@
+"""
+Master Detector - Orchestrates All Static Detection
+
+This is the SINGLE ENTRY POINT for CV issue detection.
+Runs all static detectors and combines results.
+
+100% CODE detection - AI is NOT used here.
+Same CV text → Same issues → Same results (ALWAYS)
+"""
+
+import logging
+from typing import List, Dict, Any
+
+from .contact_extractor import extract_contact_info, get_contact_issues
+from .section_extractor import extract_sections, get_section_issues, get_cv_length_issues
+from .bullet_extractor import extract_bullets, get_bullet_issues
+from .spelling_detector import detect_critical_issues
+from .language_detector import detect_language_issues
+from .format_detector import detect_format_issues
+from .polish_detector import detect_polish_issues
+
+logger = logging.getLogger(__name__)
+
+
+def detect_all_issues(cv_text: str) -> List[Dict[str, Any]]:
+    """
+    Run ALL static detectors on CV text.
+    
+    This is the MAIN function - call this to get all issues.
+    
+    DETERMINISTIC: Same cv_text → Same issues (ALWAYS)
+    
+    Args:
+        cv_text: Full CV text content
+        
+    Returns:
+        List of issue dictionaries, each with:
+        - issue_type: str (e.g., 'SPELLING_ERROR', 'NO_METRICS')
+        - location: str (where in CV)
+        - description: str (what's wrong)
+        - current: str (optional - current problematic text)
+        - suggestion: str (optional - how to fix)
+    """
+    all_issues: List[Dict[str, Any]] = []
+    structure = None
+    
+    logger.info("Starting static CV analysis...")
+    
+    try:
+        critical_issues = detect_critical_issues(cv_text)
+        all_issues.extend(critical_issues)
+        logger.info(f"Critical issues found: {len(critical_issues)}")
+    except Exception as e:
+        logger.error(f"Error detecting critical issues: {e}")
+    
+    try:
+        contact_info = extract_contact_info(cv_text)
+        contact_issues = get_contact_issues(contact_info)
+        all_issues.extend(contact_issues)
+        logger.info(f"Contact issues found: {len(contact_issues)}")
+    except Exception as e:
+        logger.error(f"Error detecting contact issues: {e}")
+    
+    try:
+        structure = extract_sections(cv_text)
+        section_issues = get_section_issues(structure)
+        all_issues.extend(section_issues)
+        logger.info(f"Section issues found: {len(section_issues)}")
+        
+        length_issues = get_cv_length_issues(cv_text)
+        all_issues.extend(length_issues)
+    except Exception as e:
+        logger.error(f"Error detecting section issues: {e}")
+    
+    try:
+        experience_text = structure.experience if structure and structure.experience else cv_text
+        bullets = extract_bullets(experience_text)
+        bullet_issues = get_bullet_issues(bullets)
+        all_issues.extend(bullet_issues)
+        logger.info(f"Bullet issues found: {len(bullet_issues)}")
+    except Exception as e:
+        logger.error(f"Error detecting bullet issues: {e}")
+    
+    try:
+        language_issues = detect_language_issues(cv_text)
+        all_issues.extend(language_issues)
+        logger.info(f"Language issues found: {len(language_issues)}")
+    except Exception as e:
+        logger.error(f"Error detecting language issues: {e}")
+    
+    try:
+        format_issues = detect_format_issues(cv_text)
+        all_issues.extend(format_issues)
+        logger.info(f"Format issues found: {len(format_issues)}")
+    except Exception as e:
+        logger.error(f"Error detecting format issues: {e}")
+    
+    try:
+        polish_issues = detect_polish_issues(cv_text)
+        all_issues.extend(polish_issues)
+        logger.info(f"Polish issues found: {len(polish_issues)}")
+    except Exception as e:
+        logger.error(f"Error detecting polish issues: {e}")
+    
+    logger.info(f"Static detection complete. Total issues: {len(all_issues)}")
+    
+    return all_issues
+
+
+def get_detection_summary(issues: List[Dict]) -> Dict[str, int]:
+    """
+    Get summary counts by issue type.
+    
+    Args:
+        issues: List of issues from detect_all_issues
+        
+    Returns:
+        Dictionary with counts per issue_type
+    """
+    from collections import Counter
+    
+    types = [issue.get('issue_type', 'UNKNOWN') for issue in issues]
+    return dict(Counter(types))
