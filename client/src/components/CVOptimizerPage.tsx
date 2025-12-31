@@ -6,17 +6,9 @@ import { isAuthenticated, getAuthToken } from '@/lib/auth'
 const MAX_FILE_SIZE = 10 * 1024 * 1024
 const ALLOWED_EXTENSIONS = ['pdf', 'docx', 'doc', 'txt', 'md', 'rtf', 'odt']
 
-interface UserCV {
-  id: string
-  filename: string
-  created_at: string
-}
-
 export function CVOptimizerPage() {
   const navigate = useNavigate()
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [selectedCvId, setSelectedCvId] = useState('')
-  const [userCvs, setUserCvs] = useState<UserCV[]>([])
   const [isDragging, setIsDragging] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -24,37 +16,13 @@ export function CVOptimizerPage() {
   useEffect(() => {
     if (!isAuthenticated()) {
       navigate('/login')
-      return
     }
-
-    const fetchUserCvs = async () => {
-      try {
-        const token = getAuthToken()
-        const response = await fetch(`/api/cv/list?token=${token}`)
-        if (response.ok) {
-          const data = await response.json()
-          setUserCvs(data.cvs || [])
-        }
-      } catch (err) {
-        console.error('Failed to fetch CVs:', err)
-      }
-    }
-
-    fetchUserCvs()
   }, [navigate])
 
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return bytes + ' B'
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    })
   }
 
   const validateAndSetFile = (file: File) => {
@@ -72,7 +40,6 @@ export function CVOptimizerPage() {
     }
 
     setSelectedFile(file)
-    setSelectedCvId('')
   }
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -132,12 +99,10 @@ export function CVOptimizerPage() {
 
         const uploadData = await uploadResponse.json()
         cvId = uploadData.cv_id
-      } else if (selectedCvId) {
-        cvId = selectedCvId
-      }
 
-      if (cvId) {
-        navigate(`/service/cv-optimizer/scanning?cv_id=${cvId}`)
+        if (cvId) {
+          navigate(`/service/cv-optimizer/scanning?cv_id=${cvId}`)
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred. Please try again.')
@@ -234,44 +199,13 @@ export function CVOptimizerPage() {
           )}
         </div>
 
-        <div className="flex items-center my-8">
-          <div className="flex-1 border-t border-gray-300"></div>
-          <span className="px-4 text-gray-500 text-sm">OR select a saved CV</span>
-          <div className="flex-1 border-t border-gray-300"></div>
-        </div>
-
-        <div className="mb-8">
-          <select
-            value={selectedCvId}
-            onChange={(e) => {
-              setSelectedCvId(e.target.value)
-              if (e.target.value) setSelectedFile(null)
-            }}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            disabled={selectedFile !== null}
-          >
-            <option value="">Select from your uploaded CVs</option>
-            {userCvs.map((cv) => (
-              <option key={cv.id} value={cv.id}>
-                {cv.filename} - Uploaded {formatDate(cv.created_at)}
-              </option>
-            ))}
-          </select>
-
-          {userCvs.length === 0 && (
-            <p className="text-sm text-gray-500 mt-2">
-              No saved CVs found. Upload a new file above.
-            </p>
-          )}
-        </div>
-
-        <div className="text-center">
+        <div className="text-center mt-8">
           <button
             onClick={handleStartScan}
-            disabled={!selectedFile && !selectedCvId}
+            disabled={!selectedFile}
             className={`
               px-8 py-3 rounded-lg font-medium text-lg flex items-center justify-center mx-auto
-              ${(selectedFile || selectedCvId)
+              ${selectedFile
                 ? 'bg-blue-600 text-white hover:bg-blue-700'
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
               }

@@ -1,0 +1,130 @@
+═══════════════════════════════════════════════════════════════════
+PROMPT 1#1: Remove "Select from uploaded CVs" Dropdown
+═══════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify files not explicitly mentioned
+3. Do NOT add features not explicitly requested
+4. Do NOT refactor or "improve" existing code
+5. If unclear, STOP and ask - do not assume
+6. Make MINIMAL, SURGICAL changes only
+
+FORBIDDEN ACTIONS:
+- Changing the file upload functionality
+- Modifying the "Start Scan" button
+- Changing the page layout/structure
+- Adding new features
+
+───────────────────────────────────────────────────────────────────
+
+TASK: Remove the "Select from your uploaded CVs" dropdown section
+
+OBJECTIVE:
+Remove the dropdown that says "Select from your uploaded CVs" from
+the CV upload page. Keep only the file upload functionality.
+
+CONTEXT:
+The upload page currently has:
+1. File upload area (drag & drop) ← KEEP
+2. "OR select a saved CV" divider ← REMOVE
+3. "Select from your uploaded CVs" dropdown ← REMOVE
+4. "Start Scan" button ← KEEP
+
+We want to simplify the page by removing the saved CV selector.
+
+───────────────────────────────────────────────────────────────────
+
+INSTRUCTIONS:
+
+Step 1: Find the CV upload page component
+
+File: Look for one of these:
+- client/src/pages/CVUploadPage.tsx
+- client/src/pages/UploadPage.tsx
+- client/src/components/CVUpload.tsx
+- Or search for "Select from your uploaded CVs" in the codebase
+
+Step 2: REMOVE the "OR select a saved CV" divider
+
+Find and DELETE the element that shows:
+- "OR select a saved CV"
+- Any horizontal line/divider above the dropdown
+
+Step 3: REMOVE the dropdown selector
+
+Find and DELETE:
+- The dropdown/select element
+- "Select from your uploaded CVs" text
+- Any associated state variables for selected saved CV
+- Any onChange handlers for the dropdown
+
+Step 4: Clean up unused code
+
+If there are functions or state related to saved CV selection:
+- Remove unused state variables (e.g., selectedSavedCV)
+- Remove unused fetch calls for saved CVs list
+- Remove unused imports
+
+───────────────────────────────────────────────────────────────────
+
+VISUAL COMPARISON:
+
+BEFORE:
+┌─────────────────────────────────────────┐
+│ Perfect Your CV                         │
+│                                         │
+│ ┌─────────────────────────────────────┐ │
+│ │     📄 Sample_CV_David_Cohen.md     │ │
+│ │           15.1 KB                   │ │
+│ │         Remove file                 │ │
+│ └─────────────────────────────────────┘ │
+│                                         │
+│ ─────── OR select a saved CV ───────   │  ← REMOVE
+│                                         │
+│ [Select from your uploaded CVs    ▼]   │  ← REMOVE
+│                                         │
+│        [🔍 Start Scan]                  │
+└─────────────────────────────────────────┘
+
+AFTER:
+┌─────────────────────────────────────────┐
+│ Perfect Your CV                         │
+│                                         │
+│ ┌─────────────────────────────────────┐ │
+│ │     📄 Sample_CV_David_Cohen.md     │ │
+│ │           15.1 KB                   │ │
+│ │         Remove file                 │ │
+│ └─────────────────────────────────────┘ │
+│                                         │
+│        [🔍 Start Scan]                  │
+└─────────────────────────────────────────┘
+
+───────────────────────────────────────────────────────────────────
+
+FILES TO MODIFY:
+- CV upload page component (find the correct file)
+  - Remove "OR select a saved CV" divider
+  - Remove dropdown selector
+  - Clean up unused state/functions
+
+DO NOT TOUCH:
+- File upload/drag-drop functionality
+- "Start Scan" button
+- Page header and description
+- Backend files
+
+───────────────────────────────────────────────────────────────────
+
+WHEN COMPLETE:
+
+Confirm:
+□ "OR select a saved CV" divider removed
+□ Dropdown selector removed
+□ File upload still works
+□ "Start Scan" button still works
+□ No console errors
+□ Page layout looks clean
+
+═══════════════════════════════════════════════════════════════════
