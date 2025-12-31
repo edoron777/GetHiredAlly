@@ -1,0 +1,131 @@
+═══════════════════════════════════════════════════════════════════
+DEBUG PROMPT: Issue Detection Variation Investigation
+═══════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL: This is an INVESTIGATION, not a fix.
+Do NOT change any code until root cause is confirmed.
+
+───────────────────────────────────────────────────────────────────
+
+PROBLEM DESCRIPTION:
+
+After implementing the deterministic severity fix, the same CV 
+scanned 3 times produces DIFFERENT numbers of issues:
+
+Run 1: 50 issues (27 Important, 19 Consider, 4 Polish)
+Run 2: 27 issues (19 Important, 5 Consider, 3 Polish)
+Run 3: 20 issues (15 Important, 5 Consider, 0 Polish)
+
+Expected: Same CV = Same number of issues (and same breakdown)
+Actual: Issue count varies from 20 to 50
+
+The SCORE is consistent (64%) but issue detection is not.
+
+───────────────────────────────────────────────────────────────────
+
+INVESTIGATION QUESTIONS:
+
+1. AI PROMPT CURRENT STATE:
+   Show me the EXACT current AI prompt text in cv_optimizer.py
+   - What instructions does it give about issue detection?
+   - Does it limit the number of issues?
+   - Does it have any randomness or variation language?
+
+2. AI RESPONSE SAMPLE:
+   Can you add temporary logging to capture:
+   - The raw AI response (before processing)
+   - The number of issues in raw response
+   - The issues after assign_severity_to_issues()
+   
+   Add this logging temporarily:
+   
+   import json
+   logger.info(f"RAW AI RESPONSE: {json.dumps(ai_response, indent=2)[:2000]}")
+   logger.info(f"ISSUES COUNT BEFORE PROCESSING: {len(ai_response.get('issues', []))}")
+   logger.info(f"ISSUES COUNT AFTER PROCESSING: {len(processed_issues)}")
+
+3. ISSUE_TYPE ENFORCEMENT:
+   - Does the prompt tell AI to use ONLY the predefined issue_types?
+   - What happens if AI returns an issue_type not in our enum?
+   - Are any issues being filtered out during processing?
+
+4. RESPONSE PROCESSING FLOW:
+   Show me the code path from:
+   AI response received → issues extracted → issues processed → issues stored
+   
+   Specifically:
+   - Is there any filtering happening?
+   - Is there any deduplication?
+   - Is there any limit on number of issues?
+
+5. PROMPT STRUCTURE CHECK:
+   - Does the prompt ask AI to "find ALL issues" or "find main issues"?
+   - Is there any language that could cause variation like:
+     - "identify key issues"
+     - "highlight important problems"
+     - "find the most significant"
+   
+   These phrases cause AI to vary what it returns.
+
+6. COMPARE OLD VS NEW PROMPT:
+   - What did the prompt say BEFORE our changes?
+   - What does it say NOW?
+   - Did we accidentally remove something important?
+
+───────────────────────────────────────────────────────────────────
+
+SPECIFIC FILES TO EXAMINE:
+
+1. backend/app/cv_optimizer.py
+   - The AI prompt string (show full text)
+   - The response processing function
+   - Any filtering or limiting logic
+
+2. backend/common/scoring/severity.py
+   - Does assign_severity_to_issues filter anything out?
+   - What happens to issues with unknown issue_type?
+
+3. Any other file that processes CV analysis results
+
+───────────────────────────────────────────────────────────────────
+
+REPORT FORMAT:
+
+FINDING 1 - Current AI Prompt:
+[Show the exact prompt text - especially the part about what to detect]
+
+FINDING 2 - Issue Detection Instructions:
+- Does prompt say "find ALL issues"? YES/NO
+- Does prompt limit number of issues? YES/NO
+- Does prompt use vague language? YES/NO (list examples)
+
+FINDING 3 - Response Processing:
+- Any filtering in processing? YES/NO
+- Any issue count limit? YES/NO
+- Any deduplication? YES/NO
+
+FINDING 4 - Issue Type Handling:
+- What happens to unknown issue_types?
+- Are any issues being dropped?
+
+FINDING 5 - Comparison with Old Prompt:
+- What changed from before?
+- Could any change affect issue count?
+
+ROOT CAUSE HYPOTHESIS:
+Based on findings, the issue count variation is likely caused by:
+[ ] A - AI prompt wording causes variable detection
+[ ] B - Issue_type restrictions filtering issues
+[ ] C - Response processing dropping issues
+[ ] D - AI not following new format consistently
+[ ] E - Other: __________
+
+───────────────────────────────────────────────────────────────────
+
+DO NOT FIX ANYTHING YET.
+Report findings first.
+
+After reporting, add temporary logging (as shown above) and 
+run ONE test scan so we can see actual data.
+
+═══════════════════════════════════════════════════════════════════
