@@ -1,0 +1,157 @@
+═══════════════════════════════════════════════════════════════════════════════
+DEBUG PROMPT: Session Context Not Preserved
+═══════════════════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL: This is an INVESTIGATION, not a fix.
+Do NOT change any code until root cause is confirmed.
+
+───────────────────────────────────────────────────────────────────────────────
+
+PROBLEM DESCRIPTION:
+
+User uploads CV and gets scan results (121 issues detected).
+User selects a path (Deep Dive or Easy Way).
+User navigates BACK to choose a different path.
+RESULT: All scan data is lost. User must re-upload CV.
+
+This breaks the user experience. Scan results should persist until user 
+explicitly uploads a NEW CV.
+
+───────────────────────────────────────────────────────────────────────────────
+
+INVESTIGATION QUESTIONS:
+
+PART A: WHERE IS SCAN DATA STORED?
+
+1. STORAGE LOCATION:
+   - Where are scan results stored after CV analysis?
+   - Database table? Which one?
+   - Session storage?
+   - React state?
+   - URL parameters?
+
+2. DATA STRUCTURE:
+   - What data is saved after scan?
+   - Show the structure (cv_id, issues, score, etc.)
+
+3. PERSISTENCE:
+   - Is scan data saved to database? YES/NO
+   - Is it only in frontend state? YES/NO
+   - Is it in URL (like cv_id=xxx)? YES/NO
+
+───────────────────────────────────────────────────────────────────────────────
+
+PART B: NAVIGATION FLOW
+
+4. CROSSROADS PAGE:
+   - What is the URL of the "Choose Your Path" page?
+   - What data does it receive/expect?
+   - How does it get the scan results?
+
+5. DEEP DIVE PATH:
+   - What URL does "View All Issues" navigate to?
+   - What parameters are passed?
+   - Does it fetch data from DB or expect state?
+
+6. EASY WAY PATH:
+   - What URL does "Fix My CV Now" navigate to?
+   - What parameters are passed?
+   - Does it fetch data from DB or expect state?
+
+7. BACK NAVIGATION:
+   - When user clicks back, what happens?
+   - Is data re-fetched from database?
+   - Or does it expect state that is now empty?
+
+───────────────────────────────────────────────────────────────────────────────
+
+PART C: STATE MANAGEMENT
+
+8. REACT STATE:
+   - Is scan data stored in React state/context?
+   - What component holds this state?
+   - Is state lost on navigation? Why?
+
+9. URL PARAMETERS:
+   - Is cv_id or report_id in the URL?
+   - Can data be re-fetched using URL params?
+
+10. DATABASE CHECK:
+    - After scan completes, is data saved to DB?
+    - What tables store: issues, score, cv_text?
+    - Can this data be retrieved by cv_id?
+
+───────────────────────────────────────────────────────────────────────────────
+
+PART D: ROOT CAUSE IDENTIFICATION
+
+Check each hypothesis:
+
+[ ] H1: Data only in React state (lost on navigation)
+[ ] H2: Data in DB but not re-fetched on back navigation
+[ ] H3: Component remounts and doesn't restore data
+[ ] H4: URL params lost, can't identify which scan to load
+[ ] H5: Session/cookie data cleared on path selection
+[ ] H6: Other: __________
+
+───────────────────────────────────────────────────────────────────────────────
+
+SPECIFIC CODE TO SHOW:
+
+1. The Crossroads page component (where user chooses path)
+2. Navigation handlers for "Deep Dive" and "Easy Way"
+3. The back navigation handler
+4. Where scan results are stored after analysis
+5. How scan results are retrieved when page loads
+
+───────────────────────────────────────────────────────────────────────────────
+
+NAVIGATION MAP TO TRACE:
+
+Please trace this exact flow and show what happens at each step:
+
+STEP 1: /service/cv-optimizer (Upload page)
+        ↓ User uploads CV
+STEP 2: /service/cv-optimizer/scanning?cv_id={uuid}
+        ↓ Scan completes
+STEP 3: /service/cv-optimizer/crossroads/{id} (Choose Your Path)
+        ↓ User clicks "View All Issues"
+STEP 4: /service/cv-optimizer/report/{id} (Deep Dive)
+        ↓ User clicks BACK
+STEP 5: ??? What URL? What data available?
+
+For each step show:
+- URL
+- Data source (DB/state/params)
+- What data is available
+
+───────────────────────────────────────────────────────────────────────────────
+
+REPORT FORMAT:
+
+FINDING 1 - Data Storage:
+- Scan results stored in: [DB/state/session]
+- Table name (if DB): [name]
+- State location (if state): [component/context]
+
+FINDING 2 - Navigation Flow:
+- Crossroads URL: [url]
+- Deep Dive URL: [url]
+- Easy Way URL: [url]
+- Back URL: [url]
+
+FINDING 3 - Why Data is Lost:
+- Root cause: [explanation]
+- Confirmed hypothesis: H1/H2/H3/H4/H5/H6
+
+FINDING 4 - Data Available for Fix:
+- cv_id available in URL: YES/NO
+- Data in database: YES/NO
+- Can re-fetch on back: YES/NO
+
+───────────────────────────────────────────────────────────────────────────────
+
+DO NOT FIX ANYTHING YET.
+Report findings first.
+
+═══════════════════════════════════════════════════════════════════════════════
