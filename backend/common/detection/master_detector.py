@@ -51,7 +51,7 @@ def detect_all_issues(cv_text: str) -> List[Dict[str, Any]]:
         
     Returns:
         List of issue dictionaries, each with:
-        - issue_type: str (e.g., 'SPELLING_ERROR', 'NO_METRICS')
+        - issue_type: str (e.g., 'GRAMMAR_SPELLING_ERROR', 'CONTENT_MISSING_METRICS')
         - location: str (where in CV)
         - description: str (what's wrong)
         - current: str (optional - current problematic text)
