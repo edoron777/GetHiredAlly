@@ -23,3 +23,5 @@ export { Footer } from './Footer';
 export { GoogleSignInButton } from './GoogleSignInButton';
 export { OrDivider } from './OrDivider';
 export { GHAScanner, playStartSound, playCompleteSound, playErrorSound, STATUS_MESSAGES, SCANNER_STYLES, SCANNER_COLORS } from './GHAScanner';
+export { UserSessionKeep, useServiceSession, SERVICE_CONFIGS } from './UserSessionKeep';
+export type { ServiceSessionData, ServiceConfig } from './UserSessionKeep';
