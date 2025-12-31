@@ -1,0 +1,83 @@
+═══════════════════════════════════════════════════════════════════════════════
+FUNCTION CREATION: UserSessionKeep
+Following: ReplitFunctionCreationGuidelines v1.0
+═══════════════════════════════════════════════════════════════════════════════
+
+FUNCTION REQUIREMENTS:
+- Display a banner when user has existing work in progress
+- Allow user to "Continue" or "Start New"
+- "Start New" shows confirmation dialog
+- Must work across ALL services (not just one)
+- Must be reusable (import once, use everywhere)
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 1: SEARCH FOR EXISTING SOLUTION
+═══════════════════════════════════════════════════════════════════════════════
+
+Before writing new code, search for existing solutions:
+
+1. Check npm packages:
+   - Search: "react session banner" or "react continue work component"
+   - Search: "react persistent session ui"
+
+2. Check existing GetHiredAlly code:
+   - Does CVOptimizerPage.tsx have similar banner code?
+   - Can we extract and generalize it?
+
+3. Check common UI libraries:
+   - Does shadcn/ui have a suitable component?
+   - Does the project already use a component library?
+
+REPORT YOUR FINDINGS:
+- External package found: YES/NO
+- If YES: Package name and how to use
+- If NO: Proceed to Step 2
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 2: DECIDE - USE EXTERNAL OR WRITE NEW
+═══════════════════════════════════════════════════════════════════════════════
+
+Based on Step 1 findings:
+
+OPTION A: If suitable external solution found
+- Install the package
+- Integrate into project
+- Skip to Step 4 (Document)
+
+OPTION B: If no suitable solution OR existing code can be extracted
+- Extract existing code from CVOptimizerPage.tsx if applicable
+- Proceed to Step 3 (Write new code)
+
+REPORT YOUR DECISION:
+- Decision: USE EXTERNAL / EXTRACT EXISTING / WRITE NEW
+- Reason: [explain]
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 3: ISOLATE - CREATE FUNCTION IN DEDICATED FILES
+═══════════════════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL: Do NOT mix function code with service code!
+
+CREATE FOLDER: client/src/components/common/UserSessionKeep/
+
+CREATE FILES:
+
+FILE 1: sessionTypes.ts
+- ServiceSessionData interface
+- ServiceConfig interface  
+- SERVICE_CONFIGS object (config for each service)
+
+FILE 2: useServiceSession.ts
+- Custom React hook
+- Fetches latest session from API
+- Returns: session, isLoading, error, archiveSession, refreshSession
+
+FILE 3: UserSessionKeep.tsx
+- Main React component
+- Shows banner with "Continue" and "Start New" buttons
+- Includes confirmation dialog
+
+FILE 4: index.ts
+- Exports all public items
+
+FOLDER STRUCTURE:
