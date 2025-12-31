@@ -1,0 +1,238 @@
+═══════════════════════════════════════════════════════════════════════════════
+FIX PROMPT: Prevent AI From Breaking Critical CV Elements During Auto-Fix
+═══════════════════════════════════════════════════════════════════════════════
+
+PROBLEM:
+The AI auto-fix is modifying LinkedIn URLs, email addresses, and phone numbers
+in ways that break our detection regex patterns. This causes the "after" score
+to lose points even though improvements were made.
+
+Example:
+- AI changes: [**LinkedIn**](linkedin.com/in/user) → [LinkedIn Profile URL]
+- Our regex no longer detects LinkedIn
+- Completeness score DROPS instead of staying same
+- Net improvement = 0%
+
+───────────────────────────────────────────────────────────────────────────────
+
+SOLUTION: TWO-PART FIX
+
+PART 1: Update AI prompt to preserve critical elements
+PART 2: Add post-fix validation to catch any breakage
+
+═══════════════════════════════════════════════════════════════════════════════
+PART 1: UPDATE AI FIX PROMPT
+═══════════════════════════════════════════════════════════════════════════════
+
+TASK:
+Find the AI prompt used for auto-fixing CV text and add explicit instructions
+to preserve critical contact elements.
+
+STEP 1: Locate the AI fix prompt
+
+Search for:
+- The function that calls AI to fix the CV
+- The prompt/instructions given to the AI
+- Likely in: backend/app/cv_optimizer.py or similar
+
+STEP 2: Add these rules to the AI prompt
+
+Add the following section to the AI system prompt or instructions:
+
+───────────────────────────────────────────────────────────────────────────────
+CRITICAL: ELEMENTS YOU MUST NEVER MODIFY
+───────────────────────────────────────────────────────────────────────────────
+
+DO NOT change the FORMAT of these elements. You may fix typos IN them, but
+preserve their exact structure:
+
+1. EMAIL ADDRESSES
+   - Keep format: name@domain.com
+   - DO NOT change to: [Email] or "email address" or any placeholder
+   - OK to fix typos: jonh@gmail.com → john@gmail.com
+
+2. PHONE NUMBERS
+   - Keep format: +1-555-123-4567 or (555) 123-4567 or similar
+   - DO NOT change to: [Phone] or "phone number" or any placeholder
+   - OK to fix format inconsistency within the number
+
+3. LINKEDIN URLS
+   - Keep format: linkedin.com/in/username or full URL
+   - DO NOT change to: [LinkedIn Profile URL] or any placeholder
+   - DO NOT remove the actual URL
+   - If wrapped in markdown link, preserve: [text](linkedin.com/in/...)
+
+4. GITHUB/PORTFOLIO URLS
+   - Keep actual URLs intact
+   - DO NOT replace with placeholders
+
+EXAMPLES OF WHAT NOT TO DO:
+
+❌ WRONG: Change "linkedin.com/in/johnsmith" to "[LinkedIn Profile URL]"
+✅ RIGHT: Keep "linkedin.com/in/johnsmith" exactly as is
+
+❌ WRONG: Change "john.smith@gmail.com" to "[Email Address]"
+✅ RIGHT: Keep "john.smith@gmail.com" exactly as is
+
+❌ WRONG: Change "+972-50-1234567" to "[Phone Number]"
+✅ RIGHT: Keep "+972-50-1234567" exactly as is
+
+If a URL or contact info is MISSING, you may add a placeholder like 
+[Add LinkedIn URL here] - but NEVER replace an existing real value with 
+a placeholder.
+───────────────────────────────────────────────────────────────────────────────
+
+STEP 3: Show me the updated prompt
+
+After adding these rules, show me:
+- The file path
+- The complete updated AI prompt/instructions
+
+═══════════════════════════════════════════════════════════════════════════════
+PART 2: ADD POST-FIX VALIDATION
+═══════════════════════════════════════════════════════════════════════════════
+
+TASK:
+Create a validation function that runs AFTER AI fix to ensure critical
+elements are still detected.
+
+STEP 1: Create validation function
+
+Create file: backend/common/detection/fix_validator.py
+
+"""
+Post-Fix Validation
+Ensures AI fix didn't break critical CV elements
+"""
+
+import re
+from typing import Dict, List, Tuple
+
+EMAIL_PATTERN = r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'
+PHONE_PATTERN = r'[\+]?[(]?[0-9]{1,3}[)]?[-\s\.]?[(]?[0-9]{1,4}[)]?[-\s\.]?[0-9]{1,4}[-\s\.]?[0-9]{1,9}'
+LINKEDIN_PATTERN = r'linkedin\.com/in/[a-zA-Z0-9_-]+'
+
+
+def extract_critical_elements(text: str) -> Dict[str, List[str]]:
+    """Extract all critical elements from CV text"""
+    return {
+        'emails': re.findall(EMAIL_PATTERN, text, re.IGNORECASE),
+        'phones': re.findall(PHONE_PATTERN, text),
+        'linkedin': re.findall(LINKEDIN_PATTERN, text, re.IGNORECASE)
+    }
+
+
+def validate_fix(original_text: str, fixed_text: str) -> Tuple[bool, List[str]]:
+    """
+    Validate that AI fix didn't remove critical elements.
+    
+    Returns:
+        (is_valid, list_of_warnings)
+    """
+    original_elements = extract_critical_elements(original_text)
+    fixed_elements = extract_critical_elements(fixed_text)
+    
+    warnings = []
+    is_valid = True
+    
+    if original_elements['emails'] and not fixed_elements['emails']:
+        warnings.append("WARNING: Email address was removed or broken by fix")
+        is_valid = False
+    
+    if original_elements['phones'] and not fixed_elements['phones']:
+        warnings.append("WARNING: Phone number was removed or broken by fix")
+        is_valid = False
+    
+    if original_elements['linkedin'] and not fixed_elements['linkedin']:
+        warnings.append("WARNING: LinkedIn URL was removed or broken by fix")
+        is_valid = False
+    
+    return is_valid, warnings
+
+
+def restore_critical_elements(original_text: str, fixed_text: str) -> str:
+    """If AI broke critical elements, restore them from original."""
+    original_elements = extract_critical_elements(original_text)
+    fixed_elements = extract_critical_elements(fixed_text)
+    
+    result = fixed_text
+    
+    if original_elements['emails'] and not fixed_elements['emails']:
+        original_email = original_elements['emails'][0]
+        result = re.sub(
+            r'\[Email\s*Address?\]|\[Your\s*Email\]|\[Email\]',
+            original_email, result, flags=re.IGNORECASE
+        )
+    
+    if original_elements['phones'] and not fixed_elements['phones']:
+        original_phone = original_elements['phones'][0]
+        result = re.sub(
+            r'\[Phone\s*Number?\]|\[Your\s*Phone\]|\[Phone\]',
+            original_phone, result, flags=re.IGNORECASE
+        )
+    
+    if original_elements['linkedin'] and not fixed_elements['linkedin']:
+        original_linkedin = original_elements['linkedin'][0]
+        result = re.sub(
+            r'\[LinkedIn\s*Profile\s*URL?\]|\[Your\s*LinkedIn\]|\[LinkedIn\]',
+            original_linkedin, result, flags=re.IGNORECASE
+        )
+    
+    return result
+
+
+STEP 2: Integrate validation into fix process
+
+Find the auto-fix function and add validation AFTER AI generates fix:
+
+from backend.common.detection.fix_validator import validate_fix, restore_critical_elements
+
+# After AI generates fixed_cv_text:
+is_valid, warnings = validate_fix(original_cv_text, fixed_cv_text)
+
+if not is_valid:
+    for warning in warnings:
+        logger.warning(warning)
+    fixed_cv_text = restore_critical_elements(original_cv_text, fixed_cv_text)
+
+
+STEP 3: Add to __init__.py
+
+Update backend/common/detection/__init__.py to export:
+
+from .fix_validator import validate_fix, restore_critical_elements
+
+═══════════════════════════════════════════════════════════════════════════════
+VERIFICATION
+═══════════════════════════════════════════════════════════════════════════════
+
+After implementing both parts, test:
+
+1. Upload a CV with LinkedIn URL
+2. Run auto-fix
+3. Check that LinkedIn URL is PRESERVED in fixed CV
+4. Check that score IMPROVES (not stays same or drops)
+
+Expected result:
+- Before: 64%
+- After: 68% or higher (actual improvement, not cancelled out)
+
+───────────────────────────────────────────────────────────────────────────────
+
+REPORT FORMAT:
+
+PART 1 COMPLETE:
+- File modified: [path]
+- AI prompt updated: YES/NO
+- New instructions added: [summary]
+
+PART 2 COMPLETE:
+- fix_validator.py created: YES/NO
+- Validation integrated: YES/NO
+- Restoration logic added: YES/NO
+
+VERIFICATION:
+- LinkedIn preserved after fix: YES/NO
+- Score improved after fix: [before]% → [after]%
+
+═══════════════════════════════════════════════════════════════════════════════

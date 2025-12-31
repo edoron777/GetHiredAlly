@@ -10,6 +10,7 @@ from .contact_extractor import extract_contact_info
 from .section_extractor import extract_sections
 from .bullet_extractor import extract_bullets
 from .ai_enhancer import add_basic_suggestions, enhance_with_ai
+from .fix_validator import validate_fix, restore_critical_elements, extract_critical_elements
 from .word_lists import (
     WEAK_VERBS,
     STRONG_VERBS,

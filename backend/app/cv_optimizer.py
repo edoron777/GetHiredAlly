@@ -853,6 +853,37 @@ ISSUES TO FIX:
 {issues_list}
 
 ═══════════════════════════════════════════════════════════
+CRITICAL: ELEMENTS YOU MUST NEVER MODIFY
+═══════════════════════════════════════════════════════════
+
+DO NOT change the FORMAT of these elements. Preserve their exact structure:
+
+1. EMAIL ADDRESSES
+   - Keep format exactly: name@domain.com
+   - DO NOT replace with: [Email] or "email address" or any placeholder
+   - OK to fix typos: jonh@gmail.com → john@gmail.com
+
+2. PHONE NUMBERS  
+   - Keep format exactly: +1-555-123-4567 or (555) 123-4567
+   - DO NOT replace with: [Phone] or "phone number" or any placeholder
+
+3. LINKEDIN URLS
+   - Keep format exactly: linkedin.com/in/username or full URL
+   - DO NOT replace with: [LinkedIn Profile URL] or any placeholder
+   - DO NOT remove the actual URL
+   - If in markdown format [text](url), preserve both text and URL
+
+4. GITHUB/PORTFOLIO URLS
+   - Keep actual URLs intact, never replace with placeholders
+
+EXAMPLES:
+❌ WRONG: linkedin.com/in/johnsmith → [LinkedIn Profile URL]
+✅ RIGHT: linkedin.com/in/johnsmith (keep exactly)
+
+❌ WRONG: john.smith@gmail.com → [Email Address]  
+✅ RIGHT: john.smith@gmail.com (keep exactly)
+
+═══════════════════════════════════════════════════════════
 TRANSFORMATION RULES (APPLY AGGRESSIVELY)
 ═══════════════════════════════════════════════════════════
 
@@ -1025,6 +1056,16 @@ async def generate_fixed_cv(request: Request, scan_id: str, token: str):
             cursor.close()
             conn.close()
             raise HTTPException(status_code=500, detail="AI returned empty response")
+
+        # VALIDATION: Ensure AI didn't break critical elements (email, phone, LinkedIn)
+        from backend.common.detection.fix_validator import validate_fix, restore_critical_elements
+        
+        is_valid, warnings = validate_fix(original_content, fixed_content)
+        if not is_valid:
+            for warning in warnings:
+                logger.warning(f"[CV_FIX] {warning}")
+            fixed_content = restore_critical_elements(original_content, fixed_content)
+            logger.info("[CV_FIX] Critical elements restored after AI broke them")
 
         # Extract changes list with second AI call
         logger.info("[CV_FIX] Extracting changes list...")
