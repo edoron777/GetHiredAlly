@@ -1,0 +1,189 @@
+═══════════════════════════════════════════════════════════════════
+PROMPT 1#1: Simplify Fixed CV "Needs Your Input" Section
+═══════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify files not explicitly mentioned
+3. Do NOT add features not explicitly requested
+4. Do NOT refactor or "improve" existing code
+5. If unclear, STOP and ask - do not assume
+6. Make MINIMAL, SURGICAL changes only
+
+FORBIDDEN ACTIONS:
+- Changing the score display section
+- Modifying download buttons
+- Changing the "What Improved" section
+- Adding new features
+
+───────────────────────────────────────────────────────────────────
+
+TASK: Simplify the "Needs Your Input" section on Fixed CV page
+
+OBJECTIVE:
+- Remove confusing/redundant sections
+- Merge into ONE clear, simple section
+- Remove broken "View All Details" button
+- Remove redundant "Items Marked in Blue" section
+
+CONTEXT:
+The current Fixed CV page has 3 confusing sections that say similar things:
+1. "Needs Your Input" with detailed cards
+2. "View All Details" button (doesn't work)
+3. "Items Marked in Blue" explanation (redundant)
+
+Users are confused. We need ONE simple section.
+
+───────────────────────────────────────────────────────────────────
+
+INSTRUCTIONS:
+
+Step 1: Find the Fixed CV page component
+
+File: Look for one of these:
+- client/src/pages/FixedCVPage.tsx
+- client/src/pages/CVFixedPage.tsx
+- client/src/components/FixedCVPage.tsx
+- Or search for "Needs Your Input" in the codebase
+
+Step 2: REMOVE the "View All Details" button
+
+Find and DELETE the button that says "View All Details".
+Remove the entire button element and any associated click handler.
+
+Step 3: REMOVE the "Items Marked in Blue" section
+
+Find and DELETE the section that contains:
+- "Items Marked in Blue Need Your Input"
+- "Look for [PLACEHOLDER] text in your Fixed CV"
+- "Examples: [15 engineers], [$2.5M], [40% improvement]"
+
+Remove this entire section/div.
+
+Step 4: SIMPLIFY the "Needs Your Input" section
+
+REPLACE the current detailed "Needs Your Input" section with this simpler version:
+
+{needsInputItems && needsInputItems.length > 0 && (
+  <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 mt-6">
+    <div className="flex items-center gap-2 mb-4">
+      <span className="text-2xl">✏️</span>
+      <h3 className="text-xl font-bold text-gray-800">
+        {needsInputItems.length} Items Need Your Input
+      </h3>
+    </div>
+    
+    <p className="text-gray-600 mb-4">
+      We've marked these with <span className="text-blue-600 font-semibold">[PLACEHOLDER]</span> in your CV. 
+      Replace them with your actual information:
+    </p>
+    
+    <ul className="space-y-2 mb-4">
+      {needsInputItems.map((item, index) => (
+        <li key={index} className="flex items-start gap-2 text-gray-700">
+          <span className="text-amber-500">•</span>
+          <span>
+            <strong>{item.title || item.issue_type}</strong>
+            {item.location && <span className="text-gray-500"> ({item.location})</span>}
+          </span>
+        </li>
+      ))}
+    </ul>
+    
+    <div className="bg-white rounded-lg p-3 border border-amber-100">
+      <p className="text-sm text-gray-600">
+        💡 <strong>Tip:</strong> Search for <code className="bg-gray-100 px-1 rounded">[</code> in your downloaded CV to find all placeholders quickly!
+      </p>
+    </div>
+  </div>
+)}
+
+Step 5: Adjust variable names if needed
+
+The code above assumes:
+- needsInputItems = array of items that need user input
+- Each item has: title (or issue_type), location
+
+Check the actual variable names in the component and adjust accordingly.
+Common names might be:
+- manualFixes
+- unfixedIssues
+- remainingIssues
+- needsAttention
+
+Step 6: Clean up any unused imports or functions
+
+If the removed sections had dedicated components or handlers, remove those imports.
+
+───────────────────────────────────────────────────────────────────
+
+VISUAL COMPARISON:
+
+BEFORE (Confusing - 3 sections):
+┌─────────────────────────────────────────┐
+│ Needs Your Input                        │
+│ ┌─────────────────────────────────────┐ │
+│ │ Missing LinkedIn URL                │ │
+│ │ Location: Header                    │ │
+│ │ Example: Include the full...        │ │
+│ └─────────────────────────────────────┘ │
+│ ┌─────────────────────────────────────┐ │
+│ │ Formatting issue                    │ │
+│ │ ...                                 │ │
+│ └─────────────────────────────────────┘ │
+│         [View All Details]              │  ← REMOVE
+└─────────────────────────────────────────┘
+┌─────────────────────────────────────────┐
+│ Items Marked in Blue Need Your Input    │  ← REMOVE
+│ Look for [PLACEHOLDER] text...          │
+│ Examples: [15 engineers]...             │
+└─────────────────────────────────────────┘
+
+AFTER (Simple - 1 section):
+┌─────────────────────────────────────────┐
+│ ✏️ 3 Items Need Your Input              │
+│                                         │
+│ We've marked these with [PLACEHOLDER]   │
+│ in your CV. Replace them with your      │
+│ actual information:                     │
+│                                         │
+│ • LinkedIn URL (Header)                 │
+│ • Achievement numbers (Sales role)      │
+│ • Team size (Project Manager)           │
+│                                         │
+│ 💡 Tip: Search for [ in your CV...      │
+└─────────────────────────────────────────┘
+
+───────────────────────────────────────────────────────────────────
+
+FILES TO MODIFY:
+- Fixed CV page component (find the correct file)
+  - Remove "View All Details" button
+  - Remove "Items Marked in Blue" section
+  - Replace "Needs Your Input" with simplified version
+
+DO NOT TOUCH:
+- Score comparison section (Before/After circles)
+- "What Improved" section with category badges
+- Download buttons
+- Navigation elements
+- Backend files
+
+───────────────────────────────────────────────────────────────────
+
+WHEN COMPLETE:
+
+Confirm:
+□ "View All Details" button removed
+□ "Items Marked in Blue" section removed
+□ "Needs Your Input" simplified to one clean section
+□ Shows bullet list of items (not detailed cards)
+□ Shows helpful tip about searching for [
+□ Uses amber/yellow background color
+□ No console errors
+□ Page still displays correctly
+
+Take a screenshot of the updated Fixed CV page.
+
+═══════════════════════════════════════════════════════════════════

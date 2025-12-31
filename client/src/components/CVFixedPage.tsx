@@ -333,74 +333,40 @@ export function CVFixedPage() {
             )}
 
             {data.issues && data.issues.filter(i => i.is_auto_fixable === false).length > 0 && (
-              <div className="mt-8 pt-6 border-t border-gray-200">
-                <div className="flex items-center gap-2 justify-center mb-4">
-                  <span className="text-blue-500 text-xl">✏️</span>
-                  <h3 className="text-lg font-semibold text-gray-800">Needs Your Input</h3>
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 mt-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-2xl">✏️</span>
+                  <h3 className="text-xl font-bold text-gray-800">
+                    {data.issues.filter(i => i.is_auto_fixable === false).length} Items Need Your Input
+                  </h3>
                 </div>
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 max-w-xl mx-auto">
-                  <p className="text-sm text-blue-700">
-                    <span className="font-semibold">Look for blue placeholders</span> in your Fixed CV below. 
-                    Replace them with your actual numbers and achievements, then re-upload for another analysis.
-                  </p>
-                </div>
-                <div className="space-y-3 max-w-xl mx-auto">
+                
+                <p className="text-gray-600 mb-4">
+                  We've marked these with <span className="text-blue-600 font-semibold">[PLACEHOLDER]</span> in your CV. 
+                  Replace them with your actual information:
+                </p>
+                
+                <ul className="space-y-2 mb-4">
                   {data.issues
                     .filter(i => i.is_auto_fixable === false)
-                    .slice(0, 5)
                     .map((issue) => (
-                      <div key={issue.id} className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                        <div className="flex items-start gap-2">
-                          <span className="text-blue-600 mt-0.5">📝</span>
-                          <div className="flex-1">
-                            <p className="font-medium text-gray-800 text-sm">{issue.issue}</p>
-                            <p className="text-xs text-gray-600 mt-1">
-                              <span className="font-medium">Location:</span> {issue.location}
-                            </p>
-                            <div className="mt-2 bg-white border border-dashed border-blue-300 rounded p-2">
-                              <p className="text-xs text-blue-800">
-                                <span className="font-medium">Example:</span> {issue.suggested_fix}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                      <li key={issue.id} className="flex items-start gap-2 text-gray-700">
+                        <span className="text-amber-500">•</span>
+                        <span>
+                          <strong>{issue.issue}</strong>
+                          {issue.location && <span className="text-gray-500"> ({issue.location})</span>}
+                        </span>
+                      </li>
                     ))}
-                  {data.issues.filter(i => i.is_auto_fixable === false).length > 5 && (
-                    <p className="text-center text-sm text-gray-500">
-                      +{data.issues.filter(i => i.is_auto_fixable === false).length - 5} more items
-                    </p>
-                  )}
-                </div>
-                <div className="text-center mt-4">
-                  <button
-                    onClick={() => window.open(`/service/cv-optimizer/report/${scanId}`, '_blank')}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 transition-colors text-sm font-medium"
-                  >
-                    <FileText size={16} />
-                    View All Details
-                  </button>
+                </ul>
+                
+                <div className="bg-white rounded-lg p-3 border border-amber-100">
+                  <p className="text-sm text-gray-600">
+                    💡 <strong>Tip:</strong> Search for <code className="bg-gray-100 px-1 rounded">[</code> in your downloaded CV to find all placeholders quickly!
+                  </p>
                 </div>
               </div>
             )}
-          </div>
-        )}
-
-        {data.issues && data.issues.filter(i => i.is_auto_fixable === false).length > 0 && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <div className="flex items-start gap-3">
-              <span className="text-2xl">✏️</span>
-              <div>
-                <h4 className="font-semibold text-blue-800">Items Marked in Blue Need Your Input</h4>
-                <p className="text-sm text-blue-700 mt-1">
-                  Look for <span className="bg-blue-100 text-blue-800 px-1 rounded border border-dashed border-blue-400 text-xs">[PLACEHOLDER]</span> text in your Fixed CV. 
-                  Replace these with your actual numbers and achievements.
-                </p>
-                <p className="text-xs text-blue-600 mt-2">
-                  Examples: <span className="bg-blue-100 px-1 rounded">[15 engineers]</span>, <span className="bg-blue-100 px-1 rounded">[$2.5M]</span>, <span className="bg-blue-100 px-1 rounded">[40% improvement]</span>
-                </p>
-              </div>
-            </div>
           </div>
         )}
 
