@@ -25,14 +25,14 @@ const PathCard: React.FC<PathCardProps> = ({
   
   const cardStyles = isBlue
     ? 'border-2 border-blue-400 bg-blue-50 shadow-lg'
-    : 'border border-gray-200 bg-white';
+    : 'border border-gray-300 bg-gray-50';
     
   const buttonStyles = isBlue
     ? 'bg-blue-600 hover:bg-blue-700 text-white'
     : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300';
     
-  const iconBg = isBlue ? 'bg-blue-100' : 'bg-red-100';
-  const icon = isBlue ? '💊' : '🔍';
+  const iconBg = isBlue ? 'bg-blue-100' : 'bg-gray-100';
+  const icon = isBlue ? '⚡' : '📋';
 
   return (
     <div className={`rounded-xl p-6 ${cardStyles} flex flex-col h-full`}>

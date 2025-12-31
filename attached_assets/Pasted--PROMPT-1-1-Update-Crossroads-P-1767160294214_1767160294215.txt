@@ -1,0 +1,64 @@
+═══════════════════════════════════════════════════════════════════
+PROMPT 1#1: Update Crossroads Page UI Design
+═══════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify files not explicitly mentioned
+3. Do NOT add features not explicitly requested
+4. Do NOT refactor or "improve" existing code
+5. If unclear, STOP and ask - do not assume
+6. Make MINIMAL, SURGICAL changes only
+
+FORBIDDEN ACTIONS:
+- Changing navigation logic
+- Modifying other components
+- Adding new features
+
+───────────────────────────────────────────────────────────────────
+
+TASK: Update Crossroads page icons, colors, and content
+
+OBJECTIVE:
+- Change icons to universal symbols (remove Matrix reference)
+- Update Deep Dive card background color
+- Remove discouraging time estimation from Deep Dive
+- Update feature text to be more positive
+
+CONTEXT:
+The Matrix pill reference is confusing for most users.
+The time estimation ("2h 30m") discourages users from choosing Deep Dive.
+We need universal icons that communicate SPEED vs CONTROL.
+
+───────────────────────────────────────────────────────────────────
+
+INSTRUCTIONS:
+
+Step 1: Update PathCard.tsx
+
+File: client/src/components/cv-optimizer/PathCard.tsx
+
+FIND this code (around line 25-30):
+  const iconBg = isBlue ? 'bg-blue-100' : 'bg-red-100';
+  const icon = isBlue ? '💊' : '🔍';
+
+REPLACE WITH:
+  const iconBg = isBlue ? 'bg-blue-100' : 'bg-gray-100';
+  const icon = isBlue ? '⚡' : '📋';
+
+───────────────────────────────────────────────────────────────────
+
+Step 2: Update PathCard.tsx - Card background for "red" variant
+
+FIND this code (around line 20):
+  const cardStyles = isBlue
+    ? 'border-2 border-blue-400 bg-blue-50 shadow-lg'
+    : 'border border-gray-200 bg-white';
+
+REPLACE WITH:
+  const cardStyles = isBlue
+    ? 'border-2 border-blue-400 bg-blue-50 shadow-lg'
+    : 'border border-gray-300 bg-gray-50';
+
+───────
