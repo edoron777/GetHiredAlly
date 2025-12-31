@@ -1,0 +1,129 @@
+═══════════════════════════════════════════════════════════════════════════════
+PROJECT: CV Issue Catalog Backend - PROMPT 6 OF 10
+═══════════════════════════════════════════════════════════════════════════════
+
+CONTEXT:
+Continuing from Prompt D1. API routes created.
+
+───────────────────────────────────────────────────────────────────────────────
+
+TASK: Initialize Catalog Service on App Startup
+
+Modify the main.py file to:
+1. Initialize the CatalogService when the app starts
+2. Register the catalog routes
+
+───────────────────────────────────────────────────────────────────────────────
+
+FIND in backend/main.py the app initialization code.
+
+ADD these imports at the top:
+
+```python
+from common.catalog import init_catalog_service
+from routes.catalog_routes import router as catalog_router
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+ADD catalog initialization after Supabase client is created.
+
+Look for where the Supabase client is initialized (usually something like):
+```python
+supabase = create_client(url, key)
+```
+
+ADD after it:
+```python
+# Initialize CV Issue Catalog Service
+try:
+    catalog_service = init_catalog_service(supabase)
+    print("✓ CV Issue Catalog loaded successfully")
+except Exception as e:
+    print(f"⚠ Warning: Failed to load CV Issue Catalog: {e}")
+    # App can still run, but catalog features won't work
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+ADD route registration.
+
+Look for where other routers are included (usually something like):
+```python
+app.include_router(some_router)
+```
+
+ADD:
+```python
+app.include_router(catalog_router)
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+ALTERNATIVE: If using lifespan context manager
+
+If the app uses FastAPI's lifespan, add to the lifespan function:
+
+```python
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    try:
+        from common.catalog import init_catalog_service
+        # Assumes supabase client is available
+        init_catalog_service(supabase)
+        print("✓ CV Issue Catalog loaded")
+    except Exception as e:
+        print(f"⚠ Catalog load warning: {e}")
+    
+    yield  # App runs
+    
+    # Shutdown (if needed)
+    pass
+
+app = FastAPI(lifespan=lifespan)
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+
+After making changes, restart the app and check:
+
+1. Check console output shows: "✓ CV Issue Catalog loaded successfully"
+
+2. Test the health endpoint:
+   GET /api/catalog/health
+   
+   Expected response:
+   {
+     "status": "ok",
+     "is_ready": true,
+     "cache_loaded": true,
+     "loaded_at": "2025-12-31T..."
+   }
+
+3. Test getting issues:
+   GET /api/catalog/summary
+   
+   Expected response:
+   {
+     "total_categories": 7,
+     "total_subcategories": 21,
+     "total_issue_types": 50,
+     ...
+   }
+
+───────────────────────────────────────────────────────────────────────────────
+
+VERIFICATION CHECKLIST:
+- [ ] Imports added to main.py
+- [ ] Catalog initialization added after Supabase client
+- [ ] Router registered with app
+- [ ] App starts without errors
+- [ ] /api/catalog/health returns is_ready: true
+- [ ] /api/catalog/summary shows 50 issues
+
+═══════════════════════════════════════════════════════════════════════════════
