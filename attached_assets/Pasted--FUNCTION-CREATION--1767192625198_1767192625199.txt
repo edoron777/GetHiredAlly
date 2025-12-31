@@ -1,0 +1,343 @@
+═══════════════════════════════════════════════════════════════════════════════
+FUNCTION CREATION: UserSessionKeep
+Following: ReplitFunctionCreationGuidelines v1.0
+═══════════════════════════════════════════════════════════════════════════════
+
+FUNCTION REQUIREMENTS:
+- Display a banner when user has existing work in progress
+- Allow user to "Continue" or "Start New"
+- "Start New" shows confirmation dialog
+- Must work across ALL services (not just one)
+- Must be reusable (import once, use everywhere)
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 1: SEARCH FOR EXISTING SOLUTION
+═══════════════════════════════════════════════════════════════════════════════
+
+Before writing new code, search for existing solutions:
+
+1. Check npm packages:
+   - Search: "react session banner" or "react continue work component"
+   - Search: "react persistent session ui"
+
+2. Check existing GetHiredAlly code:
+   - Does CVOptimizerPage.tsx have similar banner code?
+   - Can we extract and generalize it?
+
+3. Check common UI libraries:
+   - Does shadcn/ui have a suitable component?
+   - Does the project already use a component library?
+
+REPORT YOUR FINDINGS:
+- External package found: YES/NO
+- If YES: Package name and how to use
+- If NO: Proceed to Step 2
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 2: DECIDE - USE EXTERNAL OR WRITE NEW
+═══════════════════════════════════════════════════════════════════════════════
+
+Based on Step 1 findings:
+
+OPTION A: If suitable external solution found
+- Install the package
+- Integrate into project
+- Skip to Step 4 (Document)
+
+OPTION B: If no suitable solution OR existing code can be extracted
+- Extract existing code from CVOptimizerPage.tsx if applicable
+- Proceed to Step 3 (Write new code)
+
+REPORT YOUR DECISION:
+- Decision: USE EXTERNAL / EXTRACT EXISTING / WRITE NEW
+- Reason: [explain]
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 3: ISOLATE - CREATE FUNCTION IN DEDICATED FILES
+═══════════════════════════════════════════════════════════════════════════════
+
+CRITICAL: Do NOT mix function code with service code!
+
+CREATE FOLDER: client/src/components/common/UserSessionKeep/
+
+FOLDER STRUCTURE:
+client/src/components/common/UserSessionKeep/
+├── sessionTypes.ts      # Types and configs
+├── useServiceSession.ts # Custom hook
+├── UserSessionKeep.tsx  # Main component
+└── index.ts             # Exports
+
+───────────────────────────────────────────────────────────────────────────────
+FILE 1: sessionTypes.ts
+───────────────────────────────────────────────────────────────────────────────
+
+Create TypeScript file with:
+
+1. ServiceSessionData interface:
+   - id: string | number
+   - serviceName: string
+   - displayTitle: string
+   - summary: string
+   - updatedAt: string
+   - status: 'completed' | 'in_progress' | 'pending'
+   - continueUrl: string
+   - metadata?: Record<string, any>
+
+2. ServiceConfig interface:
+   - serviceName: string
+   - displayName: string
+   - apiEndpoint: string
+   - archiveEndpoint: string
+   - getContinueUrl: (id) => string
+   - formatSummary: (data) => string
+
+3. SERVICE_CONFIGS object with entries for:
+
+   'cv-optimizer':
+     displayName: 'Perfect Your CV'
+     apiEndpoint: '/api/cv-optimizer/latest'
+     archiveEndpoint: '/api/cv-optimizer/scans'
+     getContinueUrl: (id) => /service/cv-optimizer/crossroads/{id}
+     formatSummary: (data) => Score: {score}% • {total_issues} issues found
+
+   'xray-analyzer':
+     displayName: 'Decode the Job Post'
+     apiEndpoint: '/api/xray/latest'
+     archiveEndpoint: '/api/xray/sessions'
+     getContinueUrl: (id) => /service/understand-job/results/{id}
+     formatSummary: (data) => {job_title} at {company_name}
+
+   'predict-questions':
+     displayName: 'Predict the Questions'
+     apiEndpoint: '/api/smart-questions/latest'
+     archiveEndpoint: '/api/smart-questions/results'
+     getContinueUrl: (id) => /service/predict-questions/smart/results/{id}
+     formatSummary: (data) => {question_count} questions predicted
+
+───────────────────────────────────────────────────────────────────────────────
+FILE 2: useServiceSession.ts
+───────────────────────────────────────────────────────────────────────────────
+
+Create custom React hook that:
+
+1. Takes serviceName as parameter
+2. Gets config from SERVICE_CONFIGS
+3. Fetches latest session from API on mount
+4. Returns object with:
+   - session: ServiceSessionData | null
+   - isLoading: boolean
+   - error: string | null
+   - archiveSession: () => Promise<boolean>
+   - refreshSession: () => Promise<void>
+
+Use getAuthToken() from lib/auth.ts for authentication.
+
+───────────────────────────────────────────────────────────────────────────────
+FILE 3: UserSessionKeep.tsx
+───────────────────────────────────────────────────────────────────────────────
+
+Create React component with:
+
+1. Props:
+   - serviceName: string (required)
+   - onStartNew?: () => void (optional callback)
+
+2. Uses useServiceSession hook
+
+3. Renders nothing if isLoading or no session
+
+4. Banner UI (when session exists):
+   - Blue background box
+   - Icon: 📄
+   - Title: "You have work in progress"
+   - Summary text from session
+   - "Last updated: X minutes ago"
+   - [Continue] button - links to session.continueUrl
+   - [Start New] button - opens confirmation dialog
+
+5. Confirmation Dialog:
+   - Title: "⚠️ Start New Analysis?"
+   - Shows current work details
+   - [Cancel] button
+   - [Download Results] button (optional)
+   - [Start New] button - calls archiveSession then onStartNew
+
+6. formatTimeAgo helper function for "X minutes ago" display
+
+───────────────────────────────────────────────────────────────────────────────
+FILE 4: index.ts
+───────────────────────────────────────────────────────────────────────────────
+
+Export:
+- UserSessionKeep (default and named)
+- useServiceSession
+- SERVICE_CONFIGS
+- ServiceSessionData type
+- ServiceConfig type
+
+───────────────────────────────────────────────────────────────────────────────
+BACKEND API ENDPOINTS
+───────────────────────────────────────────────────────────────────────────────
+
+Check which endpoints already exist. Create missing ones:
+
+CV Optimizer:
+- GET /api/cv-optimizer/latest - EXISTS? Check and report
+- POST /api/cv-optimizer/scans/{id}/archive - EXISTS? Check and report
+
+X-Ray Analyzer (in analyze.py):
+- GET /api/xray/latest
+  Returns: id, job_title, company_name, status, created_at, updated_at
+  
+- POST /api/xray/sessions/{id}/archive
+  Sets status = 'archived'
+
+Predict Questions (in smart_questions.py):
+- GET /api/smart-questions/latest
+  Returns: id, job_title, question_count, status, created_at, updated_at
+  
+- POST /api/smart-questions/results/{id}/archive
+  Sets status = 'archived'
+
+Add 'status' column to tables if missing:
+- analysis_sessions: ADD status VARCHAR(20) DEFAULT 'completed'
+- smart_question_results: ADD status VARCHAR(20) DEFAULT 'completed'
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 4: DOCUMENT - CREATE FUNCTION DOCUMENTATION
+═══════════════════════════════════════════════════════════════════════════════
+
+CREATE FILE: client/src/components/common/UserSessionKeep/README.md
+
+Content:
+
+# UserSessionKeep Component
+
+## Location
+client/src/components/common/UserSessionKeep/
+
+## How to Import
+import { UserSessionKeep } from '../common/UserSessionKeep';
+
+## How to Use
+<UserSessionKeep 
+  serviceName="cv-optimizer"
+  onStartNew={() => console.log('Starting new')}
+/>
+
+## Props
+| Prop | Type | Required | Description |
+|------|------|----------|-------------|
+| serviceName | string | YES | Service identifier |
+| onStartNew | function | NO | Callback after archive |
+
+## Supported Services
+| serviceName | Display Name |
+|-------------|--------------|
+| cv-optimizer | Perfect Your CV |
+| xray-analyzer | Decode the Job Post |
+| predict-questions | Predict the Questions |
+
+## How to Add New Service
+1. Add config to SERVICE_CONFIGS in sessionTypes.ts
+2. Create GET /api/{service}/latest endpoint
+3. Create POST /api/{service}/{id}/archive endpoint
+4. Use <UserSessionKeep serviceName="new-service" /> in page
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 5: REGISTER - UPDATE COMPONENT REGISTRY
+═══════════════════════════════════════════════════════════════════════════════
+
+UPDATE FILE: client/src/components/common/index.ts
+
+ADD this line:
+export { UserSessionKeep, useServiceSession, SERVICE_CONFIGS } from './UserSessionKeep';
+
+REGISTRY ENTRY:
+| Field | Value |
+|-------|-------|
+| Function Name | UserSessionKeep |
+| File Path | client/src/components/common/UserSessionKeep/ |
+| Purpose | Display "Continue work" banner across all services |
+| Parameters | serviceName (string), onStartNew (optional callback) |
+| Return Value | React component (JSX) |
+| Date Added | December 31, 2025 |
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 6: VERIFY - TEST FUNCTION ACCESSIBILITY
+═══════════════════════════════════════════════════════════════════════════════
+
+TEST 1: Import Test
+- Can other files import from common/UserSessionKeep? 
+
+TEST 2: CV Optimizer Integration
+- Add to CVOptimizerPage.tsx
+- Upload CV, analyze, go Home, return
+- Banner should appear with "Continue" option
+
+TEST 3: X-Ray Integration
+- Add to UnderstandJobPage.tsx
+- Analyze job, go Home, return
+- Banner should appear
+
+TEST 4: Start New Flow
+- Click "Start New" on banner
+- Confirmation dialog appears
+- Confirm - session archived, banner disappears
+
+═══════════════════════════════════════════════════════════════════════════════
+REPORT FORMAT
+═══════════════════════════════════════════════════════════════════════════════
+
+STEP 1: SEARCH
+- External package found: YES/NO
+- Existing code found in CVOptimizerPage: YES/NO
+
+STEP 2: DECIDE
+- Decision: USE EXTERNAL / EXTRACT EXISTING / WRITE NEW
+- Reason: ___
+
+STEP 3: ISOLATE
+- Folder created: YES/NO
+- Files created:
+  [ ] sessionTypes.ts
+  [ ] useServiceSession.ts
+  [ ] UserSessionKeep.tsx
+  [ ] index.ts
+- Backend endpoints created/verified:
+  [ ] /api/cv-optimizer/latest
+  [ ] /api/xray/latest
+  [ ] /api/smart-questions/latest
+  [ ] Archive endpoints
+
+STEP 4: DOCUMENT
+- README.md created: YES/NO
+
+STEP 5: REGISTER
+- Export added to common/index.ts: YES/NO
+
+STEP 6: VERIFY
+- Import test: PASS/FAIL
+- CV Optimizer integration: PASS/FAIL
+- X-Ray integration: PASS/FAIL
+- Start New flow: PASS/FAIL
+
+═══════════════════════════════════════════════════════════════════════════════
+VALIDATION CHECKLIST
+═══════════════════════════════════════════════════════════════════════════════
+
+CODE QUALITY:
+[ ] External solution search completed
+[ ] Code stored in separate, dedicated files
+[ ] Function is importable from other services
+
+DOCUMENTATION:
+[ ] Function location documented
+[ ] Usage instructions provided
+[ ] Parameters documented
+
+REGISTRY:
+[ ] Component Registry updated
+[ ] Entry includes all required information
+
+═══════════════════════════════════════════════════════════════════════════════
