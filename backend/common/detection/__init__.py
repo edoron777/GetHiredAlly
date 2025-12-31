@@ -9,6 +9,7 @@ from .master_detector import detect_all_issues, get_detection_summary
 from .contact_extractor import extract_contact_info
 from .section_extractor import extract_sections
 from .bullet_extractor import extract_bullets
+from .ai_enhancer import add_basic_suggestions, enhance_with_ai
 from .word_lists import (
     WEAK_VERBS,
     STRONG_VERBS,
