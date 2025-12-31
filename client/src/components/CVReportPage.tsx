@@ -53,19 +53,39 @@ interface ReportData {
   }
 }
 
+const SEVERITY_DISPLAY: Record<string, string> = {
+  'critical': 'Critical',
+  'important': 'Important',
+  'consider': 'Consider',
+  'polish': 'Polish',
+  'high': 'Important',
+  'medium': 'Consider',
+  'low': 'Polish'
+}
+
+const SEVERITY_COLORS: Record<string, string> = {
+  'critical': 'text-red-600 bg-red-50 border-red-200',
+  'important': 'text-orange-600 bg-orange-50 border-orange-200',
+  'consider': 'text-yellow-600 bg-yellow-50 border-yellow-200',
+  'polish': 'text-green-600 bg-green-50 border-green-200',
+  'high': 'text-orange-600 bg-orange-50 border-orange-200',
+  'medium': 'text-yellow-600 bg-yellow-50 border-yellow-200',
+  'low': 'text-green-600 bg-green-50 border-green-200'
+}
+
 const SEVERITY_FILTERS = [
   { id: 'all', label: 'All', icon: '' },
   { id: 'critical', label: 'Critical', icon: '🔴' },
-  { id: 'high', label: 'Important', icon: '🟠' },
-  { id: 'medium', label: 'Consider', icon: '🟡' },
-  { id: 'low', label: 'Polish', icon: '🟢' }
+  { id: 'important', label: 'Important', icon: '🟠' },
+  { id: 'consider', label: 'Consider', icon: '🟡' },
+  { id: 'polish', label: 'Polish', icon: '🟢' }
 ]
 
 const SEVERITY_SECTIONS = [
   { key: 'critical', label: 'CRITICAL', icon: '🔴', bgColor: 'bg-red-50', borderColor: 'border-red-200', textColor: 'text-red-700' },
-  { key: 'high', label: 'IMPORTANT', icon: '🟠', bgColor: 'bg-orange-50', borderColor: 'border-orange-200', textColor: 'text-orange-700' },
-  { key: 'medium', label: 'CONSIDER', icon: '🟡', bgColor: 'bg-yellow-50', borderColor: 'border-yellow-200', textColor: 'text-yellow-700' },
-  { key: 'low', label: 'POLISH', icon: '🟢', bgColor: 'bg-green-50', borderColor: 'border-green-200', textColor: 'text-green-700' }
+  { key: 'important', label: 'IMPORTANT', icon: '🟠', bgColor: 'bg-orange-50', borderColor: 'border-orange-200', textColor: 'text-orange-700' },
+  { key: 'consider', label: 'CONSIDER', icon: '🟡', bgColor: 'bg-yellow-50', borderColor: 'border-yellow-200', textColor: 'text-yellow-700' },
+  { key: 'polish', label: 'POLISH', icon: '🟢', bgColor: 'bg-green-50', borderColor: 'border-green-200', textColor: 'text-green-700' }
 ]
 
 const FIX_STATUS_MESSAGES = [

@@ -178,17 +178,31 @@ interface IssueCardProps {
   effortColor: EffortGroup['color'];
 }
 
+const SEVERITY_DISPLAY: Record<string, string> = {
+  'critical': 'Critical',
+  'important': 'Important',
+  'consider': 'Consider',
+  'polish': 'Polish',
+  'high': 'Important',
+  'medium': 'Consider',
+  'low': 'Polish'
+};
+
+const SEVERITY_COLORS: Record<string, string> = {
+  'critical': 'bg-red-100 text-red-700',
+  'important': 'bg-orange-100 text-orange-700',
+  'consider': 'bg-yellow-100 text-yellow-700',
+  'polish': 'bg-green-100 text-green-700',
+  'high': 'bg-orange-100 text-orange-700',
+  'medium': 'bg-yellow-100 text-yellow-700',
+  'low': 'bg-green-100 text-green-700'
+};
+
 function IssueCard({ 
   issue, 
   isExpanded, 
   onToggle,
 }: IssueCardProps) {
-  const severityColors: Record<string, string> = {
-    critical: 'bg-red-100 text-red-700',
-    high: 'bg-orange-100 text-orange-700',
-    medium: 'bg-yellow-100 text-yellow-700',
-    low: 'bg-green-100 text-green-700'
-  };
 
   return (
     <div className="border border-gray-200 rounded-lg overflow-hidden">
@@ -204,8 +218,8 @@ function IssueCard({
           )}
           <span className="font-medium text-gray-900">{issue.issue}</span>
         </div>
-        <span className={`text-xs px-2 py-1 rounded-full ${severityColors[issue.severity] || 'bg-gray-100 text-gray-700'}`}>
-          {issue.severity}
+        <span className={`text-xs px-2 py-1 rounded-full ${SEVERITY_COLORS[issue.severity] || 'bg-gray-100 text-gray-700'}`}>
+          {SEVERITY_DISPLAY[issue.severity] || issue.severity}
         </span>
       </button>
 

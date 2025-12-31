@@ -1,0 +1,300 @@
+═══════════════════════════════════════════════════════════════════════════════
+PROJECT: CV Issue Catalog Backend - PROMPT 9 OF 10
+═══════════════════════════════════════════════════════════════════════════════
+
+CONTEXT:
+Backend is complete. Now fixing frontend display bugs.
+
+BUGS TO FIX:
+1. Boxes always expanded (should be collapsed by default)
+2. SUGGESTED FIX shows empty (field name: 'suggestion')
+3. FOUND shows "..." (field name: 'current')
+4. Severity labels wrong (should be: Critical, Important, Consider, Polish)
+5. "Items Need Your Input" needs expand/collapse with tips
+
+───────────────────────────────────────────────────────────────────────────────
+
+FILE: client/src/components/CVReportPage.tsx (or similar)
+
+───────────────────────────────────────────────────────────────────────────────
+
+FIX 1: Add Severity Display Constants
+
+Add at the top of the file:
+
+```typescript
+// Severity display configuration
+const SEVERITY_DISPLAY: Record = {
+  'critical': 'Critical',
+  'important': 'Important',
+  'consider': 'Consider',
+  'polish': 'Polish',
+  // Legacy support
+  'high': 'Important',
+  'medium': 'Consider',
+  'low': 'Polish'
+};
+
+const SEVERITY_COLORS: Record = {
+  'critical': 'text-red-600 bg-red-50 border-red-200',
+  'important': 'text-orange-600 bg-orange-50 border-orange-200',
+  'consider': 'text-yellow-600 bg-yellow-50 border-yellow-200',
+  'polish': 'text-green-600 bg-green-50 border-green-200',
+  // Legacy support
+  'high': 'text-orange-600 bg-orange-50 border-orange-200',
+  'medium': 'text-yellow-600 bg-yellow-50 border-yellow-200',
+  'low': 'text-green-600 bg-green-50 border-green-200'
+};
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+FIX 2: Fix Expand/Collapse Default State
+
+Find the condition that shows expanded content.
+
+LOOK FOR pattern like:
+```typescript
+{(displayLevel >= 2 || expandedIssues.has(issue.id)) && (
+```
+
+CHANGE TO:
+```typescript
+{expandedIssues.has(issue.id) && (
+```
+
+This ensures boxes start COLLAPSED and only expand when clicked.
+
+───────────────────────────────────────────────────────────────────────────────
+
+FIX 3: Ensure Issue Interface Matches Backend
+
+The Issue interface should use these field names:
+
+```typescript
+interface Issue {
+  id: number;
+  issue_type?: string;
+  issue?: string;           // Issue title/display name
+  display_name?: string;
+  severity: string;         // critical, important, consider, polish
+  category?: string;
+  subcategory?: string;
+  location: string;
+  current?: string;         // Found text (NOT current_text)
+  suggestion?: string;      // Tip/fix suggestion (NOT suggested_fix)
+  fix_difficulty?: string;
+  can_auto_fix?: boolean;
+  auto_fix_type?: string;
+  user_effort?: string;
+  weight?: number;
+}
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+FIX 4: Update Severity Badge Display
+
+Where severity badge is rendered, use the constants:
+
+```typescript
+
+  {SEVERITY_DISPLAY[issue.severity] || issue.severity}
+
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+FIX 5: Update Expanded Content Display
+
+In the expanded section, show suggestion and current:
+
+```typescript
+{expandedIssues.has(issue.id) && (
+  
+
+    {/* How to Fix / Suggestion */}
+    {issue.suggestion && (
+      
+
+        
+
+How to Fix
+
+
+        
+
+          {issue.suggestion}
+        
+
+      
+
+    )}
+    
+    {/* Found in Your CV */}
+    {issue.current && (
+      
+
+        
+
+Found in Your CV
+
+
+        
+
+          "{issue.current}"
+        
+
+      
+
+    )}
+    
+    {/* Location */}
+    {issue.location && (
+      
+
+        
+
+Location
+
+
+        
+
+{issue.location}
+
+
+      
+
+    )}
+  
+
+)}
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+FIX 6: "Items Need Your Input" Section
+
+Find where manual fix items are displayed (CVFixedPage or similar).
+
+Add expand/collapse state:
+
+```typescript
+const [expandedManualItems, setExpandedManualItems] = useState>(new Set());
+
+const toggleManualItem = (id: number) => {
+  setExpandedManualItems(prev => {
+    const next = new Set(prev);
+    if (next.has(id)) {
+      next.delete(id);
+    } else {
+      next.add(id);
+    }
+    return next;
+  });
+};
+```
+
+Render with expand/collapse:
+
+```typescript
+{manualFixItems.map((item, index) => {
+  const itemId = item.id || index;
+  const isExpanded = expandedManualItems.has(itemId);
+  
+  return (
+    
+
+      {/* Clickable Header */}
+      
+ toggleManualItem(itemId)}
+      >
+        
+
+          
+          
+            {item.display_name || item.issue}
+          
+        
+
+        
+          {isExpanded ? '▼' : '▶'}
+        
+      
+
+      
+      {/* Expanded Content */}
+      {isExpanded && (
+        
+
+          {/* How to Fix */}
+          
+
+            
+
+How to Fix
+
+
+            
+
+              {item.suggestion || 'Review this issue and make appropriate changes.'}
+            
+
+          
+
+          
+          {/* Found Text */}
+          {item.current && (
+            
+
+              
+
+Found in Your CV
+
+
+              
+
+                "{item.current}"
+              
+
+            
+
+          )}
+          
+          {/* Location */}
+          {item.location && (
+            
+
+              
+
+Location
+
+
+              
+
+{item.location}
+
+
+            
+
+          )}
+        
+
+      )}
+    
+
+  );
+})}
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+VERIFICATION CHECKLIST:
+- [ ] Severity constants added
+- [ ] Boxes collapsed by default
+- [ ] Field names correct (current, suggestion)
+- [ ] Severity badges show correct labels
+- [ ] Expanded content shows tip and found text
+- [ ] "Items Need Your Input" has expand/collapse
+
+═══════════════════════════════════════════════════════════════════════════════

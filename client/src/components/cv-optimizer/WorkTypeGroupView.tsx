@@ -62,8 +62,21 @@ export default function WorkTypeGroupView({
     return mins > 0 ? `${hours}h ${mins}m` : `${hours} hour${hours > 1 ? 's' : ''}`;
   };
 
+  const SEVERITY_DISPLAY: Record<string, string> = {
+    'critical': 'Critical',
+    'important': 'Important',
+    'consider': 'Consider',
+    'polish': 'Polish',
+    'high': 'Important',
+    'medium': 'Consider',
+    'low': 'Polish'
+  };
+
   const severityColors: Record<string, string> = {
     critical: 'bg-red-100 text-red-700',
+    important: 'bg-orange-100 text-orange-700',
+    consider: 'bg-yellow-100 text-yellow-700',
+    polish: 'bg-green-100 text-green-700',
     high: 'bg-orange-100 text-orange-700',
     medium: 'bg-yellow-100 text-yellow-700',
     low: 'bg-green-100 text-green-700'
@@ -134,7 +147,7 @@ export default function WorkTypeGroupView({
                           <span className="font-medium text-gray-900">{issue.issue}</span>
                         </div>
                         <span className={`text-xs px-2 py-1 rounded-full ${severityColors[issue.severity] || 'bg-gray-100 text-gray-700'}`}>
-                          {issue.severity}
+                          {SEVERITY_DISPLAY[issue.severity] || issue.severity}
                         </span>
                       </button>
 
