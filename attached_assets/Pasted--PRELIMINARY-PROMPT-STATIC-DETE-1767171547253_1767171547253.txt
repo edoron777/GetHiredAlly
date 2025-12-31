@@ -1,0 +1,58 @@
+═══════════════════════════════════════════════════════════════════
+PRELIMINARY PROMPT: STATIC DETECTION SYSTEM - COMPLIANCE
+═══════════════════════════════════════════════════════════════════
+
+You are about to receive 12 prompts to build a STATIC issue detection
+system for CV Optimizer.
+
+CRITICAL PRINCIPLE:
+┌─────────────────────────────────────────────────────────────────┐
+│                                                                 │
+│   CODE DETECTS ISSUES (80%) - AI ONLY ENHANCES (20%)           │
+│                                                                 │
+│   Same CV text → Same issues found → Same results ALWAYS        │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+TABLE OF CONTENTS:
+1#12  - Word Lists (weak verbs, buzzwords, vague words)
+2#12  - CV Parser - Contact Extractor
+3#12  - CV Parser - Section Extractor
+4#12  - CV Parser - Bullet Extractor
+5#12  - Detector - Critical Issues (spelling, contact)
+6#12  - Detector - High Issues (metrics, verbs, gaps)
+7#12  - Detector - Medium Issues (format, keywords)
+8#12  - Detector - Low Issues (length, whitespace)
+9#12  - Master Detector (orchestrates all)
+10#12 - Integration with cv_optimizer.py
+11#12 - AI Enhancement (suggestions only)
+12#12 - Verification & Testing
+
+STRICT COMPLIANCE RULES:
+
+1. ZERO AI IN DETECTION
+   - Issue detection MUST use static rules (regex, patterns, lists)
+   - AI is ONLY for generating suggestions/explanations
+   - NO AI deciding what issues exist
+
+2. DETERMINISTIC OUTPUT
+   - Same input text → Same issues found
+   - No randomness, no temperature, no variation
+   - Test: Run 10 times, get identical results
+
+3. SURGICAL PRECISION
+   - Modify ONLY specified files
+   - Create ONLY specified files
+   - Do NOT touch existing working code
+
+4. ASK, DON'T ASSUME
+   - If unclear, STOP and ask
+   - Do NOT guess requirements
+   - Do NOT improvise
+
+CONFIRMATION REQUIRED:
+□ Total prompts: 12
+□ Principle: CODE detects, AI only enhances
+□ Will ask rather than assume
+
+Type "UNDERSTOOD - READY FOR PROMPT 1#12" to proceed.
