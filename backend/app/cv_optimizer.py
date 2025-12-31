@@ -216,13 +216,36 @@ Analyze this CV thoroughly and identify ALL issues that could hurt the candidate
 For each issue found, return a JSON object with:
 - id: sequential number
 - issue: brief description of the problem
-- severity: "critical" | "high" | "medium" | "low"
+- issue_type: MUST be one of the EXACT values listed below
 - category: one of the categories below
 - location: where in the CV (section name)
 - current_text: the exact problematic text (quote it)
 - suggested_fix: how to fix it with example
 - fix_difficulty: "quick" | "medium" | "complex"
 - is_auto_fixable: true/false (can AI fix this without human input?)
+
+ISSUE_TYPE VALUES - Use EXACTLY one of these (do NOT invent new types):
+
+CRITICAL ISSUES (will cause immediate rejection):
+"SPELLING_ERROR", "GRAMMAR_ERROR", "MISSING_EMAIL", "MISSING_PHONE", 
+"INVALID_EMAIL", "INVALID_PHONE"
+
+HIGH PRIORITY (major competitive disadvantage):
+"NO_METRICS", "WEAK_ACTION_VERBS", "EMPLOYMENT_GAP", "MISSING_LINKEDIN",
+"VAGUE_DESCRIPTION", "NO_ACHIEVEMENTS", "MISSING_DATES", "MISSING_COMPANY",
+"MISSING_TITLE", "BUZZWORD_STUFFING"
+
+MEDIUM PRIORITY (optimization opportunity):
+"FORMAT_INCONSISTENT", "WEAK_SUMMARY", "SECTION_ORDER", "ATS_INCOMPATIBLE",
+"BULLET_FORMAT", "MISSING_KEYWORDS", "DATE_FORMAT_INCONSISTENT",
+"CONTACT_INCOMPLETE", "SKILLS_UNORGANIZED", "REPETITIVE_CONTENT"
+
+LOW PRIORITY (minor polish):
+"CV_TOO_LONG", "CV_TOO_SHORT", "BULLET_TOO_LONG", "BULLET_TOO_SHORT",
+"WHITESPACE_ISSUE", "MINOR_FORMAT", "HEADER_STYLE", "OUTDATED_INFO"
+
+IMPORTANT: Use EXACTLY one of these issue_type values. Do NOT invent new types.
+Do NOT include a "severity" field - severity will be assigned by the system.
 
 IS_AUTO_FIXABLE RULES:
 
@@ -245,12 +268,6 @@ Set is_auto_fixable: false for issues requiring human input:
 - Missing company names or job titles
 
 DEFAULT: When in doubt, set is_auto_fixable: true
-
-SEVERITY GUIDE:
-- critical: Will cause immediate rejection (spelling errors, missing contact info)
-- high: Major competitive disadvantage (passive language, no metrics, unexplained gaps)
-- medium: Optimization opportunity (formatting issues, weak summary, outdated skills)
-- low: Minor polish (small improvements, nice-to-haves)
 
 EMAIL ADDRESS RULES:
 - Do NOT flag standard email providers (Gmail, Outlook, Yahoo, Hotmail) as unprofessional
@@ -288,8 +305,8 @@ CV CONTENT:
 
 Return ONLY a valid JSON array of issues. No other text. Example:
 [
-  {{"id": 1, "issue": "Spelling error", "severity": "critical", "category": "Spelling & Grammar", "location": "Professional Summary", "current_text": "Developped", "suggested_fix": "Developed", "fix_difficulty": "quick", "is_auto_fixable": true}},
-  {{"id": 2, "issue": "Missing email", "severity": "critical", "category": "Missing Information", "location": "Contact Section", "current_text": "Phone only listed", "suggested_fix": "Add professional email like firstname.lastname@email.com", "fix_difficulty": "quick", "is_auto_fixable": false}}
+  {{"id": 1, "issue": "Spelling error", "issue_type": "SPELLING_ERROR", "category": "Spelling & Grammar", "location": "Professional Summary", "current_text": "Developped", "suggested_fix": "Developed", "fix_difficulty": "quick", "is_auto_fixable": true}},
+  {{"id": 2, "issue": "Missing email", "issue_type": "MISSING_EMAIL", "category": "Missing Information", "location": "Contact Section", "current_text": "Phone only listed", "suggested_fix": "Add professional email like firstname.lastname@email.com", "fix_difficulty": "quick", "is_auto_fixable": false}}
 ]
 """
 

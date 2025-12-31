@@ -1,0 +1,139 @@
+═══════════════════════════════════════════════════════════════════
+PROMPT 3#5: Update AI Prompt (Remove Severity, Add Issue Type Enum)
+═══════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify files not explicitly mentioned
+3. Do NOT change any other functions in cv_optimizer.py
+4. If unclear, STOP and ask - do not assume
+
+FORBIDDEN ACTIONS:
+- Modifying scoring functions
+- Modifying database functions
+- Touching frontend files
+- Changing function signatures
+
+───────────────────────────────────────────────────────────────────
+
+TASK: Update AI analysis prompt to use issue_type instead of severity
+
+OBJECTIVE:
+Modify the AI prompt so AI returns issue_type (from predefined enum)
+instead of subjectively assigning severity.
+
+CONTEXT:
+Current prompt asks AI: "severity: critical | high | medium | low"
+This causes AI to make subjective judgments that vary each time.
+
+New prompt will ask AI: "issue_type: SPELLING_ERROR | NO_METRICS | ..."
+Code will then assign severity deterministically.
+
+───────────────────────────────────────────────────────────────────
+
+INSTRUCTIONS:
+
+Step 1: Open file: backend/app/cv_optimizer.py
+
+Step 2: Find the CV analysis prompt string
+(The investigation found it around lines 213-294)
+
+Look for text containing:
+- "severity"
+- "critical" | "high" | "medium" | "low"
+- SEVERITY GUIDE
+
+Step 3: In the prompt, FIND and REMOVE this section (or similar):
+
+- severity: "critical" | "high" | "medium" | "low"
+
+SEVERITY GUIDE:
+- critical: Will cause immediate rejection
+- high: Major competitive disadvantage
+- medium: Optimization opportunity
+- low: Minor polish
+
+Step 4: REPLACE with this issue_type specification:
+
+- issue_type: MUST be one of these EXACT values:
+  
+  CRITICAL ISSUES (will cause immediate rejection):
+  "SPELLING_ERROR", "GRAMMAR_ERROR", "MISSING_EMAIL", "MISSING_PHONE", 
+  "INVALID_EMAIL", "INVALID_PHONE"
+  
+  HIGH PRIORITY (major competitive disadvantage):
+  "NO_METRICS", "WEAK_ACTION_VERBS", "EMPLOYMENT_GAP", "MISSING_LINKEDIN",
+  "VAGUE_DESCRIPTION", "NO_ACHIEVEMENTS", "MISSING_DATES", "MISSING_COMPANY",
+  "MISSING_TITLE", "BUZZWORD_STUFFING"
+  
+  MEDIUM PRIORITY (optimization opportunity):
+  "FORMAT_INCONSISTENT", "WEAK_SUMMARY", "SECTION_ORDER", "ATS_INCOMPATIBLE",
+  "BULLET_FORMAT", "MISSING_KEYWORDS", "DATE_FORMAT_INCONSISTENT",
+  "CONTACT_INCOMPLETE", "SKILLS_UNORGANIZED", "REPETITIVE_CONTENT"
+  
+  LOW PRIORITY (minor polish):
+  "CV_TOO_LONG", "CV_TOO_SHORT", "BULLET_TOO_LONG", "BULLET_TOO_SHORT",
+  "WHITESPACE_ISSUE", "MINOR_FORMAT", "HEADER_STYLE", "OUTDATED_INFO"
+
+IMPORTANT: Use EXACTLY one of these issue_type values. Do NOT invent new types.
+Do NOT include a "severity" field - severity will be assigned by the system.
+
+Step 5: In the expected JSON response format section, change:
+
+FROM (something like):
+{
+  "issues": [
+    {
+      "type": "...",
+      "severity": "high",
+      "description": "...",
+      ...
+    }
+  ]
+}
+
+TO:
+{
+  "issues": [
+    {
+      "issue_type": "NO_METRICS",
+      "description": "...",
+      "location": "...",
+      "suggestion": "..."
+    }
+  ]
+}
+
+Step 6: REMOVE any mention of "severity" from the prompt
+The AI should NOT be asked to determine severity at all.
+
+───────────────────────────────────────────────────────────────────
+
+FILES TO MODIFY:
+- backend/app/cv_optimizer.py
+  - Update the AI prompt string ONLY
+  - Replace severity guide with issue_type enum
+  - Update expected response format
+
+DO NOT TOUCH:
+- Any functions other than the prompt string
+- Database operations
+- Scoring calculations
+- Frontend files
+- severity.py (already created)
+- config.py (already created)
+
+───────────────────────────────────────────────────────────────────
+
+WHEN COMPLETE:
+
+Confirm:
+□ Old severity guide REMOVED from prompt
+□ New issue_type enum ADDED to prompt (all 34 types)
+□ Expected response format updated (issue_type, no severity)
+□ "Use EXACTLY one of these" instruction included
+□ No Python syntax errors
+□ Prompt is still valid string
+
+Type "PROMPT 3#5 COMPLETE - READY FOR 4#5" when done.

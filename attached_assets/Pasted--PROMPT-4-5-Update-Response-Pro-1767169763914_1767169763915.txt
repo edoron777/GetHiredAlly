@@ -1,0 +1,126 @@
+═══════════════════════════════════════════════════════════════════
+PROMPT 4#5: Update Response Processing
+═══════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify files not explicitly mentioned
+3. Do NOT change function signatures
+4. If unclear, STOP and ask - do not assume
+
+FORBIDDEN ACTIONS:
+- Modifying the AI prompt (already done in 3#5)
+- Modifying config.py (already done in 1#5)
+- Modifying severity.py (already done in 2#5)
+- Touching frontend files
+- Changing database schema
+
+───────────────────────────────────────────────────────────────────
+
+TASK: Update response processing to use code-assigned severity
+
+OBJECTIVE:
+After AI returns issues with issue_type, call the severity assignment
+function to add deterministic severity before storing/returning.
+
+CONTEXT:
+AI now returns: {"issue_type": "SPELLING_ERROR", ...}
+Code must add: {"issue_type": "SPELLING_ERROR", "severity": "critical", ...}
+
+───────────────────────────────────────────────────────────────────
+
+INSTRUCTIONS:
+
+Step 1: Open file: backend/app/cv_optimizer.py
+
+Step 2: Add import at the TOP of the file (with other imports):
+
+from common.scoring.severity import assign_severity_to_issues, count_issues_by_severity
+
+Step 3: Find where AI response is processed
+Look for the function that:
+- Receives/parses AI response
+- Extracts issues from response
+- Stores issues or returns them
+
+Step 4: AFTER extracting issues from AI response, BEFORE storing/returning,
+ADD this line:
+
+issues = assign_severity_to_issues(issues)
+
+Example pattern to find and modify:
+
+BEFORE (current code looks something like):
+    # Parse AI response
+    ai_response = json.loads(response_text)
+    issues = ai_response.get('issues', [])
+    
+    # Store or return issues
+    ...
+
+AFTER (add the severity assignment call):
+    # Parse AI response
+    ai_response = json.loads(response_text)
+    issues = ai_response.get('issues', [])
+    
+    # DETERMINISTIC SEVERITY ASSIGNMENT (code, not AI)
+    issues = assign_severity_to_issues(issues)
+    
+    # Store or return issues
+    ...
+
+Step 5: If there's a summary endpoint that counts issues by severity,
+update it to use the new count_issues_by_severity function:
+
+BEFORE:
+breakdown = {
+    'critical': sum(1 for i in issues if i.get('severity') == 'critical'),
+    'high': sum(1 for i in issues if i.get('severity') == 'high'),
+    ...
+}
+
+AFTER:
+breakdown = count_issues_by_severity(issues)
+
+Step 6: Search for any other places in the file where issues are processed
+and ensure assign_severity_to_issues is called.
+
+───────────────────────────────────────────────────────────────────
+
+CRITICAL PLACEMENT:
+
+The assign_severity_to_issues call MUST be placed:
+✓ AFTER AI response is parsed
+✓ AFTER issues are extracted from response
+✓ BEFORE issues are stored in database
+✓ BEFORE issues are returned to frontend
+
+This ensures ALL issues have deterministic severity.
+
+───────────────────────────────────────────────────────────────────
+
+FILES TO MODIFY:
+- backend/app/cv_optimizer.py
+  - Add import for severity functions
+  - Add assign_severity_to_issues call after AI response
+  - Update breakdown calculation if exists
+
+DO NOT TOUCH:
+- severity.py (already created)
+- config.py (already created)
+- Frontend files
+- Database schema
+
+───────────────────────────────────────────────────────────────────
+
+WHEN COMPLETE:
+
+Confirm:
+□ Import added: from common.scoring.severity import assign_severity_to_issues, count_issues_by_severity
+□ assign_severity_to_issues called AFTER AI response parsing
+□ assign_severity_to_issues called BEFORE storing/returning
+□ No Python syntax errors
+□ Server starts without import errors
+
+Type "PROMPT 4#5 COMPLETE - READY FOR 5#5" when done.
