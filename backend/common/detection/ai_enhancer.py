@@ -13,6 +13,18 @@ from typing import List, Dict, Any, Optional
 logger = logging.getLogger(__name__)
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+# DEPRECATED: SUGGESTION_TEMPLATES
+# 
+# These templates have been moved to the database (cv_issue_types.static_tip).
+# The CatalogService now provides all suggestions via enrich_detected_issue().
+# 
+# Kept here for backward compatibility/fallback if catalog is unavailable.
+# New code should use: catalog_service.enrich_detected_issue()
+# 
+# Date deprecated: 2025-12-31
+# ═══════════════════════════════════════════════════════════════════════════
+
 SUGGESTION_TEMPLATES = {
     'SPELLING_ERROR': 'Check spelling and correct "{current}" to proper spelling',
     'GRAMMAR_ERROR': 'Review grammar and fix the error',

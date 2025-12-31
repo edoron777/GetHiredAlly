@@ -141,17 +141,16 @@ VAGUE_PHRASES = [
 ]
 
 # ═══════════════════════════════════════════════════════════════════
-# ISSUE TYPE CONFIGURATION - SINGLE SOURCE OF TRUTH
-# CV Issue Type Catalog v1.0 - 50 Issue Types
-# ═══════════════════════════════════════════════════════════════════
+# DEPRECATED: ISSUE_TYPE_CONFIG
 # 
-# SEVERITY LEVELS (UI Display):
-#   critical  → Red badge - Immediate rejection risk
-#   important → Orange badge - Major disadvantage  
-#   consider  → Yellow badge - Optimization opportunity
-#   polish    → Green badge - Minor improvements
-#
-# DO NOT let AI assign severity - use this config instead!
+# This config has been moved to the database (cv_issue_types table).
+# The CatalogService now provides all issue type metadata.
+# 
+# Kept here for backward compatibility with existing code that may
+# still reference ISSUE_TYPE_CONFIG or ISSUE_TYPE_ENUM.
+# New code should use: from common.catalog import get_catalog_service
+# 
+# Date deprecated: 2025-12-31
 # ═══════════════════════════════════════════════════════════════════
 
 ISSUE_TYPE_CONFIG = {
@@ -671,10 +670,16 @@ ISSUE_TYPE_CONFIG = {
 }
 
 # ═══════════════════════════════════════════════════════════════════
-# LEGACY ISSUE TYPE MAPPING - Backward Compatibility
+# DEPRECATED: LEGACY_ISSUE_TYPE_MAPPING
+# 
+# This mapping has been moved to the database (cv_issue_legacy_mapping).
+# The CatalogService now handles legacy code normalization.
+# 
+# Kept here for backward compatibility with severity.py.
+# New code should use: catalog_service.normalize_issue_code()
+# 
+# Date deprecated: 2025-12-31
 # ═══════════════════════════════════════════════════════════════════
-# Maps old issue type names to new catalog names
-# Used by severity.py to support existing data
 
 LEGACY_ISSUE_TYPE_MAPPING = {
     'SPELLING_ERROR': 'GRAMMAR_SPELLING_ERROR',
