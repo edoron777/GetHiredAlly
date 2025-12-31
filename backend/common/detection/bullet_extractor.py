@@ -147,7 +147,7 @@ def get_bullet_issues(bullets: List[BulletPoint]) -> List[Dict]:
     for bullet in bullets:
         if not bullet.has_metrics:
             issues.append({
-                'issue_type': 'NO_METRICS',
+                'issue_type': 'CONTENT_MISSING_METRICS',
                 'location': f'Line {bullet.line_number}',
                 'description': 'Bullet point lacks quantified achievement (no numbers, percentages, or metrics)',
                 'current': bullet.text[:100] + '...' if len(bullet.text) > 100 else bullet.text,
@@ -155,7 +155,7 @@ def get_bullet_issues(bullets: List[BulletPoint]) -> List[Dict]:
         
         if not bullet.starts_with_verb:
             issues.append({
-                'issue_type': 'BULLET_FORMAT',
+                'issue_type': 'CONTENT_WEAK_ACTION_VERBS',
                 'location': f'Line {bullet.line_number}',
                 'description': 'Bullet should start with a strong action verb',
                 'current': bullet.text[:50] + '...' if len(bullet.text) > 50 else bullet.text,
@@ -163,7 +163,7 @@ def get_bullet_issues(bullets: List[BulletPoint]) -> List[Dict]:
         
         if bullet.word_count > 30:
             issues.append({
-                'issue_type': 'BULLET_TOO_LONG',
+                'issue_type': 'CONTENT_BULLET_TOO_LONG',
                 'location': f'Line {bullet.line_number}',
                 'description': f'Bullet is {bullet.word_count} words - consider splitting or condensing',
                 'current': bullet.text[:100] + '...',
@@ -171,7 +171,7 @@ def get_bullet_issues(bullets: List[BulletPoint]) -> List[Dict]:
         
         if bullet.word_count < 5:
             issues.append({
-                'issue_type': 'BULLET_TOO_SHORT',
+                'issue_type': 'CONTENT_BULLET_TOO_SHORT',
                 'location': f'Line {bullet.line_number}',
                 'description': f'Bullet is only {bullet.word_count} words - add more detail',
                 'current': bullet.text,

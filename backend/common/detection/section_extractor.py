@@ -206,13 +206,13 @@ def get_section_issues(structure: CVStructure) -> List[Dict]:
     
     if not structure.has_summary:
         issues.append({
-            'issue_type': 'WEAK_SUMMARY',
+            'issue_type': 'CONTENT_GENERIC_STATEMENTS',
             'location': 'Summary Section',
             'description': 'No summary/profile section found',
         })
     elif structure.summary and len(structure.summary.split()) < 30:
         issues.append({
-            'issue_type': 'WEAK_SUMMARY',
+            'issue_type': 'CONTENT_GENERIC_STATEMENTS',
             'location': 'Summary Section',
             'description': f'Summary is too short ({len(structure.summary.split())} words, recommend 30-60)',
             'current': structure.summary[:100] + '...' if len(structure.summary) > 100 else structure.summary,
@@ -225,7 +225,7 @@ def get_section_issues(structure: CVStructure) -> List[Dict]:
         if edu_idx < exp_idx:
             if structure.experience and len(structure.experience.split()) > 50:
                 issues.append({
-                    'issue_type': 'SECTION_ORDER',
+                    'issue_type': 'FORMAT_POOR_VISUAL_HIERARCHY',
                     'location': 'CV Structure',
                     'description': 'Education appears before Experience - consider reordering for experienced professionals',
                 })
@@ -245,14 +245,14 @@ def get_cv_length_issues(text: str) -> List[Dict]:
     
     if word_count > 1000:
         issues.append({
-            'issue_type': 'CV_TOO_LONG',
+            'issue_type': 'LENGTH_CV_TOO_LONG',
             'location': 'Overall CV',
             'description': f'CV is {word_count} words - consider condensing to under 800 words',
             'current': f'{word_count} words',
         })
     elif word_count < 200:
         issues.append({
-            'issue_type': 'CV_TOO_SHORT',
+            'issue_type': 'LENGTH_CV_TOO_SHORT',
             'location': 'Overall CV',
             'description': f'CV is only {word_count} words - consider adding more detail',
             'current': f'{word_count} words',

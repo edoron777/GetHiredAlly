@@ -83,7 +83,7 @@ def check_spelling(text: str, max_errors: int = 20) -> List[Dict]:
             suggestions = list(candidates)[:3] if candidates else []
             
             issues.append({
-                'issue_type': 'SPELLING_ERROR',
+                'issue_type': 'GRAMMAR_SPELLING_ERROR',
                 'location': 'Throughout CV',
                 'description': f'Possible spelling error: "{word}"',
                 'current': word,
@@ -115,7 +115,7 @@ def check_grammar(text: str) -> List[Dict]:
         
         for match in matches[:3]:
             issues.append({
-                'issue_type': 'GRAMMAR_ERROR',
+                'issue_type': 'GRAMMAR_GRAMMATICAL_ERROR',
                 'location': 'Throughout CV',
                 'description': error_msg.format(match) if '{}' in error_msg else error_msg,
                 'current': match if isinstance(match, str) else str(match),

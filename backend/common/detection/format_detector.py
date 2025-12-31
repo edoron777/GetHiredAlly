@@ -52,7 +52,7 @@ def detect_date_inconsistency(text: str) -> List[Dict]:
             examples.append(matches[0])
         
         issues.append({
-            'issue_type': 'DATE_FORMAT_INCONSISTENT',
+            'issue_type': 'FORMAT_INCONSISTENT_DATES',
             'location': 'Throughout CV',
             'description': f'Multiple date formats used ({len(formats_found)} different formats)',
             'current': ', '.join(examples[:3]),
@@ -82,7 +82,7 @@ def detect_bullet_inconsistency(text: str) -> List[Dict]:
     
     if len(styles_found) > 1:
         issues.append({
-            'issue_type': 'FORMAT_INCONSISTENT',
+            'issue_type': 'FORMAT_INCONSISTENT_BULLETS',
             'location': 'Bullet Points',
             'description': f'Inconsistent bullet styles ({len(styles_found)} different styles: {", ".join(styles_found.keys())})',
             'current': ', '.join(styles_found.keys()),
@@ -106,7 +106,7 @@ def detect_whitespace_issues(text: str) -> List[Dict]:
     
     if re.search(r'\n{4,}', text):
         issues.append({
-            'issue_type': 'WHITESPACE_ISSUE',
+            'issue_type': 'FORMAT_EXCESSIVE_BLANK_LINES',
             'location': 'Throughout CV',
             'description': 'Excessive blank lines detected',
             'suggestion': 'Remove extra blank lines for cleaner appearance',
@@ -115,7 +115,7 @@ def detect_whitespace_issues(text: str) -> List[Dict]:
     trailing_count = len(re.findall(r'[ \t]+$', text, re.MULTILINE))
     if trailing_count > 5:
         issues.append({
-            'issue_type': 'MINOR_FORMAT',
+            'issue_type': 'FORMAT_TRAILING_WHITESPACE',
             'location': 'Throughout CV',
             'description': f'Trailing whitespace on {trailing_count} lines',
             'suggestion': 'Remove trailing spaces for cleaner formatting',
@@ -128,7 +128,7 @@ def detect_whitespace_issues(text: str) -> List[Dict]:
         
         if unique_indents > 3:
             issues.append({
-                'issue_type': 'FORMAT_INCONSISTENT',
+                'issue_type': 'FORMAT_INCONSISTENT_SPACING',
                 'location': 'Indentation',
                 'description': f'Inconsistent indentation ({unique_indents} different levels)',
                 'suggestion': 'Use consistent indentation throughout',

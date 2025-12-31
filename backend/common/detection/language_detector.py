@@ -41,7 +41,7 @@ def detect_weak_verbs(text: str) -> List[Dict]:
             for match in matches[:2]:
                 if verb.lower() not in [v.lower() for v in found_verbs]:
                     issues.append({
-                        'issue_type': 'WEAK_ACTION_VERBS',
+                        'issue_type': 'CONTENT_WEAK_ACTION_VERBS',
                         'location': 'Experience Section',
                         'description': f'Weak/passive phrase detected: "{verb}"',
                         'current': match.strip(),
@@ -78,7 +78,7 @@ def detect_vague_language(text: str) -> List[Dict]:
     if vague_count > VAGUE_THRESHOLD:
         unique_words = list(set(found_words))
         issues.append({
-            'issue_type': 'VAGUE_DESCRIPTION',
+            'issue_type': 'CONTENT_GENERIC_STATEMENTS',
             'location': 'Throughout CV',
             'description': f'Too many vague words ({vague_count} found): {", ".join(unique_words[:5])}',
             'current': ', '.join(unique_words),
@@ -113,7 +113,7 @@ def detect_buzzword_stuffing(text: str) -> List[Dict]:
     
     if buzzword_count > BUZZWORD_THRESHOLD:
         issues.append({
-            'issue_type': 'BUZZWORD_STUFFING',
+            'issue_type': 'CONTENT_GENERIC_STATEMENTS',
             'location': 'Throughout CV',
             'description': f'Too many buzzwords ({buzzword_count} found): {", ".join(found_buzzwords[:5])}',
             'current': ', '.join(found_buzzwords[:10]),

@@ -33,7 +33,7 @@ def detect_outdated_info(text: str, years_threshold: int = 15) -> List[Dict]:
     
     if old_years:
         issues.append({
-            'issue_type': 'OUTDATED_INFO',
+            'issue_type': 'STANDARDS_OUTDATED_INFORMATION',
             'location': 'Throughout CV',
             'description': f'CV contains references to {min(old_years)} - consider removing information older than {years_threshold} years',
             'current': f'Years found: {", ".join(sorted(set(old_years)))}',
@@ -75,7 +75,7 @@ def detect_header_inconsistency(text: str) -> List[Dict]:
     
     if active_styles > 1:
         issues.append({
-            'issue_type': 'HEADER_STYLE',
+            'issue_type': 'FORMAT_INCONSISTENT_CAPITALIZATION',
             'location': 'Section Headers',
             'description': 'Inconsistent header capitalization (mix of UPPERCASE and Title Case)',
             'suggestion': 'Use consistent capitalization for all section headers',
@@ -114,7 +114,7 @@ def detect_repetitive_content(text: str) -> List[Dict]:
         for phrase, count in top_repeated:
             if count >= 2 and len(phrase.split()) >= 3:
                 issues.append({
-                    'issue_type': 'REPETITIVE_CONTENT',
+                    'issue_type': 'CONTENT_GENERIC_STATEMENTS',
                     'location': 'Throughout CV',
                     'description': f'Phrase repeated {count} times: "{phrase}"',
                     'current': phrase,

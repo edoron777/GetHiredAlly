@@ -174,13 +174,13 @@ def get_contact_issues(contact: ContactInfo) -> List[Dict]:
     
     if not contact.has_email:
         issues.append({
-            'issue_type': 'MISSING_EMAIL',
+            'issue_type': 'CONTACT_MISSING_EMAIL',
             'location': 'Contact Information',
             'description': 'No email address found in CV',
         })
     elif not contact.email_valid:
         issues.append({
-            'issue_type': 'INVALID_EMAIL',
+            'issue_type': 'CONTACT_UNPROFESSIONAL_EMAIL',
             'location': 'Contact Information',
             'description': f'Email format appears invalid: {contact.email}',
             'current': contact.email,
@@ -188,13 +188,13 @@ def get_contact_issues(contact: ContactInfo) -> List[Dict]:
     
     if not contact.has_phone:
         issues.append({
-            'issue_type': 'MISSING_PHONE',
+            'issue_type': 'CONTACT_MISSING_PHONE',
             'location': 'Contact Information',
             'description': 'No phone number found in CV',
         })
     elif not contact.phone_valid:
         issues.append({
-            'issue_type': 'INVALID_PHONE',
+            'issue_type': 'CONTACT_INCONSISTENT_FORMAT',
             'location': 'Contact Information',
             'description': f'Phone format appears invalid: {contact.phone}',
             'current': contact.phone,
@@ -202,7 +202,7 @@ def get_contact_issues(contact: ContactInfo) -> List[Dict]:
     
     if not contact.has_linkedin:
         issues.append({
-            'issue_type': 'MISSING_LINKEDIN',
+            'issue_type': 'CONTACT_MISSING_LINKEDIN',
             'location': 'Contact Information',
             'description': 'No LinkedIn profile URL found',
         })
