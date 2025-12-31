@@ -1,0 +1,91 @@
+═══════════════════════════════════════════════════════════════════════════════
+PROJECT: CV Issue Catalog Backend - PROMPT 8 OF 10
+═══════════════════════════════════════════════════════════════════════════════
+
+CONTEXT:
+Detection now uses CatalogService.
+Old hardcoded config is no longer needed.
+
+───────────────────────────────────────────────────────────────────────────────
+
+TASK: Remove Old Config (or Comment Out for Safety)
+
+⚠️ IMPORTANT: Instead of deleting, first COMMENT OUT the old config.
+This allows easy rollback if issues occur.
+
+───────────────────────────────────────────────────────────────────────────────
+
+FILE: backend/common/scoring/config.py
+
+Find ISSUE_TYPE_CONFIG dictionary.
+Add comment header and comment out:
+
+```python
+# ═══════════════════════════════════════════════════════════════════════════
+# DEPRECATED: ISSUE_TYPE_CONFIG
+# 
+# This config has been moved to the database (cv_issue_types table).
+# The CatalogService now provides all issue type metadata.
+# 
+# Kept here commented for reference/rollback. Can be deleted after
+# confirming database approach works correctly.
+# 
+# Date deprecated: 2025-12-31
+# ═══════════════════════════════════════════════════════════════════════════
+
+# ISSUE_TYPE_CONFIG = {
+#     'SPELLING_ERROR': {
+#         'severity': 'critical',
+#         'weight': 9,
+#         ...
+#     },
+#     ... rest of config ...
+# }
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+FILE: backend/common/detection/ai_enhancer.py
+
+Find SUGGESTION_TEMPLATES dictionary.
+Add comment header and comment out:
+
+```python
+# ═══════════════════════════════════════════════════════════════════════════
+# DEPRECATED: SUGGESTION_TEMPLATES
+# 
+# These templates have been moved to the database (cv_issue_types.static_tip).
+# The CatalogService now provides all suggestions.
+# 
+# Kept here commented for reference/rollback. Can be deleted after
+# confirming database approach works correctly.
+# 
+# Date deprecated: 2025-12-31
+# ═══════════════════════════════════════════════════════════════════════════
+
+# SUGGESTION_TEMPLATES = {
+#     'SPELLING_ERROR': 'Fix all spelling errors...',
+#     ... rest of templates ...
+# }
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+ALSO: Remove any imports of the old config
+
+Search for and remove/comment:
+```python
+# from backend.common.scoring.config import ISSUE_TYPE_CONFIG
+# from backend.common.detection.ai_enhancer import SUGGESTION_TEMPLATES
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+- [ ] ISSUE_TYPE_CONFIG commented out (not deleted)
+- [ ] SUGGESTION_TEMPLATES commented out (not deleted)
+- [ ] Old imports removed/commented
+- [ ] App still starts without errors
+- [ ] Detection still works using CatalogService
+
+═══════════════════════════════════════════════════════════════════════════════

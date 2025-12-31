@@ -11,6 +11,7 @@ Same CV text → Same issues → Same results (ALWAYS)
 import logging
 from typing import List, Dict, Any
 
+from common.catalog import get_catalog_service
 from .contact_extractor import extract_contact_info, get_contact_issues
 from .section_extractor import extract_sections, get_section_issues, get_cv_length_issues
 from .bullet_extractor import extract_bullets, get_bullet_issues
@@ -20,6 +21,21 @@ from .format_detector import detect_format_issues
 from .polish_detector import detect_polish_issues
 
 logger = logging.getLogger(__name__)
+
+
+def enrich_issues_from_catalog(issues: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Enrich detected issues with metadata from the catalog.
+    This replaces the old ISSUE_TYPE_CONFIG lookup.
+    """
+    try:
+        catalog_service = get_catalog_service()
+        if catalog_service.is_ready:
+            return catalog_service.enrich_all_issues(issues)
+    except Exception as e:
+        logger.warning(f"Could not enrich from catalog: {e}")
+    
+    return issues
 
 
 def detect_all_issues(cv_text: str) -> List[Dict[str, Any]]:
@@ -103,6 +119,8 @@ def detect_all_issues(cv_text: str) -> List[Dict[str, Any]]:
         logger.error(f"Error detecting polish issues: {e}")
     
     logger.info(f"Static detection complete. Total issues: {len(all_issues)}")
+    
+    all_issues = enrich_issues_from_catalog(all_issues)
     
     return all_issues
 

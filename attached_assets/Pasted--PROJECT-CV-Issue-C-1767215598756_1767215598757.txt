@@ -1,0 +1,113 @@
+═══════════════════════════════════════════════════════════════════════════════
+PROJECT: CV Issue Catalog Backend - PROMPT 7 OF 10
+═══════════════════════════════════════════════════════════════════════════════
+
+CONTEXT:
+CatalogService is now initialized and working.
+Now update the detection code to use it instead of hardcoded config.
+
+───────────────────────────────────────────────────────────────────────────────
+
+TASK: Update Detection Code to Use CatalogService
+
+Modify: backend/common/detection/master_detector.py (or equivalent main detection file)
+
+───────────────────────────────────────────────────────────────────────────────
+
+STEP 1: Add import at top of file
+
+```python
+from common.catalog import get_catalog_service
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+STEP 2: Find where issues are processed/enriched
+
+Look for code that adds severity, weight, or metadata to detected issues.
+It might look like:
+
+```python
+# OLD CODE (example):
+for issue in issues:
+    issue['severity'] = ISSUE_TYPE_CONFIG.get(issue['issue_type'], {}).get('severity', 'consider')
+    issue['weight'] = ISSUE_TYPE_CONFIG.get(issue['issue_type'], {}).get('weight', 5)
+```
+
+REPLACE with:
+
+```python
+# NEW CODE - Use CatalogService
+def enrich_issues_from_catalog(issues: list) -> list:
+    """
+    Enrich detected issues with metadata from the catalog.
+    This replaces the old ISSUE_TYPE_CONFIG lookup.
+    """
+    try:
+        catalog_service = get_catalog_service()
+        if catalog_service.is_ready:
+            return catalog_service.enrich_all_issues(issues)
+    except Exception as e:
+        # Log but don't fail - fall back to basic enrichment
+        print(f"Warning: Could not enrich from catalog: {e}")
+    
+    # Fallback if catalog not ready
+    return issues
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+STEP 3: Call the enrichment function
+
+Find the main detection function that returns issues.
+It might be called: detect_all_issues, run_detection, analyze_cv, etc.
+
+Add at the end before returning:
+
+```python
+def detect_all_issues(cv_text: str) -> list:
+    issues = []
+    
+    # ... existing detection code ...
+    
+    # Enrich issues with catalog metadata
+    issues = enrich_issues_from_catalog(issues)
+    
+    return issues
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+STEP 4: Update ai_enhancer.py (if it adds suggestions)
+
+If there's a file that adds suggestions/tips, update it to use the catalog.
+
+Find code like:
+```python
+# OLD CODE
+issue['suggestion'] = SUGGESTION_TEMPLATES.get(issue['issue_type'], '')
+```
+
+The new CatalogService.enrich_detected_issue() already adds static_tip as 'suggestion'.
+So this code can be simplified or removed.
+
+If you want to keep it as a fallback:
+```python
+# NEW CODE - catalog already provides suggestion, this is fallback
+if not issue.get('suggestion'):
+    catalog_service = get_catalog_service()
+    catalog_entry = catalog_service.get_issue_by_code(issue.get('issue_type', ''))
+    if catalog_entry and catalog_entry.static_tip:
+        issue['suggestion'] = catalog_entry.static_tip
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+- [ ] Import added to detection file
+- [ ] enrich_issues_from_catalog function created
+- [ ] Main detection function calls enrichment
+- [ ] Test detection still works
+- [ ] Issues now have severity, weight, suggestion from catalog
+
+═══════════════════════════════════════════════════════════════════════════════
