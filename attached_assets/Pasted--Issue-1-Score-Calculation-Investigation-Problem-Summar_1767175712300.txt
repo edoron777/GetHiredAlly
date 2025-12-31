@@ -1,0 +1,132 @@
+# Issue #1: Score Calculation - Investigation
+
+## Problem Summary
+
+**Symptom:** User's CV had 104 issues fixed automatically, but score only improved by 4% (64% → 68%)
+
+**User Concern:** This seems disproportionate - fixing 104 issues should have more impact than just 4%
+
+---
+
+## Investigation Prompt for Replit Agent
+
+```
+═══════════════════════════════════════════════════════════════════════════════
+DEBUG PROMPT: Score Calculation Investigation
+═══════════════════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL: This is an INVESTIGATION, not a fix.
+Do NOT change any code until root cause is confirmed.
+
+───────────────────────────────────────────────────────────────────────────────
+
+PROBLEM DESCRIPTION:
+
+User uploaded a CV and received:
+- Original Score: 64%
+- Issues Found: 121 total
+- Issues Fixed Automatically: 104
+- Issues Requiring Manual Input: 17
+- New Score After Optimization: 68%
+- Improvement: Only +4%
+
+Expected: 104 fixes should result in significant score improvement
+Actual: Only 4% improvement despite 104 fixes
+
+This feels disproportionate to users and reduces trust in the service.
+
+───────────────────────────────────────────────────────────────────────────────
+
+INVESTIGATION QUESTIONS:
+
+1. SCORE CALCULATION LOCATION:
+   - Where is the CV score calculated?
+   - File path: __________
+   - Function name: __________
+
+2. SCORE FORMULA:
+   - Show the exact formula/algorithm used to calculate the score
+   - What are the weights for each category?
+   - How does fixing an issue affect the score?
+
+3. BEFORE vs AFTER CALCULATION:
+   - How is the "before" score calculated?
+   - How is the "after" score calculated?
+   - Are they using the same formula?
+
+4. ISSUE WEIGHTS:
+   - Do different issue types have different weights?
+   - Show the weight configuration
+   - What's the weight for:
+     - Critical issues?
+     - High issues?
+     - Medium issues?
+     - Low issues?
+
+5. FIXED ISSUES BREAKDOWN:
+   - Where is the "104 issues fixed" calculated?
+   - What types of issues were in the 104?
+   - Show the breakdown by severity
+
+6. SCORE IMPACT CALCULATION:
+   - Is there a formula that calculates: "If X issues fixed → Y% improvement"?
+   - Or is the score recalculated from scratch on the fixed CV?
+
+───────────────────────────────────────────────────────────────────────────────
+
+SPECIFIC CODE TO SHOW:
+
+1. The score calculation function (full code)
+2. The weight configuration (ISSUE_TYPE_CONFIG or similar)
+3. The "after optimization" score calculation
+4. Any function that calculates improvement percentage
+
+───────────────────────────────────────────────────────────────────────────────
+
+REPORT FORMAT:
+
+FINDING 1 - Score Calculation Location:
+- File: [path]
+- Function: [name]
+- Formula: [description]
+
+FINDING 2 - Weight System:
+- Critical weight: [value]
+- High weight: [value]
+- Medium weight: [value]
+- Low weight: [value]
+
+FINDING 3 - Before/After Logic:
+- Before: [how calculated]
+- After: [how calculated]
+- Same formula?: YES/NO
+
+FINDING 4 - Why Only 4% Improvement:
+- [Explanation based on code]
+
+───────────────────────────────────────────────────────────────────────────────
+
+DO NOT FIX ANYTHING YET.
+Report findings first.
+
+═══════════════════════════════════════════════════════════════════════════════
+```
+
+---
+
+## Expected Findings
+
+After investigation, we expect to understand:
+
+1. **Is the formula correct?** - Maybe the weights don't properly reflect issue severity
+2. **Are most fixed issues low-weight?** - 104 low-severity fixes = minimal impact
+3. **Is there a cap on improvement?** - Maybe the formula has a maximum
+4. **Is the "after" score calculated correctly?** - Maybe it's not recalculating properly
+
+---
+
+## Next Step
+
+After Replit Agent responds with findings, we will:
+1. Analyze the root cause
+2. Create a FIX prompt if needed
