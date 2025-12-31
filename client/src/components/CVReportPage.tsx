@@ -69,10 +69,10 @@ const SEVERITY_FILTERS = [
 ]
 
 const SEVERITY_SECTIONS = [
-  { key: 'critical', label: 'HIGH-IMPACT QUICK FIXES', icon: '🔴', bgColor: 'bg-red-50', borderColor: 'border-red-200', textColor: 'text-red-700' },
-  { key: 'high', label: 'IMPORTANT IMPROVEMENTS', icon: '🟠', bgColor: 'bg-orange-50', borderColor: 'border-orange-200', textColor: 'text-orange-700' },
-  { key: 'medium', label: 'WORTH CONSIDERING', icon: '🟡', bgColor: 'bg-yellow-50', borderColor: 'border-yellow-200', textColor: 'text-yellow-700' },
-  { key: 'low', label: 'OPTIONAL POLISH', icon: '🟢', bgColor: 'bg-green-50', borderColor: 'border-green-200', textColor: 'text-green-700' }
+  { key: 'critical', label: 'QUICK WINS', icon: '🔴', bgColor: 'bg-red-50', borderColor: 'border-red-200', textColor: 'text-red-700' },
+  { key: 'high', label: 'IMPORTANT', icon: '🟠', bgColor: 'bg-orange-50', borderColor: 'border-orange-200', textColor: 'text-orange-700' },
+  { key: 'medium', label: 'CONSIDER', icon: '🟡', bgColor: 'bg-yellow-50', borderColor: 'border-yellow-200', textColor: 'text-yellow-700' },
+  { key: 'low', label: 'POLISH', icon: '🟢', bgColor: 'bg-green-50', borderColor: 'border-green-200', textColor: 'text-green-700' }
 ]
 
 const FIX_STATUS_MESSAGES = [

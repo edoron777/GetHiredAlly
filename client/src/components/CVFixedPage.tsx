@@ -295,40 +295,42 @@ export function CVFixedPage() {
               </p>
             </div>
 
-            {data.category_improvements && Object.keys(data.category_improvements).length > 0 && (
+            {data.issues && data.issues.length > 0 && (
               <div className="mt-8 pt-6 border-t border-gray-200">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">What Improved</h3>
                 <div className="flex flex-wrap justify-center gap-4">
-                  {Object.entries(data.category_improvements)
-                    .filter(([_, v]) => v.issues_fixed > 0)
-                    .sort((a, b) => b[1].issues_fixed - a[1].issues_fixed)
-                    .map(([category, values]) => {
-                      const isBigWin = values.issues_fixed >= 5
-                      const categoryLabel = category.charAt(0).toUpperCase() + category.slice(1)
-                      return (
+                  {(() => {
+                    const severityCounts = {
+                      critical: data.issues.filter(i => i.severity === 'critical').length,
+                      high: data.issues.filter(i => i.severity === 'high').length,
+                      medium: data.issues.filter(i => i.severity === 'medium').length,
+                      low: data.issues.filter(i => i.severity === 'low').length
+                    }
+                    const severityConfig = [
+                      { key: 'critical', label: 'Quick Wins', icon: '🔴', bg: 'bg-red-50', text: 'text-red-700' },
+                      { key: 'high', label: 'Important', icon: '🟠', bg: 'bg-orange-50', text: 'text-orange-700' },
+                      { key: 'medium', label: 'Consider', icon: '🟡', bg: 'bg-yellow-50', text: 'text-yellow-700' },
+                      { key: 'low', label: 'Polish', icon: '🟢', bg: 'bg-green-50', text: 'text-green-700' }
+                    ]
+                    return severityConfig
+                      .filter(s => severityCounts[s.key as keyof typeof severityCounts] > 0)
+                      .map(s => (
                         <div 
-                          key={category} 
-                          className="flex items-center gap-2 px-3 py-2 bg-green-50 rounded-lg"
+                          key={s.key} 
+                          className={`flex items-center gap-2 px-3 py-2 ${s.bg} rounded-lg`}
                         >
-                          <span className="text-green-600">✓</span>
-                          <span className="capitalize text-gray-700">{categoryLabel}</span>
-                          <span className={`font-semibold ${
-                            values.issues_fixed >= 5 ? 'text-green-600' : 'text-green-500'
-                          }`}>
-                            {values.issues_fixed} fixed
+                          <span>{s.icon}</span>
+                          <span className={s.text}>{s.label}:</span>
+                          <span className={`font-semibold ${s.text}`}>
+                            {severityCounts[s.key as keyof typeof severityCounts]} fixed
                           </span>
-                          {isBigWin && (
-                            <span className="text-yellow-500">⭐</span>
-                          )}
                         </div>
-                      )
-                    })}
+                      ))
+                  })()}
                 </div>
-                {data.total_issues_fixed && data.total_issues_fixed > 0 && (
-                  <p className="text-center text-sm text-gray-500 mt-3">
-                    Total: {data.total_issues_fixed} issues fixed automatically
-                  </p>
-                )}
+                <p className="text-center text-sm text-gray-500 mt-3">
+                  Total: {data.issues.length} issues fixed automatically
+                </p>
               </div>
             )}
 

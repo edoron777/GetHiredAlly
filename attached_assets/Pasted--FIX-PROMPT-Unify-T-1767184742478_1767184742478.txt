@@ -1,0 +1,125 @@
+═══════════════════════════════════════════════════════════════════════════════
+FIX PROMPT: Unify Taxonomy Across CV Optimizer Screens
+═══════════════════════════════════════════════════════════════════════════════
+
+PROBLEM:
+Different screens use different terms for the same severity levels.
+This confuses users and breaks the UX flow.
+
+───────────────────────────────────────────────────────────────────────────────
+
+UNIFIED TAXONOMY TO IMPLEMENT:
+
+Use these EXACT terms everywhere:
+
+| Level | Code | Display Name | Color | Description |
+|-------|------|--------------|-------|-------------|
+| 1 | critical | "Quick Wins" | 🔴 Red | High-impact, easy to fix |
+| 2 | high | "Important" | 🟠 Orange | Should fix, more effort |
+| 3 | medium | "Consider" | 🟡 Yellow | Recommended improvements |
+| 4 | low | "Polish" | 🟢 Green | Nice to have, optional |
+
+───────────────────────────────────────────────────────────────────────────────
+
+CHANGES REQUIRED:
+
+LOCATION 1: Score Screen (Issues Detected Box)
+
+File: Find the component that shows "22 Critical, 62 Important, 22 Consider, 15 Polish"
+
+CHANGE:
+- "Critical" → "Quick Wins"
+
+The display should be:
+- 🔴 22 Quick Wins
+- 🟠 62 Important
+- 🟡 22 Consider
+- 🟢 15 Polish
+
+───────────────────────────────────────────────────────────────────────────────
+
+LOCATION 2: Filter by Priority Buttons
+
+File: Find the filter buttons component
+
+CURRENT:
+[All] [Quick Wins 22] [Important 62] [Consider 22] [Polish 15]
+
+This is CORRECT - no change needed here.
+
+───────────────────────────────────────────────────────────────────────────────
+
+LOCATION 3: Your Recommendations Section Headers
+
+File: Find the recommendations list component
+
+CHANGE the group headers:
+
+CURRENT → NEW:
+- "HIGH-IMPACT QUICK FIXES" → "QUICK WINS"
+- "IMPORTANT IMPROVEMENTS" → "IMPORTANT"
+- "WORTH CONSIDERING" → "CONSIDER"
+- "OPTIONAL POLISH" → "POLISH"
+
+Format: Keep the same styling, just change the text.
+
+───────────────────────────────────────────────────────────────────────────────
+
+LOCATION 4: Fix My CV Results ("What Improved" Box)
+
+File: Find the fixed CV results page component
+
+CURRENT:
+✓ Quantification 58 fixed ⭐
+✓ Grammar 22 fixed ⭐
+✓ Formatting 18 fixed ⭐
+✓ Language 6 fixed ⭐
+
+CHANGE TO show severity breakdown:
+
+✓ Quick Wins: 22 fixed (critical issues resolved)
+✓ Important: 45 fixed 
+✓ Consider: 25 fixed
+✓ Polish: 12 fixed
+
+Total: 104 issues fixed automatically
+
+NOTE: This requires mapping each fixed issue to its severity level.
+The data should already have severity from the detection phase.
+
+───────────────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+
+After changes, verify these screens use IDENTICAL terms:
+
+| Screen | Should Show |
+|--------|-------------|
+| Score Screen | Quick Wins, Important, Consider, Polish |
+| Filter Buttons | Quick Wins, Important, Consider, Polish |
+| Recommendation Headers | QUICK WINS, IMPORTANT, CONSIDER, POLISH |
+| Fix Results | Quick Wins, Important, Consider, Polish |
+
+───────────────────────────────────────────────────────────────────────────────
+
+REPORT FORMAT:
+
+LOCATION 1 (Score Screen):
+- File modified: [path]
+- Change made: "Critical" → "Quick Wins"
+- Status: DONE/NOT DONE
+
+LOCATION 2 (Filter Buttons):
+- Status: Already correct / Modified
+
+LOCATION 3 (Recommendation Headers):
+- File modified: [path]
+- Changes made: [list]
+- Status: DONE/NOT DONE
+
+LOCATION 4 (Fix Results):
+- File modified: [path]
+- Now shows severity breakdown: YES/NO
+- Status: DONE/NOT DONE
+
+═══════════════════════════════════════════════════════════════════════════════

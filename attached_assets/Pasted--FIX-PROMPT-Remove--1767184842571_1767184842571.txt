@@ -1,0 +1,127 @@
+═══════════════════════════════════════════════════════════════════════════════
+FIX PROMPT: Remove Detail Level Selector
+═══════════════════════════════════════════════════════════════════════════════
+
+PROBLEM:
+The "How much information do you want to see?" bar adds unnecessary complexity.
+Users don't need to choose detail levels - we should always show full details.
+
+───────────────────────────────────────────────────────────────────────────────
+
+CURRENT STATE:
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ▽ How much information do you want to see?                                  │
+│                                                                             │
+│ [Quick Review] [Standard] [With Fix] [Complete]                            │
+│  Just titles   +Category   +How to    Full                                 │
+│                & location  fix it     details                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+───────────────────────────────────────────────────────────────────────────────
+
+DESIRED STATE:
+
+- This entire bar should be REMOVED from the UI
+- No replacement needed
+- Detail level is always "Complete" (hardcoded)
+
+───────────────────────────────────────────────────────────────────────────────
+
+TASK:
+
+STEP 1: Find the Detail Level Selector component
+
+Search for:
+- Text: "How much information do you want to see?"
+- Buttons: "Quick Review", "Standard", "With Fix", "Complete"
+- Likely in: CVReportPage.tsx or a child component
+
+STEP 2: Remove the component from the UI
+
+Option A: Delete the component entirely
+Option B: Comment it out (if you want to keep for future)
+
+Recommended: Option A (delete)
+
+STEP 3: Set default detail level to "Complete"
+
+Find where detail level state is used:
+- Likely: const [detailLevel, setDetailLevel] = useState('complete')
+- Or similar state management
+
+Change:
+- Remove the state if no longer needed
+- OR hardcode detailLevel = 'complete' everywhere it's used
+
+STEP 4: Ensure recommendation boxes show full details
+
+When a recommendation box is EXPANDED, it should show:
+- Title
+- Category & location
+- How to fix it
+- Full explanation
+- Examples (if available)
+
+This is the "Complete" view - make it the ONLY view.
+
+STEP 5: Keep collapse/expand functionality
+
+IMPORTANT: Do NOT remove the expand/collapse feature!
+
+- Default: All boxes COLLAPSED (just showing title)
+- On click: Box EXPANDS to show COMPLETE details
+- User can still collapse/expand individual boxes
+
+───────────────────────────────────────────────────────────────────────────────
+
+WHAT TO KEEP vs REMOVE:
+
+| Feature | Action |
+|---------|--------|
+| Detail Level Selector bar | ❌ REMOVE |
+| "Quick Review" option | ❌ REMOVE |
+| "Standard" option | ❌ REMOVE |
+| "With Fix" option | ❌ REMOVE |
+| "Complete" option | ❌ REMOVE (make it default) |
+| Expand/Collapse buttons | ✅ KEEP |
+| Individual box expand/collapse | ✅ KEEP |
+| Full details when expanded | ✅ KEEP (always) |
+
+───────────────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+
+After changes:
+
+1. [ ] Detail Level Selector bar is NOT visible
+2. [ ] Recommendation boxes are COLLAPSED by default
+3. [ ] Clicking a box EXPANDS it with FULL details
+4. [ ] "Expand All" / "Collapse All" buttons still work
+5. [ ] No JavaScript errors in console
+
+───────────────────────────────────────────────────────────────────────────────
+
+REPORT FORMAT:
+
+STEP 1 - Component Found:
+- File: [path]
+- Component name: [name]
+
+STEP 2 - Component Removed:
+- Method: Deleted / Commented out
+- Lines removed: [range]
+
+STEP 3 - Default Detail Level:
+- State removed: YES/NO
+- Hardcoded to 'complete': YES/NO
+
+STEP 4 - Full Details Verified:
+- Expanded boxes show complete info: YES/NO
+
+STEP 5 - Collapse/Expand Works:
+- Individual expand: YES/NO
+- Expand All button: YES/NO
+- Collapse All button: YES/NO
+
+═══════════════════════════════════════════════════════════════════════════════
