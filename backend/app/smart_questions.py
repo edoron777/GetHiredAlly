@@ -376,3 +376,61 @@ async def list_smart_questions(token: str = Query(...), limit: int = Query(defau
         return {"results": result.data or []}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+
+@router.get("/latest")
+async def get_latest_smart_questions(token: str = Query(...)):
+    """Get the most recent smart questions result for current user"""
+    user = await get_user_from_token(token)
+    user_id = str(user["id"])
+    
+    supabase = get_supabase_client()
+    
+    try:
+        result = supabase.table("smart_question_results").select(
+            "id, job_title, company_name, status, personalized_questions, created_at"
+        ).eq("user_id", user_id).neq("status", "archived").order("created_at", desc=True).limit(1).execute()
+        
+        if not result.data:
+            raise HTTPException(status_code=404, detail="No results found")
+        
+        record = result.data[0]
+        questions = record.get("personalized_questions") or []
+        question_count = len(questions) if isinstance(questions, list) else 0
+        
+        return {
+            "id": record["id"],
+            "job_title": record.get("job_title"),
+            "company_name": record.get("company_name"),
+            "question_count": question_count,
+            "status": record.get("status", "completed"),
+            "created_at": record["created_at"],
+            "updated_at": record["created_at"]
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+
+@router.post("/{result_id}/archive")
+async def archive_smart_questions(result_id: str, token: str = Query(...)):
+    """Archive a smart questions result"""
+    user = await get_user_from_token(token)
+    user_id = str(user["id"])
+    
+    supabase = get_supabase_client()
+    
+    try:
+        result = supabase.table("smart_question_results").select("id").eq("id", result_id).eq("user_id", user_id).execute()
+        
+        if not result.data:
+            raise HTTPException(status_code=404, detail="Result not found")
+        
+        supabase.table("smart_question_results").update({"status": "archived"}).eq("id", result_id).execute()
+        
+        return {"success": True, "message": "Result archived"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")

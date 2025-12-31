@@ -392,3 +392,73 @@ async def analyze_job(request: Request, data: AnalyzeJobRequest):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+
+
+@router.get("/xray/latest")
+async def get_latest_xray_session(token: str):
+    """Get the most recent completed X-Ray analysis for current user"""
+    supabase = get_supabase_client()
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Database not configured")
+    
+    token_hash = hashlib.sha256(token.encode()).hexdigest()
+    session_result = supabase.table("user_sessions").select("user_id").eq("token_hash", token_hash).execute()
+    
+    if not session_result.data:
+        raise HTTPException(status_code=401, detail="Invalid or expired session")
+    
+    user_id = session_result.data[0]["user_id"]
+    
+    try:
+        result = supabase.table("analysis_sessions").select(
+            "id, job_title, company_name, status, created_at"
+        ).eq("user_id", user_id).neq("status", "archived").order("created_at", desc=True).limit(1).execute()
+        
+        if not result.data:
+            raise HTTPException(status_code=404, detail="No session found")
+        
+        session = result.data[0]
+        return {
+            "id": session["id"],
+            "job_title": session.get("job_title"),
+            "company_name": session.get("company_name"),
+            "status": session.get("status", "completed"),
+            "created_at": session["created_at"],
+            "updated_at": session["created_at"]
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching latest session: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch session")
+
+
+@router.post("/xray/sessions/{session_id}/archive")
+async def archive_xray_session(session_id: str, token: str):
+    """Archive an X-Ray session"""
+    supabase = get_supabase_client()
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Database not configured")
+    
+    token_hash = hashlib.sha256(token.encode()).hexdigest()
+    session_result = supabase.table("user_sessions").select("user_id").eq("token_hash", token_hash).execute()
+    
+    if not session_result.data:
+        raise HTTPException(status_code=401, detail="Invalid or expired session")
+    
+    user_id = session_result.data[0]["user_id"]
+    
+    try:
+        result = supabase.table("analysis_sessions").select("id").eq("id", session_id).eq("user_id", user_id).execute()
+        
+        if not result.data:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        supabase.table("analysis_sessions").update({"status": "archived"}).eq("id", session_id).execute()
+        
+        return {"success": True, "message": "Session archived"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error archiving session: {e}")
+        raise HTTPException(status_code=500, detail="Failed to archive session")
