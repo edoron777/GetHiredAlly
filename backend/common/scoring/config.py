@@ -142,245 +142,574 @@ VAGUE_PHRASES = [
 
 # ═══════════════════════════════════════════════════════════════════
 # ISSUE TYPE CONFIGURATION - SINGLE SOURCE OF TRUTH
+# CV Issue Type Catalog v1.0 - 50 Issue Types
 # ═══════════════════════════════════════════════════════════════════
 # 
-# SEVERITY LEVELS:
-#   critical → "Quick Wins" in UI (red badge) - Immediate rejection risk
-#   high     → "Important" in UI (orange badge) - Major disadvantage
-#   medium   → "Consider" in UI (yellow badge) - Optimization opportunity
-#   low      → "Polish" in UI (green badge) - Minor improvements
+# SEVERITY LEVELS (UI Display):
+#   critical  → Red badge - Immediate rejection risk
+#   important → Orange badge - Major disadvantage  
+#   consider  → Yellow badge - Optimization opportunity
+#   polish    → Green badge - Minor improvements
 #
 # DO NOT let AI assign severity - use this config instead!
 # ═══════════════════════════════════════════════════════════════════
 
 ISSUE_TYPE_CONFIG = {
     # ─────────────────────────────────────────────────────────────────
-    # CRITICAL - Immediate rejection risk
+    # CATEGORY 1: CONTACT INFORMATION (8 types)
     # ─────────────────────────────────────────────────────────────────
-    'SPELLING_ERROR': {
+    'CONTACT_MISSING_EMAIL': {
         'severity': 'critical',
-        'ui_category': 'spelling_grammar',
+        'weight': 10,
+        'category': 'Contact Information',
+        'subcategory': 'Missing Information',
+        'auto_fixable': False,
+        'display_name': 'Missing Email Address',
+        'detection_method': 'regex'
+    },
+    'CONTACT_MISSING_PHONE': {
+        'severity': 'critical',
+        'weight': 9,
+        'category': 'Contact Information',
+        'subcategory': 'Missing Information',
+        'auto_fixable': False,
+        'display_name': 'Missing Phone Number',
+        'detection_method': 'regex'
+    },
+    'CONTACT_MISSING_LINKEDIN': {
+        'severity': 'important',
+        'weight': 7,
+        'category': 'Contact Information',
+        'subcategory': 'Missing Information',
+        'auto_fixable': False,
+        'display_name': 'No LinkedIn Profile URL',
+        'detection_method': 'regex'
+    },
+    'CONTACT_MISSING_LOCATION': {
+        'severity': 'important',
+        'weight': 6,
+        'category': 'Contact Information',
+        'subcategory': 'Missing Information',
+        'auto_fixable': False,
+        'display_name': 'Missing Location/City',
+        'detection_method': 'regex'
+    },
+    'CONTACT_UNPROFESSIONAL_EMAIL': {
+        'severity': 'important',
+        'weight': 7,
+        'category': 'Contact Information',
+        'subcategory': 'Format Issues',
+        'auto_fixable': False,
+        'display_name': 'Unprofessional Email Address',
+        'detection_method': 'regex'
+    },
+    'CONTACT_INCONSISTENT_FORMAT': {
+        'severity': 'consider',
+        'weight': 3,
+        'category': 'Contact Information',
+        'subcategory': 'Format Issues',
+        'auto_fixable': True,
+        'display_name': 'Inconsistent Contact Format',
+        'detection_method': 'regex'
+    },
+    'CONTACT_PHOTO_INCLUDED': {
+        'severity': 'important',
+        'weight': 6,
+        'category': 'Contact Information',
+        'subcategory': 'Professional Standards',
+        'auto_fixable': True,
+        'display_name': 'Photo Included on CV',
+        'detection_method': 'rule'
+    },
+    'CONTACT_PERSONAL_INFO_EXCESSIVE': {
+        'severity': 'important',
+        'weight': 5,
+        'category': 'Contact Information',
+        'subcategory': 'Professional Standards',
+        'auto_fixable': True,
+        'display_name': 'Excessive Personal Information',
+        'detection_method': 'regex'
+    },
+    
+    # ─────────────────────────────────────────────────────────────────
+    # CATEGORY 2: FORMATTING & STRUCTURE (13 types)
+    # ─────────────────────────────────────────────────────────────────
+    'FORMAT_INCONSISTENT_DATES': {
+        'severity': 'consider',
+        'weight': 4,
+        'category': 'Formatting & Structure',
+        'subcategory': 'Consistency Issues',
+        'auto_fixable': True,
+        'display_name': 'Inconsistent Date Formats',
+        'detection_method': 'regex'
+    },
+    'FORMAT_INCONSISTENT_BULLETS': {
+        'severity': 'consider',
+        'weight': 3,
+        'category': 'Formatting & Structure',
+        'subcategory': 'Consistency Issues',
+        'auto_fixable': True,
+        'display_name': 'Inconsistent Bullet Point Styles',
+        'detection_method': 'regex'
+    },
+    'FORMAT_INCONSISTENT_CAPITALIZATION': {
+        'severity': 'consider',
+        'weight': 3,
+        'category': 'Formatting & Structure',
+        'subcategory': 'Consistency Issues',
+        'auto_fixable': True,
+        'display_name': 'Inconsistent Header Capitalization',
+        'detection_method': 'regex'
+    },
+    'FORMAT_INCONSISTENT_SPACING': {
+        'severity': 'polish',
+        'weight': 2,
+        'category': 'Formatting & Structure',
+        'subcategory': 'Consistency Issues',
+        'auto_fixable': True,
+        'display_name': 'Inconsistent Spacing',
+        'detection_method': 'rule'
+    },
+    'FORMAT_MISSING_SECTION_HEADERS': {
+        'severity': 'critical',
+        'weight': 8,
+        'category': 'Formatting & Structure',
+        'subcategory': 'Visual Hierarchy',
+        'auto_fixable': False,
+        'display_name': 'Missing Section Headers',
+        'detection_method': 'nlp'
+    },
+    'FORMAT_POOR_VISUAL_HIERARCHY': {
+        'severity': 'important',
+        'weight': 6,
+        'category': 'Formatting & Structure',
+        'subcategory': 'Visual Hierarchy',
+        'auto_fixable': False,
+        'display_name': 'Poor Visual Hierarchy',
+        'detection_method': 'rule'
+    },
+    'FORMAT_TRAILING_WHITESPACE': {
+        'severity': 'polish',
+        'weight': 1,
+        'category': 'Formatting & Structure',
+        'subcategory': 'Whitespace & Spacing',
+        'auto_fixable': True,
+        'display_name': 'Trailing Whitespace',
+        'detection_method': 'regex'
+    },
+    'FORMAT_MULTIPLE_SPACES': {
+        'severity': 'polish',
+        'weight': 1,
+        'category': 'Formatting & Structure',
+        'subcategory': 'Whitespace & Spacing',
+        'auto_fixable': True,
+        'display_name': 'Multiple Consecutive Spaces',
+        'detection_method': 'regex'
+    },
+    'FORMAT_EXCESSIVE_BLANK_LINES': {
+        'severity': 'consider',
+        'weight': 2,
+        'category': 'Formatting & Structure',
+        'subcategory': 'Whitespace & Spacing',
+        'auto_fixable': True,
+        'display_name': 'Excessive Blank Lines',
+        'detection_method': 'regex'
+    },
+    'FORMAT_TABLES_DETECTED': {
+        'severity': 'important',
+        'weight': 7,
+        'category': 'Formatting & Structure',
+        'subcategory': 'ATS Compatibility',
+        'auto_fixable': False,
+        'display_name': 'Tables May Cause ATS Issues',
+        'detection_method': 'rule'
+    },
+    'FORMAT_MULTIPLE_COLUMNS': {
+        'severity': 'important',
+        'weight': 7,
+        'category': 'Formatting & Structure',
+        'subcategory': 'ATS Compatibility',
+        'auto_fixable': False,
+        'display_name': 'Multiple Columns May Cause ATS Issues',
+        'detection_method': 'rule'
+    },
+    'FORMAT_SPECIAL_CHARACTERS': {
+        'severity': 'consider',
+        'weight': 4,
+        'category': 'Formatting & Structure',
+        'subcategory': 'ATS Compatibility',
+        'auto_fixable': True,
+        'display_name': 'Special Characters May Not Display',
+        'detection_method': 'regex'
+    },
+    'FORMAT_HEADERS_GRAPHICS': {
+        'severity': 'critical',
+        'weight': 9,
+        'category': 'Formatting & Structure',
+        'subcategory': 'ATS Compatibility',
+        'auto_fixable': False,
+        'display_name': 'Header Contains Graphics',
+        'detection_method': 'rule'
+    },
+    
+    # ─────────────────────────────────────────────────────────────────
+    # CATEGORY 3: CONTENT QUALITY (12 types)
+    # ─────────────────────────────────────────────────────────────────
+    'CONTENT_TASK_FOCUSED': {
+        'severity': 'critical',
+        'weight': 10,
+        'category': 'Content Quality',
+        'subcategory': 'Achievement vs Task Focus',
+        'auto_fixable': False,
+        'display_name': 'Task-Focused Instead of Achievement-Focused',
+        'detection_method': 'nlp'
+    },
+    'CONTENT_MISSING_IMPACT': {
+        'severity': 'important',
+        'weight': 8,
+        'category': 'Content Quality',
+        'subcategory': 'Achievement vs Task Focus',
+        'auto_fixable': False,
+        'display_name': 'Missing Impact/Results',
+        'detection_method': 'nlp'
+    },
+    'CONTENT_MISSING_METRICS': {
+        'severity': 'critical',
+        'weight': 10,
+        'category': 'Content Quality',
+        'subcategory': 'Quantification & Metrics',
+        'auto_fixable': False,
+        'display_name': 'Missing Quantifiable Metrics',
+        'detection_method': 'nlp'
+    },
+    'CONTENT_VAGUE_METRICS': {
+        'severity': 'important',
+        'weight': 6,
+        'category': 'Content Quality',
+        'subcategory': 'Quantification & Metrics',
+        'auto_fixable': False,
+        'display_name': 'Vague or Weak Metrics',
+        'detection_method': 'nlp'
+    },
+    'CONTENT_WEAK_ACTION_VERBS': {
+        'severity': 'important',
+        'weight': 6,
+        'category': 'Content Quality',
+        'subcategory': 'Action Verbs & Language',
+        'auto_fixable': True,
+        'display_name': 'Weak or Passive Action Verbs',
+        'detection_method': 'nlp'
+    },
+    'CONTENT_FIRST_PERSON_PRONOUNS': {
+        'severity': 'consider',
+        'weight': 3,
+        'category': 'Content Quality',
+        'subcategory': 'Action Verbs & Language',
+        'auto_fixable': True,
+        'display_name': 'First Person Pronouns (I, Me, My)',
+        'detection_method': 'regex'
+    },
+    'CONTENT_PASSIVE_VOICE': {
+        'severity': 'consider',
+        'weight': 4,
+        'category': 'Content Quality',
+        'subcategory': 'Action Verbs & Language',
+        'auto_fixable': True,
+        'display_name': 'Passive Voice Usage',
+        'detection_method': 'nlp'
+    },
+    'CONTENT_IRRELEVANT_INFORMATION': {
+        'severity': 'consider',
+        'weight': 5,
+        'category': 'Content Quality',
+        'subcategory': 'Relevance & Focus',
+        'auto_fixable': False,
+        'display_name': 'Irrelevant Information Included',
+        'detection_method': 'nlp'
+    },
+    'CONTENT_GENERIC_STATEMENTS': {
+        'severity': 'important',
+        'weight': 6,
+        'category': 'Content Quality',
+        'subcategory': 'Relevance & Focus',
+        'auto_fixable': False,
+        'display_name': 'Generic/Cliché Statements',
+        'detection_method': 'nlp'
+    },
+    'CONTENT_BULLET_TOO_SHORT': {
+        'severity': 'important',
+        'weight': 6,
+        'category': 'Content Quality',
+        'subcategory': 'Bullet Point Quality',
+        'auto_fixable': False,
+        'display_name': 'Bullet Point Too Short',
+        'detection_method': 'rule'
+    },
+    'CONTENT_BULLET_TOO_LONG': {
+        'severity': 'consider',
+        'weight': 4,
+        'category': 'Content Quality',
+        'subcategory': 'Bullet Point Quality',
+        'auto_fixable': False,
+        'display_name': 'Bullet Point Too Long',
+        'detection_method': 'rule'
+    },
+    'CONTENT_TOO_MANY_BULLETS': {
+        'severity': 'consider',
+        'weight': 4,
+        'category': 'Content Quality',
+        'subcategory': 'Bullet Point Quality',
+        'auto_fixable': False,
+        'display_name': 'Too Many Bullets Per Role',
+        'detection_method': 'rule'
+    },
+    
+    # ─────────────────────────────────────────────────────────────────
+    # CATEGORY 4: GRAMMAR & LANGUAGE (7 types)
+    # ─────────────────────────────────────────────────────────────────
+    'GRAMMAR_SPELLING_ERROR': {
+        'severity': 'critical',
+        'weight': 9,
+        'category': 'Grammar & Language',
+        'subcategory': 'Spelling',
+        'auto_fixable': True,
         'display_name': 'Spelling Error',
+        'detection_method': 'nlp'
+    },
+    'GRAMMAR_COMPANY_NAME_SPELLING': {
+        'severity': 'critical',
+        'weight': 8,
+        'category': 'Grammar & Language',
+        'subcategory': 'Spelling',
         'auto_fixable': True,
+        'display_name': 'Company/Brand Name Misspelled',
+        'detection_method': 'nlp'
     },
-    'GRAMMAR_ERROR': {
+    'GRAMMAR_GRAMMATICAL_ERROR': {
         'severity': 'critical',
-        'ui_category': 'spelling_grammar',
-        'display_name': 'Grammar Error',
+        'weight': 8,
+        'category': 'Grammar & Language',
+        'subcategory': 'Grammar',
         'auto_fixable': True,
+        'display_name': 'Grammatical Error',
+        'detection_method': 'nlp'
     },
-    'MISSING_EMAIL': {
-        'severity': 'critical',
-        'ui_category': 'contact_information',
-        'display_name': 'Missing Email',
-        'auto_fixable': False,
+    'GRAMMAR_ARTICLE_MISUSE': {
+        'severity': 'consider',
+        'weight': 3,
+        'category': 'Grammar & Language',
+        'subcategory': 'Grammar',
+        'auto_fixable': True,
+        'display_name': 'Article Misuse (A/An/The)',
+        'detection_method': 'nlp'
     },
-    'MISSING_PHONE': {
-        'severity': 'critical',
-        'ui_category': 'contact_information',
-        'display_name': 'Missing Phone',
-        'auto_fixable': False,
+    'GRAMMAR_INCONSISTENT_PERIODS': {
+        'severity': 'consider',
+        'weight': 2,
+        'category': 'Grammar & Language',
+        'subcategory': 'Punctuation',
+        'auto_fixable': True,
+        'display_name': 'Inconsistent Period Usage',
+        'detection_method': 'regex'
     },
-    'INVALID_EMAIL': {
-        'severity': 'critical',
-        'ui_category': 'contact_information',
-        'display_name': 'Invalid Email Format',
-        'auto_fixable': False,
+    'GRAMMAR_MISSING_PUNCTUATION': {
+        'severity': 'consider',
+        'weight': 3,
+        'category': 'Grammar & Language',
+        'subcategory': 'Punctuation',
+        'auto_fixable': True,
+        'display_name': 'Missing Punctuation',
+        'detection_method': 'nlp'
     },
-    'INVALID_PHONE': {
-        'severity': 'critical',
-        'ui_category': 'contact_information',
-        'display_name': 'Invalid Phone Format',
-        'auto_fixable': False,
+    'GRAMMAR_INCONSISTENT_TENSE': {
+        'severity': 'important',
+        'weight': 5,
+        'category': 'Grammar & Language',
+        'subcategory': 'Tense Consistency',
+        'auto_fixable': True,
+        'display_name': 'Inconsistent Verb Tense',
+        'detection_method': 'nlp'
     },
     
     # ─────────────────────────────────────────────────────────────────
-    # HIGH - Major competitive disadvantage
+    # CATEGORY 5: LENGTH & CONCISENESS (4 types)
     # ─────────────────────────────────────────────────────────────────
-    'NO_METRICS': {
-        'severity': 'high',
-        'ui_category': 'quantified_achievements',
-        'display_name': 'No Quantified Achievement',
+    'LENGTH_CV_TOO_LONG': {
+        'severity': 'important',
+        'weight': 7,
+        'category': 'Length & Conciseness',
+        'subcategory': 'Overall Length',
         'auto_fixable': False,
+        'display_name': 'CV is Too Long',
+        'detection_method': 'rule'
     },
-    'WEAK_ACTION_VERBS': {
-        'severity': 'high',
-        'ui_category': 'action_verbs',
-        'display_name': 'Weak Action Verb',
-        'auto_fixable': True,
-    },
-    'EMPLOYMENT_GAP': {
-        'severity': 'high',
-        'ui_category': 'career_gaps',
-        'display_name': 'Employment Gap',
+    'LENGTH_CV_TOO_SHORT': {
+        'severity': 'consider',
+        'weight': 5,
+        'category': 'Length & Conciseness',
+        'subcategory': 'Overall Length',
         'auto_fixable': False,
+        'display_name': 'CV is Too Short',
+        'detection_method': 'rule'
     },
-    'MISSING_LINKEDIN': {
-        'severity': 'high',
-        'ui_category': 'contact_information',
-        'display_name': 'Missing LinkedIn',
+    'LENGTH_EXPERIENCE_TOO_DETAILED': {
+        'severity': 'consider',
+        'weight': 4,
+        'category': 'Length & Conciseness',
+        'subcategory': 'Section Length',
         'auto_fixable': False,
+        'display_name': 'Old Roles Have Too Much Detail',
+        'detection_method': 'rule'
     },
-    'VAGUE_DESCRIPTION': {
-        'severity': 'high',
-        'ui_category': 'career_narrative',
-        'display_name': 'Vague Description',
-        'auto_fixable': True,
-    },
-    'NO_ACHIEVEMENTS': {
-        'severity': 'high',
-        'ui_category': 'quantified_achievements',
-        'display_name': 'No Achievements Listed',
+    'LENGTH_EDUCATION_TOO_DETAILED': {
+        'severity': 'consider',
+        'weight': 3,
+        'category': 'Length & Conciseness',
+        'subcategory': 'Section Length',
         'auto_fixable': False,
-    },
-    'MISSING_DATES': {
-        'severity': 'high',
-        'ui_category': 'career_gaps',
-        'display_name': 'Missing Dates',
-        'auto_fixable': False,
-    },
-    'MISSING_COMPANY': {
-        'severity': 'high',
-        'ui_category': 'career_narrative',
-        'display_name': 'Missing Company Name',
-        'auto_fixable': False,
-    },
-    'MISSING_TITLE': {
-        'severity': 'high',
-        'ui_category': 'career_narrative',
-        'display_name': 'Missing Job Title',
-        'auto_fixable': False,
-    },
-    'BUZZWORD_STUFFING': {
-        'severity': 'high',
-        'ui_category': 'career_narrative',
-        'display_name': 'Buzzword Overuse',
-        'auto_fixable': True,
+        'display_name': 'Education Section Too Detailed',
+        'detection_method': 'rule'
     },
     
     # ─────────────────────────────────────────────────────────────────
-    # MEDIUM - Optimization opportunities
+    # CATEGORY 6: PROFESSIONAL STANDARDS (8 types)
     # ─────────────────────────────────────────────────────────────────
-    'FORMAT_INCONSISTENT': {
-        'severity': 'medium',
-        'ui_category': 'professional_formatting',
-        'display_name': 'Inconsistent Formatting',
-        'auto_fixable': True,
-    },
-    'WEAK_SUMMARY': {
-        'severity': 'medium',
-        'ui_category': 'career_narrative',
-        'display_name': 'Weak Summary',
-        'auto_fixable': True,
-    },
-    'SECTION_ORDER': {
-        'severity': 'medium',
-        'ui_category': 'cv_length_structure',
-        'display_name': 'Suboptimal Section Order',
-        'auto_fixable': True,
-    },
-    'ATS_INCOMPATIBLE': {
-        'severity': 'medium',
-        'ui_category': 'professional_formatting',
-        'display_name': 'ATS Compatibility Issue',
-        'auto_fixable': True,
-    },
-    'BULLET_FORMAT': {
-        'severity': 'medium',
-        'ui_category': 'professional_formatting',
-        'display_name': 'Bullet Point Format',
-        'auto_fixable': True,
-    },
-    'MISSING_KEYWORDS': {
-        'severity': 'medium',
-        'ui_category': 'keywords_skills',
-        'display_name': 'Missing Keywords',
+    'STANDARDS_OBJECTIVE_STATEMENT': {
+        'severity': 'important',
+        'weight': 5,
+        'category': 'Professional Standards',
+        'subcategory': 'Outdated Elements',
         'auto_fixable': False,
+        'display_name': 'Outdated Objective Statement',
+        'detection_method': 'nlp'
     },
-    'DATE_FORMAT_INCONSISTENT': {
-        'severity': 'medium',
-        'ui_category': 'professional_formatting',
-        'display_name': 'Inconsistent Date Format',
+    'STANDARDS_REFERENCES_SECTION': {
+        'severity': 'consider',
+        'weight': 2,
+        'category': 'Professional Standards',
+        'subcategory': 'Outdated Elements',
         'auto_fixable': True,
+        'display_name': 'Unnecessary References Section',
+        'detection_method': 'regex'
     },
-    'CONTACT_INCOMPLETE': {
-        'severity': 'medium',
-        'ui_category': 'contact_information',
-        'display_name': 'Incomplete Contact Info',
+    'STANDARDS_OUTDATED_INFORMATION': {
+        'severity': 'consider',
+        'weight': 4,
+        'category': 'Professional Standards',
+        'subcategory': 'Outdated Elements',
         'auto_fixable': False,
+        'display_name': 'Information Over 15 Years Old',
+        'detection_method': 'rule'
     },
-    'SKILLS_UNORGANIZED': {
-        'severity': 'medium',
-        'ui_category': 'keywords_skills',
-        'display_name': 'Unorganized Skills',
+    'STANDARDS_OUTDATED_SKILLS': {
+        'severity': 'important',
+        'weight': 6,
+        'category': 'Professional Standards',
+        'subcategory': 'Outdated Elements',
         'auto_fixable': True,
+        'display_name': 'Outdated Skills Listed',
+        'detection_method': 'nlp'
     },
-    'REPETITIVE_CONTENT': {
-        'severity': 'medium',
-        'ui_category': 'career_narrative',
-        'display_name': 'Repetitive Content',
+    'STANDARDS_HOBBIES_IRRELEVANT': {
+        'severity': 'consider',
+        'weight': 2,
+        'category': 'Professional Standards',
+        'subcategory': 'Unnecessary Sections',
+        'auto_fixable': False,
+        'display_name': 'Irrelevant Hobbies/Interests',
+        'detection_method': 'nlp'
+    },
+    'STANDARDS_UNPROFESSIONAL_LANGUAGE': {
+        'severity': 'important',
+        'weight': 6,
+        'category': 'Professional Standards',
+        'subcategory': 'Professional Tone',
         'auto_fixable': True,
+        'display_name': 'Unprofessional Language',
+        'detection_method': 'nlp'
+    },
+    'STANDARDS_NEGATIVE_LANGUAGE': {
+        'severity': 'important',
+        'weight': 6,
+        'category': 'Professional Standards',
+        'subcategory': 'Professional Tone',
+        'auto_fixable': False,
+        'display_name': 'Negative Language',
+        'detection_method': 'nlp'
     },
     
     # ─────────────────────────────────────────────────────────────────
-    # LOW - Minor polish
+    # CATEGORY 7: KEYWORDS & OPTIMIZATION (3 types)
     # ─────────────────────────────────────────────────────────────────
-    'CV_TOO_LONG': {
-        'severity': 'low',
-        'ui_category': 'cv_length_structure',
-        'display_name': 'CV Too Long',
+    'KEYWORDS_MISSING_INDUSTRY': {
+        'severity': 'important',
+        'weight': 7,
+        'category': 'Keywords & Optimization',
+        'subcategory': 'Industry Keywords',
         'auto_fixable': False,
+        'display_name': 'Missing Industry Keywords',
+        'detection_method': 'ai'
     },
-    'CV_TOO_SHORT': {
-        'severity': 'low',
-        'ui_category': 'cv_length_structure',
-        'display_name': 'CV Too Short',
-        'auto_fixable': False,
-    },
-    'BULLET_TOO_LONG': {
-        'severity': 'low',
-        'ui_category': 'professional_formatting',
-        'display_name': 'Bullet Too Long',
+    'KEYWORDS_SKILLS_FORMAT': {
+        'severity': 'consider',
+        'weight': 5,
+        'category': 'Keywords & Optimization',
+        'subcategory': 'Skill Keywords',
         'auto_fixable': True,
+        'display_name': 'Skills Not ATS-Optimized',
+        'detection_method': 'rule'
     },
-    'BULLET_TOO_SHORT': {
-        'severity': 'low',
-        'ui_category': 'professional_formatting',
-        'display_name': 'Bullet Too Short',
-        'auto_fixable': False,
-    },
-    'WHITESPACE_ISSUE': {
-        'severity': 'low',
-        'ui_category': 'professional_formatting',
-        'display_name': 'Whitespace Issue',
+    'KEYWORDS_ABBREVIATION_INCONSISTENT': {
+        'severity': 'consider',
+        'weight': 3,
+        'category': 'Keywords & Optimization',
+        'subcategory': 'Skill Keywords',
         'auto_fixable': True,
-    },
-    'MINOR_FORMAT': {
-        'severity': 'low',
-        'ui_category': 'professional_formatting',
-        'display_name': 'Minor Format Issue',
-        'auto_fixable': True,
-    },
-    'HEADER_STYLE': {
-        'severity': 'low',
-        'ui_category': 'professional_formatting',
-        'display_name': 'Header Style',
-        'auto_fixable': True,
-    },
-    'OUTDATED_INFO': {
-        'severity': 'low',
-        'ui_category': 'career_narrative',
-        'display_name': 'Outdated Information',
-        'auto_fixable': False,
+        'display_name': 'Inconsistent Abbreviation Usage',
+        'detection_method': 'nlp'
     },
 }
 
-# Default severity for unknown issue types (fallback)
-DEFAULT_SEVERITY = 'medium'
-DEFAULT_UI_CATEGORY = 'career_narrative'
+# ═══════════════════════════════════════════════════════════════════
+# LEGACY ISSUE TYPE MAPPING - Backward Compatibility
+# ═══════════════════════════════════════════════════════════════════
+# Maps old issue type names to new catalog names
+# Used by severity.py to support existing data
 
-# Valid severity levels (for validation)
-VALID_SEVERITIES = ['critical', 'high', 'medium', 'low']
+LEGACY_ISSUE_TYPE_MAPPING = {
+    'SPELLING_ERROR': 'GRAMMAR_SPELLING_ERROR',
+    'GRAMMAR_ERROR': 'GRAMMAR_GRAMMATICAL_ERROR',
+    'MISSING_EMAIL': 'CONTACT_MISSING_EMAIL',
+    'MISSING_PHONE': 'CONTACT_MISSING_PHONE',
+    'INVALID_EMAIL': 'CONTACT_UNPROFESSIONAL_EMAIL',
+    'INVALID_PHONE': 'CONTACT_MISSING_PHONE',
+    'MISSING_LINKEDIN': 'CONTACT_MISSING_LINKEDIN',
+    'WEAK_SUMMARY': 'CONTENT_GENERIC_STATEMENTS',
+    'SECTION_ORDER': 'FORMAT_POOR_VISUAL_HIERARCHY',
+    'CV_TOO_LONG': 'LENGTH_CV_TOO_LONG',
+    'CV_TOO_SHORT': 'LENGTH_CV_TOO_SHORT',
+    'NO_METRICS': 'CONTENT_MISSING_METRICS',
+    'BULLET_FORMAT': 'FORMAT_INCONSISTENT_BULLETS',
+    'BULLET_TOO_LONG': 'CONTENT_BULLET_TOO_LONG',
+    'BULLET_TOO_SHORT': 'CONTENT_BULLET_TOO_SHORT',
+    'WEAK_ACTION_VERBS': 'CONTENT_WEAK_ACTION_VERBS',
+    'VAGUE_DESCRIPTION': 'CONTENT_VAGUE_METRICS',
+    'BUZZWORD_STUFFING': 'CONTENT_GENERIC_STATEMENTS',
+    'DATE_FORMAT_INCONSISTENT': 'FORMAT_INCONSISTENT_DATES',
+    'FORMAT_INCONSISTENT': 'FORMAT_INCONSISTENT_BULLETS',
+    'WHITESPACE_ISSUE': 'FORMAT_TRAILING_WHITESPACE',
+    'MINOR_FORMAT': 'FORMAT_MULTIPLE_SPACES',
+    'OUTDATED_INFO': 'STANDARDS_OUTDATED_INFORMATION',
+    'HEADER_STYLE': 'FORMAT_INCONSISTENT_CAPITALIZATION',
+    'REPETITIVE_CONTENT': 'CONTENT_GENERIC_STATEMENTS',
+}
+
+# Default severity for unknown issue types (fallback)
+DEFAULT_SEVERITY = 'consider'
+DEFAULT_UI_CATEGORY = 'Content Quality'
+
+# Valid severity levels (for validation) - NEW taxonomy
+VALID_SEVERITIES = ['critical', 'important', 'consider', 'polish']
 
 # Issue type enum list (for AI prompt reference)
 ISSUE_TYPE_ENUM = list(ISSUE_TYPE_CONFIG.keys())
