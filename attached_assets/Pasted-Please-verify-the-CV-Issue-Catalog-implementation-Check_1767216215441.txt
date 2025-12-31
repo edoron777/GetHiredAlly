@@ -1,0 +1,96 @@
+Please verify the CV Issue Catalog implementation. Check each item and report status.
+
+═══════════════════════════════════════════════════════════════════════════════
+VERIFICATION CHECKLIST
+═══════════════════════════════════════════════════════════════════════════════
+
+PART 1: BACKEND FILES
+Check if these files exist:
+
+□ backend/common/catalog/__init__.py
+□ backend/common/catalog/models.py
+□ backend/common/catalog/repository.py
+□ backend/common/catalog/cache.py
+□ backend/common/catalog/service.py
+□ backend/routes/catalog_routes.py
+
+For each file, report: EXISTS / MISSING
+
+───────────────────────────────────────────────────────────────────────────────
+
+PART 2: MAIN.PY INTEGRATION
+Check backend/main.py for:
+
+□ Import: from common.catalog import init_catalog_service
+□ Import: from routes.catalog_routes import router as catalog_router
+□ Initialization: init_catalog_service(supabase) called
+□ Router: app.include_router(catalog_router)
+
+For each item, report: FOUND / NOT FOUND
+
+───────────────────────────────────────────────────────────────────────────────
+
+PART 3: DETECTION INTEGRATION
+Check backend/common/detection/ files for:
+
+□ Import of get_catalog_service
+□ Function enrich_issues_from_catalog (or similar)
+□ Detection uses catalog service for metadata
+
+Report: INTEGRATED / NOT INTEGRATED
+
+───────────────────────────────────────────────────────────────────────────────
+
+PART 4: OLD CONFIG STATUS
+Check these files:
+
+□ backend/common/scoring/config.py
+  - Is ISSUE_TYPE_CONFIG commented out or removed?
+  
+□ backend/common/detection/ai_enhancer.py
+  - Is SUGGESTION_TEMPLATES commented out or removed?
+
+Report: COMMENTED / ACTIVE / NOT FOUND
+
+───────────────────────────────────────────────────────────────────────────────
+
+PART 5: FRONTEND FIXES
+Check client/src/components/ for:
+
+□ SEVERITY_DISPLAY constant defined
+□ SEVERITY_COLORS constant defined
+□ Expand/collapse uses only expandedIssues.has() (not displayLevel)
+□ Issue interface uses 'current' (not 'current_text')
+□ Issue interface uses 'suggestion' (not 'suggested_fix')
+
+Report status of each: FIXED / NOT FIXED / NOT FOUND
+
+───────────────────────────────────────────────────────────────────────────────
+
+PART 6: API TEST
+If the app is running, test:
+
+GET /api/catalog/health
+
+Expected: { "status": "ok", "is_ready": true }
+
+Report: WORKING / ERROR / NOT TESTED
+
+───────────────────────────────────────────────────────────────────────────────
+
+SUMMARY FORMAT:
+
+Please provide summary like this:
+
+BACKEND FILES:     X/6 exist
+MAIN.PY:           X/4 integrated  
+DETECTION:         INTEGRATED / NOT INTEGRATED
+OLD CONFIG:        REMOVED / STILL ACTIVE
+FRONTEND:          X/5 fixed
+API:               WORKING / NOT WORKING
+
+MISSING ITEMS:
+1. [list what's missing]
+2. [list what's missing]
+
+═══════════════════════════════════════════════════════════════════════════════
