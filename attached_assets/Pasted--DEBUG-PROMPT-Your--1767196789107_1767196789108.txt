@@ -1,0 +1,235 @@
+═══════════════════════════════════════════════════════════════════════════════
+DEBUG PROMPT: Your Recommendations Display Broken
+═══════════════════════════════════════════════════════════════════════════════
+
+CRITICAL: This is an INVESTIGATION, not a fix.
+Do NOT change any code until root cause is confirmed.
+
+───────────────────────────────────────────────────────────────────────────────
+
+PROBLEM DESCRIPTION:
+
+The "Your Recommendations" section in CV Report page is broken:
+
+BUG 1: All boxes are EXPANDED by default
+- Expected: All boxes should be COLLAPSED by default
+- Actual: All boxes are OPEN
+
+BUG 2: SUGGESTED FIX field is EMPTY
+- Expected: Shows fix suggestion like "Replace 'managed' with 'led', 'directed'..."
+- Actual: Green box is completely empty
+
+BUG 3: FOUND field shows only "..."
+- Expected: Shows the actual text from CV that has the issue
+- Actual: Just shows "..." (three dots)
+
+───────────────────────────────────────────────────────────────────────────────
+
+INVESTIGATION GOAL:
+
+Find why the data is not displaying. Is it:
+A) Backend not sending the data?
+B) Frontend not reading the correct field names?
+C) Data structure changed?
+D) Recent code change broke it?
+
+═══════════════════════════════════════════════════════════════════════════════
+PART A: CHECK BACKEND DATA
+═══════════════════════════════════════════════════════════════════════════════
+
+TASK 1: Find what backend returns
+
+File to check: backend/app/cv_optimizer.py
+
+Find the endpoint that returns scan results:
+- GET /api/cv-optimizer/scans/{id}
+- Or similar endpoint
+
+Show the response structure - what fields are in each issue?
+
+TASK 2: Check issues_json in database
+
+Run SQL query:
+
+SELECT id, issues_json 
+FROM cv_scan_results 
+WHERE status = 'completed' 
+ORDER BY created_at DESC 
+LIMIT 1;
+
+Show ONE issue from the issues_json array.
+What fields does each issue have?
+
+Expected fields (check if they exist):
+- type or issue_type
+- message or title
+- severity
+- suggestion or suggested_fix
+- original_text or found_text or context
+- location
+- category
+
+TASK 3: Check ai_enhancer.py
+
+File: backend/common/detection/ai_enhancer.py
+
+Show the add_basic_suggestions() function.
+What field name does it use for suggestions?
+- suggestion?
+- suggested_fix?
+- fix?
+- recommendation?
+
+═══════════════════════════════════════════════════════════════════════════════
+PART B: CHECK FRONTEND DISPLAY
+═══════════════════════════════════════════════════════════════════════════════
+
+TASK 4: Find recommendation card component
+
+File to check: client/src/components/CVReportPage.tsx
+Or: client/src/components/cv-report/ folder
+
+Find where "SUGGESTED FIX" is displayed.
+What field name does it try to read?
+
+Show the code that renders:
+- SUGGESTED FIX field
+- FOUND field
+
+TASK 5: Check field name mapping
+
+Does frontend expect:
+- issue.suggestion OR issue.suggested_fix OR issue.fix?
+- issue.original_text OR issue.found_text OR issue.context?
+
+Show the exact code.
+
+TASK 6: Check default expanded state
+
+Find where expand/collapse state is set.
+Is there a defaultExpanded={true} somewhere?
+Should be defaultExpanded={false} or collapsed by default.
+
+═══════════════════════════════════════════════════════════════════════════════
+PART C: COMPARE BACKEND vs FRONTEND
+═══════════════════════════════════════════════════════════════════════════════
+
+TASK 7: Field name comparison
+
+Fill this table:
+
+| Data | Backend Field Name | Frontend Field Name | Match? |
+|------|-------------------|---------------------|--------|
+| Issue title | ??? | ??? | YES/NO |
+| Severity | ??? | ??? | YES/NO |
+| Suggestion | ??? | ??? | YES/NO |
+| Found text | ??? | ??? | YES/NO |
+| Location | ??? | ??? | YES/NO |
+| Category | ??? | ??? | YES/NO |
+
+TASK 8: Console log test
+
+Add temporary console.log to see actual data:
+
+In CVReportPage.tsx, find where issues are loaded and add:
+console.log('Issues data:', issues);
+console.log('First issue:', issues[0]);
+
+Check browser console - what fields are actually present?
+
+═══════════════════════════════════════════════════════════════════════════════
+PART D: CHECK RECENT CHANGES
+═══════════════════════════════════════════════════════════════════════════════
+
+TASK 9: Git history
+
+Run:
+git log --oneline -20
+
+Show recent commits.
+
+Run:
+git diff HEAD~5 -- client/src/components/CVReportPage.tsx
+
+Show what changed recently in CVReportPage.
+
+TASK 10: Check for field name changes
+
+Was there a recent change that renamed fields?
+- suggestion -> suggested_fix?
+- original_text -> context?
+- Any other rename?
+
+═══════════════════════════════════════════════════════════════════════════════
+REPORT FORMAT
+═══════════════════════════════════════════════════════════════════════════════
+
+PART A: BACKEND DATA
+
+TASK 1 - API Response:
+- Endpoint: [path]
+- Issue fields returned: [list fields]
+
+TASK 2 - Database Data:
+- Sample issue from issues_json:
+  [show one issue object]
+
+TASK 3 - ai_enhancer.py:
+- Suggestion field name used: [field name]
+
+───────────────────────────────────────────────────────────────────────────────
+
+PART B: FRONTEND DISPLAY
+
+TASK 4 - Suggestion Display Code:
+- File: [path]
+- Field accessed: [field name]
+- Code: [show relevant line]
+
+TASK 5 - Found Text Display Code:
+- Field accessed: [field name]
+- Code: [show relevant line]
+
+TASK 6 - Expand State:
+- Default state: EXPANDED / COLLAPSED
+- Code location: [path and line]
+
+───────────────────────────────────────────────────────────────────────────────
+
+PART C: COMPARISON
+
+| Data | Backend | Frontend | Match? |
+|------|---------|----------|--------|
+| Suggestion | ??? | ??? | ??? |
+| Found text | ??? | ??? | ??? |
+
+Console log output:
+[paste first issue object from console]
+
+───────────────────────────────────────────────────────────────────────────────
+
+PART D: RECENT CHANGES
+
+Recent commits:
+[list]
+
+Field name changes found:
+[list any renames]
+
+───────────────────────────────────────────────────────────────────────────────
+
+ROOT CAUSE:
+
+[ ] A) Backend not sending data
+[ ] B) Frontend using wrong field names
+[ ] C) Data structure changed
+[ ] D) Recent code change broke it
+[ ] E) Other: ___
+
+SPECIFIC ISSUE:
+[Explain exactly what is wrong]
+
+═══════════════════════════════════════════════════════════════════════════════
+DO NOT FIX ANYTHING YET.
+Report findings first.
+═══════════════════════════════════════════════════════════════════════════════
