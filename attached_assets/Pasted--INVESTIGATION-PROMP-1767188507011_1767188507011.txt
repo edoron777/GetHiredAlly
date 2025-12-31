@@ -1,0 +1,251 @@
+═══════════════════════════════════════════════════════════════════════════════
+INVESTIGATION PROMPT: UserSessionKeep Function - Requirements Gathering
+═══════════════════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL: This is an INVESTIGATION, not implementation.
+Do NOT create any code. Just gather information and report.
+
+───────────────────────────────────────────────────────────────────────────────
+
+GOAL:
+We want to create a reusable function called "UserSessionKeep" that maintains
+user session data across all services. Before building it, we need to 
+understand the current system structure.
+
+═══════════════════════════════════════════════════════════════════════════════
+PART A: DATABASE STRUCTURE
+═══════════════════════════════════════════════════════════════════════════════
+
+TASK 1: List all database tables
+
+Run this SQL query (or equivalent for your database):
+```sql
+-- For PostgreSQL/Supabase:
+SELECT table_name 
+FROM information_schema.tables 
+WHERE table_schema = 'public'
+ORDER BY table_name;
+
+-- OR for SQLite:
+SELECT name FROM sqlite_master WHERE type='table';
+```
+
+Report: List all tables found.
+
+───────────────────────────────────────────────────────────────────────────────
+
+TASK 2: Find service-related tables
+
+For each of these services, identify if a table exists and show its structure:
+
+SERVICE 1: CV Optimizer
+- Expected table: cv_scans or similar
+- Run: \d cv_scans (PostgreSQL) or PRAGMA table_info(cv_scans) (SQLite)
+- Or show CREATE TABLE statement
+
+SERVICE 2: Tailor for This Job
+- Look for tables like: job_tailoring, cv_job_match, tailored_cvs
+- Show structure if found
+
+SERVICE 3: Decode the Job Post (X-Ray Analyzer)
+- Look for tables like: job_analyses, xray_reports, job_posts
+- Show structure if found
+
+SERVICE 4: Predict the Questions
+- Look for tables like: predicted_questions, interview_questions
+- Show structure if found
+
+SERVICE 5: Craft Your Answers
+- Look for tables like: answer_drafts, interview_answers, crafted_answers
+- Show structure if found
+
+───────────────────────────────────────────────────────────────────────────────
+
+TASK 3: Check for existing session table
+
+Look for any existing session management:
+```sql
+-- Look for session-related tables
+SELECT table_name 
+FROM information_schema.tables 
+WHERE table_schema = 'public'
+AND (
+    table_name LIKE '%session%' 
+    OR table_name LIKE '%state%'
+    OR table_name LIKE '%progress%'
+);
+```
+
+═══════════════════════════════════════════════════════════════════════════════
+PART B: COMPONENT REGISTRY
+═══════════════════════════════════════════════════════════════════════════════
+
+TASK 4: Find Component Registry
+
+Search for component registry files:
+```bash
+# Search for registry files
+find . -name "*registry*" -o -name "*REGISTRY*" -o -name "*component*index*" 2>/dev/null
+
+# Search for component documentation
+find . -name "COMPONENTS.md" -o -name "ComponentRegistry.md" 2>/dev/null
+
+# Check common locations
+ls -la ./docs/ 2>/dev/null
+ls -la ./client/src/components/ 2>/dev/null
+```
+
+Report:
+- File found: YES/NO
+- Location: [path]
+- Current contents summary (if exists)
+
+───────────────────────────────────────────────────────────────────────────────
+
+TASK 5: Find existing common/shared components
+```bash
+# List shared component directories
+ls -la ./client/src/components/common/ 2>/dev/null
+ls -la ./client/src/components/shared/ 2>/dev/null
+ls -la ./client/src/components/ui/ 2>/dev/null
+
+# Find reusable components
+find ./client/src -name "*.tsx" -path "*/common/*" 2>/dev/null
+find ./client/src -name "*.tsx" -path "*/shared/*" 2>/dev/null
+```
+
+Report: List any existing shared/common components.
+
+═══════════════════════════════════════════════════════════════════════════════
+PART C: SERVICE IMPLEMENTATION STATUS
+═══════════════════════════════════════════════════════════════════════════════
+
+TASK 6: Check which services have frontend pages
+```bash
+# Find service pages
+find ./client/src -name "*CV*" -name "*.tsx" 2>/dev/null
+find ./client/src -name "*Tailor*" -name "*.tsx" 2>/dev/null
+find ./client/src -name "*XRay*" -o -name "*Decode*" -name "*.tsx" 2>/dev/null
+find ./client/src -name "*Question*" -name "*.tsx" 2>/dev/null
+find ./client/src -name "*Answer*" -name "*.tsx" 2>/dev/null
+
+# Or list all pages/components
+ls -la ./client/src/components/ 2>/dev/null
+ls -la ./client/src/pages/ 2>/dev/null
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+TASK 7: Check which services have backend routes
+```bash
+# Find backend route files
+find ./backend -name "*.py" | xargs grep -l "router\|Router\|@app" 2>/dev/null
+
+# List backend app files
+ls -la ./backend/app/ 2>/dev/null
+ls -la ./backend/routes/ 2>/dev/null
+ls -la ./backend/api/ 2>/dev/null
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+TASK 8: Check routes/navigation configuration
+```bash
+# Find router configuration
+find ./client/src -name "*route*" -o -name "*Route*" | head -20
+
+# Show main router file
+cat ./client/src/App.tsx 2>/dev/null | grep -A 2 "Route\|path="
+```
+
+═══════════════════════════════════════════════════════════════════════════════
+PART D: EXISTING PATTERNS
+═══════════════════════════════════════════════════════════════════════════════
+
+TASK 9: How does CV Optimizer handle session?
+
+Show the code for:
+1. Where scan data is saved after analysis
+2. How Crossroads page loads existing scan data
+3. Any existing "continue" or "resume" functionality
+
+Files to check:
+- CVOptimizerPage.tsx
+- CrossroadsPage.tsx
+- cv_optimizer.py (backend)
+
+───────────────────────────────────────────────────────────────────────────────
+
+═══════════════════════════════════════════════════════════════════════════════
+REPORT FORMAT
+═══════════════════════════════════════════════════════════════════════════════
+
+Please provide a structured report:
+
+## PART A: DATABASE STRUCTURE
+
+### All Tables Found:
+[list tables]
+
+### Service Tables:
+
+| Service | Table Name | Exists | Key Columns |
+|---------|------------|--------|-------------|
+| CV Optimizer | | YES/NO | |
+| Tailor for This Job | | YES/NO | |
+| Decode the Job Post | | YES/NO | |
+| Predict Questions | | YES/NO | |
+| Craft Answers | | YES/NO | |
+
+### Session Table:
+- Exists: YES/NO
+- Name: [if exists]
+- Structure: [if exists]
+
+---
+
+## PART B: COMPONENT REGISTRY
+
+### Registry File:
+- Exists: YES/NO
+- Location: [path]
+
+### Common/Shared Components Folder:
+- Location: [path]
+- Existing components: [list]
+
+---
+
+## PART C: SERVICE STATUS
+
+| Service | Frontend | Backend | Database | Status |
+|---------|----------|---------|----------|--------|
+| CV Optimizer | YES/NO | YES/NO | YES/NO | Working/Partial/Not Started |
+| Tailor for This Job | YES/NO | YES/NO | YES/NO | Working/Partial/Not Started |
+| Decode the Job Post | YES/NO | YES/NO | YES/NO | Working/Partial/Not Started |
+| Predict Questions | YES/NO | YES/NO | YES/NO | Working/Partial/Not Started |
+| Craft Answers | YES/NO | YES/NO | YES/NO | Working/Partial/Not Started |
+
+---
+
+## PART D: EXISTING PATTERNS
+
+### How CV Optimizer Saves Session:
+[describe]
+
+### How It Retrieves Session:
+[describe]
+
+### Existing Reusable Patterns:
+[list any patterns we can follow]
+
+---
+
+## RECOMMENDATIONS
+
+Based on findings, suggest:
+1. Best location for UserSessionKeep component
+2. Database approach (use existing tables vs. new unified table)
+3. Any existing code we can extend
+
+═══════════════════════════════════════════════════════════════════════════════
