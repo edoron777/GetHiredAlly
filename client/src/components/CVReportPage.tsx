@@ -24,8 +24,8 @@ interface Issue {
   severity: string
   category: string
   location: string
-  current_text: string
-  suggested_fix: string
+  current: string
+  suggestion: string | null
   fix_difficulty: string
   additional_info?: string
 }
@@ -509,7 +509,7 @@ export function CVReportPage() {
                           </div>
                         </button>
 
-                        {(displayLevel >= 2 || expandedIssues.has(issue.id)) && (
+                        {expandedIssues.has(issue.id) && (
                           <div className="p-4 bg-white border-t border-gray-100">
                             <div className="grid grid-cols-2 gap-4 mb-4">
                               <div>
@@ -522,25 +522,25 @@ export function CVReportPage() {
                               </div>
                             </div>
 
-                            {displayLevel >= 3 && (
-                              <div className={displayLevel >= 4 ? 'mb-4' : ''}>
+                            {issue.suggestion && (
+                              <div className="mb-4">
                                 <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Suggested Fix</p>
                                 <div className="bg-green-50 border border-green-200 rounded p-3">
-                                  <p className="text-green-800">{issue.suggested_fix}</p>
+                                  <p className="text-green-800">{issue.suggestion}</p>
                                 </div>
                               </div>
                             )}
 
-                            {displayLevel >= 4 && (
+                            {issue.current && (
                               <div className="mb-4">
                                 <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Found</p>
                                 <div className="bg-red-50 border border-red-200 rounded p-3">
-                                  <p className="text-red-800 font-mono text-sm">"{issue.current_text}"</p>
+                                  <p className="text-red-800 font-mono text-sm">"{issue.current}"</p>
                                 </div>
                               </div>
                             )}
 
-                            {displayLevel >= 4 && issue.additional_info && (
+                            {issue.additional_info && (
                               <div className="mt-4 pt-4 border-t border-gray-100">
                                 <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Additional Information</p>
                                 <p className="text-gray-600 text-sm">{issue.additional_info}</p>

@@ -1,0 +1,155 @@
+═══════════════════════════════════════════════════════════════════════════════
+FIX PROMPT: CV Recommendations Display - 3 Bugs
+═══════════════════════════════════════════════════════════════════════════════
+
+ROOT CAUSE CONFIRMED. Proceed with fixes.
+
+═══════════════════════════════════════════════════════════════════════════════
+BUG 1: All Boxes Always Expanded
+═══════════════════════════════════════════════════════════════════════════════
+
+FILE: client/src/components/CVReportPage.tsx
+
+PROBLEM:
+Line 512: {(displayLevel >= 2 || expandedIssues.has(issue.id)) && (
+Since displayLevel = 4, the condition "displayLevel >= 2" is ALWAYS TRUE.
+So content always renders (always expanded).
+
+FIX:
+Change line 512 FROM:
+{(displayLevel >= 2 || expandedIssues.has(issue.id)) && (
+
+TO:
+{expandedIssues.has(issue.id) && (
+
+This makes boxes collapsed by default, only expanded when user clicks.
+
+═══════════════════════════════════════════════════════════════════════════════
+BUG 2 & 3: Field Name Mismatch
+═══════════════════════════════════════════════════════════════════════════════
+
+PROBLEM:
+- Frontend expects: issue.suggested_fix
+- Backend sends: issue.suggestion
+
+- Frontend expects: issue.current_text  
+- Backend sends: issue.current
+
+SOLUTION: Update frontend interface to match backend field names.
+
+FILE: client/src/components/CVReportPage.tsx
+
+STEP 1: Find the Issue interface (around lines 21-31)
+
+CHANGE FROM:
+interface Issue {
+  id: number;
+  issue: string;
+  current_text: string;
+  suggested_fix: string;
+  category: string;
+  location: string;
+  severity: string;
+  issue_type: string;
+  fix_difficulty?: string;
+}
+
+CHANGE TO:
+interface Issue {
+  id: number;
+  issue: string;
+  current: string;
+  suggestion: string | null;
+  category: string;
+  location: string;
+  severity: string;
+  issue_type: string;
+  fix_difficulty?: string;
+}
+
+STEP 2: Update all usages in the file
+
+Find and replace:
+- issue.current_text -> issue.current
+- issue.suggested_fix -> issue.suggestion
+
+STEP 3: Handle null suggestion
+
+Where suggestion is displayed (around line 529), add null check:
+
+CHANGE FROM:
+{issue.suggested_fix}
+
+CHANGE TO:
+{issue.suggestion || 'No specific suggestion available'}
+
+OR show the section only if suggestion exists:
+{issue.suggestion && (
+  <div>
+    <p className="text-xs text-gray-500 mb-1">SUGGESTED FIX</p>
+    <div className="bg-green-50 p-2 rounded text-sm text-green-800">
+      {issue.suggestion}
+    </div>
+  </div>
+)}
+
+STEP 4: Update FOUND section (around line 538)
+
+CHANGE FROM:
+{issue.current_text}
+
+CHANGE TO:
+{issue.current}
+
+═══════════════════════════════════════════════════════════════════════════════
+VERIFICATION
+═══════════════════════════════════════════════════════════════════════════════
+
+After fixes, test:
+
+TEST 1: Collapse State
+- Go to CV Report page
+- All recommendation boxes should be COLLAPSED by default
+- Click on a box - it should EXPAND
+- Click again - it should COLLAPSE
+- Result: PASS / FAIL
+
+TEST 2: SUGGESTED FIX Display
+- Expand a recommendation box
+- SUGGESTED FIX should show actual suggestion text (or "No specific suggestion")
+- Should NOT be empty
+- Result: PASS / FAIL
+
+TEST 3: FOUND Display
+- Expand a recommendation box
+- FOUND should show the actual text from CV
+- Should NOT show "..." or be empty
+- Result: PASS / FAIL
+
+TEST 4: Expand All / Collapse All Buttons
+- Click "Expand All" - all boxes should expand
+- Click "Collapse All" - all boxes should collapse
+- Result: PASS / FAIL
+
+═══════════════════════════════════════════════════════════════════════════════
+REPORT FORMAT
+═══════════════════════════════════════════════════════════════════════════════
+
+BUG 1 FIX:
+- Line 512 updated: YES/NO
+- Condition changed to expandedIssues.has(issue.id) only: YES/NO
+
+BUG 2 & 3 FIX:
+- Interface updated: YES/NO
+- Field names changed:
+  - current_text -> current: YES/NO
+  - suggested_fix -> suggestion: YES/NO
+- Null check added for suggestion: YES/NO
+
+VERIFICATION:
+- TEST 1 (Collapse State): PASS/FAIL
+- TEST 2 (SUGGESTED FIX): PASS/FAIL
+- TEST 3 (FOUND): PASS/FAIL
+- TEST 4 (Expand All/Collapse All): PASS/FAIL
+
+═══════════════════════════════════════════════════════════════════════════════

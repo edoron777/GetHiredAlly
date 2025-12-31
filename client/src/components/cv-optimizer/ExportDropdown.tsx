@@ -7,7 +7,7 @@ interface Recommendation {
   category: string;
   location: string;
   severity: string;
-  suggestion?: string;
+  suggestion?: string | null;
 }
 
 interface ExportDropdownProps {
