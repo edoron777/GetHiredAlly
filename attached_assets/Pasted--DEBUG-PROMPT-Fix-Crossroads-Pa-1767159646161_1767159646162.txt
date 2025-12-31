@@ -1,0 +1,114 @@
+═══════════════════════════════════════════════════════════════════
+DEBUG PROMPT: Fix Crossroads Page Data Loading
+═══════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify files not explicitly mentioned
+3. If unclear, STOP and ask - do not assume
+
+───────────────────────────────────────────────────────────────────
+
+PROBLEM:
+
+Crossroads page shows: "Failed to load report data"
+URL: /service/cv-optimizer/crossroads/87
+
+The page is trying to fetch from:
+/api/cv-optimizer/report/87/summary
+
+But it's failing.
+
+───────────────────────────────────────────────────────────────────
+
+DEBUG STEP 1: Check backend logs
+
+Look at the console/terminal for any Python errors when
+accessing /api/cv-optimizer/report/87/summary
+
+Report the error message.
+
+───────────────────────────────────────────────────────────────────
+
+DEBUG STEP 2: Test the endpoint directly
+
+In the browser or using curl, try to access:
+GET /api/cv-optimizer/report/87/summary
+
+What response do you get?
+- 404 Not Found?
+- 500 Internal Server Error?
+- Empty response?
+- Something else?
+
+───────────────────────────────────────────────────────────────────
+
+DEBUG STEP 3: Verify endpoint registration
+
+Check if the endpoint was properly registered:
+
+1. Open backend/app/cv_optimizer.py
+2. Search for "/report/<" and "summary"
+3. Verify the route decorator is correct:
+   @cv_optimizer_bp.route('/report/<int:scan_id>/summary', methods=['GET'])
+
+4. Check the blueprint name matches your project
+   (might be cv_optimizer_bp, cv_bp, or something else)
+
+───────────────────────────────────────────────────────────────────
+
+DEBUG STEP 4: Check the database model
+
+The endpoint tries to access CVScan.query.get(scan_id)
+
+Verify:
+1. What is the actual model name? (CVScan? Scan? CVReport?)
+2. What is the primary key field? (id? scan_id?)
+3. How are issues stored? (issues? recommendations? analysis?)
+
+Show me the model definition.
+
+───────────────────────────────────────────────────────────────────
+
+DEBUG STEP 5: Check existing working endpoints
+
+Find another endpoint that successfully returns scan data.
+For example: /api/cv-optimizer/report/<id>
+
+Show me that endpoint code so we can match the pattern.
+
+───────────────────────────────────────────────────────────────────
+
+REPORT FORMAT:
+
+1. BACKEND ERROR (if any):
+   [Paste error message]
+
+2. ENDPOINT STATUS:
+   - Route registered: YES/NO
+   - Blueprint name: __________
+   - Route path: __________
+
+3. DATABASE MODEL:
+   - Model name: __________
+   - Primary key: __________
+   - Issues field name: __________
+   - Score field name: __________
+
+4. WORKING ENDPOINT EXAMPLE:
+   [Paste similar working endpoint code]
+
+5. ROOT CAUSE:
+   [ ] Endpoint not registered
+   [ ] Wrong model name
+   [ ] Wrong field names
+   [ ] Blueprint not imported
+   [ ] Other: __________
+
+───────────────────────────────────────────────────────────────────
+
+After identifying the issue, FIX IT by updating the summary endpoint
+to match your actual model and field names.
+
+═══════════════════════════════════════════════════════════════════

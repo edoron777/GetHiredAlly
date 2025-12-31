@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import IssuesSummaryBox from '../components/cv-optimizer/IssuesSummaryBox';
 import PathCard from '../components/cv-optimizer/PathCard';
+import { getAuthToken } from '../lib/auth';
 
 interface ReportData {
   score: number;
@@ -26,7 +27,8 @@ const CVCrossroadsPage: React.FC = () => {
     const fetchReportData = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`/api/cv-optimizer/report/${id}/summary`);
+        const token = getAuthToken();
+        const response = await fetch(`/api/cv-optimizer/report/${id}/summary?token=${token}`);
         if (!response.ok) {
           throw new Error('Failed to fetch report data');
         }
