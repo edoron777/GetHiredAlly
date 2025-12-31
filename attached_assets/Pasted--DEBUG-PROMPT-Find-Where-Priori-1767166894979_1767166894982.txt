@@ -1,0 +1,140 @@
+═══════════════════════════════════════════════════════════════════
+DEBUG PROMPT: Find Where Priority (Important/Consider/Polish) Is Assigned
+═══════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL: This is an INVESTIGATION, not a fix.
+Do NOT change any code until we understand the architecture.
+
+───────────────────────────────────────────────────────────────────
+
+PROBLEM:
+
+When uploading the same CV multiple times, the priority breakdown 
+changes dramatically:
+
+Run 1: 2 Important, 30 Consider, 44 Polish
+Run 2: 5 Important, 25 Consider, 46 Polish  
+Run 3: 0 Important, 40 Consider, 36 Polish
+
+This violates the core principle:
+"SAME CV + SAME ALGORITHM = SAME RESULT (ALWAYS)"
+
+───────────────────────────────────────────────────────────────────
+
+INVESTIGATION STEP 1: Find the AI prompt that analyzes CVs
+
+Search for:
+- The prompt that asks AI to analyze the CV
+- The prompt that asks AI to detect issues
+- Any prompt with "Important", "Consider", "Polish"
+- Any prompt with "priority", "severity", "critical", "high", "medium", "low"
+
+Files to search:
+- backend/app/cv_optimizer.py
+- backend/services/cv_optimizer/*.py
+- Any file with "scan", "analyze", "cv" in the name
+
+QUESTION 1: Does the AI prompt ASK the AI to assign priority?
+- If YES → This is the bug! Priority should be assigned by CODE
+- If NO → Continue investigation
+
+SHOW ME the exact AI prompt text.
+
+───────────────────────────────────────────────────────────────────
+
+INVESTIGATION STEP 2: Find where priority is assigned
+
+Search for:
+- "Important"
+- "Consider" 
+- "Polish"
+- "critical"
+- "high"
+- "medium"
+- "low"
+- "priority"
+- "severity"
+
+For each occurrence, answer:
+- Is it in an AI PROMPT (sent to Claude/Gemini)?
+- Is it in BACKEND CODE (Python logic)?
+- Is it in FRONTEND CODE (JavaScript/TypeScript)?
+
+QUESTION 2: WHERE is priority assigned?
+- In AI prompt response? (BAD - varies each time)
+- In backend code based on rules? (GOOD - consistent)
+
+───────────────────────────────────────────────────────────────────
+
+INVESTIGATION STEP 3: Check the scoring module
+
+Open: backend/common/scoring/ folder (if exists)
+
+Look for:
+- config.py - Should have weight definitions
+- calculator.py - Should have priority logic
+- categories/*.py - Should have parameter definitions
+
+QUESTION 3: Do the category files define priority for each parameter?
+
+Each parameter should have a STATIC priority like:
+
+PARAMETER_DEFINITIONS = {
+    'QNT-001': {
+        'name': 'Has percentage metrics',
+        'weight': 4.0,
+        'priority': 'Important',  # ← STATIC, not AI-assigned
+        'category': 'content_quality',
+        ...
+    },
+    'GRM-001': {
+        'name': 'No spelling errors',
+        'weight': 2.0,
+        'priority': 'Polish',  # ← STATIC, not AI-assigned
+        ...
+    }
+}
+
+───────────────────────────────────────────────────────────────────
+
+INVESTIGATION STEP 4: Trace the data flow
+
+When a CV is scanned:
+
+1. What does the AI return?
+   - Does it return "priority" in the response?
+   - Or does it return just "issue detected: true/false"?
+
+2. After AI response, what does the code do?
+   - Does code ADD priority based on rules?
+   - Or does code just PASS THROUGH AI's priority?
+
+SHOW ME the code that processes AI response.
+
+───────────────────────────────────────────────────────────────────
+
+REPORT FORMAT:
+
+FINDING 1 - AI PROMPT:
+- Location: [file path]
+- Does AI assign priority? YES/NO
+- If YES, paste the relevant prompt section
+
+FINDING 2 - PRIORITY ASSIGNMENT LOCATION:
+- File: [file path]
+- Line numbers: [lines]
+- Assigned by: AI / CODE
+- Logic: [describe how priority is determined]
+
+FINDING 3 - PARAMETER DEFINITIONS:
+- Location: [file path or "NOT FOUND"]
+- Has static priorities? YES/NO
+- Sample: [paste one parameter definition]
+
+FINDING 4 - DATA FLOW:
+- AI returns: [what fields]
+- Code then: [what it does with priority]
+
+ROOT CAUSE:
+[ ] A. AI prompt asks AI to assign priority (AI judgment varies)
+[ ] B. Code exi
