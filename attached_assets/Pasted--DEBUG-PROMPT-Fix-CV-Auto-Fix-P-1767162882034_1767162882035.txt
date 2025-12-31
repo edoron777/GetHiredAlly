@@ -1,0 +1,66 @@
+═══════════════════════════════════════════════════════════════════
+DEBUG PROMPT: Fix CV Auto-Fix Process from Crossroads
+═══════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify files not explicitly mentioned
+3. If unclear, STOP and ask - do not assume
+
+───────────────────────────────────────────────────────────────────
+
+PROBLEM:
+
+When clicking "The Easy Way" (Blue Pill) on Crossroads page:
+1. Should show fixing animation (like when clicking "Fix My CV" from report page)
+2. Then show the fixed CV result page
+
+CURRENT BEHAVIOR:
+- Shows "Fixing your CV..." text briefly
+- Then shows ERROR
+- No proper scanning/fixing animation
+
+EXPECTED BEHAVIOR:
+- Show the same fixing animation used elsewhere in the app
+- Complete the fix process
+- Navigate to fixed CV page
+
+───────────────────────────────────────────────────────────────────
+
+DEBUG STEP 1: Check browser console errors
+
+Open browser DevTools (F12) → Console tab
+Click "The Easy Way" button
+Report ALL error messages that appear.
+
+───────────────────────────────────────────────────────────────────
+
+DEBUG STEP 2: Check backend logs
+
+Look at the terminal/console for Python errors when the 
+fix API is called.
+
+Report any errors from:
+POST /api/cv-optimizer/fix/{id}
+
+───────────────────────────────────────────────────────────────────
+
+DEBUG STEP 3: Find the WORKING fix process
+
+The "Fix My CV" button on the Report page (CVReportPage.tsx) 
+works correctly.
+
+Find that code and show me:
+1. What function is called when clicking "Fix My CV"?
+2. What API endpoint does it call?
+3. How does it handle the animation/loading state?
+4. Where does it navigate after completion?
+
+───────────────────────────────────────────────────────────────────
+
+DEBUG STEP 4: Compare with Crossroads implementation
+
+Show me the current handleBluePill function in CVCrossroadsPage.tsx
+
+Compare it with the working implementation from CVR
