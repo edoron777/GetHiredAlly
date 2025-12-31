@@ -16,6 +16,7 @@ dependencies = [
     "pdfplumber>=0.11.8",
     "psycopg2-binary>=2.9.11",
     "pydantic[email]>=2.12.5",
+    "pyspellchecker>=0.8.4",
     "python-docx>=1.2.0",
     "python-multipart>=0.0.21",
     "reportlab>=4.4.7",
