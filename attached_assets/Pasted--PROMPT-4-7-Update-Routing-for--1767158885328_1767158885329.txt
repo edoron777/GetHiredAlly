@@ -1,0 +1,89 @@
+═══════════════════════════════════════════════════════════════════
+PROMPT 4#7: Update Routing for Crossroads Flow
+═══════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify files not explicitly mentioned
+3. Do NOT add features not explicitly requested
+4. Do NOT refactor or "improve" existing code
+5. If unclear, STOP and ask - do not assume
+6. Make MINIMAL, SURGICAL changes only
+
+FORBIDDEN ACTIONS:
+- Deleting existing routes
+- Changing route paths that aren't mentioned
+- Modifying component logic
+
+───────────────────────────────────────────────────────────────────
+
+TASK: Update routes to include Crossroads page in the flow
+
+OBJECTIVE:
+After scanning completes, redirect to Crossroads page instead of 
+directly to the report page.
+
+CONTEXT:
+Current flow: Scan → Report
+New flow: Scan → Crossroads → (Blue: Fix / Red: Details)
+
+───────────────────────────────────────────────────────────────────
+
+INSTRUCTIONS:
+
+Step 1: Find the main routes file
+- Likely: client/src/App.tsx or client/src/routes.tsx or similar
+
+Step 2: Import the new CVCrossroadsPage component
+- Add: import CVCrossroadsPage from './pages/CVCrossroadsPage';
+
+Step 3: Add NEW routes (do NOT delete existing routes):
+
+Add these routes:
+- /service/cv-optimizer/crossroads/:id → CVCrossroadsPage
+- /service/cv-optimizer/report/:id/details → CVReportPage (existing component)
+
+Step 4: Find where scanning redirects after completion
+- Likely in: client/src/pages/CVScanningPage.tsx or similar
+- Find the navigation after scan completes
+- Change the destination from /report/:id to /crossroads/:id
+
+EXAMPLE CHANGE in scanning page:
+BEFORE:
+  navigate(`/service/cv-optimizer/report/${reportId}`);
+
+AFTER:
+  navigate(`/service/cv-optimizer/crossroads/${reportId}`);
+
+Step 5: Verify existing routes still work:
+- /service/cv-optimizer/report/:id (keep as is - for direct access)
+- /service/cv-optimizer/fixed/:id (keep as is)
+
+───────────────────────────────────────────────────────────────────
+
+FILES TO MODIFY:
+- client/src/App.tsx (or wherever routes are defined) - add new route
+- client/src/pages/CVScanningPage.tsx (or similar) - change redirect destination
+
+FILES TO CREATE:
+- None
+
+DO NOT TOUCH:
+- CVReportPage.tsx logic
+- Fixed page routes
+- Backend files
+
+───────────────────────────────────────────────────────────────────
+
+WHEN COMPLETE:
+
+Confirm:
+□ CVCrossroadsPage imported in routes file
+□ Route /service/cv-optimizer/crossroads/:id added
+□ Route /service/cv-optimizer/report/:id/details added (or existing route works)
+□ Scanning page redirects to /crossroads/:id after completion
+□ Existing routes still functional
+□ No console errors
+
+Type "PROMPT 4#7 COMPLETE - READY FOR 5#7" when done.
