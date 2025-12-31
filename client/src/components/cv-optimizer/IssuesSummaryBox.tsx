@@ -39,7 +39,7 @@ const IssuesSummaryBox: React.FC<IssuesSummaryBoxProps> = ({
       <div className="flex flex-wrap justify-center gap-2 mb-4">
         {breakdown.critical > 0 && (
           <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium">
-            🔴 {breakdown.critical} Quick Wins
+            🔴 {breakdown.critical} Critical
           </span>
         )}
         {breakdown.high > 0 && (

@@ -55,14 +55,14 @@ interface ReportData {
 
 const SEVERITY_FILTERS = [
   { id: 'all', label: 'All', icon: '' },
-  { id: 'critical', label: 'Quick Wins', icon: '🔴' },
+  { id: 'critical', label: 'Critical', icon: '🔴' },
   { id: 'high', label: 'Important', icon: '🟠' },
   { id: 'medium', label: 'Consider', icon: '🟡' },
   { id: 'low', label: 'Polish', icon: '🟢' }
 ]
 
 const SEVERITY_SECTIONS = [
-  { key: 'critical', label: 'QUICK WINS', icon: '🔴', bgColor: 'bg-red-50', borderColor: 'border-red-200', textColor: 'text-red-700' },
+  { key: 'critical', label: 'CRITICAL', icon: '🔴', bgColor: 'bg-red-50', borderColor: 'border-red-200', textColor: 'text-red-700' },
   { key: 'high', label: 'IMPORTANT', icon: '🟠', bgColor: 'bg-orange-50', borderColor: 'border-orange-200', textColor: 'text-orange-700' },
   { key: 'medium', label: 'CONSIDER', icon: '🟡', bgColor: 'bg-yellow-50', borderColor: 'border-yellow-200', textColor: 'text-yellow-700' },
   { key: 'low', label: 'POLISH', icon: '🟢', bgColor: 'bg-green-50', borderColor: 'border-green-200', textColor: 'text-green-700' }
@@ -400,7 +400,7 @@ export function CVReportPage() {
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
             <p className="text-sm text-gray-600 mb-3 flex items-center">
               <Filter size={16} className="mr-2" />
-              Filter by priority
+              Filter by severity
             </p>
             <div className="flex flex-wrap gap-2">
               {SEVERITY_FILTERS.map(filter => (

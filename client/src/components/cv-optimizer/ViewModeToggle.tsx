@@ -27,7 +27,7 @@ export default function ViewModeToggle({
             }
           `}
         >
-          📊 By Priority
+          📊 By Severity
         </button>
         <button
           onClick={() => onModeChange('effort')}
@@ -53,7 +53,7 @@ export default function ViewModeToggle({
             }
           `}
         >
-          🛠️ By Work Type
+          🛠️ By Category
         </button>
       </div>
     </div>

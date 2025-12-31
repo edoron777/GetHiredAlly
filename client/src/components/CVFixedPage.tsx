@@ -307,7 +307,7 @@ export function CVFixedPage() {
                       low: data.issues.filter(i => i.severity === 'low').length
                     }
                     const severityConfig = [
-                      { key: 'critical', label: 'Quick Wins', icon: '🔴', bg: 'bg-red-50', text: 'text-red-700' },
+                      { key: 'critical', label: 'Critical', icon: '🔴', bg: 'bg-red-50', text: 'text-red-700' },
                       { key: 'high', label: 'Important', icon: '🟠', bg: 'bg-orange-50', text: 'text-orange-700' },
                       { key: 'medium', label: 'Consider', icon: '🟡', bg: 'bg-yellow-50', text: 'text-yellow-700' },
                       { key: 'low', label: 'Polish', icon: '🟢', bg: 'bg-green-50', text: 'text-green-700' }

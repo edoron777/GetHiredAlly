@@ -1,0 +1,279 @@
+# Fix: Taxonomy Clarification - Separate Severity from Effort
+
+## Problem Summary
+
+The current UI **mixes two different concepts**:
+- **Severity** = How bad is the issue?
+- **Effort** = How hard to fix?
+
+These are INDEPENDENT dimensions and should NOT be merged.
+
+---
+
+## The Two Dimensions
+
+### Dimension 1: SEVERITY (How bad is the issue?)
+
+| Level | Code | Display | Color | Meaning |
+|-------|------|---------|-------|---------|
+| 1 | critical | Critical | 🔴 Red | Must fix - hurts your chances |
+| 2 | high | Important | 🟠 Orange | Should fix - noticeable problem |
+| 3 | medium | Consider | 🟡 Yellow | Recommended improvement |
+| 4 | low | Polish | 🟢 Green | Optional - minor enhancement |
+
+### Dimension 2: EFFORT (How hard to fix?)
+
+| Level | Code | Display | Icon | Meaning |
+|-------|------|---------|------|---------|
+| 1 | quick | Quick fix | ⚡ | Easy, takes seconds |
+| 2 | medium | Medium effort | 🔧 | Takes some work |
+| 3 | extensive | Extensive | 📝 | Requires rewrite |
+
+### They Are INDEPENDENT
+
+| Example Issue | Severity | Effort |
+|---------------|----------|--------|
+| Spelling error in company name | 🔴 Critical | ⚡ Quick fix |
+| Missing achievements section | 🔴 Critical | 📝 Extensive |
+| Weak action verb | 🟠 Important | ⚡ Quick fix |
+| No metrics in bullets | 🔴 Critical | 🔧 Medium |
+| Minor formatting issue | 🟢 Polish | ⚡ Quick fix |
+
+---
+
+## Fix Prompt for Replit Agent
+
+```
+═══════════════════════════════════════════════════════════════════════════════
+FIX PROMPT: Clarify Taxonomy - Separate Severity from Effort
+═══════════════════════════════════════════════════════════════════════════════
+
+PROBLEM:
+The UI mixes "Severity" and "Effort" which are two DIFFERENT things.
+- Severity = How bad is the issue?
+- Effort = How hard to fix?
+
+A Critical issue can be a Quick fix (e.g., spelling error in company name).
+A Polish issue can be Extensive (e.g., rewriting optional section).
+
+These must be shown SEPARATELY.
+
+───────────────────────────────────────────────────────────────────────────────
+
+CORRECT TAXONOMY:
+
+SEVERITY (Primary classification - always visible):
+| Code | Display | Color |
+|------|---------|-------|
+| critical | Critical | 🔴 Red |
+| high | Important | 🟠 Orange |
+| medium | Consider | 🟡 Yellow |
+| low | Polish | 🟢 Green |
+
+EFFORT (Secondary classification - shown as tag/badge):
+| Code | Display | Icon |
+|------|---------|------|
+| quick | Quick fix | ⚡ |
+| medium | Medium effort | 🔧 |
+| extensive | Extensive | 📝 |
+
+───────────────────────────────────────────────────────────────────────────────
+
+CHANGES REQUIRED:
+
+LOCATION 1: Score Screen (Issues Detected Box)
+
+CURRENT (if changed to Quick Wins - REVERT):
+🔴 22 Quick Wins  🟠 62 Important  🟡 22 Consider  🟢 15 Polish
+
+CORRECT:
+🔴 22 Critical  🟠 62 Important  🟡 22 Consider  🟢 15 Polish
+
+This shows SEVERITY only. Effort is not shown here.
+
+───────────────────────────────────────────────────────────────────────────────
+
+LOCATION 2: Filter by Priority Section
+
+CURRENT:
+┌─────────────────────────────────────────────────────────────────┐
+│ Filter by priority                                              │
+│ [All] [Quick Wins 22] [Important 62] [Consider 22] [Polish 15] │
+└─────────────────────────────────────────────────────────────────┘
+
+CORRECT:
+┌─────────────────────────────────────────────────────────────────┐
+│ Filter by severity                                              │
+│ [All] [Critical 22] [Important 62] [Consider 22] [Polish 15]   │
+└─────────────────────────────────────────────────────────────────┘
+
+CHANGE:
+- Label: "Filter by priority" → "Filter by severity"
+- Button: "Quick Wins" → "Critical"
+
+───────────────────────────────────────────────────────────────────────────────
+
+LOCATION 3: View By Section
+
+CURRENT:
+┌─────────────────────────────────────────────────────────────────┐
+│ View by                                                         │
+│ [By Priority] [By Effort] [By Work Type]                       │
+└─────────────────────────────────────────────────────────────────┘
+
+CORRECT:
+┌─────────────────────────────────────────────────────────────────┐
+│ View by                                                         │
+│ [By Severity] [By Effort] [By Category]                        │
+└─────────────────────────────────────────────────────────────────┘
+
+CHANGES:
+- "By Priority" → "By Severity"
+- "By Work Type" → "By Category" (clearer name)
+
+───────────────────────────────────────────────────────────────────────────────
+
+LOCATION 4: Recommendation Group Headers
+
+WHEN VIEWING BY SEVERITY:
+┌─────────────────────────────────────────────────────────────────┐
+│ 🔴 CRITICAL (22 issues)                                         │
+│ ├── Issue 1...                          ⚡ Quick fix            │
+│ ├── Issue 2...                          🔧 Medium effort        │
+│ └── Issue 3...                          📝 Extensive            │
+│                                                                 │
+│ 🟠 IMPORTANT (62 issues)                                        │
+│ ├── Issue 4...                          ⚡ Quick fix            │
+│ └── Issue 5...                          🔧 Medium effort        │
+└─────────────────────────────────────────────────────────────────┘
+
+WHEN VIEWING BY EFFORT:
+┌─────────────────────────────────────────────────────────────────┐
+│ ⚡ QUICK FIXES (45 issues)                                      │
+│ ├── Issue 1...                          🔴 Critical             │
+│ ├── Issue 2...                          🟠 Important            │
+│ └── Issue 3...                          🟢 Polish               │
+│                                                                 │
+│ 🔧 MEDIUM EFFORT (30 issues)                                    │
+│ ├── Issue 4...                          🔴 Critical             │
+│ └── Issue 5...                          🟡 Consider             │
+└─────────────────────────────────────────────────────────────────┘
+
+KEY: Each issue shows BOTH severity AND effort, but grouped by one.
+
+───────────────────────────────────────────────────────────────────────────────
+
+LOCATION 5: Individual Issue Cards
+
+Each issue card should show BOTH dimensions:
+
+┌─────────────────────────────────────────────────────────────────┐
+│ > Possible spelling error: "Cybersecurity"                      │
+│                                           🔴 Critical  ⚡ Quick │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│ > No metrics in achievement bullets                             │
+│                                           🔴 Critical  🔧 Medium│
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│ > Consider adding more detail to summary                        │
+│                                           🟡 Consider  📝 Extensive│
+└─────────────────────────────────────────────────────────────────┘
+
+───────────────────────────────────────────────────────────────────────────────
+
+LOCATION 6: Fix My CV Results ("What Improved" Box)
+
+Show SEVERITY breakdown (not categories like Quantification/Grammar):
+
+CURRENT:
+✓ Quantification 58 fixed ⭐
+✓ Grammar 22 fixed ⭐
+✓ Formatting 18 fixed ⭐
+✓ Language 6 fixed ⭐
+
+CORRECT:
+What Improved (by severity):
+🔴 Critical: 18 fixed
+🟠 Important: 52 fixed
+🟡 Consider: 22 fixed
+🟢 Polish: 12 fixed
+
+Total: 104 issues fixed automatically
+
+───────────────────────────────────────────────────────────────────────────────
+
+SUMMARY OF CHANGES:
+
+| Location | Change |
+|----------|--------|
+| Score Screen | Keep "Critical" (not "Quick Wins") |
+| Filter label | "Filter by priority" → "Filter by severity" |
+| Filter button | "Quick Wins" → "Critical" |
+| View By button | "By Priority" → "By Severity" |
+| View By button | "By Work Type" → "By Category" |
+| Issue cards | Show BOTH severity AND effort tags |
+| Group headers | Use correct dimension based on view |
+| Fix Results | Show severity breakdown |
+
+───────────────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+
+After changes:
+
+1. [ ] "Critical" used for severity (not "Quick Wins")
+2. [ ] "Quick fix" used for effort only
+3. [ ] Each issue shows BOTH severity AND effort
+4. [ ] Filters labeled correctly ("Filter by severity")
+5. [ ] View By options: "By Severity", "By Effort", "By Category"
+6. [ ] Fix Results shows severity breakdown
+
+───────────────────────────────────────────────────────────────────────────────
+
+REPORT FORMAT:
+
+LOCATION 1 (Score Screen):
+- Shows: Critical/Important/Consider/Polish
+- Status: CORRECT / NEEDS FIX
+
+LOCATION 2 (Filter Section):
+- Label changed to "Filter by severity": YES/NO
+- "Quick Wins" changed to "Critical": YES/NO
+
+LOCATION 3 (View By):
+- "By Priority" → "By Severity": YES/NO
+- "By Work Type" → "By Category": YES/NO
+
+LOCATION 4 (Group Headers):
+- Severity view shows: CRITICAL/IMPORTANT/CONSIDER/POLISH
+- Effort view shows: QUICK FIXES/MEDIUM EFFORT/EXTENSIVE
+
+LOCATION 5 (Issue Cards):
+- Each card shows both severity AND effort: YES/NO
+
+LOCATION 6 (Fix Results):
+- Shows severity breakdown: YES/NO
+
+═══════════════════════════════════════════════════════════════════════════════
+```
+
+---
+
+## Visual Summary
+
+### Before (Confusing)
+```
+"Quick Wins" = Severity? Effort? Both? 🤷
+```
+
+### After (Clear)
+```
+SEVERITY: 🔴 Critical  🟠 Important  🟡 Consider  🟢 Polish
+EFFORT:   ⚡ Quick     🔧 Medium     📝 Extensive
+
+Each issue has BOTH:
+"Spelling error in Citi"  →  🔴 Critical + ⚡ Quick fix
+```
