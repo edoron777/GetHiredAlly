@@ -22,6 +22,7 @@ const CVCrossroadsPage: React.FC = () => {
   const [reportData, setReportData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isFixing, setIsFixing] = useState(false);
 
   useEffect(() => {
     const fetchReportData = async () => {
@@ -65,9 +66,20 @@ const CVCrossroadsPage: React.FC = () => {
     }
   }, [id]);
 
-  const handleBluePill = () => {
-    // Navigate to fix process
-    navigate(`/service/cv-optimizer/fix/${id}`);
+  const handleBluePill = async () => {
+    // Call fix API then navigate to fixed CV page
+    setIsFixing(true);
+    try {
+      const token = getAuthToken();
+      const response = await fetch(`/api/cv-optimizer/fix/${id}?token=${token}`, {
+        method: 'POST'
+      });
+      if (!response.ok) throw new Error('Failed to generate fix');
+      navigate(`/service/cv-optimizer/fixed/${id}`);
+    } catch (err) {
+      alert('Failed to generate fixed CV. Please try again.');
+      setIsFixing(false);
+    }
   };
 
   const handleRedPill = () => {
@@ -98,6 +110,18 @@ const CVCrossroadsPage: React.FC = () => {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading your results...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isFixing) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Fixing your CV...</p>
+          <p className="text-sm text-gray-500 mt-2">This may take 15-30 seconds</p>
         </div>
       </div>
     );

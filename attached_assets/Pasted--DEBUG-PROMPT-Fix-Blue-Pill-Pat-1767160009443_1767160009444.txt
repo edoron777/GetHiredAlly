@@ -1,0 +1,131 @@
+═══════════════════════════════════════════════════════════════════
+DEBUG PROMPT: Fix Blue Pill Path (Auto-Fix)
+═══════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify files not explicitly mentioned
+3. If unclear, STOP and ask - do not assume
+
+───────────────────────────────────────────────────────────────────
+
+PROBLEM:
+
+On the Crossroads page:
+- "The Deep Dive" (Red Pill) → Works correctly ✅
+- "The Easy Way" (Blue Pill) → Shows blank white page ❌
+
+The Blue Pill button navigates to: /service/cv-optimizer/fix/{id}
+
+───────────────────────────────────────────────────────────────────
+
+DEBUG STEP 1: Check the navigation path
+
+Open: client/src/pages/CVCrossroadsPage.tsx
+
+Find the handleBluePill function and verify what URL it navigates to:
+
+const handleBluePill = () => {
+  navigate(`/service/cv-optimizer/fix/${id}`);
+};
+
+What is the ACTUAL path being used?
+
+───────────────────────────────────────────────────────────────────
+
+DEBUG STEP 2: Check if route exists
+
+Open: client/src/App.tsx (or routes file)
+
+Search for routes related to "fix":
+- /service/cv-optimizer/fix/:id
+- /fix/:id
+- Or similar
+
+Does this route exist?
+If yes, what component does it render?
+
+───────────────────────────────────────────────────────────────────
+
+DEBUG STEP 3: Find the correct fix route
+
+Search the codebase for where the CV fix process currently lives.
+
+Look for:
+- CVFixPage
+- FixingPage
+- CVFixingPage
+- Or the page that shows the "Fixing Your CV..." animation
+
+What is the CORRECT route path for the fix process?
+
+───────────────────────────────────────────────────────────────────
+
+DEBUG STEP 4: Check browser console
+
+When clicking "The Easy Way":
+1. Open browser DevTools (F12)
+2. Go to Console tab
+3. Click the Blue Pill button
+4. What errors appear?
+
+Report any errors.
+
+───────────────────────────────────────────────────────────────────
+
+FIX:
+
+Once you identify the correct route, update CVCrossroadsPage.tsx:
+
+FIND:
+const handleBluePill = () => {
+  navigate(`/service/cv-optimizer/fix/${id}`);
+};
+
+REPLACE with correct path:
+const handleBluePill = () => {
+  navigate(`[CORRECT_PATH_HERE]/${id}`);
+};
+
+───────────────────────────────────────────────────────────────────
+
+ALTERNATIVE FIX - If route doesn't exist:
+
+If there's no dedicated fix route, the fix might be triggered
+differently (e.g., API call from the report page).
+
+In that case:
+1. Find how the existing "Fix My CV" button works
+2. Copy that logic to the Blue Pill handler
+3. Or navigate to the report page with a "autofix=true" parameter
+
+Example:
+navigate(`/service/cv-optimizer/report/${id}?autofix=true`);
+
+───────────────────────────────────────────────────────────────────
+
+FILES TO CHECK:
+- client/src/pages/CVCrossroadsPage.tsx
+- client/src/App.tsx (or routes file)
+- Search for: "fix", "CVFix", "fixing"
+
+FILES TO MODIFY:
+- client/src/pages/CVCrossroadsPage.tsx (update navigation path)
+
+───────────────────────────────────────────────────────────────────
+
+WHEN COMPLETE:
+
+Confirm:
+□ Correct fix route identified
+□ CVCrossroadsPage.tsx updated with correct path
+□ Blue Pill button now navigates to fix process
+□ Fix process starts (animation shows)
+□ No console errors
+
+Report:
+- Old path: /service/cv-optimizer/fix/${id}
+- New path: [what you changed it to]
+
+═══════════════════════════════════════════════════════════════════

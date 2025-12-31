@@ -121,8 +121,19 @@ export function CVReportPage() {
     }))
   }
 
-  const handleSwitchToAutoFix = () => {
-    navigate(`/service/cv-optimizer/fix/${scanId}`)
+  const handleSwitchToAutoFix = async () => {
+    setIsGeneratingFix(true)
+    try {
+      const token = getAuthToken()
+      const response = await fetch(`/api/cv-optimizer/fix/${scanId}?token=${token}`, {
+        method: 'POST'
+      })
+      if (!response.ok) throw new Error('Failed to generate fix')
+      navigate(`/service/cv-optimizer/fixed/${scanId}`)
+    } catch (err) {
+      alert('Failed to generate fixed CV. Please try again.')
+      setIsGeneratingFix(false)
+    }
   }
 
   useEffect(() => {
