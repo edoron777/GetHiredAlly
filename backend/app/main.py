@@ -21,6 +21,8 @@ from .admin import router as admin_router
 from .cv import router as cv_router
 from .cv_optimizer import router as cv_optimizer_router
 from .user import router as user_router
+from common.catalog import init_catalog_service
+from routes.catalog_routes import router as catalog_router
 
 app = FastAPI(title="Backend API")
 
@@ -36,6 +38,7 @@ app.include_router(admin_router)
 app.include_router(cv_router)
 app.include_router(cv_optimizer_router)
 app.include_router(user_router)
+app.include_router(catalog_router)
 
 app.add_middleware(SecurityHeadersMiddleware)
 
@@ -53,6 +56,16 @@ def get_supabase_client() -> Client | None:
     if url and key:
         return create_client(url, key)
     return None
+
+try:
+    supabase_client = get_supabase_client()
+    if supabase_client:
+        catalog_service = init_catalog_service(supabase_client)
+        print("✓ CV Issue Catalog loaded successfully")
+    else:
+        print("⚠ Warning: Supabase not configured, catalog features unavailable")
+except Exception as e:
+    print(f"⚠ Warning: Failed to load CV Issue Catalog: {e}")
 
 @app.get("/api/health")
 async def health_check():
