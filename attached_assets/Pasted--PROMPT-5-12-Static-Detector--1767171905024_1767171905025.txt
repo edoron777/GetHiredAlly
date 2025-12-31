@@ -1,0 +1,229 @@
+═══════════════════════════════════════════════════════════════════
+PROMPT 5#12: Static Detector - Critical Issues
+═══════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE ⚠️
+- Execute ONLY instructions below
+- Detection uses static rules - no AI
+- Same text → Same issues detected
+
+───────────────────────────────────────────────────────────────────
+
+TASK: Create detector for CRITICAL issues (spelling, grammar)
+
+OBJECTIVE:
+Detect critical issues that cause immediate rejection:
+- SPELLING_ERROR
+- GRAMMAR_ERROR
+
+Using spell-check library and pattern rules.
+
+───────────────────────────────────────────────────────────────────
+
+INSTRUCTIONS:
+
+Step 1: Install spellchecker library (if not present)
+pip install pyspellchecker
+
+Step 2: CREATE file: backend/common/detection/spelling_detector.py
+
+Step 3: Add this content:
+
+"""
+Spelling and Grammar Detector
+
+Detects spelling errors using pyspellchecker.
+100% CODE - No AI - Deterministic results.
+"""
+
+import re
+from typing import List, Dict, Set
+from spellchecker import SpellChecker
+
+
+# Initialize spell checker
+spell = SpellChecker()
+
+# Words to ignore (technical terms, proper nouns, etc.)
+IGNORE_WORDS: Set[str] = {
+    # Technical terms
+    'api', 'apis', 'sql', 'html', 'css', 'javascript', 'typescript',
+    'python', 'java', 'nodejs', 'react', 'angular', 'vue', 'django',
+    'flask', 'aws', 'gcp', 'azure', 'docker', 'kubernetes', 'ci', 'cd',
+    'devops', 'saas', 'paas', 'iaas', 'sdk', 'ide', 'ui', 'ux',
+    'frontend', 'backend', 'fullstack', 'postgresql', 'mongodb', 'redis',
+    'elasticsearch', 'graphql', 'restful', 'microservices', 'agile', 'scrum',
+    'jira', 'github', 'gitlab', 'bitbucket', 'jenkins', 'terraform',
+    
+    # Common abbreviations
+    'inc', 'ltd', 'llc', 'corp', 'co', 'mgmt', 'dept', 'hr', 'it',
+    'ceo', 'cto', 'cfo', 'vp', 'svp', 'evp', 'dir', 'mgr', 'sr', 'jr',
+    
+    # Months
+    'jan', 'feb', 'mar', 'apr', 'jun', 'jul', 'aug', 'sep', 'sept', 'oct', 'nov', 'dec',
+    
+    # Common CV words
+    'linkedin', 'github', 'gmail', 'mailto', 'href', 'https', 'http', 'www',
+}
+
+# Common grammar error patterns
+GRAMMAR_PATTERNS = [
+    # Double words
+    (re.compile(r'\b(\w+)\s+\1\b', re.IGNORECASE), 'Repeated word: "{}"'),
+    # Missing space after period
+    (re.compile(r'\.[A-Z]'), 'Missing space after period'),
+    # Double spaces
+    (re.compile(r'  +'), 'Multiple consecutive spaces'),
+    # Space before punctuation
+    (re.compile(r'\s+[,.]'), 'Space before punctuation'),
+]
+
+
+def extract_words(text: str) -> List[str]:
+    """Extract all words from text for spell checking."""
+    # Remove URLs
+    text = re.sub(r'https?://\S+', '', text)
+    text = re.sub(r'www\.\S+', '', text)
+    
+    # Remove email addresses
+    text = re.sub(r'\S+@\S+\.\S+', '', text)
+    
+    # Extract words (letters only)
+    words = re.findall(r'\b[a-zA-Z]+\b', text)
+    
+    return words
+
+
+def check_spelling(text: str, max_errors: int = 20) -> List[Dict]:
+    """
+    Check text for spelling errors.
+    
+    Args:
+        text: Text to check
+        max_errors: Maximum errors to return (to avoid overwhelming)
+        
+    Returns:
+        List of spelling error issues
+    """
+    issues = []
+    words = extract_words(text)
+    
+    # Track found errors to avoid duplicates
+    found_errors: Set[str] = set()
+    
+    for word in words:
+        # Skip short words
+        if len(word) < 3:
+            continue
+        
+        # Skip ignored words
+        if word.lower() in IGNORE_WORDS:
+            continue
+        
+        # Skip if already found
+        if word.lower() in found_errors:
+            continue
+        
+        # Skip words with numbers mixed in
+        if any(c.isdigit() for c in word):
+            continue
+        
+        # Skip all-caps (likely acronyms)
+        if word.isupper() and len(word) <= 5:
+            continue
+        
+        # Check spelling
+        if word.lower() not in spell:
+            # Get suggestions
+            suggestions = list(spell.candidates(word.lower()))[:3]
+            
+            issues.append({
+                'issue_type': 'SPELLING_ERROR',
+                'location': 'Throughout CV',
+                'description': f'Possible spelling error: "{word}"',
+                'current': word,
+                'suggestion': suggestions[0] if suggestions else None,
+            })
+            
+            found_errors.add(word.lower())
+            
+            if len(issues) >= max_errors:
+                break
+    
+    return issues
+
+
+def check_grammar(text: str) -> List[Dict]:
+    """
+    Check text for common grammar errors using patterns.
+    
+    Args:
+        text: Text to check
+        
+    Returns:
+        List of grammar error issues
+    """
+    issues = []
+    
+    for pattern, error_msg in GRAMMAR_PATTERNS:
+        matches = pattern.findall(text)
+        
+        for match in matches[:3]:  # Limit to 3 per pattern type
+            issues.append({
+                'issue_type': 'GRAMMAR_ERROR',
+                'location': 'Throughout CV',
+                'description': error_msg.format(match) if '{}' in error_msg else error_msg,
+                'current': match if isinstance(match, str) else str(match),
+            })
+    
+    return issues
+
+
+def detect_critical_issues(text: str) -> List[Dict]:
+    """
+    Detect all critical issues (spelling + grammar).
+    
+    This is the MAIN function for critical issue detection.
+    100% deterministic - same text → same result.
+    
+    Args:
+        text: Full CV text
+        
+    Returns:
+        List of critical issues (SPELLING_ERROR, GRAMMAR_ERROR)
+    """
+    issues = []
+    
+    # Check spelling
+    issues.extend(check_spelling(text))
+    
+    # Check grammar
+    issues.extend(check_grammar(text))
+    
+    return issues
+
+───────────────────────────────────────────────────────────────────
+
+FILES TO CREATE:
+- backend/common/detection/spelling_detector.py
+
+DEPENDENCIES TO INSTALL:
+- pip install pyspellchecker
+
+DO NOT TOUCH:
+- All other files
+
+───────────────────────────────────────────────────────────────────
+
+WHEN COMPLETE:
+
+Confirm:
+□ pyspellchecker installed
+□ spelling_detector.py created
+□ IGNORE_WORDS set defined
+□ check_spelling function works
+□ check_grammar function works
+□ detect_critical_issues returns SPELLING_ERROR, GRAMMAR_ERROR
+□ No Python syntax errors
+
+Type "PROMPT 5#12 COMPLETE - READY FOR 6#12" when done.
