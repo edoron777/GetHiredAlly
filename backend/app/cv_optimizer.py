@@ -22,6 +22,7 @@ from config.rate_limiter import limiter
 from common.scoring import calculate_cv_score as calculate_cv_score_new, calculate_after_fix_score, get_score_message
 from common.scoring.extractors import extract_patterns, analyze_text
 from common.scoring.severity import assign_severity_to_issues, count_issues_by_severity
+from common.detection import detect_all_issues
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/cv-optimizer", tags=["cv-optimizer"])
@@ -492,60 +493,104 @@ def fix_truncated_json(json_text: str) -> str:
 
 
 async def analyze_cv_with_ai(cv_content: str, user_id: str, is_markdown: bool = False) -> dict:
-    # Clean markdown formatting if the file was markdown
+    """
+    Analyze CV using STATIC detection (deterministic).
+    
+    NEW FLOW:
+    1. CODE detects issues (detect_all_issues) - DETERMINISTIC
+    2. CODE assigns severity (assign_severity_to_issues) - DETERMINISTIC
+    3. Same CV text → Same issues → Same results (ALWAYS)
+    
+    AI is NO LONGER used for issue detection.
+    """
     if is_markdown:
         cv_content = clean_markdown_for_analysis(cv_content)
         logger.info("[CV_SCAN] Cleaned markdown formatting from CV content")
     
-    prompt = CV_ANALYSIS_PROMPT.format(cv_content=cv_content)
-    ai_response = None
-    
     try:
-        ai_response = await generate_completion(
-            prompt=prompt,
-            provider='gemini',
-            max_tokens=8192,
-            temperature=0.3,
-            user_id=user_id,
-            service_name="cv_optimizer"
-        )
-
-        logger.info(f"[CV_SCAN] Raw AI response length: {len(ai_response.content)} chars")
-        logger.info(f"[CV_SCAN] Raw AI response first 500 chars: {ai_response.content[:500]}")
-        logger.info(f"[CV_SCAN] Raw AI response last 500 chars: {ai_response.content[-500:]}")
-
-        issues = parse_ai_json_response(ai_response.content)
+        logger.info("[CV_SCAN] Starting STATIC issue detection (deterministic)...")
         
-        # DETERMINISTIC SEVERITY ASSIGNMENT (code, not AI)
+        issues = detect_all_issues(cv_content)
+        logger.info(f"[CV_SCAN] Static detection found {len(issues)} issues")
+        
         issues = assign_severity_to_issues(issues)
+        logger.info(f"[CV_SCAN] Severity assigned to {len(issues)} issues")
         
-        logger.info(f"[CV_SCAN] Successfully parsed {len(issues)} issues")
-
+        for i, issue in enumerate(issues):
+            issue['id'] = i + 1
+            if 'issue' not in issue and 'description' in issue:
+                issue['issue'] = issue['description']
+            if 'category' not in issue:
+                issue['category'] = _get_category_for_issue_type(issue.get('issue_type', ''))
+            if 'fix_difficulty' not in issue:
+                issue['fix_difficulty'] = _get_fix_difficulty(issue.get('issue_type', ''))
+            if 'is_auto_fixable' not in issue:
+                issue['is_auto_fixable'] = _is_auto_fixable(issue.get('issue_type', ''))
+        
+        logger.info(f"[CV_SCAN] Static detection complete. Total issues: {len(issues)}")
+        
         return {
             'issues': issues,
-            'raw_response': ai_response.content
+            'detection_method': 'static'
         }
-
-    except json.JSONDecodeError as e:
-        logger.error(f"[CV_SCAN] JSON parsing failed: {str(e)}")
-        if ai_response and hasattr(ai_response, 'content'):
-            logger.error(f"[CV_SCAN] Full AI response for debugging:\n{ai_response.content[:2000]}")
-        return {
-            'issues': [{
-                'id': 1,
-                'issue': 'Analysis parsing error',
-                'severity': 'high',
-                'category': 'System',
-                'location': 'N/A',
-                'current_text': 'Could not parse CV properly',
-                'suggested_fix': 'Please try again or contact support',
-                'fix_difficulty': 'complex'
-            }],
-            'error': str(e)
-        }
+        
     except Exception as e:
-        logger.error(f"[CV_SCAN] AI analysis failed: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"AI analysis failed: {str(e)}")
+        logger.error(f"[CV_SCAN] Static detection failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"CV analysis failed: {str(e)}")
+
+
+def _get_category_for_issue_type(issue_type: str) -> str:
+    """Map issue_type to category for frontend display."""
+    category_map = {
+        'SPELLING_ERROR': 'Spelling & Grammar',
+        'GRAMMAR_ERROR': 'Spelling & Grammar',
+        'MISSING_EMAIL': 'Missing Information',
+        'MISSING_PHONE': 'Missing Information',
+        'MISSING_LINKEDIN': 'Missing Information',
+        'INVALID_EMAIL': 'Missing Information',
+        'INVALID_PHONE': 'Missing Information',
+        'NO_METRICS': 'Lack of Quantification',
+        'WEAK_ACTION_VERBS': 'Weak Presentation',
+        'VAGUE_DESCRIPTION': 'Weak Presentation',
+        'BUZZWORD_STUFFING': 'Weak Presentation',
+        'WEAK_SUMMARY': 'Formatting & Structure',
+        'SECTION_ORDER': 'Formatting & Structure',
+        'FORMAT_INCONSISTENT': 'Formatting & Structure',
+        'DATE_FORMAT_INCONSISTENT': 'Formatting & Structure',
+        'BULLET_FORMAT': 'Formatting & Structure',
+        'BULLET_TOO_LONG': 'CV Length',
+        'BULLET_TOO_SHORT': 'CV Length',
+        'CV_TOO_LONG': 'CV Length',
+        'CV_TOO_SHORT': 'CV Length',
+        'WHITESPACE_ISSUE': 'Formatting & Structure',
+        'MINOR_FORMAT': 'Formatting & Structure',
+        'HEADER_STYLE': 'Formatting & Structure',
+        'OUTDATED_INFO': 'Career Narrative',
+        'REPETITIVE_CONTENT': 'Weak Presentation',
+    }
+    return category_map.get(issue_type, 'Other')
+
+
+def _get_fix_difficulty(issue_type: str) -> str:
+    """Determine fix difficulty based on issue type."""
+    quick_fixes = ['SPELLING_ERROR', 'GRAMMAR_ERROR', 'WHITESPACE_ISSUE', 'MINOR_FORMAT']
+    complex_fixes = ['MISSING_EMAIL', 'MISSING_PHONE', 'CV_TOO_SHORT', 'SECTION_ORDER']
+    
+    if issue_type in quick_fixes:
+        return 'quick'
+    elif issue_type in complex_fixes:
+        return 'complex'
+    return 'medium'
+
+
+def _is_auto_fixable(issue_type: str) -> bool:
+    """Determine if issue can be auto-fixed by AI."""
+    auto_fixable = [
+        'SPELLING_ERROR', 'GRAMMAR_ERROR', 'WEAK_ACTION_VERBS', 
+        'VAGUE_DESCRIPTION', 'BUZZWORD_STUFFING', 'NO_METRICS',
+        'BULLET_FORMAT', 'WEAK_SUMMARY', 'REPETITIVE_CONTENT'
+    ]
+    return issue_type in auto_fixable
 
 
 class ScanRequest(BaseModel):

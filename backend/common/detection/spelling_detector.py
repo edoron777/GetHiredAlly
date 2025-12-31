@@ -79,7 +79,8 @@ def check_spelling(text: str, max_errors: int = 20) -> List[Dict]:
             continue
         
         if word.lower() not in spell:
-            suggestions = list(spell.candidates(word.lower()))[:3]
+            candidates = spell.candidates(word.lower())
+            suggestions = list(candidates)[:3] if candidates else []
             
             issues.append({
                 'issue_type': 'SPELLING_ERROR',
