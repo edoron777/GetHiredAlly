@@ -139,3 +139,248 @@ VAGUE_PHRASES = [
     'helped improve', 'assisted with', 'was involved in',
     'played a role', 'contributed to success'
 ]
+
+# ═══════════════════════════════════════════════════════════════════
+# ISSUE TYPE CONFIGURATION - SINGLE SOURCE OF TRUTH
+# ═══════════════════════════════════════════════════════════════════
+# 
+# SEVERITY LEVELS:
+#   critical → "Quick Wins" in UI (red badge) - Immediate rejection risk
+#   high     → "Important" in UI (orange badge) - Major disadvantage
+#   medium   → "Consider" in UI (yellow badge) - Optimization opportunity
+#   low      → "Polish" in UI (green badge) - Minor improvements
+#
+# DO NOT let AI assign severity - use this config instead!
+# ═══════════════════════════════════════════════════════════════════
+
+ISSUE_TYPE_CONFIG = {
+    # ─────────────────────────────────────────────────────────────────
+    # CRITICAL - Immediate rejection risk
+    # ─────────────────────────────────────────────────────────────────
+    'SPELLING_ERROR': {
+        'severity': 'critical',
+        'ui_category': 'spelling_grammar',
+        'display_name': 'Spelling Error',
+        'auto_fixable': True,
+    },
+    'GRAMMAR_ERROR': {
+        'severity': 'critical',
+        'ui_category': 'spelling_grammar',
+        'display_name': 'Grammar Error',
+        'auto_fixable': True,
+    },
+    'MISSING_EMAIL': {
+        'severity': 'critical',
+        'ui_category': 'contact_information',
+        'display_name': 'Missing Email',
+        'auto_fixable': False,
+    },
+    'MISSING_PHONE': {
+        'severity': 'critical',
+        'ui_category': 'contact_information',
+        'display_name': 'Missing Phone',
+        'auto_fixable': False,
+    },
+    'INVALID_EMAIL': {
+        'severity': 'critical',
+        'ui_category': 'contact_information',
+        'display_name': 'Invalid Email Format',
+        'auto_fixable': False,
+    },
+    'INVALID_PHONE': {
+        'severity': 'critical',
+        'ui_category': 'contact_information',
+        'display_name': 'Invalid Phone Format',
+        'auto_fixable': False,
+    },
+    
+    # ─────────────────────────────────────────────────────────────────
+    # HIGH - Major competitive disadvantage
+    # ─────────────────────────────────────────────────────────────────
+    'NO_METRICS': {
+        'severity': 'high',
+        'ui_category': 'quantified_achievements',
+        'display_name': 'No Quantified Achievement',
+        'auto_fixable': False,
+    },
+    'WEAK_ACTION_VERBS': {
+        'severity': 'high',
+        'ui_category': 'action_verbs',
+        'display_name': 'Weak Action Verb',
+        'auto_fixable': True,
+    },
+    'EMPLOYMENT_GAP': {
+        'severity': 'high',
+        'ui_category': 'career_gaps',
+        'display_name': 'Employment Gap',
+        'auto_fixable': False,
+    },
+    'MISSING_LINKEDIN': {
+        'severity': 'high',
+        'ui_category': 'contact_information',
+        'display_name': 'Missing LinkedIn',
+        'auto_fixable': False,
+    },
+    'VAGUE_DESCRIPTION': {
+        'severity': 'high',
+        'ui_category': 'career_narrative',
+        'display_name': 'Vague Description',
+        'auto_fixable': True,
+    },
+    'NO_ACHIEVEMENTS': {
+        'severity': 'high',
+        'ui_category': 'quantified_achievements',
+        'display_name': 'No Achievements Listed',
+        'auto_fixable': False,
+    },
+    'MISSING_DATES': {
+        'severity': 'high',
+        'ui_category': 'career_gaps',
+        'display_name': 'Missing Dates',
+        'auto_fixable': False,
+    },
+    'MISSING_COMPANY': {
+        'severity': 'high',
+        'ui_category': 'career_narrative',
+        'display_name': 'Missing Company Name',
+        'auto_fixable': False,
+    },
+    'MISSING_TITLE': {
+        'severity': 'high',
+        'ui_category': 'career_narrative',
+        'display_name': 'Missing Job Title',
+        'auto_fixable': False,
+    },
+    'BUZZWORD_STUFFING': {
+        'severity': 'high',
+        'ui_category': 'career_narrative',
+        'display_name': 'Buzzword Overuse',
+        'auto_fixable': True,
+    },
+    
+    # ─────────────────────────────────────────────────────────────────
+    # MEDIUM - Optimization opportunities
+    # ─────────────────────────────────────────────────────────────────
+    'FORMAT_INCONSISTENT': {
+        'severity': 'medium',
+        'ui_category': 'professional_formatting',
+        'display_name': 'Inconsistent Formatting',
+        'auto_fixable': True,
+    },
+    'WEAK_SUMMARY': {
+        'severity': 'medium',
+        'ui_category': 'career_narrative',
+        'display_name': 'Weak Summary',
+        'auto_fixable': True,
+    },
+    'SECTION_ORDER': {
+        'severity': 'medium',
+        'ui_category': 'cv_length_structure',
+        'display_name': 'Suboptimal Section Order',
+        'auto_fixable': True,
+    },
+    'ATS_INCOMPATIBLE': {
+        'severity': 'medium',
+        'ui_category': 'professional_formatting',
+        'display_name': 'ATS Compatibility Issue',
+        'auto_fixable': True,
+    },
+    'BULLET_FORMAT': {
+        'severity': 'medium',
+        'ui_category': 'professional_formatting',
+        'display_name': 'Bullet Point Format',
+        'auto_fixable': True,
+    },
+    'MISSING_KEYWORDS': {
+        'severity': 'medium',
+        'ui_category': 'keywords_skills',
+        'display_name': 'Missing Keywords',
+        'auto_fixable': False,
+    },
+    'DATE_FORMAT_INCONSISTENT': {
+        'severity': 'medium',
+        'ui_category': 'professional_formatting',
+        'display_name': 'Inconsistent Date Format',
+        'auto_fixable': True,
+    },
+    'CONTACT_INCOMPLETE': {
+        'severity': 'medium',
+        'ui_category': 'contact_information',
+        'display_name': 'Incomplete Contact Info',
+        'auto_fixable': False,
+    },
+    'SKILLS_UNORGANIZED': {
+        'severity': 'medium',
+        'ui_category': 'keywords_skills',
+        'display_name': 'Unorganized Skills',
+        'auto_fixable': True,
+    },
+    'REPETITIVE_CONTENT': {
+        'severity': 'medium',
+        'ui_category': 'career_narrative',
+        'display_name': 'Repetitive Content',
+        'auto_fixable': True,
+    },
+    
+    # ─────────────────────────────────────────────────────────────────
+    # LOW - Minor polish
+    # ─────────────────────────────────────────────────────────────────
+    'CV_TOO_LONG': {
+        'severity': 'low',
+        'ui_category': 'cv_length_structure',
+        'display_name': 'CV Too Long',
+        'auto_fixable': False,
+    },
+    'CV_TOO_SHORT': {
+        'severity': 'low',
+        'ui_category': 'cv_length_structure',
+        'display_name': 'CV Too Short',
+        'auto_fixable': False,
+    },
+    'BULLET_TOO_LONG': {
+        'severity': 'low',
+        'ui_category': 'professional_formatting',
+        'display_name': 'Bullet Too Long',
+        'auto_fixable': True,
+    },
+    'BULLET_TOO_SHORT': {
+        'severity': 'low',
+        'ui_category': 'professional_formatting',
+        'display_name': 'Bullet Too Short',
+        'auto_fixable': False,
+    },
+    'WHITESPACE_ISSUE': {
+        'severity': 'low',
+        'ui_category': 'professional_formatting',
+        'display_name': 'Whitespace Issue',
+        'auto_fixable': True,
+    },
+    'MINOR_FORMAT': {
+        'severity': 'low',
+        'ui_category': 'professional_formatting',
+        'display_name': 'Minor Format Issue',
+        'auto_fixable': True,
+    },
+    'HEADER_STYLE': {
+        'severity': 'low',
+        'ui_category': 'professional_formatting',
+        'display_name': 'Header Style',
+        'auto_fixable': True,
+    },
+    'OUTDATED_INFO': {
+        'severity': 'low',
+        'ui_category': 'career_narrative',
+        'display_name': 'Outdated Information',
+        'auto_fixable': False,
+    },
+}
+
+# Default severity for unknown issue types (fallback)
+DEFAULT_SEVERITY = 'medium'
+DEFAULT_UI_CATEGORY = 'career_narrative'
+
+# Valid severity levels (for validation)
+VALID_SEVERITIES = ['critical', 'high', 'medium', 'low']
+
+# Issue type enum list (for AI prompt reference)
+ISSUE_TYPE_ENUM = list(ISSUE_TYPE_CONFIG.keys())

@@ -1,0 +1,235 @@
+═══════════════════════════════════════════════════════════════════
+PROMPT 2#5: Severity Assignment Module
+═══════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify files not explicitly mentioned
+3. Do NOT add features not explicitly requested
+4. If unclear, STOP and ask - do not assume
+6. Make MINIMAL, SURGICAL changes only
+
+FORBIDDEN ACTIONS:
+- Modifying config.py (already done in 1#5)
+- Modifying cv_optimizer.py (will do in 3#5)
+- Touching frontend files
+
+───────────────────────────────────────────────────────────────────
+
+TASK: Create severity assignment module
+
+OBJECTIVE:
+Create a function that assigns severity based on issue_type using
+the static configuration from Prompt 1#5.
+
+CONTEXT:
+This function will be called AFTER AI returns issues and BEFORE
+storing in database. It ensures DETERMINISTIC severity assignment.
+
+───────────────────────────────────────────────────────────────────
+
+INSTRUCTIONS:
+
+Step 1: CREATE NEW file: backend/common/scoring/severity.py
+
+Step 2: Add the following content EXACTLY:
+
+"""
+Severity Assignment Module
+
+This module provides DETERMINISTIC severity assignment for CV issues.
+Severity is assigned by CODE based on issue_type, NOT by AI.
+
+RULE: Same issue_type → Same severity (ALWAYS)
+"""
+
+import logging
+from typing import Dict, List, Any
+
+from .config import (
+    ISSUE_TYPE_CONFIG,
+    DEFAULT_SEVERITY,
+    DEFAULT_UI_CATEGORY,
+    VALID_SEVERITIES,
+)
+
+logger = logging.getLogger(__name__)
+
+
+def get_severity_for_issue_type(issue_type: str) -> str:
+    """
+    Get severity for an issue type from static configuration.
+    
+    Args:
+        issue_type: The issue type identifier (e.g., 'SPELLING_ERROR')
+        
+    Returns:
+        Severity level: 'critical', 'high', 'medium', or 'low'
+        
+    Note:
+        Returns DEFAULT_SEVERITY ('medium') for unknown issue types.
+    """
+    if not issue_type:
+        logger.warning("Empty issue_type received, using default severity")
+        return DEFAULT_SEVERITY
+    
+    # Normalize issue_type (uppercase, strip whitespace)
+    normalized_type = issue_type.strip().upper()
+    
+    if normalized_type in ISSUE_TYPE_CONFIG:
+        return ISSUE_TYPE_CONFIG[normalized_type]['severity']
+    
+    # Handle unknown issue type
+    logger.warning(f"Unknown issue_type: '{issue_type}', using default severity '{DEFAULT_SEVERITY}'")
+    return DEFAULT_SEVERITY
+
+
+def get_ui_category_for_issue_type(issue_type: str) -> str:
+    """
+    Get UI category for an issue type from static configuration.
+    """
+    if not issue_type:
+        return DEFAULT_UI_CATEGORY
+    
+    normalized_type = issue_type.strip().upper()
+    
+    if normalized_type in ISSUE_TYPE_CONFIG:
+        return ISSUE_TYPE_CONFIG[normalized_type]['ui_category']
+    
+    return DEFAULT_UI_CATEGORY
+
+
+def get_display_name_for_issue_type(issue_type: str) -> str:
+    """
+    Get human-readable display name for an issue type.
+    """
+    if not issue_type:
+        return "Unknown Issue"
+    
+    normalized_type = issue_type.strip().upper()
+    
+    if normalized_type in ISSUE_TYPE_CONFIG:
+        return ISSUE_TYPE_CONFIG[normalized_type]['display_name']
+    
+    # Generate readable name from type
+    return issue_type.replace('_', ' ').title()
+
+
+def is_auto_fixable(issue_type: str) -> bool:
+    """
+    Check if an issue type can be auto-fixed by AI.
+    """
+    if not issue_type:
+        return False
+    
+    normalized_type = issue_type.strip().upper()
+    
+    if normalized_type in ISSUE_TYPE_CONFIG:
+        return ISSUE_TYPE_CONFIG[normalized_type].get('auto_fixable', False)
+    
+    return False
+
+
+def assign_severity_to_issues(issues: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Assign severity to a list of issues based on their issue_type.
+    
+    This is the MAIN FUNCTION that should be called after AI analysis.
+    It ensures deterministic severity assignment for ALL issues.
+    
+    Args:
+        issues: List of issue dictionaries from AI analysis
+                Each issue should have 'issue_type' field
+                
+    Returns:
+        List of issues with 'severity' field added/overwritten
+        
+    Example:
+        Input:  [{'issue_type': 'SPELLING_ERROR', 'description': '...'}]
+        Output: [{'issue_type': 'SPELLING_ERROR', 'description': '...', 
+                  'severity': 'critical', 'ui_category': 'spelling_grammar'}]
+    """
+    if not issues:
+        return []
+    
+    processed_issues = []
+    
+    for issue in issues:
+        # Create a copy to avoid modifying original
+        processed_issue = issue.copy()
+        
+        # Get issue_type from the issue
+        issue_type = issue.get('issue_type', issue.get('type', ''))
+        
+        # Assign severity from static configuration (DETERMINISTIC)
+        processed_issue['severity'] = get_severity_for_issue_type(issue_type)
+        
+        # Add UI category for frontend filtering
+        processed_issue['ui_category'] = get_ui_category_for_issue_type(issue_type)
+        
+        # Add display name
+        processed_issue['display_name'] = get_display_name_for_issue_type(issue_type)
+        
+        # Add auto-fixable flag
+        processed_issue['auto_fixable'] = is_auto_fixable(issue_type)
+        
+        # Normalize issue_type to uppercase
+        if issue_type:
+            processed_issue['issue_type'] = issue_type.strip().upper()
+        
+        processed_issues.append(processed_issue)
+    
+    return processed_issues
+
+
+def count_issues_by_severity(issues: List[Dict[str, Any]]) -> Dict[str, int]:
+    """
+    Count issues by severity level.
+    
+    Args:
+        issues: List of issues (must have 'severity' field)
+        
+    Returns:
+        Dictionary with counts: {'critical': 2, 'high': 10, 'medium': 20, 'low': 15}
+    """
+    counts = {severity: 0 for severity in VALID_SEVERITIES}
+    
+    for issue in issues:
+        severity = issue.get('severity', DEFAULT_SEVERITY)
+        if severity in counts:
+            counts[severity] += 1
+        else:
+            counts[DEFAULT_SEVERITY] += 1
+    
+    return counts
+
+Step 3: Verify the file has no syntax errors
+
+───────────────────────────────────────────────────────────────────
+
+FILES TO CREATE:
+- backend/common/scoring/severity.py
+
+FILES TO MODIFY:
+- None
+
+DO NOT TOUCH:
+- config.py (already done)
+- cv_optimizer.py (next prompt)
+- All other files
+
+───────────────────────────────────────────────────────────────────
+
+WHEN COMPLETE:
+
+Confirm:
+□ severity.py created in backend/common/scoring/
+□ Contains get_severity_for_issue_type function
+□ Contains assign_severity_to_issues function (MAIN)
+□ Contains count_issues_by_severity function
+□ Imports from config.py work correctly
+□ No Python syntax errors
+□ Logging included for unknown issue types
+
+Type "PROMPT 2#5 COMPLETE - READY FOR 3#5" when done.
