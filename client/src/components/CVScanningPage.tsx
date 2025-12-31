@@ -85,7 +85,7 @@ export function CVScanningPage() {
         playCompleteSound()
 
         setTimeout(() => {
-          navigate(`/service/cv-optimizer/report/${data.scan_id}`)
+          navigate(`/service/cv-optimizer/crossroads/${data.scan_id}`)
         }, 2000)
 
       } catch (err) {

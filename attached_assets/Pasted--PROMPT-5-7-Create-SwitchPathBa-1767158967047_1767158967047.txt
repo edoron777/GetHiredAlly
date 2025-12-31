@@ -1,0 +1,105 @@
+═══════════════════════════════════════════════════════════════════
+PROMPT 5#7: Create SwitchPathBanner Component
+═══════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify files not explicitly mentioned
+3. Do NOT add features not explicitly requested
+4. Do NOT refactor or "improve" existing code
+5. If unclear, STOP and ask - do not assume
+6. Make MINIMAL, SURGICAL changes only
+
+FORBIDDEN ACTIONS:
+- Modifying any existing components
+- Adding unrequested dependencies
+- Changing other files
+
+───────────────────────────────────────────────────────────────────
+
+TASK: Create SwitchPathBanner component
+
+OBJECTIVE:
+Create a banner that appears on the Issues List page (Red Pill path)
+allowing users to switch to auto-fix at any time.
+
+CONTEXT:
+Users who chose "View All Issues" (Red Pill) should always have
+the option to switch to auto-fix. This banner shows at top and
+bottom of the issues list with a dynamic count of remaining issues.
+
+───────────────────────────────────────────────────────────────────
+
+INSTRUCTIONS:
+
+Step 1: Create new file: client/src/components/cv-optimizer/SwitchPathBanner.tsx
+
+Step 2: Implement the component with this structure:
+
+import React from 'react';
+
+interface SwitchPathBannerProps {
+  remainingIssues: number;
+  onSwitchToAutoFix: () => void;
+  position?: 'top' | 'bottom';
+}
+
+const SwitchPathBanner: React.FC<SwitchPathBannerProps> = ({
+  remainingIssues,
+  onSwitchToAutoFix,
+  position = 'top'
+}) => {
+  const isTop = position === 'top';
+  
+  return (
+    <div className={`bg-blue-50 border border-blue-200 rounded-lg p-4 flex flex-col sm:flex-row items-center justify-between gap-4 ${isTop ? 'mb-6' : 'mt-6'}`}>
+      <div className="flex items-center gap-3">
+        <span className="text-2xl">💊</span>
+        <div>
+          <p className="font-medium text-blue-800">
+            {isTop ? 'Want the easy way?' : 'Done reviewing?'}
+          </p>
+          <p className="text-sm text-blue-600">
+            Let AI fix all {remainingIssues} issues instantly
+          </p>
+        </div>
+      </div>
+      
+      <button
+        onClick={onSwitchToAutoFix}
+        className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors whitespace-nowrap"
+      >
+        🚀 Fix All {remainingIssues} Issues
+      </button>
+    </div>
+  );
+};
+
+export default SwitchPathBanner;
+
+Step 3: Verify the file is created correctly
+
+───────────────────────────────────────────────────────────────────
+
+FILES TO CREATE:
+- client/src/components/cv-optimizer/SwitchPathBanner.tsx
+
+FILES TO MODIFY:
+- None
+
+DO NOT TOUCH:
+- All other files
+
+───────────────────────────────────────────────────────────────────
+
+WHEN COMPLETE:
+
+Confirm:
+□ SwitchPathBanner.tsx created in correct location
+□ Component accepts remainingIssues, onSwitchToAutoFix, position props
+□ Button displays dynamic issue count
+□ No TypeScript errors
+□ No other files modified
+
+Type "PROMPT 5#7 COMPLETE - READY FOR 6#7" when done.
