@@ -1,0 +1,74 @@
+═══════════════════════════════════════════════════════════════════════
+🔍 INVESTIGATION: AGENTS.md Awareness Check
+═══════════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL: This is an INVESTIGATION, not an implementation.
+Do NOT change any code. Report findings only.
+
+───────────────────────────────────────────────────────────────────────
+
+PURPOSE:
+I need to verify that you are aware of and following the AGENTS.md 
+instruction file in this project.
+
+───────────────────────────────────────────────────────────────────────
+
+QUESTIONS TO ANSWER:
+
+1. AGENTS.md LOCATION:
+   - Do you see a file called AGENTS.md in this project?
+   - What is its full file path?
+   - When was it last modified?
+
+2. CONTENT AWARENESS:
+   - What is the current version of AGENTS.md?
+   - List the 5 services mentioned in the file
+   - List ALL protected files you see in AGENTS.md
+
+3. RULES UNDERSTANDING:
+   - What must you do BEFORE modifying a protected file?
+   - What word must the user type to approve changes?
+   - What are you NOT allowed to do without approval?
+
+4. PRACTICAL TEST:
+   - If I asked you to "fix a bug in CVOptimizerPage.tsx", 
+     what would you do FIRST before making changes?
+
+───────────────────────────────────────────────────────────────────────
+
+REPORT FORMAT:
+
+FINDING 1 - AGENTS.md Location:
+- Found: YES/NO
+- Path: __________
+- Version: __________
+
+FINDING 2 - Protected Files List:
+- Service 1: [files]
+- Service 2: [files]
+- Service 3: [files]
+- Service 4: [files]
+- Service 5: [files]
+- Shared: [files]
+
+FINDING 3 - Rules I Follow:
+- Before modifying protected file: __________
+- Approval word required: __________
+- Forbidden actions: __________
+
+FINDING 4 - Practical Response:
+- For CVOptimizerPage.tsx fix request, I would: __________
+
+───────────────────────────────────────────────────────────────────────
+
+DO NOT:
+❌ Make any code changes
+❌ Modify any files
+❌ Skip any questions
+
+DO:
+✅ Answer all questions completely
+✅ Quote directly from AGENTS.md where relevant
+✅ Be honest if you are NOT aware of these instructions
+
+═══════════════════════════════════════════════════════════════════════
