@@ -193,15 +193,15 @@ export function GHAScanner({ progress, showLegend = true, showProgress = true }:
           <div className="flex gap-3">
             <span className="flex items-center gap-1">
               <span className="w-3 h-3 rounded-sm bg-green-500"></span>
-              <span className="text-gray-400">OK</span>
+              <span className="text-gray-400">Polish</span>
             </span>
             <span className="flex items-center gap-1">
               <span className="w-3 h-3 rounded-sm bg-yellow-400"></span>
-              <span className="text-gray-400">Minor</span>
+              <span className="text-gray-400">Consider</span>
             </span>
             <span className="flex items-center gap-1">
               <span className="w-3 h-3 rounded-sm bg-orange-500"></span>
-              <span className="text-gray-400">Medium</span>
+              <span className="text-gray-400">Important</span>
             </span>
             <span className="flex items-center gap-1">
               <span className="w-3 h-3 rounded-sm bg-red-500"></span>
@@ -215,7 +215,7 @@ export function GHAScanner({ progress, showLegend = true, showProgress = true }:
             </span>
             <span className="flex items-center gap-1">
               <span className="w-3 h-3 rounded-sm bg-gray-700"></span>
-              <span className="text-gray-400">Waiting</span>
+              <span className="text-gray-400">Pending</span>
             </span>
           </div>
         </div>
