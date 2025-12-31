@@ -1,0 +1,134 @@
+═══════════════════════════════════════════════════════════════════
+PROMPT 1#7: Create IssuesSummaryBox Component
+═══════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify files not explicitly mentioned
+3. Do NOT add features not explicitly requested
+4. Do NOT refactor or "improve" existing code
+5. If unclear, STOP and ask - do not assume
+6. Make MINIMAL, SURGICAL changes only
+
+FORBIDDEN ACTIONS:
+- Modifying any existing components
+- Adding unrequested dependencies
+- Changing other files
+
+───────────────────────────────────────────────────────────────────
+
+TASK: Create IssuesSummaryBox component
+
+OBJECTIVE:
+Create a component that displays the total issues count, priority 
+breakdown, and estimated manual fix time.
+
+CONTEXT:
+This component will be shown on the Crossroads page to highlight
+the VALUE of auto-fix (many issues + long manual time = use auto-fix!)
+
+───────────────────────────────────────────────────────────────────
+
+INSTRUCTIONS:
+
+Step 1: Create new file: client/src/components/cv-optimizer/IssuesSummaryBox.tsx
+
+Step 2: Implement the component with this structure:
+
+import React from 'react';
+
+interface IssuesSummaryBoxProps {
+  totalIssues: number;
+  breakdown: {
+    critical: number;
+    high: number;
+    medium: number;
+    low: number;
+  };
+  estimatedMinutes: number;
+}
+
+const IssuesSummaryBox: React.FC<IssuesSummaryBoxProps> = ({
+  totalIssues,
+  breakdown,
+  estimatedMinutes
+}) => {
+  const hours = Math.floor(estimatedMinutes / 60);
+  const minutes = estimatedMinutes % 60;
+  const timeString = hours > 0 
+    ? `${hours}h ${minutes}m` 
+    : `${minutes} minutes`;
+
+  return (
+    <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 mb-8">
+      {/* Header */}
+      <div className="text-center mb-4">
+        <span className="text-3xl">⚠️</span>
+        <h3 className="text-2xl font-bold text-gray-800 mt-2">
+          {totalIssues} Issues Detected
+        </h3>
+        <p className="text-gray-600 mt-1">
+          These issues could hurt your chances with recruiters
+        </p>
+      </div>
+      
+      {/* Priority Breakdown */}
+      <div className="flex flex-wrap justify-center gap-2 mb-4">
+        {breakdown.critical > 0 && (
+          <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium">
+            🔴 {breakdown.critical} Critical
+          </span>
+        )}
+        {breakdown.high > 0 && (
+          <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm font-medium">
+            🟠 {breakdown.high} Important
+          </span>
+        )}
+        {breakdown.medium > 0 && (
+          <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm font-medium">
+            🟡 {breakdown.medium} Consider
+          </span>
+        )}
+        {breakdown.low > 0 && (
+          <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+            🟢 {breakdown.low} Polish
+          </span>
+        )}
+      </div>
+      
+      {/* Time Estimate */}
+      <div className="text-center p-3 bg-white rounded-lg border border-amber-200">
+        <span className="text-gray-500">⏱️ Estimated manual fix time:</span>
+        <span className="text-xl font-bold text-gray-800 ml-2">{timeString}</span>
+      </div>
+    </div>
+  );
+};
+
+export default IssuesSummaryBox;
+
+Step 3: Verify the file is created correctly
+
+───────────────────────────────────────────────────────────────────
+
+FILES TO CREATE:
+- client/src/components/cv-optimizer/IssuesSummaryBox.tsx
+
+FILES TO MODIFY:
+- None
+
+DO NOT TOUCH:
+- All other files
+
+───────────────────────────────────────────────────────────────────
+
+WHEN COMPLETE:
+
+Confirm:
+□ IssuesSummaryBox.tsx created in correct location
+□ Component accepts totalIssues, breakdown, estimatedMinutes props
+□ No TypeScript errors
+□ No other files modified
+
+Type "PROMPT 1#7 COMPLETE - READY FOR 2#7" when done.
