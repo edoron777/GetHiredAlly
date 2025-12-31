@@ -1,15 +1,10 @@
 """
 CV Issue Catalog Module
-
-Provides database-backed catalog of CV issue types with:
-- In-memory caching for performance
-- Legacy code mapping for backward compatibility
-- Rich metadata for each issue type
 """
 
 from .models import (
     Category,
-    Subcategory,
+    Subcategory, 
     IssueType,
     IssueExample,
     LegacyMapping,
@@ -19,6 +14,13 @@ from .models import (
     DetectionMethod,
     UserEffort,
     AutoFixType
+)
+from .repository import CatalogRepository
+from .cache import CatalogCache
+from .service import (
+    CatalogService, 
+    get_catalog_service, 
+    init_catalog_service
 )
 
 __all__ = [
@@ -32,5 +34,10 @@ __all__ = [
     'Severity',
     'DetectionMethod',
     'UserEffort',
-    'AutoFixType'
+    'AutoFixType',
+    'CatalogRepository',
+    'CatalogCache',
+    'CatalogService',
+    'get_catalog_service',
+    'init_catalog_service'
 ]

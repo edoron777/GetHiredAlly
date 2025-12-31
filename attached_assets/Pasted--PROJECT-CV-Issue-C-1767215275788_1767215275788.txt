@@ -1,0 +1,191 @@
+═══════════════════════════════════════════════════════════════════════════════
+PROJECT: CV Issue Catalog Backend - PROMPT 5 OF 10
+═══════════════════════════════════════════════════════════════════════════════
+
+CONTEXT:
+Continuing from Prompt C4. Service layer created.
+
+───────────────────────────────────────────────────────────────────────────────
+
+TASK: Create Catalog API Routes
+
+Create a new file: backend/routes/catalog_routes.py
+
+This provides REST API endpoints for the catalog.
+
+───────────────────────────────────────────────────────────────────────────────
+
+FILE TO CREATE: backend/routes/catalog_routes.py
+
+```python
+"""
+CV Issue Catalog - API Routes
+
+REST API endpoints for accessing the CV Issue Catalog.
+"""
+
+from fastapi import APIRouter, HTTPException, Query
+from typing import List, Optional
+from common.catalog import (
+    get_catalog_service,
+    IssueType,
+    Category,
+    Subcategory,
+    CatalogSummary
+)
+
+router = APIRouter(prefix="/api/catalog", tags=["Catalog"])
+
+
+@router.get("/health")
+async def catalog_health():
+    """Check if catalog service is ready"""
+    service = get_catalog_service()
+    return {
+        "status": "ok" if service.is_ready else "not_ready",
+        "is_ready": service.is_ready,
+        "cache_loaded": service.cache.is_loaded if service.is_ready else False,
+        "loaded_at": service.cache.loaded_at.isoformat() if service.is_ready and service.cache.loaded_at else None
+    }
+
+
+@router.get("/issues", response_model=List[IssueType])
+async def get_all_issues(
+    category: Optional[str] = Query(None, description="Filter by category code"),
+    severity: Optional[str] = Query(None, description="Filter by severity"),
+    limit: Optional[int] = Query(None, description="Limit results")
+):
+    """
+    Get all issue types, optionally filtered.
+    
+    - **category**: Filter by category code (e.g., CONTACT, FORMAT)
+    - **severity**: Filter by severity (critical, important, consider, polish)
+    - **limit**: Limit number of results
+    """
+    service = get_catalog_service()
+    
+    if not service.is_ready:
+        raise HTTPException(503, "Catalog service not ready")
+    
+    if category:
+        issues = service.get_issues_by_category(category.upper())
+    elif severity:
+        issues = service.get_issues_by_severity(severity.lower())
+    else:
+        issues = service.get_all_issues()
+    
+    if limit:
+        issues = issues[:limit]
+    
+    return issues
+
+
+@router.get("/issues/{code}", response_model=IssueType)
+async def get_issue_by_code(code: str):
+    """
+    Get a single issue by its code.
+    
+    Automatically handles legacy code conversion.
+    """
+    service = get_catalog_service()
+    
+    if not service.is_ready:
+        raise HTTPException(503, "Catalog service not ready")
+    
+    issue = service.get_issue_by_code(code.upper())
+    
+    if not issue:
+        raise HTTPException(404, f"Issue not found: {code}")
+    
+    return issue
+
+
+@router.get("/categories", response_model=List[Category])
+async def get_categories():
+    """Get all categories"""
+    service = get_catalog_service()
+    
+    if not service.is_ready:
+        raise HTTPException(503, "Catalog service not ready")
+    
+    return service.get_categories()
+
+
+@router.get("/subcategories", response_model=List[Subcategory])
+async def get_subcategories():
+    """Get all subcategories"""
+    service = get_catalog_service()
+    
+    if not service.is_ready:
+        raise HTTPException(503, "Catalog service not ready")
+    
+    return service.get_subcategories()
+
+
+@router.get("/summary", response_model=CatalogSummary)
+async def get_summary():
+    """Get catalog statistics"""
+    service = get_catalog_service()
+    
+    if not service.is_ready:
+        raise HTTPException(503, "Catalog service not ready")
+    
+    return service.get_summary()
+
+
+@router.post("/refresh")
+async def refresh_cache():
+    """
+    Force refresh the catalog cache from database.
+    
+    Use this after making changes to the catalog in the database.
+    """
+    service = get_catalog_service()
+    
+    if not service._service_initialized:
+        raise HTTPException(503, "Catalog service not initialized")
+    
+    try:
+        service.refresh_cache()
+        summary = service.get_summary()
+        return {
+            "status": "ok",
+            "message": "Cache refreshed successfully",
+            "total_issues": summary.total_issue_types,
+            "loaded_at": service.cache.loaded_at.isoformat() if service.cache.loaded_at else None
+        }
+    except Exception as e:
+        raise HTTPException(500, f"Failed to refresh cache: {str(e)}")
+
+
+@router.get("/severity-config")
+async def get_severity_config():
+    """Get severity display configuration for frontend"""
+    service = get_catalog_service()
+    
+    if not service.is_ready:
+        raise HTTPException(503, "Catalog service not ready")
+    
+    config = service.get_severity_config()
+    return {k: v.model_dump() for k, v in config.items()}
+
+
+@router.get("/legacy-mapping")
+async def get_legacy_mapping():
+    """Get the legacy code to new code mapping"""
+    service = get_catalog_service()
+    
+    if not service.is_ready:
+        raise HTTPException(503, "Catalog service not ready")
+    
+    return service.cache.get_legacy_mapping()
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+- [ ] File created: backend/routes/catalog_routes.py
+- [ ] No syntax errors
+- [ ] All endpoints defined: /health, /issues, /categories, /summary, /refresh
+
+═══════════════════════════════════════════════════════════════════════════════
