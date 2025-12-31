@@ -1,10 +1,24 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, Upload, FileText, Search } from 'lucide-react'
+import { ArrowLeft, Upload, FileText, Search, Clock, ChevronRight, X } from 'lucide-react'
 import { isAuthenticated, getAuthToken } from '@/lib/auth'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024
 const ALLOWED_EXTENSIONS = ['pdf', 'docx', 'doc', 'txt', 'md', 'rtf', 'odt']
+
+interface ExistingScan {
+  id: number
+  cv_id: string
+  cv_filename: string
+  score: number
+  total_issues: number
+  critical_count: number
+  high_count: number
+  medium_count: number
+  low_count: number
+  status: string
+  created_at: string
+}
 
 export function CVOptimizerPage() {
   const navigate = useNavigate()
@@ -12,17 +26,56 @@ export function CVOptimizerPage() {
   const [isDragging, setIsDragging] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [existingScan, setExistingScan] = useState<ExistingScan | null>(null)
+  const [loadingExistingScan, setLoadingExistingScan] = useState(true)
+  const [showClearConfirm, setShowClearConfirm] = useState(false)
+  const [showReplaceConfirm, setShowReplaceConfirm] = useState(false)
+  const [fileToUpload, setFileToUpload] = useState<File | null>(null)
 
   useEffect(() => {
     if (!isAuthenticated()) {
       navigate('/login')
+      return
     }
+
+    const fetchExistingScan = async () => {
+      try {
+        const token = getAuthToken()
+        const response = await fetch(`/api/cv-optimizer/latest?token=${token}`)
+        if (response.ok) {
+          const data = await response.json()
+          if (data && data.status === 'completed') {
+            setExistingScan(data)
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching existing scan:', error)
+      } finally {
+        setLoadingExistingScan(false)
+      }
+    }
+    fetchExistingScan()
   }, [navigate])
 
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return bytes + ' B'
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
+  }
+
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMins / 60)
+    const diffDays = Math.floor(diffHours / 24)
+
+    if (diffMins < 1) return 'Just now'
+    if (diffMins < 60) return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`
+    if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`
+    if (diffDays < 7) return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`
+    return date.toLocaleDateString()
   }
 
   const validateAndSetFile = (file: File) => {
@@ -36,6 +89,12 @@ export function CVOptimizerPage() {
 
     if (file.size > MAX_FILE_SIZE) {
       setError('File too large. Maximum size is 10MB.')
+      return
+    }
+
+    if (existingScan) {
+      setFileToUpload(file)
+      setShowReplaceConfirm(true)
       return
     }
 
@@ -74,40 +133,98 @@ export function CVOptimizerPage() {
     setError(null)
   }
 
-  const handleStartScan = async () => {
+  const uploadAndScan = async (file: File) => {
     setIsLoading(true)
     setError(null)
 
     try {
       const token = getAuthToken()
-      let cvId: string | null = null
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('token', token || '')
 
-      if (selectedFile) {
-        const formData = new FormData()
-        formData.append('file', selectedFile)
-        formData.append('token', token || '')
+      const uploadResponse = await fetch('/api/cv/upload-for-scan', {
+        method: 'POST',
+        body: formData
+      })
 
-        const uploadResponse = await fetch('/api/cv/upload-for-scan', {
-          method: 'POST',
-          body: formData
-        })
+      if (!uploadResponse.ok) {
+        const errorData = await uploadResponse.json()
+        throw new Error(errorData.detail || 'Failed to upload file')
+      }
 
-        if (!uploadResponse.ok) {
-          const errorData = await uploadResponse.json()
-          throw new Error(errorData.detail || 'Failed to upload file')
-        }
+      const uploadData = await uploadResponse.json()
+      const cvId = uploadData.cv_id
 
-        const uploadData = await uploadResponse.json()
-        cvId = uploadData.cv_id
-
-        if (cvId) {
-          navigate(`/service/cv-optimizer/scanning?cv_id=${cvId}`)
-        }
+      if (cvId) {
+        navigate(`/service/cv-optimizer/scanning?cv_id=${cvId}`)
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred. Please try again.')
       setIsLoading(false)
     }
+  }
+
+  const handleStartScan = async () => {
+    if (selectedFile) {
+      await uploadAndScan(selectedFile)
+    }
+  }
+
+  const handleClearAndStartNew = async () => {
+    if (!existingScan) return
+
+    try {
+      const token = getAuthToken()
+      const response = await fetch(`/api/cv-optimizer/scans/${existingScan.id}/archive?token=${token}`, {
+        method: 'POST'
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to archive existing scan')
+      }
+      
+      setExistingScan(null)
+      setShowClearConfirm(false)
+    } catch (error) {
+      console.error('Error clearing scan:', error)
+      setError('Failed to archive your existing analysis. Please try again.')
+      setShowClearConfirm(false)
+    }
+  }
+
+  const handleConfirmReplace = async () => {
+    if (!existingScan || !fileToUpload) return
+
+    try {
+      const token = getAuthToken()
+      const response = await fetch(`/api/cv-optimizer/scans/${existingScan.id}/archive?token=${token}`, {
+        method: 'POST'
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to archive existing scan')
+      }
+      
+      const fileToProcess = fileToUpload
+      setExistingScan(null)
+      setShowReplaceConfirm(false)
+      setSelectedFile(fileToProcess)
+      setFileToUpload(null)
+      
+      await uploadAndScan(fileToProcess)
+    } catch (error) {
+      console.error('Error replacing scan:', error)
+      setError('Failed to archive your existing analysis. Please try again.')
+      setShowReplaceConfirm(false)
+      setFileToUpload(null)
+    }
+  }
+
+  const getScoreColor = (score: number) => {
+    if (score >= 70) return 'text-green-600'
+    if (score >= 50) return 'text-yellow-600'
+    return 'text-red-600'
   }
 
   return (
@@ -141,6 +258,45 @@ export function CVOptimizerPage() {
             Optional: Let AI fix your CV automatically
           </li>
         </ul>
+
+        {!loadingExistingScan && existingScan && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
+                <h3 className="font-semibold text-blue-900 flex items-center gap-2">
+                  <FileText size={18} />
+                  You have an analysis in progress
+                </h3>
+                <p className="text-sm text-blue-700 mt-1">
+                  <span className="font-medium">{existingScan.cv_filename}</span>
+                  {' '}&bull;{' '}
+                  Score: <span className={`font-bold ${getScoreColor(existingScan.score)}`}>{existingScan.score}%</span>
+                  {' '}&bull;{' '}
+                  {existingScan.total_issues} issues found
+                </p>
+                <p className="text-xs text-blue-500 mt-1 flex items-center gap-1">
+                  <Clock size={12} />
+                  {formatTimeAgo(existingScan.created_at)}
+                </p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Link 
+                  to={`/service/cv-optimizer/crossroads/${existingScan.id}`}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm font-medium flex items-center gap-1 whitespace-nowrap"
+                >
+                  Continue Analysis
+                  <ChevronRight size={16} />
+                </Link>
+                <button 
+                  onClick={() => setShowClearConfirm(true)}
+                  className="bg-white text-blue-600 border border-blue-300 px-4 py-2 rounded-lg hover:bg-blue-50 text-sm font-medium whitespace-nowrap"
+                >
+                  Start New
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
@@ -178,7 +334,7 @@ export function CVOptimizerPage() {
             <div>
               <Upload size={48} className="mx-auto text-gray-400 mb-4" />
               <p className="text-lg font-medium text-gray-700 mb-2">
-                Drag & drop your CV here
+                {existingScan ? 'Upload a different CV' : 'Drag & drop your CV here'}
               </p>
               <p className="text-gray-500 mb-4">or</p>
               <label className="cursor-pointer">
@@ -222,6 +378,103 @@ export function CVOptimizerPage() {
           <div className="bg-white rounded-lg p-6 flex items-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-4"></div>
             <span>Preparing scan...</span>
+          </div>
+        </div>
+      )}
+
+      {showClearConfirm && existingScan && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-xl">
+            <div className="flex items-start justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Start New Analysis?
+              </h3>
+              <button 
+                onClick={() => setShowClearConfirm(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <p className="text-gray-600 mb-4">
+              This will archive your current analysis:
+            </p>
+            <div className="bg-gray-50 rounded-lg p-3 mb-4">
+              <p className="font-medium text-gray-900">{existingScan.cv_filename}</p>
+              <p className="text-sm text-gray-500">
+                Score: {existingScan.score}% &bull; {existingScan.total_issues} issues found
+              </p>
+            </div>
+            <p className="text-sm text-gray-500 mb-6">
+              You can continue with your existing analysis by clicking &quot;Continue Analysis&quot; instead.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowClearConfirm(false)}
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleClearAndStartNew}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Start New
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showReplaceConfirm && existingScan && fileToUpload && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-xl">
+            <div className="flex items-start justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Replace Current Analysis?
+              </h3>
+              <button 
+                onClick={() => {
+                  setShowReplaceConfirm(false)
+                  setFileToUpload(null)
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <p className="text-gray-600 mb-4">
+              You&apos;re about to upload a new CV. This will archive your current analysis:
+            </p>
+            <div className="bg-gray-50 rounded-lg p-3 mb-2">
+              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Current</p>
+              <p className="font-medium text-gray-900">{existingScan.cv_filename}</p>
+              <p className="text-sm text-gray-500">
+                Score: {existingScan.score}% &bull; {existingScan.total_issues} issues
+              </p>
+            </div>
+            <div className="bg-blue-50 rounded-lg p-3 mb-4">
+              <p className="text-xs text-blue-500 uppercase tracking-wide mb-1">New</p>
+              <p className="font-medium text-blue-900">{fileToUpload.name}</p>
+              <p className="text-sm text-blue-600">{formatFileSize(fileToUpload.size)}</p>
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => {
+                  setShowReplaceConfirm(false)
+                  setFileToUpload(null)
+                }}
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmReplace}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Replace & Scan
+              </button>
+            </div>
           </div>
         </div>
       )}

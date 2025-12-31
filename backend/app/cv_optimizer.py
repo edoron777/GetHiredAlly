@@ -1373,6 +1373,9 @@ async def get_latest_scan(token: str):
 
         cv_content = scan.get('original_cv_content', '')
         score_data = extract_cv_data_and_score(cv_content) if cv_content else calculate_cv_score_from_issues([])
+        
+        created_at = scan.get("created_at")
+        created_at_str = created_at.isoformat() if created_at else None
 
         return {
             "id": scan["id"],
@@ -1385,7 +1388,7 @@ async def get_latest_scan(token: str):
             "medium_count": scan.get("medium_count", 0),
             "low_count": scan.get("low_count", 0),
             "status": scan.get("status"),
-            "created_at": scan.get("created_at").isoformat() if scan.get("created_at") else None
+            "created_at": created_at_str
         }
 
     except HTTPException:
