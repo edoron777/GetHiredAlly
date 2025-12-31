@@ -1,0 +1,150 @@
+═══════════════════════════════════════════════════════════════════════════════
+DEBUG PROMPT: Score Not Changing After Auto-Fix (0% Bug)
+═══════════════════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL: This is an INVESTIGATION, not a fix.
+Do NOT change any code until root cause is confirmed.
+
+───────────────────────────────────────────────────────────────────────────────
+
+PROBLEM DESCRIPTION:
+
+User uploaded a CV and triggered auto-fix:
+- Original Score: 64%
+- Issues Fixed: 121
+- New Score After Fix: 64%
+- Improvement: 0%
+
+This is a BUG. Even if all 121 fixes are minor/cosmetic, the score formula
+should show SOME change. 0% change means something is broken.
+
+───────────────────────────────────────────────────────────────────────────────
+
+INVESTIGATION GOAL:
+
+Trace the COMPLETE data flow from "Fix My CV" button click to "After" score
+display. Find where the bug occurs.
+
+───────────────────────────────────────────────────────────────────────────────
+
+INVESTIGATION QUESTIONS:
+
+PART A: THE AUTO-FIX FLOW
+
+1. FIX TRIGGER:
+   - What happens when user clicks "Fix My CV" button?
+   - File path: __________
+   - Function name: __________
+
+2. FIX PROCESS:
+   - Where is the CV text actually modified/fixed?
+   - Is the fixed CV text stored? Where?
+   - Show the code that applies fixes to the CV
+
+3. FIXED CV STORAGE:
+   - Where is the fixed CV text saved?
+   - Database table/column: __________
+   - Is it saved BEFORE or AFTER score calculation?
+
+───────────────────────────────────────────────────────────────────────────────
+
+PART B: THE "AFTER" SCORE CALCULATION
+
+4. SCORE RECALCULATION:
+   - Is the score RECALCULATED on the fixed CV?
+   - Or is it ESTIMATED/COPIED from somewhere?
+   - Show the exact code that calculates the "after" score
+
+5. DATA SOURCE FOR "AFTER" SCORE:
+   - What text is used to calculate the "after" score?
+   - Is it the FIXED CV text or the ORIGINAL CV text?
+   - Show where this text comes from
+
+6. EXTRACTION FOR "AFTER" SCORE:
+   - Is extract_cv_data() called on the fixed CV?
+   - Or is the original extracted_data reused?
+   - Show the code
+
+───────────────────────────────────────────────────────────────────────────────
+
+PART C: AI vs CODE CHECK
+
+7. WHO CALCULATES "AFTER" SCORE?
+   - Is it calculated by STATIC CODE (calculate_cv_score function)?
+   - Or is AI involved in any step?
+   - Show the exact flow
+
+8. AI INVOLVEMENT CHECK:
+   - Does AI generate any part of the "after" score?
+   - Does AI extract data from the fixed CV?
+   - List ALL places where AI is called during the fix process
+
+───────────────────────────────────────────────────────────────────────────────
+
+PART D: DISPLAY FLOW
+
+9. SCORE DISPLAY:
+   - Where does the "Fixed CV" page get its score values?
+   - File path: __________
+   - How are "before" and "after" scores retrieved?
+
+10. API RESPONSE:
+    - What API endpoint returns the fixed CV data?
+    - Show the response structure
+    - Does it include both before_score and after_score?
+
+───────────────────────────────────────────────────────────────────────────────
+
+SPECIFIC CODE TO SHOW:
+
+1. The function triggered by "Fix My CV" button (full code)
+2. The function that applies fixes to CV text
+3. The function that calculates "after" score
+4. The API endpoint that returns fixed CV data
+5. The frontend code that displays before/after scores
+
+───────────────────────────────────────────────────────────────────────────────
+
+HYPOTHESIS TO VERIFY:
+
+Check each hypothesis - which one is true?
+
+[ ] H1: "After" score uses ORIGINAL CV text (not fixed)
+[ ] H2: "After" score is COPIED from "before" (not recalculated)
+[ ] H3: extract_cv_data() not called on fixed CV
+[ ] H4: Fixed CV text not saved before score calculation
+[ ] H5: AI is calculating score instead of static code
+[ ] H6: Frontend displays wrong value (backend is correct)
+[ ] H7: Other: __________
+
+───────────────────────────────────────────────────────────────────────────────
+
+REPORT FORMAT:
+
+FINDING 1 - Fix Process:
+- Trigger: [file/function]
+- Fix applied by: [CODE/AI]
+- Fixed text saved to: [location]
+
+FINDING 2 - After Score Calculation:
+- Calculated by: [function name]
+- Data source: [original CV / fixed CV]
+- extract_cv_data called?: [YES/NO]
+
+FINDING 3 - AI Involvement:
+- AI used for fix generation: [YES/NO]
+- AI used for score calculation: [YES/NO - should be NO]
+- AI used for data extraction: [YES/NO]
+
+FINDING 4 - Root Cause:
+- The bug is in: [specific location]
+- Because: [explanation]
+
+CONFIRMED HYPOTHESIS: [ ] H1 / H2 / H3 / H4 / H5 / H6 / H7
+
+───────────────────────────────────────────────────────────────────────────────
+
+DO NOT FIX ANYTHING YET.
+Report findings first.
+
+═══════════════════════════════════════════════════════════════════════════════
