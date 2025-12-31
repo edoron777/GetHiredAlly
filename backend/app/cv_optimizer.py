@@ -21,6 +21,7 @@ from utils.file_generators import generate_pdf, generate_docx
 from config.rate_limiter import limiter
 from common.scoring import calculate_cv_score as calculate_cv_score_new, calculate_after_fix_score, get_score_message
 from common.scoring.extractors import extract_patterns, analyze_text
+from common.scoring.severity import assign_severity_to_issues, count_issues_by_severity
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/cv-optimizer", tags=["cv-optimizer"])
@@ -515,6 +516,9 @@ async def analyze_cv_with_ai(cv_content: str, user_id: str, is_markdown: bool = 
 
         issues = parse_ai_json_response(ai_response.content)
         
+        # DETERMINISTIC SEVERITY ASSIGNMENT (code, not AI)
+        issues = assign_severity_to_issues(issues)
+        
         logger.info(f"[CV_SCAN] Successfully parsed {len(issues)} issues")
 
         return {
@@ -773,23 +777,8 @@ async def get_report_summary(scan_id: str, token: str = ''):
         if isinstance(issues, str):
             issues = json.loads(issues)
 
-        breakdown = {
-            'critical': 0,
-            'high': 0,
-            'medium': 0,
-            'low': 0
-        }
-
-        for issue in issues:
-            severity = issue.get('severity', 'low').lower()
-            if severity == 'critical':
-                breakdown['critical'] += 1
-            elif severity == 'high':
-                breakdown['high'] += 1
-            elif severity == 'medium':
-                breakdown['medium'] += 1
-            else:
-                breakdown['low'] += 1
+        # Use deterministic severity counting
+        breakdown = count_issues_by_severity(issues)
 
         cv_content = scan.get('original_cv_content', '')
         score_data = extract_cv_data_and_score(cv_content) if cv_content else {'score': 0}

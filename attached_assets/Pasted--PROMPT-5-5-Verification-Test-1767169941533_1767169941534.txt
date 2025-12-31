@@ -1,0 +1,112 @@
+═══════════════════════════════════════════════════════════════════
+PROMPT 5#5: Verification & Test
+═══════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. This prompt is for VERIFICATION and testing
+
+───────────────────────────────────────────────────────────────────
+
+TASK: Verify all components work together
+
+OBJECTIVE:
+Confirm the complete integration works correctly and severity
+assignment is now deterministic.
+
+───────────────────────────────────────────────────────────────────
+
+INSTRUCTIONS:
+
+Step 1: Verify imports work
+
+Run this in Python to check imports:
+
+cd backend
+python -c "from common.scoring.severity import assign_severity_to_issues; print('Import OK')"
+python -c "from common.scoring.config import ISSUE_TYPE_CONFIG; print(f'Config OK: {len(ISSUE_TYPE_CONFIG)} issue types')"
+
+Step 2: Run quick determinism test
+
+Create and run a quick test:
+
+python -c "
+from common.scoring.severity import assign_severity_to_issues, get_severity_for_issue_type
+
+# Test 1: Same issue type always gets same severity
+for _ in range(10):
+    result = get_severity_for_issue_type('SPELLING_ERROR')
+    assert result == 'critical', f'Expected critical, got {result}'
+print('Test 1 PASSED: Deterministic severity')
+
+# Test 2: Process issues
+test_issues = [
+    {'issue_type': 'SPELLING_ERROR'},
+    {'issue_type': 'NO_METRICS'},
+    {'issue_type': 'CV_TOO_LONG'},
+]
+processed = assign_severity_to_issues(test_issues)
+assert processed[0]['severity'] == 'critical'
+assert processed[1]['severity'] == 'high'
+assert processed[2]['severity'] == 'low'
+print('Test 2 PASSED: Issue processing')
+
+# Test 3: Unknown type defaults to medium
+result = get_severity_for_issue_type('UNKNOWN_TYPE')
+assert result == 'medium', f'Expected medium, got {result}'
+print('Test 3 PASSED: Unknown type handling')
+
+print('ALL TESTS PASSED!')
+"
+
+Step 3: Start the server
+
+Start the backend server and check for any errors.
+Report any import errors or startup issues.
+
+Step 4: Verify data flow (manual check)
+
+After server starts, describe where these components are now:
+1. ISSUE_TYPE_CONFIG location: backend/common/scoring/config.py
+2. assign_severity_to_issues location: backend/common/scoring/severity.py
+3. AI prompt updated in: backend/app/cv_optimizer.py
+4. Severity assignment call in: backend/app/cv_optimizer.py
+
+───────────────────────────────────────────────────────────────────
+
+REPORT FORMAT:
+
+VERIFICATION RESULTS:
+
+1. IMPORTS:
+   □ severity.py imports work: YES/NO
+   □ config.py imports work: YES/NO
+
+2. QUICK TESTS:
+   □ Test 1 (Deterministic): PASS/FAIL
+   □ Test 2 (Processing): PASS/FAIL
+   □ Test 3 (Unknown type): PASS/FAIL
+
+3. SERVER:
+   □ Server starts without errors: YES/NO
+   □ Import errors: [list any]
+
+4. FILES SUMMARY:
+   - backend/common/scoring/config.py - ISSUE_TYPE_CONFIG added
+   - backend/common/scoring/severity.py - NEW FILE created
+   - backend/app/cv_optimizer.py - prompt updated + severity call added
+
+5. INTEGRATION COMPLETE:
+   □ AI prompt asks for issue_type (not severity): YES/NO
+   □ Code assigns severity from config: YES/NO
+   □ Same issue_type = same severity: YES/NO
+
+───────────────────────────────────────────────────────────────────
+
+FINAL STATUS:
+
+All 5 prompts executed successfully: YES/NO
+Determinism fix complete: YES/NO
+
+If any issues, report them for debugging.
