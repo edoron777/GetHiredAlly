@@ -1,0 +1,96 @@
+═══════════════════════════════════════════════════════════════════
+PROMPT 6#7: Update Issues List Page with Switch Banner
+═══════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE REQUIREMENTS ⚠️
+
+1. Execute ONLY the instructions below - nothing more
+2. Do NOT modify files not explicitly mentioned
+3. Do NOT add features not explicitly requested
+4. Do NOT refactor or "improve" existing code
+5. If unclear, STOP and ask - do not assume
+6. Make MINIMAL, SURGICAL changes only
+
+FORBIDDEN ACTIONS:
+- Changing filter logic
+- Modifying recommendation cards
+- Removing existing functionality
+
+───────────────────────────────────────────────────────────────────
+
+TASK: Add SwitchPathBanner to the Issues List page (CVReportPage)
+
+OBJECTIVE:
+Add the switch banner at TOP and BOTTOM of the recommendations section
+so users can switch to auto-fix from anywhere in the issues list.
+
+CONTEXT:
+Users on the "Red Pill" path (viewing all issues) should always
+have easy access to switch to auto-fix.
+
+───────────────────────────────────────────────────────────────────
+
+INSTRUCTIONS:
+
+Step 1: Open file: client/src/components/CVReportPage.tsx
+
+Step 2: Add import at the top:
+import SwitchPathBanner from './cv-optimizer/SwitchPathBanner';
+
+Step 3: Add a handler function for switching to auto-fix:
+const handleSwitchToAutoFix = () => {
+  navigate(`/service/cv-optimizer/fix/${id}`);
+};
+
+Step 4: Find the "Your Recommendations" section in the JSX
+
+Step 5: Add SwitchPathBanner BEFORE the recommendations header:
+<SwitchPathBanner
+  remainingIssues={filteredRecommendations?.length || 0}
+  onSwitchToAutoFix={handleSwitchToAutoFix}
+  position="top"
+/>
+
+Step 6: Add SwitchPathBanner AFTER the last recommendation group:
+<SwitchPathBanner
+  remainingIssues={filteredRecommendations?.length || 0}
+  onSwitchToAutoFix={handleSwitchToAutoFix}
+  position="bottom"
+/>
+
+Step 7: Make sure the navigate function is available:
+- If not already imported: import { useNavigate, useParams } from 'react-router-dom';
+- If not already defined: const navigate = useNavigate();
+
+───────────────────────────────────────────────────────────────────
+
+FILES TO MODIFY:
+- client/src/components/CVReportPage.tsx
+  - Add SwitchPathBanner import
+  - Add handleSwitchToAutoFix function
+  - Add two SwitchPathBanner components (top and bottom of recommendations)
+
+FILES TO CREATE:
+- None
+
+DO NOT TOUCH:
+- Filter components
+- Recommendation card components
+- Score components
+- Other files
+
+───────────────────────────────────────────────────────────────────
+
+WHEN COMPLETE:
+
+Confirm:
+□ SwitchPathBanner imported in CVReportPage.tsx
+□ handleSwitchToAutoFix function added
+□ Banner appears BEFORE recommendations section
+□ Banner appears AFTER recommendations section
+□ Banner shows correct issue count
+□ Button navigates to fix page
+□ No console errors
+□ Existing functionality preserved
+
+Type "PROMPT 6#7 COMPLETE - READY FOR 7#7" when done.
