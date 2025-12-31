@@ -726,6 +726,70 @@ async def get_detailed_report(scan_id: str, token: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.get("/report/{scan_id}/summary")
+async def get_report_summary(scan_id: str, token: str = ''):
+    """Get summary data for Crossroads page."""
+    user = get_user_from_token(token)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    try:
+        conn = get_db_connection()
+        if not conn:
+            raise HTTPException(status_code=500, detail="Database not available")
+
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute(
+            """SELECT id, issues_json, original_cv_content, total_issues, 
+                      critical_count, high_count, medium_count, low_count 
+               FROM cv_scan_results WHERE id = %s AND user_id = %s""",
+            (scan_id, str(user["id"]))
+        )
+        scan = cursor.fetchone()
+        cursor.close()
+        conn.close()
+
+        if not scan:
+            raise HTTPException(status_code=404, detail="Report not found")
+
+        issues = scan.get('issues_json', [])
+        if isinstance(issues, str):
+            issues = json.loads(issues)
+
+        breakdown = {
+            'critical': 0,
+            'high': 0,
+            'medium': 0,
+            'low': 0
+        }
+
+        for issue in issues:
+            severity = issue.get('severity', 'low').lower()
+            if severity == 'critical':
+                breakdown['critical'] += 1
+            elif severity == 'high':
+                breakdown['high'] += 1
+            elif severity == 'medium':
+                breakdown['medium'] += 1
+            else:
+                breakdown['low'] += 1
+
+        cv_content = scan.get('original_cv_content', '')
+        score_data = extract_cv_data_and_score(cv_content) if cv_content else {'score': 0}
+
+        return {
+            'score': score_data.get('score', 0),
+            'total_issues': len(issues),
+            'breakdown': breakdown
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting report summary: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get summary")
+
+
 CV_FIX_PROMPT = """
 You are an expert CV writer. Your task is to SIGNIFICANTLY IMPROVE this CV by fixing all identified issues.
 
