@@ -1,0 +1,288 @@
+═══════════════════════════════════════════════════════════════════════════════
+FEATURE PROMPT: Session Persistence & Reset UX
+═══════════════════════════════════════════════════════════════════════════════
+
+GOAL:
+Implement proper session management so users never lose their CV analysis
+unexpectedly. User should explicitly choose when to start over.
+
+───────────────────────────────────────────────────────────────────────────────
+
+FEATURE 1: "Continue Analysis" Banner on CV Optimizer Landing Page
+═══════════════════════════════════════════════════════════════════════════════
+
+FILE: client/src/components/CVOptimizerPage.tsx (or Upload page)
+
+WHEN: User has an existing scan in the database (status = 'completed')
+
+ADD a banner at the TOP of the page:
+```jsx
+{existingScan && (
+  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+    <div className="flex items-center justify-between">
+      <div>
+        <h3 className="font-semibold text-blue-900">
+          📄 You have an analysis in progress
+        </h3>
+        <p className="text-sm text-blue-700 mt-1">
+          {existingScan.cv_filename} • Score: {existingScan.score}% • 
+          {existingScan.total_issues} issues found
+        </p>
+        <p className="text-xs text-blue-500 mt-1">
+          Last updated: {formatTimeAgo(existingScan.updated_at)}
+        </p>
+      </div>
+      <div className="flex gap-3">
+        <Link 
+          to={`/service/cv-optimizer/crossroads/${existingScan.id}`}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+        >
+          Continue Analysis
+        </Link>
+        <button 
+          onClick={() => setShowClearConfirm(true)}
+          className="bg-white text-blue-600 border border-blue-300 px-4 py-2 rounded-lg hover:bg-blue-50"
+        >
+          Start New
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+FEATURE 2: Fetch Existing Scan on Page Load
+═══════════════════════════════════════════════════════════════════════════════
+
+FILE: client/src/components/CVOptimizerPage.tsx
+
+ADD useEffect to check for existing scans:
+```jsx
+const [existingScan, setExistingScan] = useState(null);
+const [showClearConfirm, setShowClearConfirm] = useState(false);
+
+useEffect(() => {
+  const fetchExistingScan = async () => {
+    try {
+      const response = await fetch('/api/cv-scans/latest', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.status === 'completed') {
+          setExistingScan(data);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching existing scan:', error);
+    }
+  };
+  fetchExistingScan();
+}, []);
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+FEATURE 3: API Endpoint - Get Latest Scan
+═══════════════════════════════════════════════════════════════════════════════
+
+FILE: backend/app/cv_optimizer.py (or routes file)
+
+ADD new endpoint:
+```python
+@router.get("/api/cv-scans/latest")
+async def get_latest_scan(current_user: User = Depends(get_current_user)):
+    """Get the most recent completed scan for current user"""
+    
+    # Query database for latest completed scan
+    scan = await db.cv_scans.find_one(
+        {
+            "user_id": current_user.id,
+            "status": "completed"
+        },
+        sort=[("updated_at", -1)]  # Most recent first
+    )
+    
+    if not scan:
+        return None
+    
+    return {
+        "id": scan["id"],
+        "cv_filename": scan.get("cv_filename", "Your CV"),
+        "score": scan.get("score", 0),
+        "total_issues": scan.get("total_issues", 0),
+        "status": scan["status"],
+        "updated_at": scan["updated_at"],
+        "created_at": scan["created_at"]
+    }
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+FEATURE 4: Confirmation Dialog for "Start New"
+═══════════════════════════════════════════════════════════════════════════════
+
+FILE: client/src/components/CVOptimizerPage.tsx
+
+ADD confirmation modal:
+```jsx
+{showClearConfirm && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+        ⚠️ Start New Analysis?
+      </h3>
+      <p className="text-gray-600 mb-4">
+        This will clear your current analysis:
+      </p>
+      <div className="bg-gray-50 rounded p-3 mb-4">
+        <p className="font-medium">{existingScan.cv_filename}</p>
+        <p className="text-sm text-gray-500">
+          Score: {existingScan.score}% • {existingScan.total_issues} issues
+        </p>
+      </div>
+      <p className="text-sm text-gray-500 mb-6">
+        You can download your results before starting over.
+      </p>
+      <div className="flex gap-3 justify-end">
+        <button
+          onClick={() => setShowClearConfirm(false)}
+          className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleDownloadResults}
+          className="px-4 py-2 border border-blue-300 text-blue-600 rounded-lg hover:bg-blue-50"
+        >
+          Download Results
+        </button>
+        <button
+          onClick={handleClearAndStartNew}
+          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+        >
+          Start New
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+FEATURE 5: Clear Scan Handler
+═══════════════════════════════════════════════════════════════════════════════
+
+FILE: client/src/components/CVOptimizerPage.tsx
+
+ADD handler functions:
+```jsx
+const handleClearAndStartNew = async () => {
+  try {
+    // Mark existing scan as archived (don't delete - keep history)
+    await fetch(`/api/cv-scans/${existingScan.id}/archive`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    // Clear local state
+    setExistingScan(null);
+    setShowClearConfirm(false);
+    
+    // Page now shows normal upload UI
+  } catch (error) {
+    console.error('Error clearing scan:', error);
+  }
+};
+
+const handleDownloadResults = () => {
+  // Navigate to crossroads with download option
+  // Or trigger direct download
+  window.open(`/api/cv-scans/${existingScan.id}/export/pdf`, '_blank');
+};
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+FEATURE 6: API Endpoint - Archive Scan
+═══════════════════════════════════════════════════════════════════════════════
+
+FILE: backend/app/cv_optimizer.py
+
+ADD archive endpoint:
+```python
+@router.post("/api/cv-scans/{scan_id}/archive")
+async def archive_scan(
+    scan_id: int,
+    current_user: User = Depends(get_current_user)
+):
+    """Archive a scan (mark as not active, but keep for history)"""
+    
+    # Verify ownership
+    scan = await db.cv_scans.find_one({
+        "id": scan_id,
+        "user_id": current_user.id
+    })
+    
+    if not scan:
+        raise HTTPException(status_code=404, detail="Scan not found")
+    
+    # Mark as archived
+    await db.cv_scans.update_one(
+        {"id": scan_id},
+        {"$set": {"status": "archived", "archived_at": datetime.utcnow()}}
+    )
+    
+    return {"success": True, "message": "Scan archived"}
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+FEATURE 7: Confirmation When Uploading New CV (If Existing Scan)
+═══════════════════════════════════════════════════════════════════════════════
+
+FILE: client/src/components/CVOptimizerPage.tsx
+
+MODIFY the upload handler:
+```jsx
+const handleFileUpload = async (file) => {
+  // Check if there's an existing scan
+  if (existingScan) {
+    // Show confirmation
+    setFileToUpload(file);
+    setShowReplaceConfirm(true);
+    return;
+  }
+  
+  // No existing scan, proceed normally
+  await uploadAndScan(file);
+};
+
+const handleConfirmReplace = async () => {
+  // Archive old scan
+  await fetch(`/api/cv-scans/${existingScan.id}/archive`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+  
+  // Clear state and upload new
+  setExistingScan(null);
+  setShowReplaceConfirm(false);
+  await uploadAndScan(fileToUpload);
+};
+```
+
+ADD replace confirmation modal (similar to Feature 4).
+
+───────────────────────────────────────────────────────────────────────────────
+
+═══════════════════════════════════════════════════════════════════════════════
+UI MOCKUP: CV Optimizer Landing Page with Existing Scan
+═══════════════════════════════════════════════════════════════════════════════

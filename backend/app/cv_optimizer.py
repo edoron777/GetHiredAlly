@@ -1336,3 +1336,102 @@ async def download_fixed_cv(scan_id: str, format: str = 'txt', token: str = ''):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/latest")
+async def get_latest_scan(token: str):
+    """Get the most recent completed scan for current user."""
+    user = get_user_from_token(token)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    try:
+        conn = get_db_connection()
+        if not conn:
+            raise HTTPException(status_code=500, detail="Database not available")
+
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute(
+            """SELECT csr.id, csr.cv_id, csr.total_issues, csr.critical_count, 
+                      csr.high_count, csr.medium_count, csr.low_count, 
+                      csr.status, csr.created_at, csr.original_cv_content,
+                      uc.file_name as cv_filename
+               FROM cv_scan_results csr
+               LEFT JOIN user_cvs uc ON csr.cv_id::uuid = uc.id
+               WHERE csr.user_id = %s 
+                 AND csr.status = 'completed'
+               ORDER BY csr.created_at DESC
+               LIMIT 1""",
+            (str(user["id"]),)
+        )
+        scan = cursor.fetchone()
+        cursor.close()
+        conn.close()
+
+        if not scan:
+            return None
+
+        cv_content = scan.get('original_cv_content', '')
+        score_data = extract_cv_data_and_score(cv_content) if cv_content else calculate_cv_score_from_issues([])
+
+        return {
+            "id": scan["id"],
+            "cv_id": scan.get("cv_id"),
+            "cv_filename": scan.get("cv_filename") or "Your CV",
+            "score": score_data.get('score', 0),
+            "total_issues": scan.get("total_issues", 0),
+            "critical_count": scan.get("critical_count", 0),
+            "high_count": scan.get("high_count", 0),
+            "medium_count": scan.get("medium_count", 0),
+            "low_count": scan.get("low_count", 0),
+            "status": scan.get("status"),
+            "created_at": scan.get("created_at").isoformat() if scan.get("created_at") else None
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[GET_LATEST_SCAN] Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/scans/{scan_id}/archive")
+async def archive_scan(scan_id: int, token: str):
+    """Archive a scan (mark as not active, but keep for history)."""
+    user = get_user_from_token(token)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    try:
+        conn = get_db_connection()
+        if not conn:
+            raise HTTPException(status_code=500, detail="Database not available")
+
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        
+        cursor.execute(
+            """SELECT id FROM cv_scan_results WHERE id = %s AND user_id = %s""",
+            (scan_id, str(user["id"]))
+        )
+        scan = cursor.fetchone()
+
+        if not scan:
+            cursor.close()
+            conn.close()
+            raise HTTPException(status_code=404, detail="Scan not found")
+
+        cursor.execute(
+            """UPDATE cv_scan_results SET status = 'archived' WHERE id = %s""",
+            (scan_id,)
+        )
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        return {"success": True, "message": "Scan archived"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[ARCHIVE_SCAN] Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
