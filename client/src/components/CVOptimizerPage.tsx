@@ -281,7 +281,7 @@ export function CVOptimizerPage() {
               </div>
               <div className="flex flex-col sm:flex-row gap-2">
                 <Link 
-                  to={`/service/cv-optimizer/crossroads/${existingScan.id}`}
+                  to={`/service/cv-optimizer/unified?cv_id=${existingScan.id}`}
                   className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm font-medium flex items-center gap-1 whitespace-nowrap"
                 >
                   Continue Analysis

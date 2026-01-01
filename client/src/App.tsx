@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useLocation, Navigate, useParams } from 'react-router-dom'
 import { Navbar } from '@/components/Navbar'
 import { SecondaryNav, Footer } from '@/components/common'
 import { LandingPage } from '@/components/LandingPage'
@@ -18,12 +18,16 @@ import { CVResultsPage } from '@/components/CVResultsPage'
 import { CVReportPage } from '@/components/CVReportPage'
 import { CVFixedPage } from '@/components/CVFixedPage'
 import { CVFixingPage } from '@/components/CVFixingPage'
-import CVCrossroadsPage from '@/pages/CVCrossroadsPage'
 import UnifiedResultsPage from '@/pages/cv-optimizer/ResultsPage'
 import { UserSettingsPage } from '@/components/UserSettingsPage'
 import { AdminLayout } from '@/layouts/AdminLayout'
 import { AdminOverview, AdminUsers, AdminSettings } from '@/pages/admin'
 import { isAuthenticated } from '@/lib/auth'
+
+function CrossroadsRedirect() {
+  const { id } = useParams();
+  return <Navigate to={`/service/cv-optimizer/unified?cv_id=${id}`} replace />;
+}
 
 function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation()
@@ -67,7 +71,7 @@ function App() {
               <Route path="/service/cv-optimizer" element={<CVOptimizerPage />} />
               <Route path="/service/cv-optimizer/scanning" element={<CVScanningPage />} />
               <Route path="/service/cv-optimizer/results/:scanId" element={<CVResultsPage />} />
-              <Route path="/service/cv-optimizer/crossroads/:id" element={<CVCrossroadsPage />} />
+              <Route path="/service/cv-optimizer/crossroads/:id" element={<CrossroadsRedirect />} />
               <Route path="/service/cv-optimizer/report/:scanId" element={<CVReportPage />} />
               <Route path="/service/cv-optimizer/report/:scanId/details" element={<CVReportPage />} />
               <Route path="/service/cv-optimizer/fixing/:scanId" element={<CVFixingPage />} />

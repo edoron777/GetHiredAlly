@@ -24,7 +24,7 @@ export const SERVICE_CONFIGS: Record<string, ServiceConfig> = {
     displayName: 'Perfect Your CV',
     apiEndpoint: '/api/cv-optimizer/latest',
     archiveEndpoint: '/api/cv-optimizer/scans',
-    getContinueUrl: (id) => `/service/cv-optimizer/crossroads/${id}`,
+    getContinueUrl: (id) => `/service/cv-optimizer/unified?cv_id=${id}`,
     formatSummary: (data) => 
       `Score: ${data.score || 0}% • ${data.total_issues || 0} issues found`
   },

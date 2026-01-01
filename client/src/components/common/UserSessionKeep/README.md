@@ -38,7 +38,7 @@ import { UserSessionKeep } from '../components/common';
 ## Supported Services
 | serviceName | Display Name | Continue URL |
 |-------------|--------------|--------------|
-| cv-optimizer | Perfect Your CV | /service/cv-optimizer/crossroads/{id} |
+| cv-optimizer | Perfect Your CV | /service/cv-optimizer/unified?cv_id={id} |
 | xray-analyzer | Decode the Job Post | /service/understand-job/results/{id} |
 | predict-questions | Predict the Questions | /service/predict-questions/smart/results/{id} |
 

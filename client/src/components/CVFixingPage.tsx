@@ -94,7 +94,7 @@ export function CVFixingPage() {
           <h2 className="text-xl font-bold text-gray-800 mb-2">Fix Failed</h2>
           <p className="text-gray-600 mb-6">{error}</p>
           <button
-            onClick={() => navigate(`/service/cv-optimizer/crossroads/${scanId}`)}
+            onClick={() => navigate(`/service/cv-optimizer/unified?cv_id=${scanId}`)}
             className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
             Go Back
