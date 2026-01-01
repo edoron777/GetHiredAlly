@@ -118,6 +118,43 @@ This document catalogs all reusable components in the GetHiredAlly application.
 
 ---
 
+## TipBox
+
+| Field | Value |
+|-------|-------|
+| **Name** | TipBox |
+| **Location** | `client/src/components/common/TipBox/` |
+| **Purpose** | Flexible modal popup with dynamic sections and buttons |
+| **Files** | types.ts, TipBoxSection.tsx, TipBox.tsx, TipBoxStyles.css, index.ts |
+| **Import** | `import { TipBox, TIPBOX_COLORS } from '@/components/common'` |
+| **Parameters** | isOpen, onClose, title, severity, sections[], buttons[] |
+| **Section Types** | text, category, example-wrong, example-correct, input, instructions, custom |
+| **Severities** | critical, important, consider, polish, info |
+| **Date Added** | January 1, 2026 |
+
+### Usage Example:
+```typescript
+<TipBox
+  isOpen={isOpen}
+  onClose={() => setIsOpen(false)}
+  title="Missing Quantification"
+  severity="critical"
+  sections={[
+    { type: 'category', label: 'CATEGORY', content: 'Content Quality' },
+    { type: 'text', label: 'WHY THIS MATTERS', content: 'Numbers make achievements concrete.' },
+    { type: 'example-wrong', label: 'CURRENT', content: 'Helped with projects' },
+    { type: 'example-correct', label: 'SUGGESTED', content: 'Led 5 projects saving $2M' },
+    { type: 'input', label: 'YOUR VERSION', placeholder: 'Type your improved version...' }
+  ]}
+  buttons={[
+    { id: 'apply', label: 'Apply to CV', variant: 'primary', onClick: handleApply },
+    { id: 'close', label: 'Close', variant: 'secondary', onClick: handleClose }
+  ]}
+/>
+```
+
+---
+
 ## GHAScanner
 
 | Field | Value |

@@ -1,0 +1,870 @@
+═══════════════════════════════════════════════════════════════════════════
+🔧 CREATE REUSABLE FUNCTION: TipBox
+═══════════════════════════════════════════════════════════════════════════
+
+CONTEXT:
+Creating a reusable TipBox (modal popup) function for GetHiredAlly.
+TipBox shows detailed information when user clicks on a TextMarker.
+Must be FULLY FLEXIBLE - sections and buttons are dynamic.
+
+EXTERNAL SEARCH RESULT:
+Searched npm for React modal libraries. None support:
+- Dynamic sections based on issue type
+- Severity-based color headers
+- Flexible button configuration
+
+DECISION: Write custom code.
+
+───────────────────────────────────────────────────────────────────────────
+
+FUNCTION SPECIFICATION
+
+NAME: TipBox
+
+PURPOSE: 
+Display detailed information modal with dynamic sections and buttons.
+Triggered by clicking TextMarker icons.
+
+LOCATION:
+client/src/components/common/TipBox/
+
+FILES TO CREATE:
+├── TipBox.tsx           # Main modal component
+├── TipBoxSection.tsx    # Individual section renderer
+├── TipBoxStyles.css     # Styles
+├── types.ts             # TypeScript interfaces
+└── index.ts             # Exports
+
+───────────────────────────────────────────────────────────────────────────
+
+FILE 1: types.ts
+```typescript
+// client/src/components/common/TipBox/types.ts
+
+import React from 'react'
+
+/**
+ * Section types that can appear in TipBox
+ */
+export type SectionType = 
+  | 'header'           // Title with severity badge
+  | 'text'             // Simple text content
+  | 'category'         // Category label
+  | 'example-wrong'    // Wrong text example (red background)
+  | 'example-correct'  // Correct text example (green background)
+  | 'input'            // User input field
+  | 'instructions'     // How to fix steps
+  | 'custom'           // Custom React component
+
+/**
+ * Individual section configuration
+ */
+export interface TipBoxSection {
+  type: SectionType
+  label?: string                    // Section label (e.g., "WHY THIS MATTERS")
+  content?: string                  // Text content
+  placeholder?: string              // For input type
+  defaultValue?: string             // For input type
+  component?: React.ReactNode       // For custom type
+  id?: string                       // Unique identifier for input fields
+}
+
+/**
+ * Button configuration
+ */
+export interface TipBoxButton {
+  id: string
+  label: string                     // Button text
+  variant: 'primary' | 'secondary' | 'danger' | 'success'
+  onClick: () => void
+  disabled?: boolean
+  icon?: React.ReactNode            // Optional icon
+}
+
+/**
+ * Color configuration (matches TextMarker severity)
+ */
+export interface TipBoxColor {
+  primary: string                   // Header background, button color
+  light: string                     // Light version for backgrounds
+  text: string                      // Text color on primary background
+}
+
+/**
+ * Predefined color schemes
+ */
+export const TIPBOX_COLORS = {
+  critical: {
+    primary: '#e03e3e',
+    light: '#fef2f2',
+    text: '#ffffff'
+  },
+  important: {
+    primary: '#d9730d',
+    light: '#fff7ed',
+    text: '#ffffff'
+  },
+  consider: {
+    primary: '#cb932f',
+    light: '#fefce8',
+    text: '#ffffff'
+  },
+  polish: {
+    primary: '#448361',
+    light: '#f0fdf4',
+    text: '#ffffff'
+  },
+  info: {
+    primary: '#337ea9',
+    light: '#eff6ff',
+    text: '#ffffff'
+  }
+}
+
+/**
+ * Main TipBox props
+ */
+export interface TipBoxProps {
+  isOpen: boolean
+  onClose: () => void
+  title: string
+  severity?: 'critical' | 'important' | 'consider' | 'polish' | 'info'
+  color?: TipBoxColor               // Custom color (overrides severity)
+  sections: TipBoxSection[]         // Dynamic sections
+  buttons?: TipBoxButton[]          // Dynamic buttons
+  onInputChange?: (id: string, value: string) => void
+  width?: string                    // Modal width (default: '500px')
+  className?: string
+}
+```
+
+───────────────────────────────────────────────────────────────────────────
+
+FILE 2: TipBoxSection.tsx
+```typescript
+// client/src/components/common/TipBox/TipBoxSection.tsx
+
+import React from 'react'
+import { TipBoxSection as SectionType, TipBoxColor } from './types'
+
+interface Props {
+  section: SectionType
+  color: TipBoxColor
+  onInputChange?: (id: string, value: string) => void
+}
+
+export const TipBoxSection: React.FC<Props> = ({ 
+  section, 
+  color,
+  onInputChange 
+}) => {
+  const { type, label, content, placeholder, defaultValue, component, id } = section
+
+  // Render label if provided
+  const renderLabel = () => {
+    if (!label) return null
+    return <div className="tipbox-section-label">{label}</div>
+  }
+
+  switch (type) {
+    case 'text':
+      return (
+        <div className="tipbox-section tipbox-section-text">
+          {renderLabel()}
+          <p className="tipbox-text">{content}</p>
+        </div>
+      )
+
+    case 'category':
+      return (
+        <div className="tipbox-section tipbox-section-category">
+          {renderLabel()}
+          <span 
+            className="tipbox-category-badge"
+            style={{ backgroundColor: color.light, color: color.primary }}
+          >
+            {content}
+          </span>
+        </div>
+      )
+
+    case 'example-wrong':
+      return (
+        <div className="tipbox-section tipbox-section-example">
+          {renderLabel()}
+          <div className="tipbox-example tipbox-example-wrong">
+            <span className="tipbox-example-icon">✗</span>
+            <span className="tipbox-example-text">{content}</span>
+          </div>
+        </div>
+      )
+
+    case 'example-correct':
+      return (
+        <div className="tipbox-section tipbox-section-example">
+          {renderLabel()}
+          <div className="tipbox-example tipbox-example-correct">
+            <span className="tipbox-example-icon">✓</span>
+            <span className="tipbox-example-text">{content}</span>
+          </div>
+        </div>
+      )
+
+    case 'input':
+      return (
+        <div className="tipbox-section tipbox-section-input">
+          {renderLabel()}
+          <textarea
+            className="tipbox-input"
+            placeholder={placeholder}
+            defaultValue={defaultValue}
+            onChange={(e) => onInputChange?.(id || 'default', e.target.value)}
+            rows={3}
+          />
+        </div>
+      )
+
+    case 'instructions':
+      return (
+        <div className="tipbox-section tipbox-section-instructions">
+          {renderLabel()}
+          <div className="tipbox-instructions">{content}</div>
+        </div>
+      )
+
+    case 'custom':
+      return (
+        <div className="tipbox-section tipbox-section-custom">
+          {renderLabel()}
+          {component}
+        </div>
+      )
+
+    default:
+      return null
+  }
+}
+
+export default TipBoxSection
+```
+
+───────────────────────────────────────────────────────────────────────────
+
+FILE 3: TipBox.tsx
+```typescript
+// client/src/components/common/TipBox/TipBox.tsx
+
+import React from 'react'
+import { TipBoxProps, TIPBOX_COLORS, TipBoxColor } from './types'
+import { TipBoxSection } from './TipBoxSection'
+import './TipBoxStyles.css'
+
+/**
+ * TipBox Component
+ * 
+ * Flexible modal popup for displaying detailed information.
+ * Sections and buttons are fully dynamic.
+ * 
+ * @example
+ * <TipBox
+ *   isOpen={true}
+ *   onClose={() => setOpen(false)}
+ *   title="Missing Quantification"
+ *   severity="critical"
+ *   sections={[
+ *     { type: 'category', label: 'CATEGORY', content: 'Content Quality' },
+ *     { type: 'text', label: 'WHY THIS MATTERS', content: 'Numbers make achievements concrete...' },
+ *     { type: 'example-wrong', label: 'CURRENT', content: 'Helped with projects' },
+ *     { type: 'example-correct', label: 'SUGGESTED', content: 'Led 5 projects saving $2M' },
+ *     { type: 'input', label: 'YOUR VERSION', placeholder: 'Type your improved version...' }
+ *   ]}
+ *   buttons={[
+ *     { id: 'apply', label: 'Apply to CV', variant: 'primary', onClick: handleApply },
+ *     { id: 'auto', label: 'Auto Fix', variant: 'success', onClick: handleAutoFix },
+ *     { id: 'close', label: 'Close', variant: 'secondary', onClick: handleClose }
+ *   ]}
+ * />
+ */
+export const TipBox: React.FC<TipBoxProps> = ({
+  isOpen,
+  onClose,
+  title,
+  severity = 'info',
+  color,
+  sections,
+  buttons = [],
+  onInputChange,
+  width = '500px',
+  className = ''
+}) => {
+  // Get color scheme
+  const colorScheme: TipBoxColor = color || TIPBOX_COLORS[severity]
+
+  // Don't render if not open
+  if (!isOpen) return null
+
+  // Get button variant styles
+  const getButtonStyle = (variant: string) => {
+    switch (variant) {
+      case 'primary':
+        return { backgroundColor: colorScheme.primary, color: colorScheme.text }
+      case 'success':
+        return { backgroundColor: '#448361', color: '#ffffff' }
+      case 'danger':
+        return { backgroundColor: '#e03e3e', color: '#ffffff' }
+      case 'secondary':
+      default:
+        return { backgroundColor: '#f3f4f6', color: '#374151' }
+    }
+  }
+
+  return (
+    <div className="tipbox-overlay">
+      <div 
+        className={`tipbox-modal ${className}`}
+        style={{ width }}
+      >
+        {/* Header */}
+        <div 
+          className="tipbox-header"
+          style={{ backgroundColor: colorScheme.primary }}
+        >
+          <div className="tipbox-header-content">
+            <span 
+              className="tipbox-severity-badge"
+              style={{ 
+                backgroundColor: 'rgba(255,255,255,0.2)',
+                color: colorScheme.text 
+              }}
+            >
+              {severity.toUpperCase()}
+            </span>
+            <h3 
+              className="tipbox-title"
+              style={{ color: colorScheme.text }}
+            >
+              {title}
+            </h3>
+          </div>
+          <button 
+            className="tipbox-close-btn"
+            onClick={onClose}
+            style={{ color: colorScheme.text }}
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Body - Dynamic Sections */}
+        <div className="tipbox-body">
+          {sections.map((section, index) => (
+            <TipBoxSection
+              key={`section-${index}`}
+              section={section}
+              color={colorScheme}
+              onInputChange={onInputChange}
+            />
+          ))}
+        </div>
+
+        {/* Footer - Dynamic Buttons */}
+        {buttons.length > 0 && (
+          <div className="tipbox-footer">
+            {buttons.map((button) => (
+              <button
+                key={button.id}
+                className={`tipbox-btn tipbox-btn-${button.variant}`}
+                style={getButtonStyle(button.variant)}
+                onClick={button.onClick}
+                disabled={button.disabled}
+              >
+                {button.icon && <span className="tipbox-btn-icon">{button.icon}</span>}
+                {button.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+export default TipBox
+```
+
+───────────────────────────────────────────────────────────────────────────
+
+FILE 4: TipBoxStyles.css
+```css
+/* client/src/components/common/TipBox/TipBoxStyles.css */
+
+/* ═══════════════════════════════════════════════════════════════
+   TIPBOX STYLES
+   Flexible modal popup with dynamic sections
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Overlay */
+.tipbox-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: tipbox-fade-in 0.2s ease;
+}
+
+@keyframes tipbox-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Modal Container */
+.tipbox-modal {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-height: 85vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: tipbox-slide-up 0.3s ease;
+}
+
+@keyframes tipbox-slide-up {
+  from { 
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   HEADER
+   ───────────────────────────────────────────────────────────────── */
+
+.tipbox-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-radius: 12px 12px 0 0;
+}
+
+.tipbox-header-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tipbox-severity-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+
+.tipbox-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.tipbox-close-btn {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+  opacity: 0.8;
+}
+
+.tipbox-close-btn:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  opacity: 1;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   BODY
+   ───────────────────────────────────────────────────────────────── */
+
+.tipbox-body {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Section base */
+.tipbox-section {
+  margin-bottom: 20px;
+}
+
+.tipbox-section:last-child {
+  margin-bottom: 0;
+}
+
+.tipbox-section-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+/* Text section */
+.tipbox-text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #374151;
+  margin: 0;
+}
+
+/* Category badge */
+.tipbox-category-badge {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 6px;
+}
+
+/* Example sections */
+.tipbox-example {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.tipbox-example-wrong {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+}
+
+.tipbox-example-wrong .tipbox-example-icon {
+  color: #dc2626;
+  font-weight: bold;
+}
+
+.tipbox-example-correct {
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+}
+
+.tipbox-example-correct .tipbox-example-icon {
+  color: #16a34a;
+  font-weight: bold;
+}
+
+.tipbox-example-text {
+  flex: 1;
+  color: #374151;
+}
+
+/* Input section */
+.tipbox-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 80px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.tipbox-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.tipbox-input::placeholder {
+  color: #9ca3af;
+}
+
+/* Instructions section */
+.tipbox-instructions {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #4b5563;
+  background-color: #f9fafb;
+  padding: 12px;
+  border-radius: 8px;
+  border-left: 3px solid #d1d5db;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   FOOTER
+   ───────────────────────────────────────────────────────────────── */
+
+.tipbox-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 20px;
+  border-top: 1px solid #e5e7eb;
+  background-color: #f9fafb;
+}
+
+.tipbox-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tipbox-btn:hover {
+  filter: brightness(0.95);
+  transform: translateY(-1px);
+}
+
+.tipbox-btn:active {
+  transform: translateY(0);
+}
+
+.tipbox-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.tipbox-btn-icon {
+  font-size: 16px;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .tipbox-modal {
+    width: 95% !important;
+    max-height: 90vh;
+  }
+  
+  .tipbox-footer {
+    flex-direction: column;
+  }
+  
+  .tipbox-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+```
+
+───────────────────────────────────────────────────────────────────────────
+
+FILE 5: index.ts
+```typescript
+// client/src/components/common/TipBox/index.ts
+
+export { TipBox, default } from './TipBox'
+export { TipBoxSection } from './TipBoxSection'
+export type { 
+  TipBoxProps,
+  TipBoxSection as TipBoxSectionType,
+  TipBoxButton,
+  TipBoxColor,
+  SectionType
+} from './types'
+export { TIPBOX_COLORS } from './types'
+```
+
+───────────────────────────────────────────────────────────────────────────
+
+USAGE EXAMPLES
+
+EXAMPLE 1: CV Optimizer - Full Issue Details
+```typescript
+import { TipBox, TIPBOX_COLORS } from '@/components/common/TipBox'
+
+<TipBox
+  isOpen={isOpen}
+  onClose={() => setIsOpen(false)}
+  title="Missing Quantification"
+  severity="critical"
+  sections={[
+    { 
+      type: 'category', 
+      label: 'CATEGORY', 
+      content: 'Content Quality > Achievement Statements' 
+    },
+    { 
+      type: 'text', 
+      label: 'WHY THIS MATTERS', 
+      content: 'Numbers make achievements concrete. Recruiters spend 7 seconds scanning - specific metrics catch attention.' 
+    },
+    { 
+      type: 'example-wrong', 
+      label: 'CURRENT TEXT', 
+      content: 'Helped with project management across multiple teams' 
+    },
+    { 
+      type: 'example-correct', 
+      label: 'SUGGESTED', 
+      content: 'Led 5 cross-functional projects, delivering $2M in cost savings over 18 months' 
+    },
+    { 
+      type: 'input', 
+      label: 'YOUR VERSION', 
+      id: 'user-text',
+      placeholder: 'Type your improved version here...',
+      defaultValue: '' 
+    },
+    { 
+      type: 'instructions', 
+      label: 'HOW TO FIX', 
+      content: '1. Identify the achievement\n2. Add a number (%, $, count)\n3. Include timeframe if possible' 
+    }
+  ]}
+  buttons={[
+    { id: 'auto', label: 'Auto Fix', variant: 'success', onClick: handleAutoFix },
+    { id: 'apply', label: 'Apply to CV', variant: 'primary', onClick: handleApply },
+    { id: 'close', label: 'Close', variant: 'secondary', onClick: () => setIsOpen(false) }
+  ]}
+  onInputChange={(id, value) => setUserText(value)}
+/>
+```
+
+EXAMPLE 2: Simple Info (No Input, Fewer Sections)
+```typescript
+<TipBox
+  isOpen={isOpen}
+  onClose={() => setIsOpen(false)}
+  title="Consider Using Active Voice"
+  severity="consider"
+  sections={[
+    { 
+      type: 'text', 
+      content: 'Active voice is more direct and engaging than passive voice.' 
+    },
+    { 
+      type: 'example-wrong', 
+      label: 'PASSIVE', 
+      content: 'The project was completed by the team' 
+    },
+    { 
+      type: 'example-correct', 
+      label: 'ACTIVE', 
+      content: 'The team completed the project' 
+    }
+  ]}
+  buttons={[
+    { id: 'close', label: 'Got it', variant: 'primary', onClick: () => setIsOpen(false) }
+  ]}
+/>
+```
+
+EXAMPLE 3: Custom Color (Not Using Severity)
+```typescript
+<TipBox
+  isOpen={isOpen}
+  onClose={() => setIsOpen(false)}
+  title="Keyword Match Found"
+  color={{
+    primary: '#7c3aed',  // Purple
+    light: '#f5f3ff',
+    text: '#ffffff'
+  }}
+  sections={[
+    { type: 'text', content: 'Great! This keyword matches the job description.' }
+  ]}
+  buttons={[
+    { id: 'close', label: 'Close', variant: 'secondary', onClick: () => setIsOpen(false) }
+  ]}
+/>
+```
+
+───────────────────────────────────────────────────────────────────────────
+
+COMPONENT REGISTRY UPDATE
+
+Add this entry to docs/COMPONENT_REGISTRY.md:
+
+---
+
+## TipBox
+
+| Field | Value |
+|-------|-------|
+| **Name** | TipBox |
+| **Location** | `client/src/components/common/TipBox/` |
+| **Purpose** | Flexible modal popup with dynamic sections and buttons |
+| **Files** | types.ts, TipBoxSection.tsx, TipBox.tsx, TipBoxStyles.css, index.ts |
+| **Import** | `import { TipBox, TIPBOX_COLORS } from '@/components/common/TipBox'` |
+| **Section Types** | header, text, category, example-wrong, example-correct, input, instructions, custom |
+| **Button Variants** | primary, secondary, success, danger |
+| **Predefined Colors** | critical, important, consider, polish, info |
+| **Date Added** | January 1, 2026 |
+
+---
+
+───────────────────────────────────────────────────────────────────────────
+
+VALIDATION CHECKLIST
+
+After implementation:
+
+[ ] Files created in client/src/components/common/TipBox/
+[ ] TypeScript compiles without errors
+[ ] Modal opens/closes correctly
+[ ] Header shows severity color
+[ ] All section types render correctly
+[ ] Input field captures text
+[ ] Buttons work with callbacks
+[ ] Close button (X) works
+[ ] Component Registry updated
+[ ] Can import from '@/components/common/TipBox'
+
+───────────────────────────────────────────────────────────────────────────
+
+INTEGRATION WITH CV OPTIMIZER
+
+After TipBox is created, connect to TextMarker:
+```typescript
+// In ResultsPage.tsx or CVDocument parent
+
+const [selectedIssue, setSelectedIssue] = useState(null)
+const [tipBoxOpen, setTipBoxOpen] = useState(false)
+
+// When marker clicked
+const handleMarkerClick = (issueId: string) => {
+  const issue = issues.find(i => i.id === issueId)
+  setSelectedIssue(issue)
+  setTipBoxOpen(true)
+}
+
+// Render TipBox
+{selectedIssue && (
+  <TipBox
+    isOpen={tipBoxOpen}
+    onClose={() => setTipBoxOpen(false)}
+    title={selectedIssue.title}
+    severity={selectedIssue.severity}
+    sections={buildSectionsForIssue(selectedIssue)}
+    buttons={buildButtonsForIssue(selectedIssue)}
+  />
+)}
+```
+
+═══════════════════════════════════════════════════════════════════════════

@@ -1,0 +1,248 @@
+.tipbox-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: tipbox-fade-in 0.2s ease;
+}
+
+@keyframes tipbox-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.tipbox-modal {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-height: 85vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: tipbox-slide-up 0.3s ease;
+}
+
+@keyframes tipbox-slide-up {
+  from { 
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tipbox-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-radius: 12px 12px 0 0;
+}
+
+.tipbox-header-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tipbox-severity-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+
+.tipbox-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.tipbox-close-btn {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+  opacity: 0.8;
+}
+
+.tipbox-close-btn:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  opacity: 1;
+}
+
+.tipbox-body {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.tipbox-section {
+  margin-bottom: 20px;
+}
+
+.tipbox-section:last-child {
+  margin-bottom: 0;
+}
+
+.tipbox-section-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.tipbox-text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #374151;
+  margin: 0;
+}
+
+.tipbox-category-badge {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 6px;
+}
+
+.tipbox-example {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.tipbox-example-wrong {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+}
+
+.tipbox-example-wrong .tipbox-example-icon {
+  color: #dc2626;
+  font-weight: bold;
+}
+
+.tipbox-example-correct {
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+}
+
+.tipbox-example-correct .tipbox-example-icon {
+  color: #16a34a;
+  font-weight: bold;
+}
+
+.tipbox-example-text {
+  flex: 1;
+  color: #374151;
+}
+
+.tipbox-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 80px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.tipbox-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.tipbox-input::placeholder {
+  color: #9ca3af;
+}
+
+.tipbox-instructions {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #4b5563;
+  background-color: #f9fafb;
+  padding: 12px;
+  border-radius: 8px;
+  border-left: 3px solid #d1d5db;
+  white-space: pre-line;
+}
+
+.tipbox-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 20px;
+  border-top: 1px solid #e5e7eb;
+  background-color: #f9fafb;
+}
+
+.tipbox-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tipbox-btn:hover {
+  filter: brightness(0.95);
+  transform: translateY(-1px);
+}
+
+.tipbox-btn:active {
+  transform: translateY(0);
+}
+
+.tipbox-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.tipbox-btn-icon {
+  font-size: 16px;
+}
+
+@media (max-width: 600px) {
+  .tipbox-modal {
+    width: 95% !important;
+    max-height: 90vh;
+  }
+  
+  .tipbox-footer {
+    flex-direction: column;
+  }
+  
+  .tipbox-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
