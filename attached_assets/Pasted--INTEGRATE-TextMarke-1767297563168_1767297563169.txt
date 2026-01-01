@@ -1,0 +1,128 @@
+═══════════════════════════════════════════════════════════════════════════
+🔧 INTEGRATE: TextMarker into CV Optimizer
+═══════════════════════════════════════════════════════════════════════════
+
+CONTEXT:
+TextMarker component is ready. Now integrate it into CV Optimizer 
+so markers appear on CV text.
+
+CURRENT STATE:
+- CVDocument.tsx displays CV content
+- Issues are loaded from API
+- Markers NOT visible on text
+
+GOAL:
+Show colored underlines + ⓘ icons on CV text where issues exist.
+
+───────────────────────────────────────────────────────────────────────────
+
+TASK: UPDATE CVDocument.tsx
+
+FILE: client/src/components/cv-optimizer/DocumentView/CVDocument.tsx
+
+STEP 1: Add import at top of file
+```typescript
+import { TextMarker, CV_OPTIMIZER_COLORS } from '../../common/TextMarker'
+```
+
+STEP 2: Find where CV content is rendered
+
+Look for where cvContent.fullText is displayed.
+It might be something like:
+```typescript
+// OLD (find and replace):
+<div className="cv-content">
+  {cvContent.fullText}
+</div>
+
+// OR:
+<p>{cvContent.fullText}</p>
+
+// OR:
+{renderContent()}
+```
+
+STEP 3: Replace with TextMarker
+```typescript
+// NEW:
+<TextMarker
+  content={cvContent.fullText || ''}
+  markers={issues.map(issue => ({
+    id: issue.id?.toString() || '',
+    matchText: issue.matchText || issue.current_text || '',
+    tag: issue.severity || 'consider'
+  }))}
+  config={{
+    style: 'underline',
+    tagColors: CV_OPTIMIZER_COLORS,
+    icon: { 
+      icon: 'ⓘ', 
+      position: 'after' 
+    },
+    onClick: (id, tag) => {
+      console.log('Marker clicked:', id, tag)
+      onIssueClick?.(id)
+    }
+  }}
+/>
+```
+
+STEP 4: Verify props are available
+
+Make sure CVDocument receives these props:
+- cvContent: { fullText: string }
+- issues: array of issues with matchText/current_text and severity
+- onIssueClick: (id: string) => void
+
+If props have different names, adjust accordingly.
+
+───────────────────────────────────────────────────────────────────────────
+
+DEBUG: If markers still don't appear
+
+Add this debug log BEFORE the TextMarker:
+```typescript
+console.log('=== TEXTMARKER DEBUG ===')
+console.log('Content length:', cvContent?.fullText?.length)
+console.log('Issues count:', issues?.length)
+console.log('First issue:', issues?.[0])
+console.log('First matchText:', issues?.[0]?.matchText || issues?.[0]?.current_text)
+
+// Check if matchText exists in content
+issues?.forEach((issue, i) => {
+  const text = issue.matchText || issue.current_text
+  const found = cvContent?.fullText?.includes(text)
+  console.log(`Issue ${i}: "${text?.substring(0, 30)}..." found: ${found}`)
+})
+console.log('=== END DEBUG ===')
+```
+
+───────────────────────────────────────────────────────────────────────────
+
+EXPECTED RESULT:
+
+After this change:
+- CV text shows with colored underlines on issues
+- ⓘ icon appears after each marked text
+- Clicking marker logs to console (opens TipBox later)
+- Colors: Red=critical, Orange=important, Yellow=consider, Green=polish
+
+───────────────────────────────────────────────────────────────────────────
+
+VALIDATION:
+
+[ ] Import added without errors
+[ ] TextMarker renders in Document View
+[ ] Markers visible on CV text
+[ ] Colors match severity
+[ ] ⓘ icons appear
+[ ] Click works (check console)
+
+───────────────────────────────────────────────────────────────────────────
+
+DO NOT:
+- Modify TextMarker component files
+- Change API or data fetching
+- Modify other components
+
+═══════════════════════════════════════════════════════════════════════════
