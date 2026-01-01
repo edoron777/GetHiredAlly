@@ -94,6 +94,9 @@ class IssueType(BaseModel):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     
+    example_before: Optional[str] = None
+    example_after: Optional[str] = None
+    
     subcategory_id: Optional[int] = None
     subcategory_code: Optional[str] = None
     subcategory_name: Optional[str] = None

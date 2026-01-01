@@ -11,6 +11,8 @@ interface Issue {
   suggestion: string | null;
   fix_difficulty: string;
   additional_info?: string;
+  example_before?: string;
+  example_after?: string;
 }
 
 interface EffortGroupViewProps {
@@ -236,20 +238,44 @@ function IssueCard({
             </div>
           </div>
 
-          {issue.suggestion && (
+          {issue.current && (
             <div className="mb-3">
-              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Suggested Fix</p>
-              <div className="bg-green-50 border border-green-200 rounded p-2">
-                <p className="text-green-800 text-sm">{issue.suggestion}</p>
+              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Found in Your CV</p>
+              <div className="bg-amber-50 border border-amber-200 rounded p-2">
+                <p className="text-amber-800 font-mono text-sm">"{issue.current}"</p>
               </div>
             </div>
           )}
 
-          {issue.current && (
+          {issue.example_before && (
             <div className="mb-3">
-              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Found</p>
+              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1 flex items-center gap-1">
+                <span className="text-red-500">✗</span> Weak Example
+              </p>
               <div className="bg-red-50 border border-red-200 rounded p-2">
-                <p className="text-red-800 font-mono text-sm">"{issue.current}"</p>
+                <p className="text-red-800 text-sm italic">"{issue.example_before}"</p>
+              </div>
+            </div>
+          )}
+
+          {issue.example_after && (
+            <div className="mb-3">
+              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1 flex items-center gap-1">
+                <span className="text-green-500">✓</span> Strong Example
+              </p>
+              <div className="bg-green-50 border border-green-200 rounded p-2">
+                <p className="text-green-800 text-sm">"{issue.example_after}"</p>
+              </div>
+            </div>
+          )}
+
+          {issue.suggestion && (
+            <div className="mb-3">
+              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1 flex items-center gap-1">
+                <span>💡</span> How to Fix
+              </p>
+              <div className="bg-blue-50 border border-blue-200 rounded p-2">
+                <p className="text-blue-800 text-sm">{issue.suggestion}</p>
               </div>
             </div>
           )}

@@ -135,6 +135,12 @@ class CatalogService:
             if not detected_issue.get('suggestion') and catalog_entry.static_tip:
                 detected_issue['suggestion'] = catalog_entry.static_tip
             
+            if catalog_entry.example_before:
+                detected_issue['example_before'] = catalog_entry.example_before
+            
+            if catalog_entry.example_after:
+                detected_issue['example_after'] = catalog_entry.example_after
+            
             if catalog_entry.ui_config:
                 detected_issue['ui_config'] = catalog_entry.ui_config
             
