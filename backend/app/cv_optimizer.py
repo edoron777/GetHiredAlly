@@ -1353,7 +1353,7 @@ async def get_latest_scan(token: str):
             """SELECT csr.id, csr.cv_id, csr.total_issues, csr.critical_count, 
                       csr.high_count, csr.medium_count, csr.low_count, 
                       csr.status, csr.created_at, csr.original_cv_content,
-                      uc.file_name as cv_filename
+                      uc.filename as cv_filename
                FROM cv_scan_results csr
                LEFT JOIN user_cvs uc ON csr.cv_id::uuid = uc.id
                WHERE csr.user_id = %s 

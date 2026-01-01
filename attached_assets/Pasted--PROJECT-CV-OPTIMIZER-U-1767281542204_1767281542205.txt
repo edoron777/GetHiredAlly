@@ -1,0 +1,123 @@
+═══════════════════════════════════════════════════════════════════════════
+PROJECT: CV OPTIMIZER UNIFIED INTERFACE - PROMPT 3 OF 12
+═══════════════════════════════════════════════════════════════════════════
+
+CONTEXT:
+Continuing from Prompt 2. DocumentView container exists with Word styling.
+Now creating the component that renders actual CV content.
+
+───────────────────────────────────────────────────────────────────────────
+
+OBJECTIVE:
+Create CVDocument component that renders CV content with proper structure.
+
+FILES TO CREATE:
+
+1. client/src/components/cv-optimizer/DocumentView/CVDocument.tsx
+
+SPECIFICATIONS:
+
+CVDocument.tsx Props:
+interface CVDocumentProps {
+    cvContent: {
+        fullText: string;
+        sections?: {
+            type: 'header' | 'summary' | 'experience' | 'education' | 'skills' | 'other';
+            title?: string;
+            content: string;
+            startIndex: number;
+            endIndex: number;
+        }[];
+    };
+    issues?: any[];  // Will use in Prompt 4
+}
+
+RENDERING LOGIC:
+
+1. If sections exist, render structured:
+   - Header section: name, contact (larger font, centered)
+   - Summary section: paragraph text
+   - Experience section: job entries with bullets
+   - Education section: education entries
+   - Skills section: skill list
+   - Other sections: generic rendering
+
+2. If only fullText exists, render as formatted text:
+   - Preserve line breaks
+   - Detect and style headers (ALL CAPS or ending with :)
+   - Detect and style bullets (lines starting with •, -, *)
+
+CSS CLASSES (add to document-view.css):
+
+.cv-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.cv-name {
+    font-size: 24px;
+    font-weight: bold;
+    color: #1a1a1a;
+}
+
+.cv-contact {
+    font-size: 14px;
+    color: #666;
+    margin-top: 5px;
+}
+
+.cv-section {
+    margin-bottom: 20px;
+}
+
+.cv-section-title {
+    font-size: 16px;
+    font-weight: bold;
+    color: #1a1a1a;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+}
+
+.cv-paragraph {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.cv-bullet {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #333;
+    padding-left: 20px;
+    position: relative;
+}
+
+.cv-bullet::before {
+    content: "•";
+    position: absolute;
+    left: 5px;
+}
+
+UPDATE ResultsPage.tsx:
+- Pass cvContent from analysisData to CVDocument
+- CVDocument renders inside DocumentView
+
+───────────────────────────────────────────────────────────────────────────
+
+VALIDATION:
+- CV content displays with proper formatting
+- Headers are bold and larger
+- Sections have titles with underline
+- Bullets display with bullet points
+- Text is readable (proper font size and line height)
+
+───────────────────────────────────────────────────────────────────────────
+
+RULES REMINDER:
+- Follow AGENTS.MD protected files rules
+- Follow REPLIT.MD development guidelines
+
+═══════════════════════════════════════════════════════════════════════════
