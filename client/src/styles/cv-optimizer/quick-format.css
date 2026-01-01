@@ -1,0 +1,74 @@
+.quick-format-panel {
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+    padding: 16px 20px;
+    border-radius: 0 0 8px 8px;
+}
+
+.quick-format-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 12px;
+}
+
+.quick-format-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.quick-format-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #374151;
+    cursor: pointer;
+}
+
+.quick-format-option input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #3b82f6;
+    cursor: pointer;
+}
+
+.quick-format-option:hover {
+    color: #1f2937;
+}
+
+.quick-format-count {
+    color: #64748b;
+    font-size: 12px;
+}
+
+.quick-format-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.apply-fixes-btn {
+    background: #3b82f6;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.apply-fixes-btn:hover:not(:disabled) {
+    background: #2563eb;
+}
+
+.apply-fixes-btn:disabled {
+    background: #94a3b8;
+    cursor: not-allowed;
+}

@@ -1,0 +1,97 @@
+═══════════════════════════════════════════════════════════════════════════
+PROJECT: CV OPTIMIZER UNIFIED INTERFACE - PROMPT 9 OF 12
+═══════════════════════════════════════════════════════════════════════════
+
+CONTEXT:
+Continuing from Prompt 8. QuickFormatPanel works.
+Now wrapping existing recommendation cards as the "List View" tab.
+
+───────────────────────────────────────────────────────────────────────────
+
+OBJECTIVE:
+Create ListViewTab component that wraps existing issue card display.
+
+FILES TO CREATE:
+
+1. client/src/components/cv-optimizer/ListViewTab/ListViewTab.tsx
+2. client/src/components/cv-optimizer/ListViewTab/index.ts
+
+SPECIFICATIONS:
+
+ListViewTab.tsx Props:
+interface ListViewTabProps {
+    issues: Issue[];
+    onIssueClick: (issueId: string) => void;
+    onApplyFix: (issueId: string, suggestedText: string) => void;
+}
+
+APPROACH:
+- Reuse existing IssueCard component if it exists
+- Or create a simplified version based on current RecommendationsPage
+
+LAYOUT:
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│  Found 27 opportunities to improve your CV                             │
+│                                                                         │
+│  [Show: All ▼]  [Sort: By Impact ▼]                                    │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │ 🔴 CRITICAL | Missing Email                                     │   │
+│  │                                                                  │   │
+│  │ Your CV is missing a professional email address...              │   │
+│  │                                                                  │   │
+│  │ [View Details]                              [Quick Fix]          │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+│                                                                         │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │ 🟠 IMPORTANT | Weak Action Verb                                 │   │
+│  │                                                                  │   │
+│  │ "Helped with project management" uses weak verb...              │   │
+│  │                                                                  │   │
+│  │ [View Details]                              [Quick Fix]          │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+│                                                                         │
+│  ... more cards ...                                                     │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+
+FUNCTIONALITY:
+- Display all issues as cards
+- Filter by severity (All / Critical / Important / Consider / Polish)
+- Sort by impact or severity
+- "View Details" opens TipBox
+- "Quick Fix" applies suggested fix directly (if available)
+
+CHECK EXISTING CODE:
+1. Look for existing IssueCard or RecommendationCard component
+2. If exists: import and use it
+3. If not: create basic card based on design above
+
+REUSE PRINCIPLE:
+Do NOT duplicate code. If RecommendationsPage has card rendering logic,
+extract it into a shared component and use in both places.
+
+UPDATE ResultsPage.tsx:
+- Import ListViewTab
+- Render ListViewTab when activeTab === 'list'
+- Tab switching logic between Document View and List View
+
+───────────────────────────────────────────────────────────────────────────
+
+VALIDATION:
+- Tab switching works (Document View ↔ List View)
+- List View shows all issues as cards
+- Filter dropdown works
+- Sort dropdown works
+- Card actions trigger correct callbacks
+
+───────────────────────────────────────────────────────────────────────────
+
+RULES REMINDER:
+- Follow AGENTS.MD protected files rules
+- Follow REPLIT.MD development guidelines
+- REUSE existing components, don't duplicate
+
+═══════════════════════════════════════════════════════════════════════════

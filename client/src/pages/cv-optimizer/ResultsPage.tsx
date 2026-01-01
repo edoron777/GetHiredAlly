@@ -4,6 +4,7 @@ import { CVDocument } from '../../components/cv-optimizer/DocumentView';
 import TipBox from '../../components/cv-optimizer/TipBox';
 import IssueSidebar from '../../components/cv-optimizer/IssueSidebar';
 import ContentSelector from '../../components/cv-optimizer/ContentSelector';
+import QuickFormatPanel from '../../components/cv-optimizer/QuickFormatPanel';
 
 const sampleCvContent = {
   fullText: `JOHN DOE
@@ -103,6 +104,7 @@ export default function ResultsPage() {
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
   const [isTipBoxOpen, setIsTipBoxOpen] = useState(false);
   const [selectedExportContent, setSelectedExportContent] = useState<'cv' | 'recommendations' | 'both'>('cv');
+  const [isApplyingFixes, setIsApplyingFixes] = useState(false);
 
   const handleIssueClick = (issueId: string) => {
     setSelectedIssueId(issueId);
@@ -117,6 +119,13 @@ export default function ResultsPage() {
     console.log('Apply fix:', issueId, suggestedText);
   };
 
+  const handleApplyQuickFixes = async (fixTypes: string[]) => {
+    setIsApplyingFixes(true);
+    console.log('Applying quick fixes:', fixTypes);
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    setIsApplyingFixes(false);
+  };
+
   const selectedIssue = selectedIssueId ? issueDetails[selectedIssueId] : null;
 
   const sidebarIssues = sampleIssues.map(issue => ({
@@ -124,6 +133,15 @@ export default function ResultsPage() {
     title: issue.title,
     severity: issue.severity,
   }));
+
+  const formatIssues = [
+    { id: 'f1', issueType: 'SPACING' },
+    { id: 'f2', issueType: 'SPACING' },
+    { id: 'f3', issueType: 'BULLETS' },
+    { id: 'f4', issueType: 'DATE_FORMAT' },
+    { id: 'f5', issueType: 'DATE_FORMAT' },
+    { id: 'f6', issueType: 'CAPITALIZATION' },
+  ];
 
   return (
     <div className="min-h-screen flex" style={{ backgroundColor: '#FAF9F7' }}>
@@ -163,6 +181,12 @@ export default function ResultsPage() {
               onIssueClick={handleIssueClick}
             />
           </DocumentView>
+
+          <QuickFormatPanel
+            issues={formatIssues}
+            onApplyFixes={handleApplyQuickFixes}
+            isApplying={isApplyingFixes}
+          />
         </div>
       </div>
 
