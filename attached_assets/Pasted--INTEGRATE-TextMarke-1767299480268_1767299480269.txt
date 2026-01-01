@@ -1,0 +1,362 @@
+═══════════════════════════════════════════════════════════════════════════
+🔧 INTEGRATE: TextMarker + TipBox in CV Optimizer
+═══════════════════════════════════════════════════════════════════════════
+
+CONTEXT:
+Both functions exist and are verified:
+- TextMarker: client/src/components/common/TextMarker/ (334 lines)
+- TipBox: client/src/components/common/TipBox/ (542 lines)
+
+Now connect them so clicking a marker opens TipBox with issue details.
+
+───────────────────────────────────────────────────────────────────────────
+
+GOAL:
+User clicks on marked text (ⓘ icon) → TipBox opens with issue details
+
+───────────────────────────────────────────────────────────────────────────
+
+TASK 1: UPDATE RESULTSPAGE OR CVDOCUMENT PARENT
+
+Find the component that contains CVDocument/TextMarker.
+Likely: pages/cv-optimizer/ResultsPage.tsx or UnifiedResultsPage.tsx
+
+ADD STATE:
+```typescript
+import { useState } from 'react'
+import { TipBox } from '../../components/common/TipBox'
+
+// Add state for TipBox
+const [selectedIssue, setSelectedIssue] = useState<any>(null)
+const [tipBoxOpen, setTipBoxOpen] = useState(false)
+const [userEditText, setUserEditText] = useState('')
+```
+
+───────────────────────────────────────────────────────────────────────────
+
+TASK 2: CREATE CLICK HANDLER
+
+Add function to handle marker clicks:
+```typescript
+// Handle when user clicks on a marker
+const handleMarkerClick = (issueId: string) => {
+  // Find the issue from the issues array
+  const issue = issues.find(i => 
+    i.id?.toString() === issueId || 
+    i.id === issueId
+  )
+  
+  if (issue) {
+    console.log('Opening TipBox for issue:', issue)
+    setSelectedIssue(issue)
+    setUserEditText(issue.suggested_fix || issue.suggestedText || '')
+    setTipBoxOpen(true)
+  }
+}
+```
+
+───────────────────────────────────────────────────────────────────────────
+
+TASK 3: PASS HANDLER TO TEXTMARKER
+
+Update TextMarker config to use the handler:
+```typescript
+<TextMarker
+  content={cvContent.fullText || ''}
+  markers={issues.map(issue => ({
+    id: issue.id?.toString() || '',
+    matchText: issue.matchText || issue.current_text || '',
+    tag: issue.severity || 'consider'
+  }))}
+  config={{
+    style: 'underline',
+    tagColors: CV_OPTIMIZER_COLORS,
+    icon: { 
+      icon: 'ⓘ', 
+      position: 'after' 
+    },
+    onClick: handleMarkerClick  // <-- Connect handler here
+  }}
+/>
+```
+
+───────────────────────────────────────────────────────────────────────────
+
+TASK 4: CREATE SECTION BUILDER FUNCTION
+
+Build TipBox sections dynamically based on issue data:
+```typescript
+// Build sections for TipBox based on issue data
+const buildTipBoxSections = (issue: any) => {
+  const sections: any[] = []
+  
+  // Category (if available)
+  if (issue.category || issue.issue_type) {
+    sections.push({
+      type: 'category',
+      label: 'CATEGORY',
+      content: issue.category || issue.issue_type
+    })
+  }
+  
+  // Issue description / Why it matters
+  if (issue.description || issue.issue) {
+    sections.push({
+      type: 'text',
+      label: 'WHY THIS MATTERS',
+      content: issue.description || issue.issue
+    })
+  }
+  
+  // Current text (wrong)
+  if (issue.current_text || issue.matchText) {
+    sections.push({
+      type: 'example-wrong',
+      label: 'CURRENT TEXT',
+      content: issue.current_text || issue.matchText
+    })
+  }
+  
+  // Suggested fix (correct)
+  if (issue.suggested_fix || issue.suggestedText) {
+    sections.push({
+      type: 'example-correct',
+      label: 'SUGGESTED',
+      content: issue.suggested_fix || issue.suggestedText
+    })
+  }
+  
+  // User input field (for manual edits)
+  // Only show if issue allows editing
+  if (issue.is_auto_fixable !== false) {
+    sections.push({
+      type: 'input',
+      label: 'YOUR VERSION',
+      id: 'user-edit',
+      placeholder: 'Type your improved version here...',
+      defaultValue: issue.suggested_fix || issue.suggestedText || ''
+    })
+  }
+  
+  return sections
+}
+```
+
+───────────────────────────────────────────────────────────────────────────
+
+TASK 5: CREATE BUTTON BUILDER FUNCTION
+
+Build buttons dynamically:
+```typescript
+// Build buttons for TipBox
+const buildTipBoxButtons = (issue: any) => {
+  const buttons: any[] = []
+  
+  // Auto Fix button (only if auto-fixable)
+  if (issue.is_auto_fixable) {
+    buttons.push({
+      id: 'auto-fix',
+      label: 'Auto Fix',
+      variant: 'success',
+      icon: '⚡',
+      onClick: () => handleAutoFix(issue)
+    })
+  }
+  
+  // Apply button
+  buttons.push({
+    id: 'apply',
+    label: 'Apply to CV',
+    variant: 'primary',
+    onClick: () => handleApplyFix(issue)
+  })
+  
+  // Close button
+  buttons.push({
+    id: 'close',
+    label: 'Close',
+    variant: 'secondary',
+    onClick: () => setTipBoxOpen(false)
+  })
+  
+  return buttons
+}
+```
+
+───────────────────────────────────────────────────────────────────────────
+
+TASK 6: CREATE ACTION HANDLERS
+```typescript
+// Handle Auto Fix - apply suggested text automatically
+const handleAutoFix = (issue: any) => {
+  const suggestedText = issue.suggested_fix || issue.suggestedText
+  console.log('Auto fixing:', issue.id, 'with:', suggestedText)
+  
+  // TODO: Implement actual CV update logic
+  // For now, just close the TipBox
+  setTipBoxOpen(false)
+  
+  // Show success message (optional)
+  // toast.success('Fix applied!')
+}
+
+// Handle Apply - apply user's edited text
+const handleApplyFix = (issue: any) => {
+  console.log('Applying fix:', issue.id, 'with:', userEditText)
+  
+  // TODO: Implement actual CV update logic
+  // For now, just close the TipBox
+  setTipBoxOpen(false)
+}
+
+// Handle input change in TipBox
+const handleTipBoxInputChange = (id: string, value: string) => {
+  if (id === 'user-edit') {
+    setUserEditText(value)
+  }
+}
+```
+
+───────────────────────────────────────────────────────────────────────────
+
+TASK 7: RENDER TIPBOX
+
+Add TipBox component at the end of the return statement:
+```typescript
+return (
+  <div className="results-page">
+    {/* ... existing content ... */}
+    
+    {/* TipBox Modal */}
+    {selectedIssue && (
+      <TipBox
+        isOpen={tipBoxOpen}
+        onClose={() => setTipBoxOpen(false)}
+        title={selectedIssue.title || selectedIssue.issue || 'Issue Details'}
+        severity={selectedIssue.severity || 'consider'}
+        sections={buildTipBoxSections(selectedIssue)}
+        buttons={buildTipBoxButtons(selectedIssue)}
+        onInputChange={handleTipBoxInputChange}
+      />
+    )}
+  </div>
+)
+```
+
+───────────────────────────────────────────────────────────────────────────
+
+TASK 8: ADD IMPORT
+
+Make sure TipBox is imported at the top:
+```typescript
+import { TipBox } from '../../components/common/TipBox'
+// OR if using path alias:
+import { TipBox } from '@/components/common/TipBox'
+```
+
+───────────────────────────────────────────────────────────────────────────
+
+COMPLETE CODE STRUCTURE:
+```typescript
+// Imports
+import { useState } from 'react'
+import { TextMarker, CV_OPTIMIZER_COLORS } from '../../components/common/TextMarker'
+import { TipBox } from '../../components/common/TipBox'
+
+const ResultsPage = () => {
+  // Existing state...
+  
+  // NEW: TipBox state
+  const [selectedIssue, setSelectedIssue] = useState<any>(null)
+  const [tipBoxOpen, setTipBoxOpen] = useState(false)
+  const [userEditText, setUserEditText] = useState('')
+
+  // NEW: Handlers
+  const handleMarkerClick = (issueId: string) => { /* ... */ }
+  const buildTipBoxSections = (issue: any) => { /* ... */ }
+  const buildTipBoxButtons = (issue: any) => { /* ... */ }
+  const handleAutoFix = (issue: any) => { /* ... */ }
+  const handleApplyFix = (issue: any) => { /* ... */ }
+  const handleTipBoxInputChange = (id: string, value: string) => { /* ... */ }
+
+  return (
+    <div>
+      {/* TextMarker with onClick */}
+      <TextMarker
+        content={...}
+        markers={...}
+        config={{
+          ...
+          onClick: handleMarkerClick
+        }}
+      />
+      
+      {/* TipBox */}
+      {selectedIssue && (
+        <TipBox
+          isOpen={tipBoxOpen}
+          onClose={() => setTipBoxOpen(false)}
+          title={selectedIssue.title || selectedIssue.issue}
+          severity={selectedIssue.severity}
+          sections={buildTipBoxSections(selectedIssue)}
+          buttons={buildTipBoxButtons(selectedIssue)}
+          onInputChange={handleTipBoxInputChange}
+        />
+      )}
+    </div>
+  )
+}
+```
+
+───────────────────────────────────────────────────────────────────────────
+
+VALIDATION:
+
+After implementation, test:
+
+[ ] Click on marked text → TipBox opens
+[ ] TipBox shows correct title
+[ ] TipBox header color matches severity (red/orange/yellow/green)
+[ ] Category section displays (if data exists)
+[ ] "Why This Matters" section displays
+[ ] Current text shows (red box)
+[ ] Suggested text shows (green box)
+[ ] User input field works
+[ ] "Auto Fix" button appears (if is_auto_fixable)
+[ ] "Apply to CV" button works
+[ ] "Close" button closes TipBox
+[ ] X button closes TipBox
+[ ] No console errors
+
+───────────────────────────────────────────────────────────────────────────
+
+DEBUG: If TipBox doesn't open
+
+Add console logs:
+```typescript
+const handleMarkerClick = (issueId: string) => {
+  console.log('=== MARKER CLICKED ===')
+  console.log('Issue ID:', issueId)
+  console.log('Issues array:', issues)
+  
+  const issue = issues.find(i => i.id?.toString() === issueId)
+  console.log('Found issue:', issue)
+  
+  if (issue) {
+    setSelectedIssue(issue)
+    setTipBoxOpen(true)
+  } else {
+    console.error('Issue not found for ID:', issueId)
+  }
+}
+```
+
+───────────────────────────────────────────────────────────────────────────
+
+DO NOT:
+- Modify TextMarker component files
+- Modify TipBox component files
+- Change database or API
+- Add new dependencies
+
+═══════════════════════════════════════════════════════════════════════════

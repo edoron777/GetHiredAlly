@@ -3,7 +3,9 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { FileText, List, Copy, Check, ArrowLeft, Loader2 } from 'lucide-react';
 import DocumentView from '../../components/cv-optimizer/DocumentView';
 import { CVDocument } from '../../components/cv-optimizer/DocumentView';
-import TipBox from '../../components/cv-optimizer/TipBox';
+import { TipBox } from '../../components/common/TipBox';
+import type { TipBoxButton } from '../../components/common/TipBox';
+import type { TipBoxSection } from '../../components/common/TipBox/types';
 import IssueSidebar from '../../components/cv-optimizer/IssueSidebar';
 import ContentSelector from '../../components/cv-optimizer/ContentSelector';
 import QuickFormatPanel from '../../components/cv-optimizer/QuickFormatPanel';
@@ -59,6 +61,7 @@ export default function ResultsPage() {
 
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
   const [isTipBoxOpen, setIsTipBoxOpen] = useState(false);
+  const [userEditText, setUserEditText] = useState('');
   const [selectedExportContent, setSelectedExportContent] = useState<'cv' | 'recommendations' | 'both'>('cv');
   const [isApplyingFixes, setIsApplyingFixes] = useState(false);
   const [activeTab, setActiveTab] = useState<'document' | 'list'>('document');
@@ -146,6 +149,101 @@ export default function ResultsPage() {
   const handleApplyFix = (issueId: string, suggestedText: string) => {
     console.log('Apply fix:', issueId, suggestedText);
     setIsTipBoxOpen(false);
+  };
+
+  const handleAutoFix = (issue: ReturnType<typeof normalizeIssue>) => {
+    const suggestedText = issue.suggestedText;
+    console.log('Auto fixing:', issue.id, 'with:', suggestedText);
+    setIsTipBoxOpen(false);
+  };
+
+  const handleTipBoxInputChange = (id: string, value: string) => {
+    if (id === 'user-edit') {
+      setUserEditText(value);
+    }
+  };
+
+  const buildTipBoxSections = (issue: ReturnType<typeof normalizeIssue>): TipBoxSection[] => {
+    const sections: TipBoxSection[] = [];
+    
+    if (issue.category || issue.issueType) {
+      sections.push({
+        type: 'category',
+        label: 'CATEGORY',
+        content: issue.category || issue.issueType
+      });
+    }
+    
+    if (issue.description) {
+      sections.push({
+        type: 'text',
+        label: 'WHY THIS MATTERS',
+        content: issue.description
+      });
+    }
+    
+    if (issue.currentText) {
+      sections.push({
+        type: 'example-wrong',
+        label: 'CURRENT TEXT',
+        content: issue.currentText
+      });
+    }
+    
+    if (issue.suggestedText) {
+      sections.push({
+        type: 'example-correct',
+        label: 'SUGGESTED',
+        content: issue.suggestedText
+      });
+    }
+    
+    if (issue.howToFix) {
+      sections.push({
+        type: 'instructions',
+        label: 'HOW TO FIX',
+        content: issue.howToFix
+      });
+    }
+    
+    sections.push({
+      type: 'input',
+      label: 'YOUR VERSION',
+      id: 'user-edit',
+      placeholder: 'Type your improved version here...',
+      defaultValue: issue.suggestedText || ''
+    });
+    
+    return sections;
+  };
+
+  const buildTipBoxButtons = (issue: ReturnType<typeof normalizeIssue>): TipBoxButton[] => {
+    const buttons: TipBoxButton[] = [];
+    
+    if (issue.isAutoFixable && issue.suggestedText) {
+      buttons.push({
+        id: 'auto-fix',
+        label: 'Auto Fix',
+        variant: 'success',
+        onClick: () => handleAutoFix(issue)
+      });
+    }
+    
+    buttons.push({
+      id: 'apply',
+      label: 'Apply to CV',
+      variant: 'primary',
+      onClick: () => handleApplyFix(issue.id, userEditText || issue.suggestedText)
+    });
+    
+    buttons.push({
+      id: 'close',
+      label: 'Close',
+      variant: 'secondary',
+      onClick: () => setIsTipBoxOpen(false)
+    });
+    
+    return buttons;
   };
 
   const handleApplyQuickFixes = async (fixTypes: string[]) => {
@@ -378,18 +476,11 @@ export default function ResultsPage() {
         <TipBox
           isOpen={isTipBoxOpen}
           onClose={handleCloseTipBox}
-          issue={{
-            id: selectedIssue.id,
-            severity: selectedIssue.severity,
-            issueType: selectedIssue.issueType,
-            title: selectedIssue.title,
-            description: selectedIssue.description,
-            currentText: selectedIssue.currentText,
-            suggestedText: selectedIssue.suggestedText,
-            impact: selectedIssue.impact,
-            howToFix: selectedIssue.howToFix,
-          }}
-          onApplyFix={handleApplyFix}
+          title={selectedIssue.title || 'Issue Details'}
+          severity={selectedIssue.severity}
+          sections={buildTipBoxSections(selectedIssue)}
+          buttons={buildTipBoxButtons(selectedIssue)}
+          onInputChange={handleTipBoxInputChange}
         />
       )}
     </div>
