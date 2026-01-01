@@ -820,7 +820,7 @@ async def get_report_summary(scan_id: str, token: str = ''):
         if isinstance(issues, str):
             issues = json.loads(issues)
 
-        # Use deterministic severity counting
+        # Use deterministic severity counting (supports legacy high/medium/low names)
         breakdown = count_issues_by_severity(issues)
 
         cv_content = scan.get('original_cv_content', '')

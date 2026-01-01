@@ -209,16 +209,31 @@ def count_issues_by_severity(issues: List[Dict[str, Any]]) -> Dict[str, int]:
     """
     Count issues by severity level.
     
+    Supports both NEW taxonomy (important, consider, polish) and 
+    LEGACY taxonomy (high, medium, low) for backward compatibility.
+    
     Args:
         issues: List of issues (must have 'severity' field)
         
     Returns:
         Dictionary with counts: {'critical': N, 'important': N, 'consider': N, 'polish': N}
     """
+    # Map legacy severity names to new names
+    LEGACY_SEVERITY_MAP = {
+        'high': 'important',
+        'medium': 'consider',
+        'low': 'polish',
+    }
+    
     counts = {severity: 0 for severity in VALID_SEVERITIES}
     
     for issue in issues:
         severity = issue.get('severity', DEFAULT_SEVERITY)
+        
+        # Map legacy names to new names
+        if severity in LEGACY_SEVERITY_MAP:
+            severity = LEGACY_SEVERITY_MAP[severity]
+        
         if severity in counts:
             counts[severity] += 1
         else:
