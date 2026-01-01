@@ -1,0 +1,94 @@
+═══════════════════════════════════════════════════════════════════════════
+PROJECT: CV OPTIMIZER DATA INTEGRATION - PROMPT 2 OF 5
+═══════════════════════════════════════════════════════════════════════════
+
+CONTEXT:
+Session features removed. Now connect ResultsPage to real data.
+
+───────────────────────────────────────────────────────────────────────────
+
+TASK: CONNECT RESULTSPAGE TO REAL API DATA
+
+STEP 1: FIND HOW OLD PAGE FETCHES DATA
+
+Look at the OLD "Your Recommendations" page:
+- File: pages/cv-optimizer/RecommendationsPage.tsx (or similar)
+- Find how it fetches analysis data
+- Copy that pattern
+
+LIKELY PATTERN:
+```typescript
+const { cv_id } = useParams() // or from URL query
+const [analysis, setAnalysis] = useState(null)
+
+useEffect(() => {
+  fetch(`/api/cv-optimizer/analysis/${cv_id}`)
+    .then(res => res.json())
+    .then(data => setAnalysis(data))
+}, [cv_id])
+```
+
+STEP 2: UPDATE RESULTSPAGE.TSX
+
+The ResultsPage should:
+1. Get cv_id from URL (query param or route param)
+2. Fetch analysis data from API on mount
+3. Store in state: analysisData
+4. Pass to child components
+
+REQUIRED STATE:
+```typescript
+interface AnalysisData {
+  id: string
+  cv_content: string          // Full CV text
+  score: number               // 0-100
+  issues: Issue[]             // Array of detected issues
+  created_at: string
+  filename: string
+}
+
+interface Issue {
+  id: string
+  issue_type: string
+  severity: 'critical' | 'important' | 'consider' | 'polish'
+  title: string
+  description: string
+  location_start?: number     // Position in CV text
+  location_end?: number
+  current_text?: string       // The problematic text
+  suggested_text?: string     // The fix
+}
+```
+
+STEP 3: VERIFY DATA FLOW
+
+Add console.log to verify:
+```typescript
+useEffect(() => {
+  console.log('Fetched analysis:', analysisData)
+  console.log('CV Content:', analysisData?.cv_content)
+  console.log('Issues:', analysisData?.issues)
+}, [analysisData])
+```
+
+───────────────────────────────────────────────────────────────────────────
+
+FILES TO MODIFY:
+- pages/cv-optimizer/ResultsPage.tsx
+
+FILES TO REFERENCE (don't modify):
+- pages/cv-optimizer/RecommendationsPage.tsx (copy data fetch pattern)
+
+───────────────────────────────────────────────────────────────────────────
+
+VALIDATION:
+[ ] Open browser console
+[ ] Navigate to /cv-optimizer/results?cv_id=XXX (use real cv_id)
+[ ] Console shows real CV content (not "John Doe")
+[ ] Console shows real issues array
+[ ] No fetch errors
+
+DO NOT update CVDocument yet - that's next prompt.
+Just verify data is fetched correctly.
+
+═══════════════════════════════════════════════════════════════════════════

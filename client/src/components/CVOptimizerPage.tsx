@@ -1,24 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, Upload, FileText, Search, X } from 'lucide-react'
+import { ArrowLeft, Upload, FileText, Search } from 'lucide-react'
 import { isAuthenticated, getAuthToken } from '@/lib/auth'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024
 const ALLOWED_EXTENSIONS = ['pdf', 'docx', 'doc', 'txt', 'md', 'rtf', 'odt']
-
-interface ExistingScan {
-  id: number
-  cv_id: string
-  cv_filename: string
-  score: number
-  total_issues: number
-  critical_count: number
-  high_count: number
-  medium_count: number
-  low_count: number
-  status: string
-  created_at: string
-}
 
 export function CVOptimizerPage() {
   const navigate = useNavigate()
@@ -26,32 +12,11 @@ export function CVOptimizerPage() {
   const [isDragging, setIsDragging] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [existingScan, setExistingScan] = useState<ExistingScan | null>(null)
-  const [showClearConfirm, setShowClearConfirm] = useState(false)
-  const [showReplaceConfirm, setShowReplaceConfirm] = useState(false)
-  const [fileToUpload, setFileToUpload] = useState<File | null>(null)
 
   useEffect(() => {
     if (!isAuthenticated()) {
       navigate('/login')
-      return
     }
-
-    const fetchExistingScan = async () => {
-      try {
-        const token = getAuthToken()
-        const response = await fetch(`/api/cv-optimizer/latest?token=${token}`)
-        if (response.ok) {
-          const data = await response.json()
-          if (data && data.status === 'completed') {
-            setExistingScan(data)
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching existing scan:', error)
-      }
-    }
-    fetchExistingScan()
   }, [navigate])
 
   const formatFileSize = (bytes: number) => {
@@ -71,12 +36,6 @@ export function CVOptimizerPage() {
 
     if (file.size > MAX_FILE_SIZE) {
       setError('File too large. Maximum size is 10MB.')
-      return
-    }
-
-    if (existingScan) {
-      setFileToUpload(file)
-      setShowReplaceConfirm(true)
       return
     }
 
@@ -153,56 +112,6 @@ export function CVOptimizerPage() {
     }
   }
 
-  const handleClearAndStartNew = async () => {
-    if (!existingScan) return
-
-    try {
-      const token = getAuthToken()
-      const response = await fetch(`/api/cv-optimizer/scans/${existingScan.id}/archive?token=${token}`, {
-        method: 'POST'
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to archive existing scan')
-      }
-      
-      setExistingScan(null)
-      setShowClearConfirm(false)
-    } catch (error) {
-      console.error('Error clearing scan:', error)
-      setError('Failed to archive your existing analysis. Please try again.')
-      setShowClearConfirm(false)
-    }
-  }
-
-  const handleConfirmReplace = async () => {
-    if (!existingScan || !fileToUpload) return
-
-    try {
-      const token = getAuthToken()
-      const response = await fetch(`/api/cv-optimizer/scans/${existingScan.id}/archive?token=${token}`, {
-        method: 'POST'
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to archive existing scan')
-      }
-      
-      const fileToProcess = fileToUpload
-      setExistingScan(null)
-      setShowReplaceConfirm(false)
-      setSelectedFile(fileToProcess)
-      setFileToUpload(null)
-      
-      await uploadAndScan(fileToProcess)
-    } catch (error) {
-      console.error('Error replacing scan:', error)
-      setError('Failed to archive your existing analysis. Please try again.')
-      setShowReplaceConfirm(false)
-      setFileToUpload(null)
-    }
-  }
-
   return (
     <div className="min-h-[calc(100vh-64px)] p-8" style={{ backgroundColor: '#FAF9F7' }}>
       <div className="max-w-2xl mx-auto">
@@ -234,7 +143,6 @@ export function CVOptimizerPage() {
             Optional: Let AI fix your CV automatically
           </li>
         </ul>
-
 
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
@@ -272,7 +180,7 @@ export function CVOptimizerPage() {
             <div>
               <Upload size={48} className="mx-auto text-gray-400 mb-4" />
               <p className="text-lg font-medium text-gray-700 mb-2">
-                {existingScan ? 'Upload a different CV' : 'Drag & drop your CV here'}
+                Drag & drop your CV here
               </p>
               <p className="text-gray-500 mb-4">or</p>
               <label className="cursor-pointer">
@@ -316,103 +224,6 @@ export function CVOptimizerPage() {
           <div className="bg-white rounded-lg p-6 flex items-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-4"></div>
             <span>Preparing scan...</span>
-          </div>
-        </div>
-      )}
-
-      {showClearConfirm && existingScan && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-xl">
-            <div className="flex items-start justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Start New Analysis?
-              </h3>
-              <button 
-                onClick={() => setShowClearConfirm(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <X size={20} />
-              </button>
-            </div>
-            <p className="text-gray-600 mb-4">
-              This will archive your current analysis:
-            </p>
-            <div className="bg-gray-50 rounded-lg p-3 mb-4">
-              <p className="font-medium text-gray-900">{existingScan.cv_filename}</p>
-              <p className="text-sm text-gray-500">
-                Score: {existingScan.score}% &bull; {existingScan.total_issues} issues found
-              </p>
-            </div>
-            <p className="text-sm text-gray-500 mb-6">
-              You can continue with your existing analysis by clicking &quot;Continue Analysis&quot; instead.
-            </p>
-            <div className="flex gap-3 justify-end">
-              <button
-                onClick={() => setShowClearConfirm(false)}
-                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleClearAndStartNew}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                Start New
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showReplaceConfirm && existingScan && fileToUpload && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-xl">
-            <div className="flex items-start justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Replace Current Analysis?
-              </h3>
-              <button 
-                onClick={() => {
-                  setShowReplaceConfirm(false)
-                  setFileToUpload(null)
-                }}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <X size={20} />
-              </button>
-            </div>
-            <p className="text-gray-600 mb-4">
-              You&apos;re about to upload a new CV. This will archive your current analysis:
-            </p>
-            <div className="bg-gray-50 rounded-lg p-3 mb-2">
-              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Current</p>
-              <p className="font-medium text-gray-900">{existingScan.cv_filename}</p>
-              <p className="text-sm text-gray-500">
-                Score: {existingScan.score}% &bull; {existingScan.total_issues} issues
-              </p>
-            </div>
-            <div className="bg-blue-50 rounded-lg p-3 mb-4">
-              <p className="text-xs text-blue-500 uppercase tracking-wide mb-1">New</p>
-              <p className="font-medium text-blue-900">{fileToUpload.name}</p>
-              <p className="text-sm text-blue-600">{formatFileSize(fileToUpload.size)}</p>
-            </div>
-            <div className="flex gap-3 justify-end">
-              <button
-                onClick={() => {
-                  setShowReplaceConfirm(false)
-                  setFileToUpload(null)
-                }}
-                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmReplace}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                Replace & Scan
-              </button>
-            </div>
           </div>
         </div>
       )}
