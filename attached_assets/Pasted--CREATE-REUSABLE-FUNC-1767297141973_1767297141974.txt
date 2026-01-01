@@ -1,0 +1,658 @@
+═══════════════════════════════════════════════════════════════════════════
+🔧 CREATE REUSABLE FUNCTION: TextMarker
+═══════════════════════════════════════════════════════════════════════════
+
+CONTEXT:
+Creating a reusable text marking/highlighting function for GetHiredAlly.
+Will be used by CV Optimizer and future services.
+
+EXTERNAL SEARCH RESULT:
+Searched npm for React text highlight libraries. None support:
+- Custom icons after marked text
+- Underline style (only background)
+- Per-marker onClick callbacks
+- Custom tag-to-color mapping
+
+DECISION: Write custom code.
+
+───────────────────────────────────────────────────────────────────────────
+
+FUNCTION SPECIFICATION
+
+NAME: TextMarker
+
+PURPOSE: 
+Mark/highlight text segments with customizable colors, styles, and icons.
+
+LOCATION:
+client/src/components/common/TextMarker/
+
+FILES TO CREATE:
+├── TextMarker.tsx        # Main component
+├── MarkerService.ts      # Logic functions
+├── MarkerStyles.css      # Default styles
+├── types.ts              # TypeScript interfaces
+└── index.ts              # Exports
+
+───────────────────────────────────────────────────────────────────────────
+
+FILE 1: types.ts
+```typescript
+// client/src/components/common/TextMarker/types.ts
+
+/**
+ * Single item to be marked in text
+ */
+export interface MarkerItem {
+  id: string                    // Unique identifier
+  matchText: string             // Text to find and mark
+  tag: string                   // Tag name (e.g., "critical", "keyword-match")
+}
+
+/**
+ * Color mapping: tag name → color
+ */
+export interface TagColorMap {
+  [tagName: string]: {
+    color: string               // HEX or color name
+    hoverColor?: string         // Optional hover color
+  }
+}
+
+/**
+ * Marker style options
+ */
+export type MarkerStyle = 'underline' | 'rectangle'
+
+/**
+ * Icon configuration
+ */
+export interface MarkerIcon {
+  icon: React.ReactNode         // Icon element (can be emoji, SVG, component)
+  position: 'before' | 'after'  // Position relative to text
+  className?: string            // Optional CSS class
+}
+
+/**
+ * Main configuration for TextMarker
+ */
+export interface MarkerConfig {
+  style: MarkerStyle                    // underline or rectangle
+  tagColors: TagColorMap                // Map tags to colors
+  icon?: MarkerIcon                     // Optional icon config
+  onClick?: (id: string, tag: string) => void  // Click handler
+  className?: string                    // Container CSS class
+}
+
+/**
+ * Props for TextMarker component
+ */
+export interface TextMarkerProps {
+  content: string               // Full text content
+  markers: MarkerItem[]         // Items to mark
+  config: MarkerConfig          // Configuration
+}
+```
+
+───────────────────────────────────────────────────────────────────────────
+
+FILE 2: MarkerService.ts
+```typescript
+// client/src/components/common/TextMarker/MarkerService.ts
+
+import { MarkerItem } from './types'
+
+/**
+ * Position of a marker in text
+ */
+interface MarkerPosition {
+  start: number
+  end: number
+  marker: MarkerItem
+}
+
+/**
+ * Find all marker positions in content
+ * Handles overlapping by prioritizing first match
+ */
+export function findMarkerPositions(
+  content: string,
+  markers: MarkerItem[]
+): MarkerPosition[] {
+  const positions: MarkerPosition[] = []
+  
+  markers.forEach(marker => {
+    if (!marker.matchText || marker.matchText.length === 0) return
+    
+    // Find first occurrence
+    const index = content.indexOf(marker.matchText)
+    
+    if (index !== -1) {
+      positions.push({
+        start: index,
+        end: index + marker.matchText.length,
+        marker
+      })
+    }
+  })
+  
+  // Sort by position and remove overlaps
+  return resolveOverlaps(positions.sort((a, b) => a.start - b.start))
+}
+
+/**
+ * Remove overlapping markers (keep first)
+ */
+function resolveOverlaps(positions: MarkerPosition[]): MarkerPosition[] {
+  const result: MarkerPosition[] = []
+  let lastEnd = -1
+  
+  positions.forEach(pos => {
+    if (pos.start >= lastEnd) {
+      result.push(pos)
+      lastEnd = pos.end
+    }
+  })
+  
+  return result
+}
+
+/**
+ * Get CSS class for marker style
+ */
+export function getMarkerStyleClass(style: 'underline' | 'rectangle'): string {
+  return style === 'underline' ? 'marker-underline' : 'marker-rectangle'
+}
+
+/**
+ * Generate inline style for marker color
+ */
+export function getMarkerColorStyle(
+  style: 'underline' | 'rectangle',
+  color: string
+): React.CSSProperties {
+  if (style === 'underline') {
+    return {
+      background: `linear-gradient(to bottom, transparent 60%, ${color}40 60%)`,
+      borderBottom: `2px solid ${color}`
+    }
+  } else {
+    return {
+      backgroundColor: `${color}30`,
+      borderRadius: '3px',
+      padding: '1px 3px'
+    }
+  }
+}
+```
+
+───────────────────────────────────────────────────────────────────────────
+
+FILE 3: MarkerStyles.css
+```css
+/* client/src/components/common/TextMarker/MarkerStyles.css */
+
+/* ═══════════════════════════════════════════════════════════════
+   TEXT MARKER STYLES
+   Notion-inspired color palette with two style modes
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Container */
+.text-marker-container {
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
+
+/* Base marker styles */
+.text-marker {
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   STYLE 1: UNDERLINE
+   Subtle underline highlight (like Notion)
+   ───────────────────────────────────────────────────────────────── */
+
+.marker-underline {
+  text-decoration: none;
+}
+
+.marker-underline:hover {
+  filter: brightness(0.95);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   STYLE 2: RECTANGLE (Background highlight)
+   Full background highlight (like classic highlighter)
+   ───────────────────────────────────────────────────────────────── */
+
+.marker-rectangle {
+  border-radius: 3px;
+  padding: 1px 4px;
+  margin: 0 1px;
+}
+
+.marker-rectangle:hover {
+  filter: brightness(0.9);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   PREDEFINED COLOR PALETTE (Notion-inspired)
+   ───────────────────────────────────────────────────────────────── */
+
+/* Red - Critical / Error */
+.marker-color-red.marker-underline {
+  background: linear-gradient(to bottom, transparent 60%, rgba(224, 62, 62, 0.4) 60%);
+  border-bottom: 2px solid #e03e3e;
+}
+.marker-color-red.marker-rectangle {
+  background-color: rgba(224, 62, 62, 0.2);
+}
+
+/* Orange - Important / Warning */
+.marker-color-orange.marker-underline {
+  background: linear-gradient(to bottom, transparent 60%, rgba(217, 115, 13, 0.4) 60%);
+  border-bottom: 2px solid #d9730d;
+}
+.marker-color-orange.marker-rectangle {
+  background-color: rgba(217, 115, 13, 0.2);
+}
+
+/* Yellow - Consider / Attention */
+.marker-color-yellow.marker-underline {
+  background: linear-gradient(to bottom, transparent 60%, rgba(203, 145, 47, 0.4) 60%);
+  border-bottom: 2px solid #cb932f;
+}
+.marker-color-yellow.marker-rectangle {
+  background-color: rgba(203, 145, 47, 0.2);
+}
+
+/* Green - Polish / Good */
+.marker-color-green.marker-underline {
+  background: linear-gradient(to bottom, transparent 60%, rgba(68, 131, 97, 0.4) 60%);
+  border-bottom: 2px solid #448361;
+}
+.marker-color-green.marker-rectangle {
+  background-color: rgba(68, 131, 97, 0.2);
+}
+
+/* Blue - Info */
+.marker-color-blue.marker-underline {
+  background: linear-gradient(to bottom, transparent 60%, rgba(51, 126, 169, 0.4) 60%);
+  border-bottom: 2px solid #337ea9;
+}
+.marker-color-blue.marker-rectangle {
+  background-color: rgba(51, 126, 169, 0.2);
+}
+
+/* Purple - Highlight */
+.marker-color-purple.marker-underline {
+  background: linear-gradient(to bottom, transparent 60%, rgba(144, 101, 176, 0.4) 60%);
+  border-bottom: 2px solid #9065b0;
+}
+.marker-color-purple.marker-rectangle {
+  background-color: rgba(144, 101, 176, 0.2);
+}
+
+/* Pink */
+.marker-color-pink.marker-underline {
+  background: linear-gradient(to bottom, transparent 60%, rgba(193, 76, 138, 0.4) 60%);
+  border-bottom: 2px solid #c14c8a;
+}
+.marker-color-pink.marker-rectangle {
+  background-color: rgba(193, 76, 138, 0.2);
+}
+
+/* Gray */
+.marker-color-gray.marker-underline {
+  background: linear-gradient(to bottom, transparent 60%, rgba(120, 119, 116, 0.4) 60%);
+  border-bottom: 2px solid #787774;
+}
+.marker-color-gray.marker-rectangle {
+  background-color: rgba(120, 119, 116, 0.2);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   ICON STYLES
+   ───────────────────────────────────────────────────────────────── */
+
+.marker-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  margin: 0 2px;
+  vertical-align: middle;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.marker-icon:hover {
+  transform: scale(1.2);
+}
+
+.marker-icon-before {
+  margin-right: 4px;
+}
+
+.marker-icon-after {
+  margin-left: 4px;
+}
+```
+
+───────────────────────────────────────────────────────────────────────────
+
+FILE 4: TextMarker.tsx
+```typescript
+// client/src/components/common/TextMarker/TextMarker.tsx
+
+import React from 'react'
+import { 
+  TextMarkerProps, 
+  MarkerItem, 
+  MarkerConfig 
+} from './types'
+import { 
+  findMarkerPositions, 
+  getMarkerStyleClass,
+  getMarkerColorStyle 
+} from './MarkerService'
+import './MarkerStyles.css'
+
+/**
+ * TextMarker Component
+ * 
+ * Marks/highlights text segments with customizable colors, styles, and icons.
+ * 
+ * @example
+ * // CV Optimizer usage
+ * <TextMarker
+ *   content="Resume text here..."
+ *   markers={[
+ *     { id: '1', matchText: 'Developped', tag: 'critical' },
+ *     { id: '2', matchText: 'helped with', tag: 'important' }
+ *   ]}
+ *   config={{
+ *     style: 'underline',
+ *     tagColors: {
+ *       critical: { color: '#e03e3e' },
+ *       important: { color: '#d9730d' }
+ *     },
+ *     icon: { icon: 'ⓘ', position: 'after' },
+ *     onClick: (id, tag) => console.log('Clicked:', id, tag)
+ *   }}
+ * />
+ */
+export const TextMarker: React.FC<TextMarkerProps> = ({
+  content,
+  markers,
+  config
+}) => {
+  const positions = findMarkerPositions(content, markers)
+  
+  // If no markers found, return plain text
+  if (positions.length === 0) {
+    return (
+      <div className={`text-marker-container ${config.className || ''}`}>
+        {content}
+      </div>
+    )
+  }
+  
+  // Build JSX with markers
+  const elements: React.ReactNode[] = []
+  let lastEnd = 0
+  
+  positions.forEach((pos, index) => {
+    // Add plain text before this marker
+    if (pos.start > lastEnd) {
+      elements.push(
+        <span key={`text-${index}`}>
+          {content.substring(lastEnd, pos.start)}
+        </span>
+      )
+    }
+    
+    // Get color for this tag
+    const tagColor = config.tagColors[pos.marker.tag]
+    const color = tagColor?.color || '#787774' // Default gray
+    
+    // Build marker element
+    const styleClass = getMarkerStyleClass(config.style)
+    const colorStyle = getMarkerColorStyle(config.style, color)
+    
+    const handleClick = () => {
+      config.onClick?.(pos.marker.id, pos.marker.tag)
+    }
+    
+    elements.push(
+      <span
+        key={`marker-${pos.marker.id}-${index}`}
+        id={`marker-${pos.marker.id}`}
+        className={`text-marker ${styleClass}`}
+        style={colorStyle}
+        onClick={handleClick}
+        data-tag={pos.marker.tag}
+        data-marker-id={pos.marker.id}
+      >
+        {/* Icon before (if configured) */}
+        {config.icon && config.icon.position === 'before' && (
+          <span className={`marker-icon marker-icon-before ${config.icon.className || ''}`}>
+            {config.icon.icon}
+          </span>
+        )}
+        
+        {/* Marked text */}
+        {content.substring(pos.start, pos.end)}
+        
+        {/* Icon after (if configured) */}
+        {config.icon && config.icon.position === 'after' && (
+          <span className={`marker-icon marker-icon-after ${config.icon.className || ''}`}>
+            {config.icon.icon}
+          </span>
+        )}
+      </span>
+    )
+    
+    lastEnd = pos.end
+  })
+  
+  // Add remaining text after last marker
+  if (lastEnd < content.length) {
+    elements.push(
+      <span key="text-end">
+        {content.substring(lastEnd)}
+      </span>
+    )
+  }
+  
+  return (
+    <div className={`text-marker-container ${config.className || ''}`}>
+      {elements}
+    </div>
+  )
+}
+
+export default TextMarker
+```
+
+───────────────────────────────────────────────────────────────────────────
+
+FILE 5: index.ts
+```typescript
+// client/src/components/common/TextMarker/index.ts
+
+export { TextMarker, default } from './TextMarker'
+export { findMarkerPositions, getMarkerStyleClass, getMarkerColorStyle } from './MarkerService'
+export type { 
+  MarkerItem, 
+  TagColorMap, 
+  MarkerStyle, 
+  MarkerIcon, 
+  MarkerConfig, 
+  TextMarkerProps 
+} from './types'
+
+/**
+ * PREDEFINED COLOR PALETTES
+ * Services can import these or define their own
+ */
+
+// CV Optimizer severity colors
+export const CV_OPTIMIZER_COLORS = {
+  critical: { color: '#e03e3e' },    // Red
+  important: { color: '#d9730d' },   // Orange
+  consider: { color: '#cb932f' },    // Yellow
+  polish: { color: '#448361' }       // Green
+}
+
+// Generic highlight colors
+export const NOTION_COLORS = {
+  red: { color: '#e03e3e' },
+  orange: { color: '#d9730d' },
+  yellow: { color: '#cb932f' },
+  green: { color: '#448361' },
+  blue: { color: '#337ea9' },
+  purple: { color: '#9065b0' },
+  pink: { color: '#c14c8a' },
+  gray: { color: '#787774' }
+}
+```
+
+───────────────────────────────────────────────────────────────────────────
+
+USAGE EXAMPLES
+
+EXAMPLE 1: CV Optimizer (Severity tags, underline style, info icon)
+```typescript
+import { TextMarker, CV_OPTIMIZER_COLORS } from '@/components/common/TextMarker'
+
+<TextMarker
+  content={cvContent}
+  markers={issues.map(issue => ({
+    id: issue.id,
+    matchText: issue.current_text,
+    tag: issue.severity  // 'critical', 'important', 'consider', 'polish'
+  }))}
+  config={{
+    style: 'underline',
+    tagColors: CV_OPTIMIZER_COLORS,
+    icon: { 
+      icon: 'ⓘ', 
+      position: 'after' 
+    },
+    onClick: (id, tag) => openTipBox(id)
+  }}
+/>
+```
+
+EXAMPLE 2: Tailor for This Job (Keyword matches, rectangle style, no icon)
+```typescript
+import { TextMarker, NOTION_COLORS } from '@/components/common/TextMarker'
+
+<TextMarker
+  content={resumeContent}
+  markers={keywords.map(kw => ({
+    id: kw.id,
+    matchText: kw.word,
+    tag: kw.matched ? 'matched' : 'missing'
+  }))}
+  config={{
+    style: 'rectangle',
+    tagColors: {
+      matched: { color: '#448361' },   // Green
+      missing: { color: '#e03e3e' }    // Red
+    },
+    onClick: (id) => showKeywordDetails(id)
+  }}
+/>
+```
+
+EXAMPLE 3: Job Description X-Ray (Custom icon, underline)
+```typescript
+import { TextMarker } from '@/components/common/TextMarker'
+
+<TextMarker
+  content={jobDescription}
+  markers={requirements.map(req => ({
+    id: req.id,
+    matchText: req.text,
+    tag: req.type  // 'required', 'preferred', 'bonus'
+  }))}
+  config={{
+    style: 'underline',
+    tagColors: {
+      required: { color: '#e03e3e' },
+      preferred: { color: '#d9730d' },
+      bonus: { color: '#337ea9' }
+    },
+    icon: { 
+      icon: '📌',  // Custom icon
+      position: 'before' 
+    },
+    onClick: (id) => highlightRequirement(id)
+  }}
+/>
+```
+
+───────────────────────────────────────────────────────────────────────────
+
+COMPONENT REGISTRY UPDATE
+
+Add this entry to Component Registry:
+
+| Field | Value |
+|-------|-------|
+| **Name** | TextMarker |
+| **Location** | client/src/components/common/TextMarker/ |
+| **Purpose** | Mark/highlight text with customizable colors, styles, icons |
+| **Parameters** | content (string), markers (MarkerItem[]), config (MarkerConfig) |
+| **Returns** | JSX with marked text |
+| **Date Added** | January 1, 2026 |
+
+───────────────────────────────────────────────────────────────────────────
+
+VALIDATION CHECKLIST
+
+After implementation:
+
+[ ] Files created in client/src/components/common/TextMarker/
+[ ] TypeScript compiles without errors
+[ ] Underline style works
+[ ] Rectangle style works
+[ ] Custom colors work
+[ ] Icon displays correctly
+[ ] onClick fires with correct id and tag
+[ ] Component Registry updated
+[ ] Can import from '@/components/common/TextMarker'
+
+───────────────────────────────────────────────────────────────────────────
+
+INTEGRATION WITH CV OPTIMIZER
+
+After TextMarker is created, update CVDocument.tsx:
+```typescript
+// Replace current marker logic with:
+
+import { TextMarker, CV_OPTIMIZER_COLORS } from '@/components/common/TextMarker'
+
+// In render:
+<TextMarker
+  content={cvContent.fullText}
+  markers={issues.map(issue => ({
+    id: issue.id,
+    matchText: issue.matchText || issue.current_text,
+    tag: issue.severity
+  }))}
+  config={{
+    style: 'underline',
+    tagColors: CV_OPTIMIZER_COLORS,
+    icon: { icon: 'ⓘ', position: 'after' },
+    onClick: onIssueClick
+  }}
+/>
+```
+
+═══════════════════════════════════════════════════════════════════════════

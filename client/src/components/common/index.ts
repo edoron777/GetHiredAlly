@@ -25,3 +25,5 @@ export { OrDivider } from './OrDivider';
 export { GHAScanner, playStartSound, playCompleteSound, playErrorSound, STATUS_MESSAGES, SCANNER_STYLES, SCANNER_COLORS } from './GHAScanner';
 export { UserSessionKeep, useServiceSession, SERVICE_CONFIGS } from './UserSessionKeep';
 export type { ServiceSessionData, ServiceConfig } from './UserSessionKeep';
+export { TextMarker, CV_OPTIMIZER_COLORS, NOTION_COLORS } from './TextMarker';
+export type { MarkerItem, TagColorMap, MarkerStyle, MarkerIcon, MarkerConfig, TextMarkerProps } from './TextMarker';
