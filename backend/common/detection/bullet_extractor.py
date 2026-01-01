@@ -132,49 +132,64 @@ def analyze_bullet(text: str, line_number: int) -> BulletPoint:
     )
 
 
-def get_bullet_issues(bullets: List[BulletPoint]) -> List[Dict]:
+MAX_ISSUES_PER_TYPE = 5
+
+
+def get_bullet_issues(bullets: List[BulletPoint], max_per_type: int = MAX_ISSUES_PER_TYPE) -> List[Dict]:
     """
     Generate issues based on bullet analysis.
     
+    Limits issues per type to avoid overwhelming users (e.g., max 5 "missing metrics" issues).
+    
     Args:
         bullets: List of extracted BulletPoint objects
+        max_per_type: Maximum issues to generate per issue type (default 5)
         
     Returns:
         List of issue dictionaries with issue_type
     """
     issues = []
     
+    missing_metrics_count = 0
+    weak_verbs_count = 0
+    too_long_count = 0
+    too_short_count = 0
+    
     for bullet in bullets:
-        if not bullet.has_metrics:
+        if not bullet.has_metrics and missing_metrics_count < max_per_type:
             issues.append({
                 'issue_type': 'CONTENT_MISSING_METRICS',
                 'location': f'Line {bullet.line_number}',
                 'description': 'Bullet point lacks quantified achievement (no numbers, percentages, or metrics)',
                 'current': bullet.text[:100] + '...' if len(bullet.text) > 100 else bullet.text,
             })
+            missing_metrics_count += 1
         
-        if not bullet.starts_with_verb:
+        if not bullet.starts_with_verb and weak_verbs_count < max_per_type:
             issues.append({
                 'issue_type': 'CONTENT_WEAK_ACTION_VERBS',
                 'location': f'Line {bullet.line_number}',
                 'description': 'Bullet should start with a strong action verb',
                 'current': bullet.text[:50] + '...' if len(bullet.text) > 50 else bullet.text,
             })
+            weak_verbs_count += 1
         
-        if bullet.word_count > 30:
+        if bullet.word_count > 30 and too_long_count < max_per_type:
             issues.append({
                 'issue_type': 'CONTENT_BULLET_TOO_LONG',
                 'location': f'Line {bullet.line_number}',
                 'description': f'Bullet is {bullet.word_count} words - consider splitting or condensing',
                 'current': bullet.text[:100] + '...',
             })
+            too_long_count += 1
         
-        if bullet.word_count < 5:
+        if bullet.word_count < 5 and too_short_count < max_per_type:
             issues.append({
                 'issue_type': 'CONTENT_BULLET_TOO_SHORT',
                 'location': f'Line {bullet.line_number}',
                 'description': f'Bullet is only {bullet.word_count} words - add more detail',
                 'current': bullet.text,
             })
+            too_short_count += 1
     
     return issues

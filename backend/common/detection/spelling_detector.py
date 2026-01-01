@@ -46,7 +46,7 @@ def extract_words(text: str) -> List[str]:
     return words
 
 
-def check_spelling(text: str, max_errors: int = 20) -> List[Dict]:
+def check_spelling(text: str, max_errors: int = 10) -> List[Dict]:
     """
     Check text for spelling errors.
     
@@ -113,7 +113,7 @@ def check_grammar(text: str) -> List[Dict]:
     for pattern, error_msg in GRAMMAR_PATTERNS:
         matches = pattern.findall(text)
         
-        for match in matches[:3]:
+        for match in matches[:2]:
             issues.append({
                 'issue_type': 'GRAMMAR_GRAMMATICAL_ERROR',
                 'location': 'Throughout CV',
