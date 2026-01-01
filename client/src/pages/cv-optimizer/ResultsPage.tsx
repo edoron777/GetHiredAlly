@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { FileText, List } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { FileText, List, Copy, Check } from 'lucide-react';
 import DocumentView from '../../components/cv-optimizer/DocumentView';
 import { CVDocument } from '../../components/cv-optimizer/DocumentView';
 import TipBox from '../../components/cv-optimizer/TipBox';
@@ -7,6 +7,7 @@ import IssueSidebar from '../../components/cv-optimizer/IssueSidebar';
 import ContentSelector from '../../components/cv-optimizer/ContentSelector';
 import QuickFormatPanel from '../../components/cv-optimizer/QuickFormatPanel';
 import ListViewTab from '../../components/cv-optimizer/ListViewTab';
+import { DocStyler } from '../../components/common/DocStyler';
 
 const sampleCvContent = {
   fullText: `JOHN DOE
@@ -108,10 +109,19 @@ export default function ResultsPage() {
   const [selectedExportContent, setSelectedExportContent] = useState<'cv' | 'recommendations' | 'both'>('cv');
   const [isApplyingFixes, setIsApplyingFixes] = useState(false);
   const [activeTab, setActiveTab] = useState<'document' | 'list'>('document');
+  const [copied, setCopied] = useState(false);
+  const documentRef = useRef<HTMLDivElement>(null);
 
   const handleIssueClick = (issueId: string) => {
     setSelectedIssueId(issueId);
     setIsTipBoxOpen(true);
+    if (activeTab === 'list') {
+      setActiveTab('document');
+    }
+    setTimeout(() => {
+      const marker = document.querySelector(`[data-issue-id="${issueId}"]`);
+      marker?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
   };
 
   const handleCloseTipBox = () => {
@@ -120,6 +130,7 @@ export default function ResultsPage() {
 
   const handleApplyFix = (issueId: string, suggestedText: string) => {
     console.log('Apply fix:', issueId, suggestedText);
+    setIsTipBoxOpen(false);
   };
 
   const handleApplyQuickFixes = async (fixTypes: string[]) => {
@@ -127,6 +138,46 @@ export default function ResultsPage() {
     console.log('Applying quick fixes:', fixTypes);
     await new Promise(resolve => setTimeout(resolve, 1500));
     setIsApplyingFixes(false);
+  };
+
+  const getExportContent = () => {
+    const cvMarkdown = `# CV\n\n${sampleCvContent.fullText}`;
+    const recommendationsMarkdown = sampleIssues.map(issue => {
+      const detail = issueDetails[issue.id];
+      return `## ${issue.title}\n**Severity:** ${issue.severity}\n\n${detail?.description || ''}\n\n**Current:** ${issue.matchText}\n**Suggested:** ${detail?.suggestedText || 'N/A'}`;
+    }).join('\n\n---\n\n');
+
+    if (selectedExportContent === 'cv') return cvMarkdown;
+    if (selectedExportContent === 'recommendations') return recommendationsMarkdown;
+    return `${cvMarkdown}\n\n---\n\n# Recommendations\n\n${recommendationsMarkdown}`;
+  };
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(getExportContent());
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleExportPDF = async () => {
+    await DocStyler.pdf(getExportContent(), {
+      title: 'CV Analysis Report',
+      service: 'CV Optimizer',
+      fileName: 'cv-analysis-report',
+    });
+  };
+
+  const handleExportWord = async () => {
+    await DocStyler.word(getExportContent(), {
+      title: 'CV Analysis Report',
+      service: 'CV Optimizer',
+      fileName: 'cv-analysis-report',
+    });
+  };
+
+  const handleExportMarkdown = async () => {
+    await DocStyler.md(getExportContent(), {
+      fileName: 'cv-analysis-report',
+    });
   };
 
   const selectedIssue = selectedIssueId ? issueDetails[selectedIssueId] : null;
@@ -152,7 +203,7 @@ export default function ResultsPage() {
     title: issue.title,
     description: issueDetails[issue.id]?.description || 'Review this section for improvement opportunities.',
     currentText: issue.matchText,
-    suggestedText: issueDetails[issue.id]?.suggestedFix,
+    suggestedText: issueDetails[issue.id]?.suggestedText,
   }));
 
   return (
@@ -180,9 +231,34 @@ export default function ResultsPage() {
                 />
               </div>
               
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
-                Download PDF
-              </button>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={handleCopy}
+                  className="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium text-gray-700 flex items-center gap-1"
+                  title="Copy to clipboard"
+                >
+                  {copied ? <Check size={16} className="text-green-600" /> : <Copy size={16} />}
+                  {copied ? 'Copied!' : 'Copy'}
+                </button>
+                <button 
+                  onClick={handleExportPDF}
+                  className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                >
+                  PDF
+                </button>
+                <button 
+                  onClick={handleExportWord}
+                  className="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium text-gray-700"
+                >
+                  Word
+                </button>
+                <button 
+                  onClick={handleExportMarkdown}
+                  className="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium text-gray-700"
+                >
+                  MD
+                </button>
+              </div>
             </div>
           </div>
 

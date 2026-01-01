@@ -9,6 +9,7 @@ export default function IssueMarker({ severity, children, issueId, onClick }: Is
   return (
     <span 
       className={`issue-marker ${severity}`}
+      data-issue-id={issueId}
       onClick={() => onClick?.(issueId)}
       role="button"
       tabIndex={0}

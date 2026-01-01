@@ -1,0 +1,93 @@
+═══════════════════════════════════════════════════════════════════════════
+PROJECT: CV OPTIMIZER UNIFIED INTERFACE - PROMPT 11 OF 12
+═══════════════════════════════════════════════════════════════════════════
+
+CONTEXT:
+Continuing from Prompt 10. All components integrated and tested.
+Now switching from old interface to new interface.
+
+───────────────────────────────────────────────────────────────────────────
+
+OBJECTIVE:
+Update navigation flow and remove old pages.
+
+⚠️ CRITICAL: Before this prompt, manually verify:
+- New ResultsPage works correctly
+- All features function as expected
+- No console errors
+
+TASKS:
+
+1. UPDATE SCANNING PAGE REDIRECT
+
+   FIND in CVScanningPage.tsx (or equivalent):
+   
+   // OLD:
+   navigate('/cv-optimizer/crossroads?cv_id=' + cvId);
+   
+   // CHANGE TO:
+   navigate('/cv-optimizer/results?cv_id=' + cvId);
+
+2. REMOVE OLD ROUTES
+
+   Remove routes for:
+   - /cv-optimizer/crossroads
+   - /cv-optimizer/easy-way
+   
+   Keep routes for:
+   - /cv-optimizer (upload)
+   - /cv-optimizer/scanning
+   - /cv-optimizer/results (new)
+   - /cv-optimizer/recommendations (temporary redirect to /results)
+
+3. ADD REDIRECT FOR OLD BOOKMARKS
+
+   If user visits /cv-optimizer/recommendations?cv_id=xxx
+   → Redirect to /cv-optimizer/results?cv_id=xxx
+
+4. ARCHIVE OLD FILES (Don't Delete Yet)
+
+   Move to archive folder (create if needed):
+   - pages/cv-optimizer/CrossroadsPage.tsx → archive/
+   - pages/cv-optimizer/EasyWayPage.tsx → archive/
+   
+   Keep for 2 weeks in case rollback needed.
+
+5. UPDATE ANY NAVIGATION LINKS
+
+   Search codebase for links to:
+   - /cv-optimizer/crossroads
+   - /cv-optimizer/easy-way
+   
+   Update to point to /cv-optimizer/results
+
+───────────────────────────────────────────────────────────────────────────
+
+ROLLBACK PLAN:
+
+If critical issues discovered:
+1. Revert scanning redirect to /crossroads
+2. Re-enable old routes
+3. Investigate and fix in new interface
+4. Try cutover again
+
+───────────────────────────────────────────────────────────────────────────
+
+POST-CUTOVER VERIFICATION:
+
+[ ] Upload CV → Scanning → Results (new page)
+[ ] Document View displays correctly
+[ ] List View displays correctly
+[ ] All exports work
+[ ] Old URLs redirect properly
+[ ] No 404 errors
+[ ] No console errors
+
+───────────────────────────────────────────────────────────────────────────
+
+RULES REMINDER:
+- Follow AGENTS.MD protected files rules
+- Follow REPLIT.MD development guidelines
+- Archive, don't delete old files
+
+═══════════════════════════════════════════════════════════════════════════
