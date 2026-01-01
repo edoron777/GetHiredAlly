@@ -3,6 +3,7 @@ import DocumentView from '../../components/cv-optimizer/DocumentView';
 import { CVDocument } from '../../components/cv-optimizer/DocumentView';
 import TipBox from '../../components/cv-optimizer/TipBox';
 import IssueSidebar from '../../components/cv-optimizer/IssueSidebar';
+import ContentSelector from '../../components/cv-optimizer/ContentSelector';
 
 const sampleCvContent = {
   fullText: `JOHN DOE
@@ -101,6 +102,7 @@ const issueDetails: Record<string, any> = {
 export default function ResultsPage() {
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
   const [isTipBoxOpen, setIsTipBoxOpen] = useState(false);
+  const [selectedExportContent, setSelectedExportContent] = useState<'cv' | 'recommendations' | 'both'>('cv');
 
   const handleIssueClick = (issueId: string) => {
     setSelectedIssueId(issueId);
@@ -134,9 +136,25 @@ export default function ResultsPage() {
 
       <div className="flex-1 px-4 py-8">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl font-bold mb-6" style={{ color: '#1E3A5F' }}>
-            CV Analysis Results
-          </h1>
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-2xl font-bold" style={{ color: '#1E3A5F' }}>
+              CV Analysis Results
+            </h1>
+            
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">Export:</span>
+                <ContentSelector
+                  selectedContent={selectedExportContent}
+                  onChange={setSelectedExportContent}
+                />
+              </div>
+              
+              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+                Download PDF
+              </button>
+            </div>
+          </div>
           
           <DocumentView>
             <CVDocument 

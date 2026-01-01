@@ -1,0 +1,149 @@
+═══════════════════════════════════════════════════════════════════════════
+PROJECT: CV OPTIMIZER UNIFIED INTERFACE - PROMPT 8 OF 12
+═══════════════════════════════════════════════════════════════════════════
+
+CONTEXT:
+Continuing from Prompt 7. ContentSelector works.
+Now creating the QuickFormatPanel for cosmetic fixes.
+
+───────────────────────────────────────────────────────────────────────────
+
+OBJECTIVE:
+Create QuickFormatPanel component - bottom panel with cosmetic fix options.
+
+FILES TO CREATE:
+
+1. client/src/components/cv-optimizer/QuickFormatPanel/QuickFormatPanel.tsx
+2. client/src/components/cv-optimizer/QuickFormatPanel/index.ts
+
+SPECIFICATIONS:
+
+QuickFormatPanel.tsx Props:
+interface QuickFormatPanelProps {
+    issues: Issue[];  // To show count of fixable issues
+    onApplyFixes: (fixTypes: string[]) => void;
+    isApplying: boolean;
+}
+
+LAYOUT:
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│  🔧 Quick Format Tools                                                  │
+│                                                                         │
+│  ☑ Fix spacing issues (12)     ☑ Standardize bullets (8)              │
+│  ☑ Remove extra blank lines (5) ☑ Fix capitalization (3)              │
+│                                                                         │
+│                                              [Apply Selected Fixes]     │
+└─────────────────────────────────────────────────────────────────────────┘
+
+AVAILABLE FIX TYPES:
+
+| Fix Type | Description | Example |
+|----------|-------------|---------|
+| spacing | Extra spaces between words | "Hello  World" → "Hello World" |
+| blank_lines | Multiple blank lines | 3 blank lines → 1 blank line |
+| bullets | Inconsistent bullet styles | Mix of •, -, * → All • |
+| capitalization | Inconsistent caps | "project Manager" → "Project Manager" |
+| trailing_spaces | Spaces at end of lines | "text   " → "text" |
+| date_format | Inconsistent dates | "Jan 2020" vs "January 2020" |
+
+CSS (create quick-format.css):
+
+.quick-format-panel {
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+    padding: 16px 20px;
+}
+
+.quick-format-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 12px;
+}
+
+.quick-format-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.quick-format-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.quick-format-option input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+}
+
+.quick-format-count {
+    color: #64748b;
+    font-size: 12px;
+}
+
+.quick-format-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.apply-fixes-btn {
+    background: #3b82f6;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+}
+
+.apply-fixes-btn:hover {
+    background: #2563eb;
+}
+
+.apply-fixes-btn:disabled {
+    background: #94a3b8;
+    cursor: not-allowed;
+}
+
+FUNCTIONALITY:
+- Checkboxes for each fix type
+- Show count of issues that can be fixed
+- Only show fix types that have issues
+- "Apply Selected Fixes" button
+- Loading state while applying
+- After apply: refresh issue list, update score
+
+NOTE:
+This panel handles COSMETIC fixes only (formatting).
+Content fixes (rewrites) are handled through TipBox "Apply to CV".
+
+UPDATE ResultsPage.tsx:
+- Replace bottom placeholder with QuickFormatPanel
+- Connect onApplyFixes to API call
+- Refresh data after fixes applied
+
+───────────────────────────────────────────────────────────────────────────
+
+VALIDATION:
+- Panel displays at bottom
+- Checkboxes show with issue counts
+- Only relevant fix types appear
+- Apply button triggers callback
+- Loading state during application
+
+───────────────────────────────────────────────────────────────────────────
+
+RULES REMINDER:
+- Follow AGENTS.MD protected files rules
+- Follow REPLIT.MD development guidelines
+
+═══════════════════════════════════════════════════════════════════════════
