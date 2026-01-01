@@ -1,0 +1,169 @@
+═══════════════════════════════════════════════════════════════════════════
+PROJECT: CV OPTIMIZER UNIFIED INTERFACE - PROMPT 5 OF 12
+═══════════════════════════════════════════════════════════════════════════
+
+CONTEXT:
+Continuing from Prompt 4. Markers and InfoIcons exist.
+Now creating the TipBox modal that shows issue details.
+
+───────────────────────────────────────────────────────────────────────────
+
+OBJECTIVE:
+Create TipBox component - modal popup showing full issue recommendation.
+
+FILES TO CREATE:
+
+1. client/src/components/cv-optimizer/TipBox/TipBox.tsx
+2. client/src/components/cv-optimizer/TipBox/index.ts
+
+SPECIFICATIONS:
+
+TipBox.tsx Props:
+interface TipBoxProps {
+    isOpen: boolean;
+    onClose: () => void;
+    issue: {
+        id: string;
+        severity: 'critical' | 'important' | 'consider' | 'polish';
+        issueType: string;
+        title: string;
+        description: string;
+        currentText?: string;
+        suggestedText?: string;
+        impact: string;
+        howToFix: string;
+    };
+    onApplyFix?: (issueId: string, suggestedText: string) => void;
+}
+
+LAYOUT:
+
+┌─────────────────────────────────────────────────────────────────┐
+│  [Severity Badge]  Issue Title                           [X]   │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  WHY THIS MATTERS                                               │
+│  [Impact text explaining importance]                            │
+│                                                                 │
+│  ─────────────────────────────────────────────────────────────  │
+│                                                                 │
+│  CURRENT TEXT                                                   │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │ "The text that has the issue..."                        │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│                                                                 │
+│  SUGGESTED IMPROVEMENT                                          │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │ "The improved version of the text..."                   │   │
+│  │ [Editable textarea]                                     │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│                                                                 │
+│  HOW TO FIX                                                     │
+│  [Step by step instructions]                                    │
+│                                                                 │
+├─────────────────────────────────────────────────────────────────┤
+│                              [Apply to CV]  [Close]             │
+└─────────────────────────────────────────────────────────────────┘
+
+CSS (add to document-view.css or create tipbox.css):
+
+.tipbox-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.tipbox-modal {
+    background: white;
+    border-radius: 8px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.tipbox-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.tipbox-body {
+    padding: 20px;
+}
+
+.tipbox-section {
+    margin-bottom: 20px;
+}
+
+.tipbox-section-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.tipbox-text-box {
+    background: #f9fafb;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    padding: 12px;
+    font-size: 14px;
+}
+
+.tipbox-textarea {
+    width: 100%;
+    min-height: 80px;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    padding: 12px;
+    font-size: 14px;
+    resize: vertical;
+}
+
+.tipbox-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 20px;
+    border-top: 1px solid #e5e5e5;
+}
+
+FUNCTIONALITY:
+- Suggested text is editable (textarea)
+- "Apply to CV" saves the edit (calls onApplyFix)
+- Close button and clicking overlay closes modal
+- Escape key closes modal
+
+UPDATE ResultsPage.tsx:
+- Add state: selectedIssue, isTipBoxOpen
+- Pass onClick handlers to markers
+- Render TipBox when issue is selected
+
+───────────────────────────────────────────────────────────────────────────
+
+VALIDATION:
+- Modal opens when clicking marker or info icon
+- All sections display correctly
+- Suggested text is editable
+- Close works (X button, overlay click, Escape key)
+- Apply button triggers callback
+
+───────────────────────────────────────────────────────────────────────────
+
+RULES REMINDER:
+- Follow AGENTS.MD protected files rules
+- Follow REPLIT.MD development guidelines
+
+═══════════════════════════════════════════════════════════════════════════

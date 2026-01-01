@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import DocumentView from '../../components/cv-optimizer/DocumentView';
 import { CVDocument } from '../../components/cv-optimizer/DocumentView';
+import TipBox from '../../components/cv-optimizer/TipBox';
 
 const sampleCvContent = {
   fullText: `JOHN DOE
@@ -36,13 +37,60 @@ const sampleIssues = [
   { id: '3', severity: 'polish' as const, matchText: '2017' },
 ];
 
+const issueDetails: Record<string, any> = {
+  '1': {
+    id: '1',
+    severity: 'important',
+    issueType: 'WEAK_PHRASE',
+    title: 'Overused Buzzword',
+    description: 'The phrase "Results-driven" is overused in CVs.',
+    currentText: 'Results-driven software engineer',
+    suggestedText: 'Software engineer who delivered 40% performance gains',
+    impact: 'Recruiters see "results-driven" hundreds of times daily. It\'s lost all meaning and makes your CV blend in rather than stand out.',
+    howToFix: 'Replace with a specific achievement that demonstrates results. Quantify your impact whenever possible.',
+  },
+  '2': {
+    id: '2',
+    severity: 'consider',
+    issueType: 'VAGUE_STATEMENT',
+    title: 'Vague Collaboration Statement',
+    description: 'This statement lacks specific outcomes.',
+    currentText: 'Collaborated with product team on feature prioritization',
+    suggestedText: 'Partnered with product team to prioritize 15+ features, accelerating quarterly delivery by 25%',
+    impact: 'Without measurable outcomes, this bullet point tells the recruiter what you did but not how well you did it.',
+    howToFix: 'Add metrics or outcomes. How many features? What was the impact on delivery time or customer satisfaction?',
+  },
+  '3': {
+    id: '3',
+    severity: 'polish',
+    issueType: 'DATE_FORMAT',
+    title: 'Inconsistent Date Format',
+    description: 'Date format could be more specific.',
+    currentText: '2017',
+    suggestedText: 'May 2017',
+    impact: 'Minor issue, but adding the month looks more precise and professional.',
+    howToFix: 'Add the graduation month for a polished appearance.',
+  },
+};
+
 export default function ResultsPage() {
-  const [selectedIssue, setSelectedIssue] = useState<string | null>(null);
+  const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
+  const [isTipBoxOpen, setIsTipBoxOpen] = useState(false);
 
   const handleIssueClick = (issueId: string) => {
-    setSelectedIssue(issueId);
-    console.log('Issue clicked:', issueId);
+    setSelectedIssueId(issueId);
+    setIsTipBoxOpen(true);
   };
+
+  const handleCloseTipBox = () => {
+    setIsTipBoxOpen(false);
+  };
+
+  const handleApplyFix = (issueId: string, suggestedText: string) => {
+    console.log('Apply fix:', issueId, suggestedText);
+  };
+
+  const selectedIssue = selectedIssueId ? issueDetails[selectedIssueId] : null;
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#FAF9F7' }}>
@@ -50,20 +98,6 @@ export default function ResultsPage() {
         <h1 className="text-2xl font-bold mb-6" style={{ color: '#1E3A5F' }}>
           CV Analysis Results
         </h1>
-        
-        {selectedIssue && (
-          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm text-blue-700">
-              Selected issue: <strong>{selectedIssue}</strong>
-              <button 
-                onClick={() => setSelectedIssue(null)}
-                className="ml-4 text-blue-500 hover:underline"
-              >
-                Clear
-              </button>
-            </p>
-          </div>
-        )}
         
         <DocumentView>
           <CVDocument 
@@ -73,6 +107,15 @@ export default function ResultsPage() {
           />
         </DocumentView>
       </div>
+
+      {selectedIssue && (
+        <TipBox
+          isOpen={isTipBoxOpen}
+          onClose={handleCloseTipBox}
+          issue={selectedIssue}
+          onApplyFix={handleApplyFix}
+        />
+      )}
     </div>
   );
 }

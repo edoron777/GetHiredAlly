@@ -1,0 +1,199 @@
+═══════════════════════════════════════════════════════════════════════════
+PROJECT: CV OPTIMIZER UNIFIED INTERFACE - PROMPT 6 OF 12
+═══════════════════════════════════════════════════════════════════════════
+
+CONTEXT:
+Continuing from Prompt 5. TipBox modal works.
+Now creating the left sidebar with score and issue navigation.
+
+───────────────────────────────────────────────────────────────────────────
+
+OBJECTIVE:
+Create IssueSidebar component with score display and issue navigation.
+
+FILES TO CREATE:
+
+1. client/src/components/cv-optimizer/IssueSidebar/IssueSidebar.tsx
+2. client/src/components/cv-optimizer/IssueSidebar/ScoreWidget.tsx
+3. client/src/components/cv-optimizer/IssueSidebar/IssueGroup.tsx
+4. client/src/components/cv-optimizer/IssueSidebar/index.ts
+
+SPECIFICATIONS:
+
+IssueSidebar.tsx Props:
+interface IssueSidebarProps {
+    score: number;
+    issues: Issue[];
+    onIssueClick: (issueId: string) => void;
+    selectedIssueId?: string;
+}
+
+ScoreWidget.tsx Props:
+interface ScoreWidgetProps {
+    score: number;
+    issuesCounts: {
+        critical: number;
+        important: number;
+        consider: number;
+        polish: number;
+    };
+}
+
+IssueGroup.tsx Props:
+interface IssueGroupProps {
+    severity: 'critical' | 'important' | 'consider' | 'polish';
+    issues: Issue[];
+    isExpanded: boolean;
+    onToggle: () => void;
+    onIssueClick: (issueId: string) => void;
+    selectedIssueId?: string;
+}
+
+LAYOUT:
+
+┌──────────────────┐
+│   ┌──────────┐   │
+│   │   64%    │   │  ← Score in circle
+│   │ CV Score │   │
+│   └──────────┘   │
+│                  │
+│  🔴 5  🟠 18     │  ← Issue counts by severity
+│  🟡 3  🟢 1      │
+│                  │
+│ ──────────────── │
+│                  │
+│ ▼ CRITICAL (5)   │  ← Collapsible group
+│   • Missing email│
+│   • Spelling err │
+│   • No summary   │
+│                  │
+│ ▶ IMPORTANT (18) │  ← Collapsed
+│                  │
+│ ▶ CONSIDER (3)   │
+│                  │
+│ ▶ POLISH (1)     │
+│                  │
+└──────────────────┘
+
+CSS (create sidebar.css):
+
+.issue-sidebar {
+    width: 280px;
+    background: #f9fafb;
+    border-right: 1px solid #e5e5e5;
+    height: 100%;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.score-widget {
+    text-align: center;
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.score-circle {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 6px solid #e5e5e5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 15px;
+}
+
+.score-number {
+    font-size: 32px;
+    font-weight: bold;
+}
+
+.score-label {
+    font-size: 12px;
+    color: #666;
+}
+
+.issue-counts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 15px;
+}
+
+.issue-count-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+}
+
+.issue-group {
+    margin-bottom: 10px;
+}
+
+.issue-group-header {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.issue-group-header:hover {
+    background: #e5e5e5;
+}
+
+.issue-group-items {
+    padding-left: 20px;
+}
+
+.issue-item {
+    padding: 8px 10px;
+    font-size: 13px;
+    cursor: pointer;
+    border-radius: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.issue-item:hover {
+    background: #e5e5e5;
+}
+
+.issue-item.selected {
+    background: #dbeafe;
+    font-weight: 500;
+}
+
+FUNCTIONALITY:
+- Click issue group header to expand/collapse
+- Click issue item to scroll to it in document + open TipBox
+- Selected issue is highlighted
+- Score circle border color based on score (red < 50, yellow 50-70, green > 70)
+
+UPDATE ResultsPage.tsx:
+- Replace sidebar placeholder with IssueSidebar
+- Connect onIssueClick to scroll logic + TipBox
+
+───────────────────────────────────────────────────────────────────────────
+
+VALIDATION:
+- Score displays correctly with color coding
+- Issue counts show per severity
+- Groups expand/collapse
+- Clicking issue highlights it
+- Clicking issue scrolls document to that marker
+
+───────────────────────────────────────────────────────────────────────────
+
+RULES REMINDER:
+- Follow AGENTS.MD protected files rules
+- Follow REPLIT.MD development guidelines
+
+═══════════════════════════════════════════════════════════════════════════
