@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { FileText, List } from 'lucide-react';
 import DocumentView from '../../components/cv-optimizer/DocumentView';
 import { CVDocument } from '../../components/cv-optimizer/DocumentView';
 import TipBox from '../../components/cv-optimizer/TipBox';
 import IssueSidebar from '../../components/cv-optimizer/IssueSidebar';
 import ContentSelector from '../../components/cv-optimizer/ContentSelector';
 import QuickFormatPanel from '../../components/cv-optimizer/QuickFormatPanel';
+import ListViewTab from '../../components/cv-optimizer/ListViewTab';
 
 const sampleCvContent = {
   fullText: `JOHN DOE
@@ -105,6 +107,7 @@ export default function ResultsPage() {
   const [isTipBoxOpen, setIsTipBoxOpen] = useState(false);
   const [selectedExportContent, setSelectedExportContent] = useState<'cv' | 'recommendations' | 'both'>('cv');
   const [isApplyingFixes, setIsApplyingFixes] = useState(false);
+  const [activeTab, setActiveTab] = useState<'document' | 'list'>('document');
 
   const handleIssueClick = (issueId: string) => {
     setSelectedIssueId(issueId);
@@ -143,6 +146,15 @@ export default function ResultsPage() {
     { id: 'f6', issueType: 'CAPITALIZATION' },
   ];
 
+  const listViewIssues = sampleIssues.map(issue => ({
+    id: issue.id,
+    severity: issue.severity,
+    title: issue.title,
+    description: issueDetails[issue.id]?.description || 'Review this section for improvement opportunities.',
+    currentText: issue.matchText,
+    suggestedText: issueDetails[issue.id]?.suggestedFix,
+  }));
+
   return (
     <div className="min-h-screen flex" style={{ backgroundColor: '#FAF9F7' }}>
       <IssueSidebar
@@ -173,20 +185,55 @@ export default function ResultsPage() {
               </button>
             </div>
           </div>
-          
-          <DocumentView>
-            <CVDocument 
-              cvContent={sampleCvContent} 
-              issues={sampleIssues}
-              onIssueClick={handleIssueClick}
-            />
-          </DocumentView>
 
-          <QuickFormatPanel
-            issues={formatIssues}
-            onApplyFixes={handleApplyQuickFixes}
-            isApplying={isApplyingFixes}
-          />
+          <div className="flex gap-2 mb-6">
+            <button
+              onClick={() => setActiveTab('document')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                activeTab === 'document'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <FileText size={16} />
+              Document View
+            </button>
+            <button
+              onClick={() => setActiveTab('list')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                activeTab === 'list'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <List size={16} />
+              List View
+            </button>
+          </div>
+          
+          {activeTab === 'document' ? (
+            <>
+              <DocumentView>
+                <CVDocument 
+                  cvContent={sampleCvContent} 
+                  issues={sampleIssues}
+                  onIssueClick={handleIssueClick}
+                />
+              </DocumentView>
+
+              <QuickFormatPanel
+                issues={formatIssues}
+                onApplyFixes={handleApplyQuickFixes}
+                isApplying={isApplyingFixes}
+              />
+            </>
+          ) : (
+            <ListViewTab
+              issues={listViewIssues}
+              onIssueClick={handleIssueClick}
+              onApplyFix={handleApplyFix}
+            />
+          )}
         </div>
       </div>
 

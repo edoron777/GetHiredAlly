@@ -19,6 +19,7 @@ import { CVReportPage } from '@/components/CVReportPage'
 import { CVFixedPage } from '@/components/CVFixedPage'
 import { CVFixingPage } from '@/components/CVFixingPage'
 import CVCrossroadsPage from '@/pages/CVCrossroadsPage'
+import UnifiedResultsPage from '@/pages/cv-optimizer/ResultsPage'
 import { UserSettingsPage } from '@/components/UserSettingsPage'
 import { AdminLayout } from '@/layouts/AdminLayout'
 import { AdminOverview, AdminUsers, AdminSettings } from '@/pages/admin'
@@ -71,6 +72,7 @@ function App() {
               <Route path="/service/cv-optimizer/report/:scanId/details" element={<CVReportPage />} />
               <Route path="/service/cv-optimizer/fixing/:scanId" element={<CVFixingPage />} />
               <Route path="/service/cv-optimizer/fixed/:scanId" element={<CVFixedPage />} />
+              <Route path="/service/cv-optimizer/unified" element={<UnifiedResultsPage />} />
               <Route path="/settings" element={<UserSettingsPage />} />
             </Routes>
           </Layout>

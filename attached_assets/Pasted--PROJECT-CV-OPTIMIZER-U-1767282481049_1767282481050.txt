@@ -1,0 +1,83 @@
+═══════════════════════════════════════════════════════════════════════════
+PROJECT: CV OPTIMIZER UNIFIED INTERFACE - PROMPT 10 OF 12
+═══════════════════════════════════════════════════════════════════════════
+
+CONTEXT:
+Continuing from Prompt 9. All components created.
+Now connecting everything and setting up routing.
+
+───────────────────────────────────────────────────────────────────────────
+
+OBJECTIVE:
+Integrate all components and set up proper routing.
+
+TASKS:
+
+1. INTEGRATE ACTIONBAR
+   - Import existing ActionBar component
+   - Place in toolbar area (right side of ContentSelector)
+   - Connect to DocStyler for exports
+   - Pass selectedExportContent to determine what to export
+
+2. ADD ROUTE
+   - Add route for /cv-optimizer/results
+   - Route should render ResultsPage
+
+3. CONNECT TAB SWITCHING
+   - Toolbar tabs: "Document View" | "List View"
+   - State: activeTab
+   - Render appropriate content based on tab
+
+4. CONNECT ISSUE INTERACTIONS
+   - Sidebar issue click → scroll to marker in Document View
+   - Marker click → open TipBox
+   - TipBox "Apply" → update CV content → refresh
+
+5. CONNECT EXPORTS
+   - ContentSelector selection → determines export content
+   - ActionBar buttons → trigger DocStyler with correct content
+   - Export options: Copy | Email | PDF | Word | Markdown
+
+FILES TO MODIFY:
+
+1. ResultsPage.tsx - Full integration
+2. App.tsx or routes file - Add new route
+
+TOOLBAR FINAL LAYOUT:
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│  [📄 Document] [📋 List]     Export: [Optimized CV ▼]  [Copy][PDF][...]│
+└─────────────────────────────────────────────────────────────────────────┘
+
+INTEGRATION CHECKLIST:
+
+[ ] ActionBar imported and placed
+[ ] ContentSelector connected to export logic
+[ ] Tab switching works
+[ ] Sidebar → Document scroll works
+[ ] Marker → TipBox works
+[ ] TipBox → Apply fix works
+[ ] QuickFormat → Apply fixes works
+[ ] All exports work (Copy, PDF, Word, MD)
+[ ] Route added and accessible
+
+───────────────────────────────────────────────────────────────────────────
+
+TEST SCENARIOS:
+
+1. Navigate to /cv-optimizer/results?cv_id=xxx
+2. Verify Document View displays CV with markers
+3. Click marker → TipBox opens
+4. Apply fix → CV updates
+5. Switch to List View → cards display
+6. Change export selection → export correct content
+7. Export PDF → downloads correct file
+
+───────────────────────────────────────────────────────────────────────────
+
+RULES REMINDER:
+- Follow AGENTS.MD protected files rules
+- Follow REPLIT.MD development guidelines
+- Use existing ActionBar and DocStyler (don't recreate)
+
+═══════════════════════════════════════════════════════════════════════════
