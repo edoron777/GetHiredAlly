@@ -1,0 +1,74 @@
+═══════════════════════════════════════════════════════════════════════════
+PROJECT: CV OPTIMIZER DATA INTEGRATION - PROMPT 1 OF 5
+═══════════════════════════════════════════════════════════════════════════
+
+CONTEXT:
+Before connecting data, remove unwanted features that Replit Agent 
+added without request.
+
+───────────────────────────────────────────────────────────────────────────
+
+TASK: REMOVE SESSION PERSISTENCE FEATURES
+
+REMOVE ITEM 1: "Analysis in Progress" Box
+
+Location: CV Upload page (likely CVUploadPage.tsx or similar)
+
+Find and DELETE the entire section that shows:
+- "You have an analysis in progress"
+- File name with score and issue count
+- "Continue Analysis" button
+- "Start New" button
+
+REMOVE ITEM 2: "Replace Current Analysis?" Dialog
+
+Location: CV Upload page or a modal component
+
+Find and DELETE:
+- The modal/dialog asking "Replace Current Analysis?"
+- Shows CURRENT vs NEW comparison
+- "Cancel" and "Replace & Scan" buttons
+
+REMOVE ITEM 3: Session Check Logic
+
+Find and DELETE any code that:
+- Checks for existing analysis on page load
+- Stores current analysis ID in state/context
+- Compares new upload with existing analysis
+
+AFTER REMOVAL:
+
+Upload flow should be simple:
+1. User uploads CV
+2. Scan starts immediately
+3. No questions, no dialogs
+4. Each upload = fresh analysis
+
+───────────────────────────────────────────────────────────────────────────
+
+FILES TO CHECK:
+- pages/cv-optimizer/CVUploadPage.tsx
+- pages/cv-optimizer/index.tsx
+- components/cv-optimizer/UploadForm.tsx (or similar)
+- Any modal/dialog components in cv-optimizer folder
+
+SEARCH FOR:
+- "analysis in progress"
+- "Continue Analysis"
+- "Replace Current"
+- "Replace & Scan"
+- "currentAnalysis"
+- "existingAnalysis"
+- "pendingAnalysis"
+
+───────────────────────────────────────────────────────────────────────────
+
+VALIDATION:
+[ ] Upload page shows ONLY the upload area
+[ ] No "analysis in progress" box
+[ ] Uploading CV goes directly to scanning (no dialog)
+[ ] No console errors
+
+DO NOT modify ResultsPage or Document View yet - that's next prompt.
+
+═══════════════════════════════════════════════════════════════════════════
