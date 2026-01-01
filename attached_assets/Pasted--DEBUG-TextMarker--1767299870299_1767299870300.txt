@@ -1,0 +1,125 @@
+═══════════════════════════════════════════════════════════════════════════
+🔍 DEBUG: TextMarker + TipBox Not Working
+═══════════════════════════════════════════════════════════════════════════
+
+PROBLEM:
+- Markers NOT appearing on CV text
+- TipBox NOT opening when clicking
+
+NEED TO INVESTIGATE:
+1. Is TextMarker being rendered?
+2. Is the data passed correctly?
+3. Are there console errors?
+
+───────────────────────────────────────────────────────────────────────────
+
+TASK 1: CHECK TEXTMARKER USAGE IN CVDOCUMENT
+
+Find CVDocument.tsx and check:
+- Is TextMarker imported?
+- Is TextMarker being used?
+- What data is passed to it?
+
+FILE: client/src/components/cv-optimizer/DocumentView/CVDocument.tsx
+
+SHOW ME:
+1. All imports at top of file
+2. Where TextMarker is used (or where content is rendered)
+3. The props passed to TextMarker
+
+───────────────────────────────────────────────────────────────────────────
+
+TASK 2: ADD DEBUG LOGGING
+
+In CVDocument.tsx, add console logs:
+```typescript
+console.log('=== CVDOCUMENT DEBUG ===')
+console.log('1. cvContent:', cvContent)
+console.log('2. cvContent.fullText length:', cvContent?.fullText?.length)
+console.log('3. issues:', issues)
+console.log('4. issues count:', issues?.length)
+if (issues?.length > 0) {
+  console.log('5. First issue:', issues[0])
+  console.log('6. First issue matchText:', issues[0]?.matchText || issues[0]?.current_text)
+}
+console.log('=== END DEBUG ===')
+```
+
+───────────────────────────────────────────────────────────────────────────
+
+TASK 3: VERIFY TEXTMARKER IS RENDERING
+
+In CVDocument.tsx, check if TextMarker component is actually used.
+
+EXPECTED:
+```typescript
+import { TextMarker, CV_OPTIMIZER_COLORS } from '../../common/TextMarker'
+
+// In render:
+<TextMarker
+  content={cvContent.fullText}
+  markers={...}
+  config={{
+    style: 'underline',
+    tagColors: CV_OPTIMIZER_COLORS,
+    icon: { icon: 'ⓘ', position: 'after' },
+    onClick: onIssueClick
+  }}
+/>
+```
+
+IF TextMarker is NOT used, it means the integration prompt was not fully applied.
+
+───────────────────────────────────────────────────────────────────────────
+
+TASK 4: CHECK IF OLD RENDERING EXISTS
+
+Look for old way of rendering CV content like:
+- {cvContent.fullText}
+- <p>{content}</p>
+- <div dangerouslySetInnerHTML=...>
+
+If found, this needs to be REPLACED with TextMarker.
+
+───────────────────────────────────────────────────────────────────────────
+
+TASK 5: VERIFY ONCLICK HANDLER CHAIN
+
+Check if onClick flows correctly:
+
+1. TextMarker config.onClick → should call onIssueClick prop
+2. onIssueClick prop → should be passed from parent (ResultsPage)
+3. ResultsPage handleIssueClick → should set state and open TipBox
+
+TRACE THE CHAIN:
+- CVDocument receives onIssueClick prop? YES/NO
+- TextMarker config has onClick? YES/NO
+- onClick calls onIssueClick? YES/NO
+
+───────────────────────────────────────────────────────────────────────────
+
+REPORT FORMAT:
+
+## DEBUG FINDINGS
+
+### CVDocument.tsx Status:
+- Uses TextMarker: YES/NO
+- Has correct imports: YES/NO
+- Passes onClick handler: YES/NO
+
+### Data Status:
+- cvContent.fullText exists: YES/NO (length: X)
+- issues array exists: YES/NO (count: X)
+- issues have matchText: YES/NO
+
+### Problem Found:
+[Describe what's wrong]
+
+### Fix Needed:
+[What needs to be changed]
+
+───────────────────────────────────────────────────────────────────────────
+
+DO NOT FIX YET - Just investigate and report.
+
+═══════════════════════════════════════════════════════════════════════════
