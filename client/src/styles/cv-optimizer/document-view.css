@@ -9,8 +9,8 @@
 
 .document-paper {
     background: white;
-    max-width: 800px;
-    width: 100%;
+    max-width: 950px;
+    width: 90%;
     min-height: 1000px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     padding: 50px;

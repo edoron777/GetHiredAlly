@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, Upload, FileText, Search, Clock, ChevronRight, X } from 'lucide-react'
+import { ArrowLeft, Upload, FileText, Search, X } from 'lucide-react'
 import { isAuthenticated, getAuthToken } from '@/lib/auth'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024
@@ -27,7 +27,6 @@ export function CVOptimizerPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [existingScan, setExistingScan] = useState<ExistingScan | null>(null)
-  const [loadingExistingScan, setLoadingExistingScan] = useState(true)
   const [showClearConfirm, setShowClearConfirm] = useState(false)
   const [showReplaceConfirm, setShowReplaceConfirm] = useState(false)
   const [fileToUpload, setFileToUpload] = useState<File | null>(null)
@@ -50,8 +49,6 @@ export function CVOptimizerPage() {
         }
       } catch (error) {
         console.error('Error fetching existing scan:', error)
-      } finally {
-        setLoadingExistingScan(false)
       }
     }
     fetchExistingScan()
@@ -61,21 +58,6 @@ export function CVOptimizerPage() {
     if (bytes < 1024) return bytes + ' B'
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
-  }
-
-  const formatTimeAgo = (dateString: string) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffMs = now.getTime() - date.getTime()
-    const diffMins = Math.floor(diffMs / 60000)
-    const diffHours = Math.floor(diffMins / 60)
-    const diffDays = Math.floor(diffHours / 24)
-
-    if (diffMins < 1) return 'Just now'
-    if (diffMins < 60) return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`
-    if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`
-    if (diffDays < 7) return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`
-    return date.toLocaleDateString()
   }
 
   const validateAndSetFile = (file: File) => {
@@ -221,12 +203,6 @@ export function CVOptimizerPage() {
     }
   }
 
-  const getScoreColor = (score: number) => {
-    if (score >= 70) return 'text-green-600'
-    if (score >= 50) return 'text-yellow-600'
-    return 'text-red-600'
-  }
-
   return (
     <div className="min-h-[calc(100vh-64px)] p-8" style={{ backgroundColor: '#FAF9F7' }}>
       <div className="max-w-2xl mx-auto">
@@ -259,44 +235,6 @@ export function CVOptimizerPage() {
           </li>
         </ul>
 
-        {!loadingExistingScan && existingScan && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1">
-                <h3 className="font-semibold text-blue-900 flex items-center gap-2">
-                  <FileText size={18} />
-                  You have an analysis in progress
-                </h3>
-                <p className="text-sm text-blue-700 mt-1">
-                  <span className="font-medium">{existingScan.cv_filename}</span>
-                  {' '}&bull;{' '}
-                  Score: <span className={`font-bold ${getScoreColor(existingScan.score)}`}>{existingScan.score}%</span>
-                  {' '}&bull;{' '}
-                  {existingScan.total_issues} issues found
-                </p>
-                <p className="text-xs text-blue-500 mt-1 flex items-center gap-1">
-                  <Clock size={12} />
-                  {formatTimeAgo(existingScan.created_at)}
-                </p>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-2">
-                <Link 
-                  to={`/service/cv-optimizer/unified?cv_id=${existingScan.id}`}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm font-medium flex items-center gap-1 whitespace-nowrap"
-                >
-                  Continue Analysis
-                  <ChevronRight size={16} />
-                </Link>
-                <button 
-                  onClick={() => setShowClearConfirm(true)}
-                  className="bg-white text-blue-600 border border-blue-300 px-4 py-2 rounded-lg hover:bg-blue-50 text-sm font-medium whitespace-nowrap"
-                >
-                  Start New
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
 
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">

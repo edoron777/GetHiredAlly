@@ -1,5 +1,6 @@
-import { useState, useRef } from 'react';
-import { FileText, List, Copy, Check } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { FileText, List, Copy, Check, ArrowLeft, Loader2 } from 'lucide-react';
 import DocumentView from '../../components/cv-optimizer/DocumentView';
 import { CVDocument } from '../../components/cv-optimizer/DocumentView';
 import TipBox from '../../components/cv-optimizer/TipBox';
@@ -8,109 +9,103 @@ import ContentSelector from '../../components/cv-optimizer/ContentSelector';
 import QuickFormatPanel from '../../components/cv-optimizer/QuickFormatPanel';
 import ListViewTab from '../../components/cv-optimizer/ListViewTab';
 import { DocStyler } from '../../components/common/DocStyler';
+import { getAuthToken, isAuthenticated } from '../../lib/auth';
 
-const sampleCvContent = {
-  fullText: `JOHN DOE
-john.doe@email.com | +1-555-123-4567 | linkedin.com/in/johndoe
+interface CVIssue {
+  id: string;
+  severity: 'critical' | 'important' | 'consider' | 'polish';
+  issue_type?: string;
+  issueType?: string;
+  title?: string;
+  issue_title?: string;
+  description?: string;
+  issue_description?: string;
+  problematic_text?: string;
+  matchText?: string;
+  current_text?: string;
+  suggested_fix?: string;
+  suggestedText?: string;
+  impact?: string;
+  howToFix?: string;
+  how_to_fix?: string;
+}
 
-PROFESSIONAL SUMMARY:
-Results-driven software engineer with 8+ years of experience building scalable web applications. Expert in React, TypeScript, and cloud technologies.
-
-EXPERIENCE:
-
-Senior Software Engineer | TechCorp Inc. | 2020 - Present
-• Led development of customer-facing dashboard serving 100K+ users
-• Reduced page load time by 40% through performance optimization
-• Mentored team of 5 junior developers
-
-Software Engineer | StartupXYZ | 2017 - 2020
-• Built RESTful APIs handling 1M+ requests daily
-• Implemented CI/CD pipeline reducing deployment time by 60%
-• Collaborated with product team on feature prioritization
-
-EDUCATION:
-
-Bachelor of Science in Computer Science
-University of Technology | 2017
-
-SKILLS:
-React, TypeScript, Node.js, Python, AWS, Docker, PostgreSQL, GraphQL`
-};
-
-const sampleIssues = [
-  { id: '1', severity: 'important' as const, matchText: 'Results-driven', title: 'Overused Buzzword' },
-  { id: '2', severity: 'consider' as const, matchText: 'Collaborated with product team', title: 'Vague Statement' },
-  { id: '3', severity: 'polish' as const, matchText: '2017', title: 'Date Format' },
-  { id: '4', severity: 'critical' as const, matchText: 'john.doe@email.com', title: 'Generic Email' },
-  { id: '5', severity: 'important' as const, matchText: 'Expert in', title: 'Self-Assessment' },
-];
-
-const issueDetails: Record<string, any> = {
-  '1': {
-    id: '1',
-    severity: 'important',
-    issueType: 'WEAK_PHRASE',
-    title: 'Overused Buzzword',
-    description: 'The phrase "Results-driven" is overused in CVs.',
-    currentText: 'Results-driven software engineer',
-    suggestedText: 'Software engineer who delivered 40% performance gains',
-    impact: 'Recruiters see "results-driven" hundreds of times daily. It\'s lost all meaning and makes your CV blend in rather than stand out.',
-    howToFix: 'Replace with a specific achievement that demonstrates results. Quantify your impact whenever possible.',
-  },
-  '2': {
-    id: '2',
-    severity: 'consider',
-    issueType: 'VAGUE_STATEMENT',
-    title: 'Vague Collaboration Statement',
-    description: 'This statement lacks specific outcomes.',
-    currentText: 'Collaborated with product team on feature prioritization',
-    suggestedText: 'Partnered with product team to prioritize 15+ features, accelerating quarterly delivery by 25%',
-    impact: 'Without measurable outcomes, this bullet point tells the recruiter what you did but not how well you did it.',
-    howToFix: 'Add metrics or outcomes. How many features? What was the impact on delivery time or customer satisfaction?',
-  },
-  '3': {
-    id: '3',
-    severity: 'polish',
-    issueType: 'DATE_FORMAT',
-    title: 'Inconsistent Date Format',
-    description: 'Date format could be more specific.',
-    currentText: '2017',
-    suggestedText: 'May 2017',
-    impact: 'Minor issue, but adding the month looks more precise and professional.',
-    howToFix: 'Add the graduation month for a polished appearance.',
-  },
-  '4': {
-    id: '4',
-    severity: 'critical',
-    issueType: 'CONTACT_INFO',
-    title: 'Generic Email Address',
-    description: 'Using a sample/demo email address.',
-    currentText: 'john.doe@email.com',
-    suggestedText: 'johndoe.dev@gmail.com',
-    impact: 'This appears to be a placeholder email. Recruiters won\'t be able to contact you!',
-    howToFix: 'Replace with your actual professional email address.',
-  },
-  '5': {
-    id: '5',
-    severity: 'important',
-    issueType: 'SELF_ASSESSMENT',
-    title: 'Self-Proclaimed Expert',
-    description: 'Calling yourself an "expert" without proof.',
-    currentText: 'Expert in React, TypeScript',
-    suggestedText: '5+ years building production React/TypeScript applications',
-    impact: 'Self-proclaimed expertise can seem arrogant. Let your experience speak for itself.',
-    howToFix: 'Replace with years of experience or specific achievements that demonstrate expertise.',
-  },
-};
+interface ReportData {
+  scan_id: number;
+  cv_content: string;
+  issues: CVIssue[];
+  cv_score: number;
+  total_issues: number;
+  critical_count: number;
+  high_count: number;
+  medium_count: number;
+  low_count: number;
+}
 
 export default function ResultsPage() {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const cvId = searchParams.get('cv_id');
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [reportData, setReportData] = useState<ReportData | null>(null);
+
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
   const [isTipBoxOpen, setIsTipBoxOpen] = useState(false);
   const [selectedExportContent, setSelectedExportContent] = useState<'cv' | 'recommendations' | 'both'>('cv');
   const [isApplyingFixes, setIsApplyingFixes] = useState(false);
   const [activeTab, setActiveTab] = useState<'document' | 'list'>('document');
   const [copied, setCopied] = useState(false);
-  const documentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      navigate('/login');
+      return;
+    }
+
+    if (!cvId) {
+      setError('No CV ID provided');
+      setLoading(false);
+      return;
+    }
+
+    const fetchReport = async () => {
+      try {
+        const token = getAuthToken();
+        const response = await fetch(`/api/cv-optimizer/report/${cvId}?token=${token}`);
+        
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error('CV analysis not found');
+          }
+          throw new Error('Failed to load CV analysis');
+        }
+
+        const data = await response.json();
+        setReportData(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReport();
+  }, [cvId, navigate]);
+
+  const normalizeIssue = (issue: CVIssue, index: number) => ({
+    id: issue.id || String(index + 1),
+    severity: issue.severity,
+    issueType: issue.issue_type || issue.issueType || 'UNKNOWN',
+    title: issue.title || issue.issue_title || 'Issue',
+    description: issue.description || issue.issue_description || '',
+    matchText: issue.problematic_text || issue.matchText || issue.current_text || '',
+    currentText: issue.current_text || issue.problematic_text || issue.matchText || '',
+    suggestedText: issue.suggested_fix || issue.suggestedText || '',
+    impact: issue.impact || '',
+    howToFix: issue.how_to_fix || issue.howToFix || '',
+  });
 
   const handleIssueClick = (issueId: string) => {
     setSelectedIssueId(issueId);
@@ -141,10 +136,12 @@ export default function ResultsPage() {
   };
 
   const getExportContent = () => {
-    const cvMarkdown = `# CV\n\n${sampleCvContent.fullText}`;
-    const recommendationsMarkdown = sampleIssues.map(issue => {
-      const detail = issueDetails[issue.id];
-      return `## ${issue.title}\n**Severity:** ${issue.severity}\n\n${detail?.description || ''}\n\n**Current:** ${issue.matchText}\n**Suggested:** ${detail?.suggestedText || 'N/A'}`;
+    if (!reportData) return '';
+    
+    const cvMarkdown = `# CV\n\n${reportData.cv_content}`;
+    const normalizedIssues = reportData.issues.map((issue, i) => normalizeIssue(issue, i));
+    const recommendationsMarkdown = normalizedIssues.map(issue => {
+      return `## ${issue.title}\n**Severity:** ${issue.severity}\n\n${issue.description}\n\n**Current:** ${issue.matchText}\n**Suggested:** ${issue.suggestedText || 'N/A'}`;
     }).join('\n\n---\n\n');
 
     if (selectedExportContent === 'cv') return cvMarkdown;
@@ -180,36 +177,78 @@ export default function ResultsPage() {
     });
   };
 
-  const selectedIssue = selectedIssueId ? issueDetails[selectedIssueId] : null;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#FAF9F7' }}>
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
+          <p className="text-gray-600">Loading your CV analysis...</p>
+        </div>
+      </div>
+    );
+  }
 
-  const sidebarIssues = sampleIssues.map(issue => ({
+  if (error || !reportData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-8" style={{ backgroundColor: '#FAF9F7' }}>
+        <div className="text-center max-w-md">
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Unable to Load Analysis</h2>
+          <p className="text-gray-600 mb-4">{error || 'Something went wrong'}</p>
+          <button 
+            onClick={() => navigate('/service/cv-optimizer')}
+            className="flex items-center gap-2 mx-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            <ArrowLeft size={16} />
+            Back to CV Optimizer
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const normalizedIssues = reportData.issues.map((issue, i) => normalizeIssue(issue, i));
+
+  const cvContent = {
+    fullText: reportData.cv_content
+  };
+
+  const documentIssues = normalizedIssues.map(issue => ({
+    id: issue.id,
+    severity: issue.severity,
+    matchText: issue.matchText,
+    title: issue.title,
+  }));
+
+  const sidebarIssues = normalizedIssues.map(issue => ({
     id: issue.id,
     title: issue.title,
     severity: issue.severity,
   }));
 
-  const formatIssues = [
-    { id: 'f1', issueType: 'SPACING' },
-    { id: 'f2', issueType: 'SPACING' },
-    { id: 'f3', issueType: 'BULLETS' },
-    { id: 'f4', issueType: 'DATE_FORMAT' },
-    { id: 'f5', issueType: 'DATE_FORMAT' },
-    { id: 'f6', issueType: 'CAPITALIZATION' },
-  ];
+  const issueDetails: Record<string, typeof normalizedIssues[0]> = {};
+  normalizedIssues.forEach(issue => {
+    issueDetails[issue.id] = issue;
+  });
 
-  const listViewIssues = sampleIssues.map(issue => ({
+  const selectedIssue = selectedIssueId ? issueDetails[selectedIssueId] : null;
+
+  const formatIssues = normalizedIssues
+    .filter(i => ['SPACING', 'BULLETS', 'DATE_FORMAT', 'CAPITALIZATION'].includes(i.issueType))
+    .map(i => ({ id: i.id, issueType: i.issueType }));
+
+  const listViewIssues = normalizedIssues.map(issue => ({
     id: issue.id,
     severity: issue.severity,
     title: issue.title,
-    description: issueDetails[issue.id]?.description || 'Review this section for improvement opportunities.',
-    currentText: issue.matchText,
-    suggestedText: issueDetails[issue.id]?.suggestedText,
+    description: issue.description || 'Review this section for improvement opportunities.',
+    currentText: issue.currentText,
+    suggestedText: issue.suggestedText,
   }));
 
   return (
     <div className="min-h-screen flex" style={{ backgroundColor: '#FAF9F7' }}>
       <IssueSidebar
-        score={64}
+        score={reportData.cv_score}
         issues={sidebarIssues}
         onIssueClick={handleIssueClick}
         selectedIssueId={selectedIssueId || undefined}
@@ -291,17 +330,19 @@ export default function ResultsPage() {
             <>
               <DocumentView>
                 <CVDocument 
-                  cvContent={sampleCvContent} 
-                  issues={sampleIssues}
+                  cvContent={cvContent} 
+                  issues={documentIssues}
                   onIssueClick={handleIssueClick}
                 />
               </DocumentView>
 
-              <QuickFormatPanel
-                issues={formatIssues}
-                onApplyFixes={handleApplyQuickFixes}
-                isApplying={isApplyingFixes}
-              />
+              {formatIssues.length > 0 && (
+                <QuickFormatPanel
+                  issues={formatIssues}
+                  onApplyFixes={handleApplyQuickFixes}
+                  isApplying={isApplyingFixes}
+                />
+              )}
             </>
           ) : (
             <ListViewTab
@@ -317,7 +358,17 @@ export default function ResultsPage() {
         <TipBox
           isOpen={isTipBoxOpen}
           onClose={handleCloseTipBox}
-          issue={selectedIssue}
+          issue={{
+            id: selectedIssue.id,
+            severity: selectedIssue.severity,
+            issueType: selectedIssue.issueType,
+            title: selectedIssue.title,
+            description: selectedIssue.description,
+            currentText: selectedIssue.currentText,
+            suggestedText: selectedIssue.suggestedText,
+            impact: selectedIssue.impact,
+            howToFix: selectedIssue.howToFix,
+          }}
           onApplyFix={handleApplyFix}
         />
       )}

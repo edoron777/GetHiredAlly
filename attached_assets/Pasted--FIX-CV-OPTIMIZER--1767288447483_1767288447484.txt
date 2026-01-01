@@ -1,0 +1,104 @@
+═══════════════════════════════════════════════════════════════════════════
+🔧 FIX: CV OPTIMIZER - PRODUCTION DATA + UI IMPROVEMENTS
+═══════════════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL: This is a bug fix, not a new feature.
+
+───────────────────────────────────────────────────────────────────────────
+
+PROBLEM 1: DOCUMENT VIEW SHOWS DEMO DATA
+
+Current behavior:
+- User uploads CV (e.g., "David Cohen")
+- Document View shows "John Doe" (hardcoded demo data)
+
+Expected behavior:
+- User uploads CV (e.g., "David Cohen")
+- Document View shows actual CV content from database
+
+ROOT CAUSE:
+The CVDocument component uses hardcoded demo data instead of reading 
+from the cv_analyses table in the database.
+
+FIX REQUIRED:
+1. Find where "John Doe" demo data is defined in CVDocument or DocumentView
+2. Replace with actual data from API response
+3. The data should come from: GET /api/cv-optimizer/analysis/{cv_id}
+4. Use the cv_content or full_text field from the response
+
+FILES TO CHECK:
+- components/cv-optimizer/DocumentView/CVDocument.tsx
+- components/cv-optimizer/DocumentView/DocumentView.tsx
+- pages/cv-optimizer/ResultsPage.tsx
+
+SEARCH FOR:
+- "John Doe"
+- "john.doe"
+- "JOHN DOE"
+- Any hardcoded CV content
+
+───────────────────────────────────────────────────────────────────────────
+
+PROBLEM 2: MARGINS TOO WIDE
+
+Current:
+- Document paper max-width: 800px (too narrow)
+- Too much gray space on sides
+
+Fix:
+- Change max-width to 950px
+- OR use width: 90% with max-width: 1000px
+
+FILE TO MODIFY:
+- styles/cv-optimizer/document-view.css
+- OR inline styles in DocumentView.tsx
+
+FIND:
+.document-paper {
+    max-width: 800px;
+}
+
+CHANGE TO:
+.document-paper {
+    max-width: 950px;
+    width: 90%;
+}
+
+───────────────────────────────────────────────────────────────────────────
+
+PROBLEM 3: REMOVE "ANALYSIS IN PROGRESS" BOX
+
+Location: Upload page / Perfect Your CV page
+
+Remove the entire box that shows:
+- "You have an analysis in progress"
+- File name, score, issues count
+- "Continue Analysis" button
+- "Start New" button
+
+FILE TO MODIFY:
+- pages/cv-optimizer/CVUploadPage.tsx (or similar)
+
+ACTION:
+- Find and remove this component/section entirely
+- Keep only the upload area
+
+───────────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+
+After fixes:
+
+[ ] Upload a CV → Document View shows THAT CV's content (not John Doe)
+[ ] Document area is wider (less wasted gray space)
+[ ] Upload page has NO "analysis in progress" box
+[ ] No console errors
+
+───────────────────────────────────────────────────────────────────────────
+
+DO NOT:
+- Add new features
+- Change other functionality
+- Modify database schema
+
+═══════════════════════════════════════════════════════════════════════════
