@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import DocumentView from '../../components/cv-optimizer/DocumentView';
 import { CVDocument } from '../../components/cv-optimizer/DocumentView';
 
@@ -29,7 +30,20 @@ SKILLS:
 React, TypeScript, Node.js, Python, AWS, Docker, PostgreSQL, GraphQL`
 };
 
+const sampleIssues = [
+  { id: '1', severity: 'important' as const, matchText: 'Results-driven' },
+  { id: '2', severity: 'consider' as const, matchText: 'Collaborated with product team' },
+  { id: '3', severity: 'polish' as const, matchText: '2017' },
+];
+
 export default function ResultsPage() {
+  const [selectedIssue, setSelectedIssue] = useState<string | null>(null);
+
+  const handleIssueClick = (issueId: string) => {
+    setSelectedIssue(issueId);
+    console.log('Issue clicked:', issueId);
+  };
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#FAF9F7' }}>
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -37,8 +51,26 @@ export default function ResultsPage() {
           CV Analysis Results
         </h1>
         
+        {selectedIssue && (
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-700">
+              Selected issue: <strong>{selectedIssue}</strong>
+              <button 
+                onClick={() => setSelectedIssue(null)}
+                className="ml-4 text-blue-500 hover:underline"
+              >
+                Clear
+              </button>
+            </p>
+          </div>
+        )}
+        
         <DocumentView>
-          <CVDocument cvContent={sampleCvContent} />
+          <CVDocument 
+            cvContent={sampleCvContent} 
+            issues={sampleIssues}
+            onIssueClick={handleIssueClick}
+          />
         </DocumentView>
       </div>
     </div>
