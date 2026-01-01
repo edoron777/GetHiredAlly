@@ -1,0 +1,158 @@
+═══════════════════════════════════════════════════════════════════════════
+🔍 INVESTIGATION: CV OPTIMIZER DATA INTEGRATION
+═══════════════════════════════════════════════════════════════════════════
+
+PURPOSE:
+Before making changes, I need to understand the current implementation.
+DO NOT CHANGE ANY CODE. Only investigate and report.
+
+───────────────────────────────────────────────────────────────────────────
+
+INVESTIGATION 1: FIND DEMO/PLACEHOLDER DATA
+
+Search the codebase for hardcoded demo data.
+
+SEARCH FOR:
+- "John Doe"
+- "john.doe"
+- "JOHN DOE"
+- "jane.doe"
+- "example@"
+- "placeholder"
+- "demo"
+- "mock"
+- "sample data"
+- "dummy"
+
+REPORT FORMAT:
+| File | Line | Content Found |
+|------|------|---------------|
+| ... | ... | ... |
+
+───────────────────────────────────────────────────────────────────────────
+
+INVESTIGATION 2: HOW DOES OLD PAGE FETCH DATA?
+
+Find the OLD "Your Recommendations" page or similar working page.
+
+LIKELY LOCATIONS:
+- pages/cv-optimizer/RecommendationsPage.tsx
+- pages/cv-optimizer/YourRecommendations.tsx
+- pages/cv-optimizer/AnalysisResults.tsx
+
+FIND AND REPORT:
+1. How does it get cv_id? (URL param, query string, context?)
+2. What API endpoint does it call?
+3. What hook or function fetches data?
+4. What is the response structure?
+
+COPY THE EXACT FETCH CODE and show me.
+
+───────────────────────────────────────────────────────────────────────────
+
+INVESTIGATION 3: API ENDPOINT STRUCTURE
+
+Find the backend API endpoint for CV analysis.
+
+LIKELY LOCATIONS:
+- server/routes/cv-optimizer.ts
+- api/cv-optimizer/analysis.ts
+- backend/cv_optimizer/routes.py
+
+REPORT:
+1. Endpoint URL pattern
+2. What database tables does it query?
+3. What fields does it return?
+4. Show me the response JSON structure
+
+───────────────────────────────────────────────────────────────────────────
+
+INVESTIGATION 4: NEW RESULTSPAGE CURRENT STATE
+
+Find the NEW ResultsPage created by previous prompts.
+
+LOCATION:
+- pages/cv-optimizer/ResultsPage.tsx
+
+REPORT:
+1. Does it fetch any data currently?
+2. Where does it get cv_id from?
+3. What props does it pass to child components?
+4. Show me the current data flow
+
+───────────────────────────────────────────────────────────────────────────
+
+INVESTIGATION 5: CVDOCUMENT CURRENT STATE
+
+Find CVDocument component.
+
+LOCATION:
+- components/cv-optimizer/DocumentView/CVDocument.tsx
+
+REPORT:
+1. What props does it accept?
+2. Where does it get CV content from?
+3. Is content hardcoded or passed as prop?
+4. Show me lines where content is defined
+
+───────────────────────────────────────────────────────────────────────────
+
+INVESTIGATION 6: SESSION FEATURE LOCATIONS
+
+Find where session/persistence features are implemented.
+
+SEARCH FOR:
+- "analysis in progress"
+- "Continue Analysis"
+- "Replace Current"
+- "existingAnalysis"
+- "currentAnalysis"
+- "pendingAnalysis"
+
+REPORT:
+| Feature | File | Lines |
+|---------|------|-------|
+| "Analysis in progress" box | ... | ... |
+| "Replace?" dialog | ... | ... |
+| Session check logic | ... | ... |
+
+───────────────────────────────────────────────────────────────────────────
+
+OUTPUT FORMAT:
+
+After investigation, provide a summary:
+
+## INVESTIGATION SUMMARY
+
+### Demo Data Locations:
+- File: ... Line: ... (what to remove)
+
+### Working Data Fetch Pattern:
+```typescript
+// Copy exact code from old working page
+```
+
+### API Response Structure:
+```json
+{
+  // Exact structure returned by API
+}
+```
+
+### Files to Modify:
+1. ... (reason)
+2. ... (reason)
+
+### Session Features to Remove:
+1. File: ... Component: ...
+2. File: ... Component: ...
+
+───────────────────────────────────────────────────────────────────────────
+
+⚠️ IMPORTANT:
+- DO NOT modify any files
+- DO NOT fix anything yet
+- ONLY investigate and report
+- Be thorough - check every file mentioned
+
+═══════════════════════════════════════════════════════════════════════════
