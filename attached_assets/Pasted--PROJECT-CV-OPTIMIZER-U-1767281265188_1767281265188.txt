@@ -1,0 +1,85 @@
+═══════════════════════════════════════════════════════════════════════════
+PROJECT: CV OPTIMIZER UNIFIED INTERFACE - PROMPT 2 OF 12
+═══════════════════════════════════════════════════════════════════════════
+
+CONTEXT:
+Continuing from Prompt 1. ResultsPage shell exists.
+Now creating the Word-like document container.
+
+───────────────────────────────────────────────────────────────────────────
+
+OBJECTIVE:
+Create DocumentView component with Word-like styling (gray background, 
+white paper with shadow).
+
+FILES TO CREATE:
+
+1. client/src/components/cv-optimizer/DocumentView/DocumentView.tsx
+2. client/src/components/cv-optimizer/DocumentView/index.ts
+3. client/src/styles/cv-optimizer/document-view.css
+
+SPECIFICATIONS:
+
+DocumentView.tsx:
+- Props: { children: React.ReactNode }
+- Wrapper component that provides Word-like styling
+
+CRITICAL CSS (document-view.css):
+
+.document-container {
+    background: #e8eaed;           /* Gray editor background */
+    min-height: calc(100vh - 200px);
+    padding: 30px;
+    display: flex;
+    justify-content: center;
+    overflow-y: auto;
+}
+
+.document-paper {
+    background: white;
+    max-width: 800px;
+    width: 100%;
+    min-height: 1000px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 50px;                  /* Page margins like Word */
+    border-radius: 2px;
+}
+
+COMPONENT STRUCTURE:
+
+<div className="document-container">
+    <div className="document-paper">
+        {children}
+    </div>
+</div>
+
+index.ts:
+- Export DocumentView as default
+
+UPDATE ResultsPage.tsx:
+- Import DocumentView
+- Replace content placeholder with DocumentView
+- Inside DocumentView, add temporary text: "CV Document will render here"
+
+───────────────────────────────────────────────────────────────────────────
+
+VISUAL RESULT:
+- Gray background visible around the page
+- White "paper" centered with shadow
+- 50px padding inside (like page margins)
+- 800px max-width
+- Vertical scrolling when content exceeds viewport
+
+VALIDATION:
+- Gray background (#e8eaed) visible
+- White paper centered with shadow
+- Paper has proper padding (50px)
+- Scrolling works for long content
+
+───────────────────────────────────────────────────────────────────────────
+
+RULES REMINDER:
+- Follow AGENTS.MD protected files rules
+- Follow REPLIT.MD development guidelines
+
+═══════════════════════════════════════════════════════════════════════════

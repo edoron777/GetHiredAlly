@@ -1,0 +1,66 @@
+═══════════════════════════════════════════════════════════════════════════
+PROJECT: CV OPTIMIZER UNIFIED INTERFACE
+═══════════════════════════════════════════════════════════════════════════
+
+CONTEXT:
+This is a multi-step implementation to replace the current CV Optimizer 
+dual-path interface (Easy Way + Deep Dive) with a single unified 
+"Document View" interface inspired by Microsoft Word.
+
+PROJECT OVERVIEW:
+- Goal: Create unified results page with Word-like document display
+- Files affected: pages/cv-optimizer/, components/cv-optimizer/
+- Dependencies: Existing ActionBar, DocStyler, database tables (unchanged)
+
+WHAT WE'RE BUILDING:
+1. New ResultsPage with tabbed interface (Document View / List View)
+2. Word-like CV display with gray background and white "paper"
+3. Inline issue markers (colored underlines) on CV text
+4. Info icons (ⓘ) that open tip modals
+5. Left sidebar with score and issue navigation
+6. Content selector for exports (CV / Recommendations / Both)
+7. Quick Format Tools panel for cosmetic fixes
+
+WHAT WE'RE KEEPING (NO CHANGES):
+- Upload Screen
+- Scanning Screen (only change redirect destination)
+- Database tables (cv_analyses, cv_analysis_issues, cv_issue_types)
+- ActionBar component
+- DocStyler component
+
+WHAT WE'RE REMOVING (after new interface is ready):
+- CrossroadsPage
+- EasyWayPage
+- Dual-path selection UI
+
+PROMPTS IN THIS PROJECT:
+0. OPENING - Project context (this prompt)
+1. ResultsPage Shell - Main container page
+2. DocumentView Container - Word-like styling
+3. CVDocument Renderer - CV content display
+4. Markers & Icons - IssueMarker + InfoIcon components
+5. TipBox Modal - Issue details popup
+6. IssueSidebar - Score widget + issue navigation
+7. ContentSelector - Export content dropdown
+8. QuickFormatPanel - Cosmetic fixes panel
+9. ListViewTab - Existing cards wrapper
+10. Integration & Routing - Connect everything
+11. Cutover - Remove old pages, activate new
+12. CLOSING - Verification checklist
+
+RULES TO FOLLOW:
+- Follow AGENTS.MD protected files rules
+- Follow REPLIT.MD development guidelines
+- Do not modify protected files without APPROVED
+- Use existing common components before creating new ones
+- Create NEW files in parallel, do not modify existing pages yet
+
+THIS IS PROMPT 0 OF 12 (OPENING).
+
+───────────────────────────────────────────────────────────────────────────
+
+No implementation action required for this prompt.
+This establishes project context for all subsequent prompts.
+Proceed to Prompt 1 to begin implementation.
+
+═══════════════════════════════════════════════════════════════════════════
