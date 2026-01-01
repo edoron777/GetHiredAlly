@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Info, HelpCircle, SpellCheck, TrendingUp, Zap, User, Calendar, FileText, Layout, Search, GitBranch } from 'lucide-react';
+import { Info, HelpCircle, SpellCheck, TrendingUp, Zap, User, Calendar, FileText, Layout, Search, GitBranch, ChevronDown, ChevronRight } from 'lucide-react';
 import { CV_CATEGORIES } from '../../config/cvCategories';
 import type { CategoryInfo } from '../../config/cvCategories';
 import CategoryInfoModal from './CategoryInfoModal';
@@ -37,6 +37,7 @@ export default function CategoryFilterPanel({
   visibleSuggestions
 }: CategoryFilterPanelProps) {
   const [openModal, setOpenModal] = useState<CategoryInfo | null>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const handleSelectAll = () => {
     CV_CATEGORIES.forEach(cat => onCategoryToggle(cat.id, true));
@@ -48,18 +49,35 @@ export default function CategoryFilterPanel({
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-4 mb-6">
-      <div className="mb-4">
-        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-          🎛️ Filter Results by Category
-        </h3>
-        <p className="text-sm text-gray-600 mt-2">
-          Below are the criteria we used to analyze your CV. 
-          <strong> You can uncheck any category to hide those suggestions from your results.</strong>
-          {' '}Click <Info size={14} className="inline" /> to learn why each category matters to recruiters.
-        </p>
-      </div>
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full flex items-center justify-between text-left"
+      >
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            🎛️ Filter Results by Category
+          </h3>
+          <p className="text-sm text-gray-500 mt-1">
+            {visibleSuggestions} of {totalSuggestions} suggestions visible
+            {visibleSuggestions < totalSuggestions && ` (${totalSuggestions - visibleSuggestions} hidden)`}
+          </p>
+        </div>
+        {isExpanded ? (
+          <ChevronDown size={20} className="text-gray-400" />
+        ) : (
+          <ChevronRight size={20} className="text-gray-400" />
+        )}
+      </button>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
+      {isExpanded && (
+        <>
+          <p className="text-sm text-gray-600 mt-4 mb-4">
+            Below are the criteria we used to analyze your CV. 
+            <strong> You can uncheck any category to hide those suggestions from your results.</strong>
+            {' '}Click <Info size={14} className="inline" /> to learn why each category matters to recruiters.
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
         {CV_CATEGORIES.map((category) => {
           const IconComponent = iconMap[category.icon] || HelpCircle;
           const count = categoryCounts[category.id] || 0;
@@ -105,32 +123,34 @@ export default function CategoryFilterPanel({
               </div>
             </div>
           );
-        })}
-      </div>
+            })}
+          </div>
 
-      <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-        <span className="text-sm text-gray-500">
-          Showing: <strong>{visibleSuggestions}</strong> of {totalSuggestions} suggestions
-          {visibleSuggestions < totalSuggestions && (
-            <span className="text-gray-400"> ({totalSuggestions - visibleSuggestions} hidden)</span>
-          )}
-        </span>
-        <div className="flex gap-2">
-          <button
-            onClick={handleSelectAll}
-            className="text-sm text-blue-600 hover:text-blue-700 hover:underline"
-          >
-            Select All
-          </button>
-          <span className="text-gray-300">|</span>
-          <button
-            onClick={handleClearAll}
-            className="text-sm text-blue-600 hover:text-blue-700 hover:underline"
-          >
-            Clear All
-          </button>
-        </div>
-      </div>
+          <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+            <span className="text-sm text-gray-500">
+              Showing: <strong>{visibleSuggestions}</strong> of {totalSuggestions} suggestions
+              {visibleSuggestions < totalSuggestions && (
+                <span className="text-gray-400"> ({totalSuggestions - visibleSuggestions} hidden)</span>
+              )}
+            </span>
+            <div className="flex gap-2">
+              <button
+                onClick={handleSelectAll}
+                className="text-sm text-blue-600 hover:text-blue-700 hover:underline"
+              >
+                Select All
+              </button>
+              <span className="text-gray-300">|</span>
+              <button
+                onClick={handleClearAll}
+                className="text-sm text-blue-600 hover:text-blue-700 hover:underline"
+              >
+                Clear All
+              </button>
+            </div>
+          </div>
+        </>
+      )}
 
       {openModal && (
         <CategoryInfoModal

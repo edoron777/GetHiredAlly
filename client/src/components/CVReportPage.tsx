@@ -214,22 +214,26 @@ export function CVReportPage() {
     }) || []
   }, [reportData?.issues, enabledCategories])
 
-  const filteredIssues = categoryFilteredIssues.filter(issue =>
-    severityFilter === 'all' || issue.severity === severityFilter
-  )
+  const filteredIssues = categoryFilteredIssues.filter(issue => {
+    if (severityFilter === 'all') return true
+    if (severityFilter === 'important') return issue.severity === 'important' || issue.severity === 'high'
+    if (severityFilter === 'consider') return issue.severity === 'consider' || issue.severity === 'medium'
+    if (severityFilter === 'polish') return issue.severity === 'polish' || issue.severity === 'low'
+    return issue.severity === severityFilter
+  })
 
   const severityCounts: Record<string, number> = {
     critical: categoryFilteredIssues.filter(i => i.severity === 'critical').length,
-    high: categoryFilteredIssues.filter(i => i.severity === 'high').length,
-    medium: categoryFilteredIssues.filter(i => i.severity === 'medium').length,
-    low: categoryFilteredIssues.filter(i => i.severity === 'low').length
+    important: categoryFilteredIssues.filter(i => i.severity === 'important' || i.severity === 'high').length,
+    consider: categoryFilteredIssues.filter(i => i.severity === 'consider' || i.severity === 'medium').length,
+    polish: categoryFilteredIssues.filter(i => i.severity === 'polish' || i.severity === 'low').length
   }
 
   const groupedIssues: Record<string, Issue[]> = {
     critical: filteredIssues.filter(i => i.severity === 'critical'),
-    high: filteredIssues.filter(i => i.severity === 'high'),
-    medium: filteredIssues.filter(i => i.severity === 'medium'),
-    low: filteredIssues.filter(i => i.severity === 'low')
+    important: filteredIssues.filter(i => i.severity === 'important' || i.severity === 'high'),
+    consider: filteredIssues.filter(i => i.severity === 'consider' || i.severity === 'medium'),
+    polish: filteredIssues.filter(i => i.severity === 'polish' || i.severity === 'low')
   }
 
   const toggleIssue = (issueId: number) => {
@@ -268,8 +272,11 @@ export function CVReportPage() {
   const getSeverityIcon = (severity: string, size: number = 16) => {
     switch (severity) {
       case 'critical': return <AlertCircle size={size} className="text-red-500" />
+      case 'important':
       case 'high': return <AlertTriangle size={size} className="text-orange-500" />
+      case 'consider':
       case 'medium': return <Info size={size} className="text-yellow-600" />
+      case 'polish':
       case 'low': return <Sparkles size={size} className="text-green-500" />
       default: return null
     }
@@ -411,11 +418,6 @@ export function CVReportPage() {
           visibleSuggestions={categoryFilteredIssues.length}
         />
 
-        <ViewModeToggle
-          currentMode={viewMode}
-          onModeChange={setViewMode}
-        />
-
         {viewMode === 'severity' && (
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
             <p className="text-sm text-gray-600 mb-3 flex items-center">
@@ -447,6 +449,11 @@ export function CVReportPage() {
             </div>
           </div>
         )}
+
+        <ViewModeToggle
+          currentMode={viewMode}
+          onModeChange={setViewMode}
+        />
 
         <SwitchPathBanner
           remainingIssues={filteredIssues?.length || 0}

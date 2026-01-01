@@ -12,20 +12,13 @@ interface IssuesSummaryBoxProps {
     medium?: number;
     low?: number;
   };
-  estimatedMinutes: number;
+  estimatedMinutes?: number;
 }
 
 const IssuesSummaryBox: React.FC<IssuesSummaryBoxProps> = ({
   totalIssues,
-  breakdown,
-  estimatedMinutes
+  breakdown
 }) => {
-  const hours = Math.floor(estimatedMinutes / 60);
-  const minutes = estimatedMinutes % 60;
-  const timeString = hours > 0 
-    ? `${hours}h ${minutes}m` 
-    : `${minutes} minutes`;
-
   return (
     <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 mb-8">
       {/* Header */}
@@ -40,7 +33,7 @@ const IssuesSummaryBox: React.FC<IssuesSummaryBoxProps> = ({
       </div>
       
       {/* Priority Breakdown - supports both new (important/consider/polish) and legacy (high/medium/low) */}
-      <div className="flex flex-wrap justify-center gap-2 mb-4">
+      <div className="flex flex-wrap justify-center gap-2">
         {breakdown.critical > 0 && (
           <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium">
             🔴 {breakdown.critical} Critical
@@ -61,12 +54,6 @@ const IssuesSummaryBox: React.FC<IssuesSummaryBoxProps> = ({
             🟢 {breakdown.polish || breakdown.low} Polish
           </span>
         )}
-      </div>
-      
-      {/* Time Estimate */}
-      <div className="text-center p-3 bg-white rounded-lg border border-amber-200">
-        <span className="text-gray-500">⏱️ Estimated manual fix time:</span>
-        <span className="text-xl font-bold text-gray-800 ml-2">{timeString}</span>
       </div>
     </div>
   );
