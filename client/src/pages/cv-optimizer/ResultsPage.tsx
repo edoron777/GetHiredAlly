@@ -8,6 +8,7 @@ import IssueSidebar from '../../components/cv-optimizer/IssueSidebar';
 import ContentSelector from '../../components/cv-optimizer/ContentSelector';
 import QuickFormatPanel from '../../components/cv-optimizer/QuickFormatPanel';
 import ListViewTab from '../../components/cv-optimizer/ListViewTab';
+// @ts-ignore - DocStyler types not available
 import { DocStyler } from '../../components/common/DocStyler';
 import { getAuthToken, isAuthenticated } from '../../lib/auth';
 
@@ -16,15 +17,20 @@ interface CVIssue {
   severity: 'critical' | 'important' | 'consider' | 'polish';
   issue_type?: string;
   issueType?: string;
+  issue?: string;
   title?: string;
   issue_title?: string;
   description?: string;
   issue_description?: string;
+  category?: string;
+  location?: string;
   problematic_text?: string;
   matchText?: string;
   current_text?: string;
   suggested_fix?: string;
   suggestedText?: string;
+  fix_difficulty?: string;
+  is_auto_fixable?: boolean;
   impact?: string;
   howToFix?: string;
   how_to_fix?: string;
@@ -83,6 +89,16 @@ export default function ResultsPage() {
         }
 
         const data = await response.json();
+        
+        console.log('=== CV OPTIMIZER DEBUG ===');
+        console.log('1. cvId:', cvId);
+        console.log('2. API Response:', data);
+        console.log('3. cv_content length:', data?.cv_content?.length);
+        console.log('4. cv_content preview:', data?.cv_content?.substring(0, 200));
+        console.log('5. issues count:', data?.issues?.length);
+        console.log('6. first issue:', data?.issues?.[0]);
+        console.log('=== END DEBUG ===');
+        
         setReportData(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');
@@ -98,11 +114,15 @@ export default function ResultsPage() {
     id: issue.id || String(index + 1),
     severity: issue.severity,
     issueType: issue.issue_type || issue.issueType || 'UNKNOWN',
-    title: issue.title || issue.issue_title || 'Issue',
-    description: issue.description || issue.issue_description || '',
-    matchText: issue.problematic_text || issue.matchText || issue.current_text || '',
+    title: issue.issue || issue.title || issue.issue_title || 'Issue',
+    description: issue.description || issue.issue_description || issue.issue || '',
+    category: issue.category || '',
+    location: issue.location || '',
+    matchText: issue.current_text || issue.problematic_text || issue.matchText || '',
     currentText: issue.current_text || issue.problematic_text || issue.matchText || '',
     suggestedText: issue.suggested_fix || issue.suggestedText || '',
+    fixDifficulty: issue.fix_difficulty || 'medium',
+    isAutoFixable: issue.is_auto_fixable || false,
     impact: issue.impact || '',
     howToFix: issue.how_to_fix || issue.howToFix || '',
   });

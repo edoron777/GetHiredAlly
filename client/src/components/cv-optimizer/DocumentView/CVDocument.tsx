@@ -207,6 +207,20 @@ function renderSection(
 }
 
 export default function CVDocument({ cvContent, issues = [], onIssueClick }: CVDocumentProps) {
+  console.log('=== CVDOCUMENT DEBUG ===');
+  console.log('1. cvContent.fullText length:', cvContent?.fullText?.length);
+  console.log('2. cvContent.fullText preview:', cvContent?.fullText?.substring(0, 200));
+  console.log('3. issues received:', issues?.length);
+  console.log('4. first issue:', issues?.[0]);
+  
+  if (issues?.length > 0 && cvContent?.fullText) {
+    issues.forEach((issue, i) => {
+      const found = issue.matchText ? cvContent.fullText.includes(issue.matchText) : false;
+      console.log(`Issue ${i + 1} matchText "${issue.matchText?.substring(0, 30)}..." found in CV: ${found}`);
+    });
+  }
+  console.log('=== END DEBUG ===');
+
   if (!cvContent?.fullText) {
     return (
       <div className="text-gray-500 text-center py-10">

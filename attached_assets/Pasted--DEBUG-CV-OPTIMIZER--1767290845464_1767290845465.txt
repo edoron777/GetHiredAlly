@@ -1,0 +1,161 @@
+═══════════════════════════════════════════════════════════════════════════
+🔧 DEBUG: CV OPTIMIZER - VERIFY DATA FLOW AT RUNTIME
+═══════════════════════════════════════════════════════════════════════════
+
+CONTEXT:
+Investigation shows code is connected correctly, but UI displays 
+unexpected results. Need to verify data flow at runtime.
+
+───────────────────────────────────────────────────────────────────────────
+
+TASK 1: ADD DEBUG LOGGING
+
+Add console.log statements to trace data flow.
+
+FILE: pages/cv-optimizer/ResultsPage.tsx
+
+Add after data fetch:
+```typescript
+console.log('=== CV OPTIMIZER DEBUG ===')
+console.log('1. cvId:', cvId)
+console.log('2. API Response:', reportData)
+console.log('3. cv_content length:', reportData?.cv_content?.length)
+console.log('4. cv_content preview:', reportData?.cv_content?.substring(0, 200))
+console.log('5. issues count:', reportData?.issues?.length)
+console.log('6. first issue:', reportData?.issues?.[0])
+console.log('=== END DEBUG ===')
+```
+
+FILE: components/cv-optimizer/DocumentView/CVDocument.tsx
+
+Add at component start:
+```typescript
+console.log('=== CVDOCUMENT DEBUG ===')
+console.log('1. cvContent.fullText length:', cvContent?.fullText?.length)
+console.log('2. cvContent.fullText preview:', cvContent?.fullText?.substring(0, 200))
+console.log('3. issues received:', issues?.length)
+console.log('4. first issue matchText:', issues?.[0]?.matchText)
+console.log('=== END DEBUG ===')
+```
+
+───────────────────────────────────────────────────────────────────────────
+
+TASK 2: FIX DOCUMENT WIDTH (CSS)
+
+The document paper is too narrow with wide gray margins.
+
+FIND in styles or component:
+```css
+.document-paper {
+  max-width: 800px;
+}
+```
+
+CHANGE TO:
+```css
+.document-paper {
+  max-width: 950px;
+  width: 90%;
+}
+```
+
+If using Tailwind, find:
+```tsx
+className="max-w-[800px]"
+```
+
+Change to:
+```tsx
+className="max-w-[950px] w-[90%]"
+```
+
+───────────────────────────────────────────────────────────────────────────
+
+TASK 3: FIX TYPESCRIPT ERROR
+
+FILE: ResultsPage.tsx line 11
+
+Issue: Missing TypeScript declaration for DocStyler
+
+FIX OPTION A (Quick):
+Add above the import:
+```typescript
+// @ts-ignore - DocStyler types not available
+```
+
+FIX OPTION B (Proper):
+Create declaration file: types/DocStyler.d.ts
+```typescript
+declare module '@/components/common/DocStyler' {
+  export const DocStyler: React.FC<any>
+  export default DocStyler
+}
+```
+
+───────────────────────────────────────────────────────────────────────────
+
+TASK 4: VERIFY MARKER MATCHING
+
+Check if issue matchText actually exists in CV content.
+
+Add to CVDocument.tsx in applyMarkers function:
+```typescript
+issues.forEach(issue => {
+  const found = cvContent.fullText.includes(issue.matchText)
+  console.log(`Issue "${issue.matchText}" found in CV: ${found}`)
+})
+```
+
+If matchText not found, check:
+1. Is matchText coming from `current_text` field?
+2. Is there whitespace/encoding mismatch?
+3. Is the field name different? (current_text vs matchText vs location)
+
+───────────────────────────────────────────────────────────────────────────
+
+TASK 5: CHECK DATA FIELD MAPPING
+
+API returns:
+```json
+{
+  "cv_content": "...",
+  "issues": [{
+    "current_text": "Developped",
+    "suggested_fix": "Developed"
+  }]
+}
+```
+
+CVDocument expects:
+```typescript
+issues: [{
+  matchText: "...",
+  suggestedText: "..."
+}]
+```
+
+VERIFY in ResultsPage.tsx:
+Is there a transformation that maps:
+- current_text → matchText
+- suggested_fix → suggestedText
+
+If NOT, add transformation:
+```typescript
+const documentIssues = reportData.issues.map(issue => ({
+  ...issue,
+  matchText: issue.current_text,
+  suggestedText: issue.suggested_fix,
+  severity: mapSeverity(issue.fix_difficulty) // or category
+}))
+```
+
+───────────────────────────────────────────────────────────────────────────
+
+AFTER THESE CHANGES:
+
+1. Open browser DevTools → Console
+2. Navigate to CV Optimizer results page with a real CV
+3. Check console logs
+4. Report what you see:
+
+REPORT FORMAT:
