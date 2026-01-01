@@ -2,6 +2,7 @@ import { useState } from 'react';
 import DocumentView from '../../components/cv-optimizer/DocumentView';
 import { CVDocument } from '../../components/cv-optimizer/DocumentView';
 import TipBox from '../../components/cv-optimizer/TipBox';
+import IssueSidebar from '../../components/cv-optimizer/IssueSidebar';
 
 const sampleCvContent = {
   fullText: `JOHN DOE
@@ -32,9 +33,11 @@ React, TypeScript, Node.js, Python, AWS, Docker, PostgreSQL, GraphQL`
 };
 
 const sampleIssues = [
-  { id: '1', severity: 'important' as const, matchText: 'Results-driven' },
-  { id: '2', severity: 'consider' as const, matchText: 'Collaborated with product team' },
-  { id: '3', severity: 'polish' as const, matchText: '2017' },
+  { id: '1', severity: 'important' as const, matchText: 'Results-driven', title: 'Overused Buzzword' },
+  { id: '2', severity: 'consider' as const, matchText: 'Collaborated with product team', title: 'Vague Statement' },
+  { id: '3', severity: 'polish' as const, matchText: '2017', title: 'Date Format' },
+  { id: '4', severity: 'critical' as const, matchText: 'john.doe@email.com', title: 'Generic Email' },
+  { id: '5', severity: 'important' as const, matchText: 'Expert in', title: 'Self-Assessment' },
 ];
 
 const issueDetails: Record<string, any> = {
@@ -71,6 +74,28 @@ const issueDetails: Record<string, any> = {
     impact: 'Minor issue, but adding the month looks more precise and professional.',
     howToFix: 'Add the graduation month for a polished appearance.',
   },
+  '4': {
+    id: '4',
+    severity: 'critical',
+    issueType: 'CONTACT_INFO',
+    title: 'Generic Email Address',
+    description: 'Using a sample/demo email address.',
+    currentText: 'john.doe@email.com',
+    suggestedText: 'johndoe.dev@gmail.com',
+    impact: 'This appears to be a placeholder email. Recruiters won\'t be able to contact you!',
+    howToFix: 'Replace with your actual professional email address.',
+  },
+  '5': {
+    id: '5',
+    severity: 'important',
+    issueType: 'SELF_ASSESSMENT',
+    title: 'Self-Proclaimed Expert',
+    description: 'Calling yourself an "expert" without proof.',
+    currentText: 'Expert in React, TypeScript',
+    suggestedText: '5+ years building production React/TypeScript applications',
+    impact: 'Self-proclaimed expertise can seem arrogant. Let your experience speak for itself.',
+    howToFix: 'Replace with years of experience or specific achievements that demonstrate expertise.',
+  },
 };
 
 export default function ResultsPage() {
@@ -92,20 +117,35 @@ export default function ResultsPage() {
 
   const selectedIssue = selectedIssueId ? issueDetails[selectedIssueId] : null;
 
+  const sidebarIssues = sampleIssues.map(issue => ({
+    id: issue.id,
+    title: issue.title,
+    severity: issue.severity,
+  }));
+
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#FAF9F7' }}>
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold mb-6" style={{ color: '#1E3A5F' }}>
-          CV Analysis Results
-        </h1>
-        
-        <DocumentView>
-          <CVDocument 
-            cvContent={sampleCvContent} 
-            issues={sampleIssues}
-            onIssueClick={handleIssueClick}
-          />
-        </DocumentView>
+    <div className="min-h-screen flex" style={{ backgroundColor: '#FAF9F7' }}>
+      <IssueSidebar
+        score={64}
+        issues={sidebarIssues}
+        onIssueClick={handleIssueClick}
+        selectedIssueId={selectedIssueId || undefined}
+      />
+
+      <div className="flex-1 px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-2xl font-bold mb-6" style={{ color: '#1E3A5F' }}>
+            CV Analysis Results
+          </h1>
+          
+          <DocumentView>
+            <CVDocument 
+              cvContent={sampleCvContent} 
+              issues={sampleIssues}
+              onIssueClick={handleIssueClick}
+            />
+          </DocumentView>
+        </div>
       </div>
 
       {selectedIssue && (

@@ -1,0 +1,143 @@
+═══════════════════════════════════════════════════════════════════════════
+PROJECT: CV OPTIMIZER UNIFIED INTERFACE - PROMPT 7 OF 12
+═══════════════════════════════════════════════════════════════════════════
+
+CONTEXT:
+Continuing from Prompt 6. IssueSidebar works.
+Now creating the ContentSelector dropdown for export options.
+
+───────────────────────────────────────────────────────────────────────────
+
+OBJECTIVE:
+Create ContentSelector component - dropdown to choose what content to export.
+
+FILES TO CREATE:
+
+1. client/src/components/cv-optimizer/ContentSelector/ContentSelector.tsx
+2. client/src/components/cv-optimizer/ContentSelector/index.ts
+
+SPECIFICATIONS:
+
+ContentSelector.tsx Props:
+interface ContentSelectorProps {
+    selectedContent: 'cv' | 'recommendations' | 'both';
+    onChange: (content: 'cv' | 'recommendations' | 'both') => void;
+}
+
+LAYOUT (Dropdown with radio options):
+
+┌─────────────────────────────────────┐
+│  Optimized CV                    ▼  │  ← Closed state
+└─────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│  Optimized CV                    ▲  │
+├─────────────────────────────────────┤
+│  ○ Optimized CV                     │  ← Radio options
+│    Your CV with all fixes applied   │
+│                                     │
+│  ○ Recommendations Only             │
+│    List of issues and suggestions   │
+│                                     │
+│  ○ Both (Full Report)               │
+│    CV + all recommendations         │
+└─────────────────────────────────────┘
+
+CSS (create content-selector.css):
+
+.content-selector {
+    position: relative;
+    min-width: 200px;
+}
+
+.content-selector-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: white;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.content-selector-trigger:hover {
+    border-color: #9ca3af;
+}
+
+.content-selector-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 4px;
+    background: white;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 100;
+}
+
+.content-option {
+    padding: 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.content-option:last-child {
+    border-bottom: none;
+}
+
+.content-option:hover {
+    background: #f9fafb;
+}
+
+.content-option-radio {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.content-option-title {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.content-option-description {
+    font-size: 12px;
+    color: #666;
+    margin-top: 2px;
+}
+
+FUNCTIONALITY:
+- Click trigger to open/close dropdown
+- Click option to select and close
+- Click outside to close dropdown
+- Selected option shows in trigger
+
+PLACEMENT:
+- In toolbar area, left side: "Export: [ContentSelector]"
+- ActionBar buttons go to the right of it
+
+UPDATE ResultsPage.tsx:
+- Add state: selectedExportContent
+- Add ContentSelector to toolbar
+- Pass selectedContent to ActionBar/export functions
+
+───────────────────────────────────────────────────────────────────────────
+
+VALIDATION:
+- Dropdown opens/closes correctly
+- All three options display with descriptions
+- Selection updates trigger text
+- Clicking outside closes dropdown
+- Selected value is tracked in state
+
+───────────────────────────────────────────────────────────────────────────
+
+RULES REMINDER:
+- Follow AGENTS.MD protected files rules
+- Follow REPLIT.MD development guidelines
+
+═══════════════════════════════════════════════════════════════════════════

@@ -1,0 +1,52 @@
+interface ScoreWidgetProps {
+  score: number;
+  issuesCounts: {
+    critical: number;
+    important: number;
+    consider: number;
+    polish: number;
+  };
+}
+
+function getScoreColor(score: number): string {
+  if (score < 50) return '#dc2626';
+  if (score <= 70) return '#ca8a04';
+  return '#16a34a';
+}
+
+export default function ScoreWidget({ score, issuesCounts }: ScoreWidgetProps) {
+  const scoreColor = getScoreColor(score);
+
+  return (
+    <div className="score-widget">
+      <div 
+        className="score-circle"
+        style={{ borderColor: scoreColor }}
+      >
+        <span className="score-number" style={{ color: scoreColor }}>
+          {score}
+        </span>
+        <span className="score-label">CV Score</span>
+      </div>
+
+      <div className="issue-counts">
+        <div className="issue-count-item">
+          <span style={{ color: '#dc2626' }}>●</span>
+          <span>{issuesCounts.critical}</span>
+        </div>
+        <div className="issue-count-item">
+          <span style={{ color: '#ea580c' }}>●</span>
+          <span>{issuesCounts.important}</span>
+        </div>
+        <div className="issue-count-item">
+          <span style={{ color: '#ca8a04' }}>●</span>
+          <span>{issuesCounts.consider}</span>
+        </div>
+        <div className="issue-count-item">
+          <span style={{ color: '#16a34a' }}>●</span>
+          <span>{issuesCounts.polish}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
