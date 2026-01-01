@@ -15,7 +15,7 @@ from common.catalog import get_catalog_service
 from .contact_extractor import extract_contact_info, get_contact_issues
 from .section_extractor import extract_sections, get_section_issues, get_cv_length_issues
 from .bullet_extractor import extract_bullets, get_bullet_issues
-from .spelling_detector import detect_critical_issues
+# from .spelling_detector import detect_critical_issues  # DISABLED - GRAMMAR_* issues inactive
 from .language_detector import detect_language_issues
 from .format_detector import detect_format_issues
 from .polish_detector import detect_polish_issues
@@ -62,12 +62,15 @@ def detect_all_issues(cv_text: str) -> List[Dict[str, Any]]:
     
     logger.info("Starting static CV analysis...")
     
-    try:
-        critical_issues = detect_critical_issues(cv_text)
-        all_issues.extend(critical_issues)
-        logger.info(f"Critical issues found: {len(critical_issues)}")
-    except Exception as e:
-        logger.error(f"Error detecting critical issues: {e}")
+    # DISABLED: Spelling/grammar detector - all GRAMMAR_* issues are is_active=false in catalog
+    # The spelling detector was generating too many low-value issues.
+    # To re-enable, uncomment the block below and ensure GRAMMAR_* issues are active in catalog.
+    # try:
+    #     critical_issues = detect_critical_issues(cv_text)
+    #     all_issues.extend(critical_issues)
+    #     logger.info(f"Critical issues found: {len(critical_issues)}")
+    # except Exception as e:
+    #     logger.error(f"Error detecting critical issues: {e}")
     
     try:
         contact_info = extract_contact_info(cv_text)
