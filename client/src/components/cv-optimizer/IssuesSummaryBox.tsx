@@ -4,9 +4,13 @@ interface IssuesSummaryBoxProps {
   totalIssues: number;
   breakdown: {
     critical: number;
-    high: number;
-    medium: number;
-    low: number;
+    important: number;
+    consider: number;
+    polish: number;
+    // Legacy support
+    high?: number;
+    medium?: number;
+    low?: number;
   };
   estimatedMinutes: number;
 }
@@ -35,26 +39,26 @@ const IssuesSummaryBox: React.FC<IssuesSummaryBoxProps> = ({
         </p>
       </div>
       
-      {/* Priority Breakdown */}
+      {/* Priority Breakdown - supports both new (important/consider/polish) and legacy (high/medium/low) */}
       <div className="flex flex-wrap justify-center gap-2 mb-4">
         {breakdown.critical > 0 && (
           <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium">
             🔴 {breakdown.critical} Critical
           </span>
         )}
-        {breakdown.high > 0 && (
+        {(breakdown.important > 0 || (breakdown.high && breakdown.high > 0)) && (
           <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm font-medium">
-            🟠 {breakdown.high} Important
+            🟠 {breakdown.important || breakdown.high} Important
           </span>
         )}
-        {breakdown.medium > 0 && (
+        {(breakdown.consider > 0 || (breakdown.medium && breakdown.medium > 0)) && (
           <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm font-medium">
-            🟡 {breakdown.medium} Consider
+            🟡 {breakdown.consider || breakdown.medium} Consider
           </span>
         )}
-        {breakdown.low > 0 && (
+        {(breakdown.polish > 0 || (breakdown.low && breakdown.low > 0)) && (
           <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
-            🟢 {breakdown.low} Polish
+            🟢 {breakdown.polish || breakdown.low} Polish
           </span>
         )}
       </div>

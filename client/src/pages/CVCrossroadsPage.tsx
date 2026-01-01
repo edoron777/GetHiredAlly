@@ -9,9 +9,13 @@ interface ReportData {
   totalIssues: number;
   breakdown: {
     critical: number;
-    high: number;
-    medium: number;
-    low: number;
+    important: number;
+    consider: number;
+    polish: number;
+    // Legacy support
+    high?: number;
+    medium?: number;
+    low?: number;
   };
   estimatedMinutes: number;
 }
@@ -34,21 +38,25 @@ const CVCrossroadsPage: React.FC = () => {
         }
         const data = await response.json();
         
-        // Calculate estimated time: quick=2min, medium=5min, extensive=10min
+        // Calculate estimated time - support both new (important/consider/polish) and legacy (high/medium/low)
+        const important = data.breakdown?.important || data.breakdown?.high || 0;
+        const consider = data.breakdown?.consider || data.breakdown?.medium || 0;
+        const polish = data.breakdown?.polish || data.breakdown?.low || 0;
+        
         const estimatedMinutes = 
           (data.breakdown?.critical || 0) * 10 +
-          (data.breakdown?.high || 0) * 5 +
-          (data.breakdown?.medium || 0) * 3 +
-          (data.breakdown?.low || 0) * 2;
+          important * 5 +
+          consider * 3 +
+          polish * 2;
         
         setReportData({
           score: data.score || 0,
           totalIssues: data.total_issues || 0,
           breakdown: {
             critical: data.breakdown?.critical || 0,
-            high: data.breakdown?.high || 0,
-            medium: data.breakdown?.medium || 0,
-            low: data.breakdown?.low || 0,
+            important: important,
+            consider: consider,
+            polish: polish,
           },
           estimatedMinutes: estimatedMinutes || 60,
         });
