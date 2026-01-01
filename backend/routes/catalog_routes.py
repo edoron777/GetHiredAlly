@@ -159,3 +159,39 @@ async def get_legacy_mapping():
         raise HTTPException(503, "Catalog service not ready")
     
     return service.cache.get_legacy_mapping()
+
+
+@router.get("/debug/severity-breakdown")
+async def debug_severity_breakdown():
+    """
+    DEBUG: Get severity breakdown of all issues in the catalog.
+    Shows which issue codes have which severity.
+    """
+    service = get_catalog_service()
+    
+    if not service.is_ready:
+        raise HTTPException(503, "Catalog service not ready")
+    
+    all_issues = service.get_all_issues()
+    
+    severity_breakdown = {
+        'critical': [],
+        'important': [],
+        'consider': [],
+        'polish': []
+    }
+    
+    for issue in all_issues:
+        severity = issue.severity.lower() if issue.severity else 'unknown'
+        if severity in severity_breakdown:
+            severity_breakdown[severity].append({
+                'code': issue.issue_code,
+                'name': issue.display_name,
+                'category': issue.category_name
+            })
+    
+    return {
+        'total_issues': len(all_issues),
+        'counts': {k: len(v) for k, v in severity_breakdown.items()},
+        'breakdown': severity_breakdown
+    }

@@ -510,11 +510,9 @@ async def analyze_cv_with_ai(cv_content: str, user_id: str, is_markdown: bool = 
     try:
         logger.info("[CV_SCAN] Starting STATIC issue detection (deterministic)...")
         
+        # detect_all_issues already enriches from catalog (assigns severity, category, etc.)
         issues = detect_all_issues(cv_content)
-        logger.info(f"[CV_SCAN] Static detection found {len(issues)} issues")
-        
-        issues = assign_severity_to_issues(issues)
-        logger.info(f"[CV_SCAN] Severity assigned to {len(issues)} issues")
+        logger.info(f"[CV_SCAN] Static detection found {len(issues)} issues (severity from catalog)")
         
         for i, issue in enumerate(issues):
             issue['id'] = i + 1

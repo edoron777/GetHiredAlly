@@ -118,6 +118,9 @@ class CatalogService:
         
         catalog_entry = self.cache.get_issue_by_code(normalized_code)
         
+        # DEBUG: Log enrichment
+        logger.debug(f"Enriching {normalized_code}: catalog_entry={catalog_entry is not None}")
+        
         if catalog_entry:
             detected_issue['severity'] = catalog_entry.severity
             detected_issue['weight'] = catalog_entry.weight
