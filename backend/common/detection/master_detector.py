@@ -46,7 +46,7 @@ def enrich_issues_from_catalog(issues: List[Dict[str, Any]]) -> List[Dict[str, A
     return issues
 
 
-def detect_all_issues(cv_text: str) -> List[Dict[str, Any]]:
+def detect_all_issues(cv_text: str, job_description: str = None) -> List[Dict[str, Any]]:
     """
     Run ALL static detectors on CV text.
     
@@ -56,6 +56,7 @@ def detect_all_issues(cv_text: str) -> List[Dict[str, Any]]:
     
     Args:
         cv_text: Full CV text content
+        job_description: Optional job description for keyword matching
         
     Returns:
         List of issue dictionaries, each with:
@@ -146,7 +147,7 @@ def detect_all_issues(cv_text: str) -> List[Dict[str, Any]]:
         logger.error(f"Error detecting standards issues: {e}")
     
     try:
-        keywords_issues = detect_keywords_issues(cv_text)
+        keywords_issues = detect_keywords_issues(cv_text, job_description)
         all_issues.extend(keywords_issues)
         logger.info(f"Keywords issues found: {len(keywords_issues)}")
     except Exception as e:
