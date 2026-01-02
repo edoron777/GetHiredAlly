@@ -1,0 +1,179 @@
+═══════════════════════════════════════════════════════════════════════
+PROJECT: CV Optimizer Complete Fix - PROMPT 1#18: Filter Invalid Markers
+═══════════════════════════════════════════════════════════════════════
+
+CONTEXT:
+Debug investigation found that 81% of issues have matchText that cannot 
+be found in the CV. We need to filter these out from TextMarker while 
+still showing them in the sidebar.
+
+ROOT CAUSE: Backend returns descriptive text, not exact CV text.
+
+───────────────────────────────────────────────────────────────────────
+
+TASK:
+1. Create a function to validate if matchText exists in CV content
+2. Classify issues as "highlightable" or "non-highlightable"
+3. Only pass valid markers to TextMarker component
+
+───────────────────────────────────────────────────────────────────────
+
+FILE TO MODIFY:
+client/src/components/cv-optimizer/DocumentView/CVDocument.tsx
+
+───────────────────────────────────────────────────────────────────────
+
+PART 1: ADD VALIDATION FUNCTION
+
+Add this function at the top of the component or in a utils file:
+```typescript
+/**
+ * Validates if a marker's text can be found in the CV content.
+ * Returns true if the text exists and can be highlighted.
+ */
+const isValidMarker = (matchText: string | undefined | null, cvContent: string): boolean => {
+  // Must have matchText
+  if (!matchText || matchText.trim() === '') {
+    return false;
+  }
+  
+  // Must be at least 3 characters (avoid single letters/numbers)
+  if (matchText.trim().length < 3) {
+    return false;
+  }
+  
+  // Must not be a descriptive/summary text pattern
+  const invalidPatterns = [
+    /^\d+\s*words/i,           // "1838 words..."
+    /^\d+\s*months?\s*gap/i,   // "84 months gap..."
+    /^years?\s*found/i,        // "Years found: 1999..."
+    /^both\s*['"]/i,           // "Both 'AI' and..."
+    /^(I,\s*)+I/i,             // "I, I, I, I..."
+    /\.\.\./,                   // Truncated text with "..."
+  ];
+  
+  for (const pattern of invalidPatterns) {
+    if (pattern.test(matchText)) {
+      return false;
+    }
+  }
+  
+  // Must actually exist in CV content
+  return cvContent.includes(matchText);
+};
+```
+
+───────────────────────────────────────────────────────────────────────
+
+PART 2: FILTER MARKERS BEFORE PASSING TO TEXTMARKER
+
+Modify where markers are created/filtered:
+```typescript
+// In CVDocument component
+
+// Get all issues as potential markers
+const allMarkers = issues.map(issue => ({
+  id: issue.id,
+  matchText: issue.matchText || issue.current_text || issue.problematic_text || '',
+  tag: issue.severity,
+  // Keep reference to original issue
+  issueData: issue
+}));
+
+// Filter to only valid, highlightable markers
+const validMarkers = allMarkers.filter(marker => 
+  isValidMarker(marker.matchText, cvContent.fullText)
+);
+
+// Log for debugging
+console.log('Markers stats:', {
+  total: allMarkers.length,
+  valid: validMarkers.length,
+  invalid: allMarkers.length - validMarkers.length
+});
+
+// Pass only valid markers to TextMarker
+<TextMarker
+  content={cvContent.fullText}
+  markers={validMarkers}  // Only valid markers!
+  config={{
+    style: 'underline',
+    tagColors: CV_OPTIMIZER_COLORS,
+    icon: { icon: 'ⓘ', position: 'after' },
+    onClick: (id) => onIssueClick?.(id),
+    className: 'cv-content-text'
+  }}
+/>
+```
+
+───────────────────────────────────────────────────────────────────────
+
+PART 3: EXPORT CLASSIFICATION FOR SIDEBAR USE
+
+Add a utility to classify all issues:
+```typescript
+/**
+ * Classifies issues into highlightable and non-highlightable
+ */
+export const classifyIssues = (issues: any[], cvContent: string) => {
+  const highlightable: any[] = [];
+  const nonHighlightable: any[] = [];
+  
+  for (const issue of issues) {
+    const matchText = issue.matchText || issue.current_text || issue.problematic_text || '';
+    
+    if (isValidMarker(matchText, cvContent)) {
+      highlightable.push({ ...issue, isHighlightable: true });
+    } else {
+      nonHighlightable.push({ ...issue, isHighlightable: false });
+    }
+  }
+  
+  return { highlightable, nonHighlightable, all: issues };
+};
+```
+
+───────────────────────────────────────────────────────────────────────
+
+PART 4: UPDATE RESULTSPAGE TO USE CLASSIFICATION
+
+File: client/src/pages/cv-optimizer/ResultsPage.tsx
+```typescript
+import { classifyIssues } from '../../components/cv-optimizer/DocumentView/CVDocument';
+
+// In component, after issues are loaded:
+const { highlightable, nonHighlightable } = useMemo(() => {
+  if (!reportData?.cv_content || !issues.length) {
+    return { highlightable: [], nonHighlightable: [] };
+  }
+  return classifyIssues(issues, reportData.cv_content);
+}, [issues, reportData?.cv_content]);
+
+// Log classification results
+useEffect(() => {
+  console.log('Issue classification:', {
+    total: issues.length,
+    highlightable: highlightable.length,
+    nonHighlightable: nonHighlightable.length
+  });
+}, [highlightable, nonHighlightable]);
+```
+
+───────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+1. Load CV Optimizer results page
+2. Check console for "Markers stats" log
+3. Verify: Valid markers < Total markers
+4. Verify: Only valid issues are highlighted in Document View
+5. Verify: No errors in console about text not found
+
+───────────────────────────────────────────────────────────────────────
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- Only filter markers, do NOT hide issues completely
+- Issues must still appear in sidebar (next prompt)
+- Do NOT modify backend code in this prompt
+- If anything is unclear, STOP and ask
+
+═══════════════════════════════════════════════════════════════════════
