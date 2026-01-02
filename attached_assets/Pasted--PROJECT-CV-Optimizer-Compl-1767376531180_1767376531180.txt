@@ -1,0 +1,96 @@
+═══════════════════════════════════════════════════════════════════════
+PROJECT: CV Optimizer Complete Fix - PROMPT 9#18: Fix language_detector.py
+═══════════════════════════════════════════════════════════════════════
+
+CONTEXT:
+The language_detector identifies issues like weak action verbs, passive
+voice, and generic statements. These should have actual CV text that
+can be highlighted.
+
+───────────────────────────────────────────────────────────────────────
+
+TASK:
+Review and fix language_detector to return actual highlightable text.
+
+───────────────────────────────────────────────────────────────────────
+
+FILE TO MODIFY:
+backend/common/detection/language_detector.py
+
+───────────────────────────────────────────────────────────────────────
+
+INVESTIGATION FIRST:
+
+Show current output for these issue types:
+1. CONTENT_WEAK_ACTION_VERBS
+2. CONTENT_PASSIVE_VOICE
+3. CONTENT_GENERIC_STATEMENTS
+4. GRAMMAR_SPELLING_ERROR (if in this file)
+
+───────────────────────────────────────────────────────────────────────
+
+EXPECTED OUTPUT FORMAT:
+
+For WEAK ACTION VERBS:
+```python
+{
+    "issue_type": "CONTENT_WEAK_ACTION_VERBS",
+    "title": "Weak action verb: 'helped'",
+    "severity": "important",
+    "current": "Helped with project documentation",  # Full bullet/sentence
+    "is_highlightable": True,
+    "weak_verb": "helped",
+    "suggested_fix": "Replace 'Helped' with stronger verb: 'Contributed', 'Delivered', 'Produced'"
+}
+```
+
+For PASSIVE VOICE:
+```python
+{
+    "issue_type": "CONTENT_PASSIVE_VOICE",
+    "title": "Passive voice detected",
+    "severity": "consider",
+    "current": "Reports were generated weekly",  # Full sentence
+    "is_highlightable": True,
+    "suggested_fix": "Use active voice: 'Generated weekly reports'"
+}
+```
+
+For GENERIC STATEMENTS:
+```python
+{
+    "issue_type": "CONTENT_GENERIC_STATEMENTS",
+    "title": "Generic statement without specifics",
+    "severity": "important",
+    "current": "Responsible for various tasks",  # Full bullet
+    "is_highlightable": True,
+    "suggested_fix": "Add specific details: what tasks? what results?"
+}
+```
+
+───────────────────────────────────────────────────────────────────────
+
+KEY PRINCIPLE:
+
+`current` field MUST contain the EXACT text from the CV that:
+1. Can be found via string matching
+2. Provides enough context (full sentence/bullet)
+3. Does NOT have "..." truncation
+
+───────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+1. Test with CV containing weak verbs, passive voice
+2. Verify: `current` contains actual CV sentences
+3. Verify: TextMarker highlights these sentences
+4. Verify: No truncation in `current` field
+
+───────────────────────────────────────────────────────────────────────
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- Focus on `current` field format only
+- Keep detection logic unchanged
+- Do NOT change which verbs are considered weak
+- If anything is unclear, STOP and ask
+
+═══════════════════════════════════════════════════════════════════════

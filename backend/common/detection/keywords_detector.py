@@ -66,7 +66,9 @@ def detect_missing_industry_keywords(cv_text: str, job_description: Optional[str
             "issue_type": "KEYWORDS_MISSING_INDUSTRY",
             "location": "Throughout CV",
             "description": f"CV missing {len(important_missing)} keywords from job description",
-            "current": ', '.join(sorted(important_missing)[:10]),
+            "current": "",
+            "is_highlightable": False,
+            "missing_keywords": sorted(important_missing)[:10],
             "suggestion": "Add relevant keywords from the job description naturally into your CV"
         })
     
@@ -93,12 +95,14 @@ def detect_skills_format(cv_text: str) -> List[Dict[str, Any]]:
         if len(lines) <= 2:
             comma_count = skills_section.count(',')
             if comma_count > 8:
-                preview = skills_section[:100] + "..." if len(skills_section) > 100 else skills_section
+                preview = skills_section[:100].strip()
+                
                 issues.append({
                     "issue_type": "KEYWORDS_SKILLS_FORMAT",
                     "location": "Skills section",
                     "description": "Skills listed in paragraph format are harder to scan",
-                    "current": preview.strip(),
+                    "current": preview,
+                    "is_highlightable": bool(preview and preview in cv_text),
                     "suggestion": "Organize skills into categories (Programming, Tools, Soft Skills, etc.)"
                 })
     
@@ -134,22 +138,31 @@ def detect_abbreviation_inconsistency(cv_text: str) -> List[Dict[str, Any]]:
         ('SaaS', 'Software as a Service'),
     ]
     
-    inconsistencies = []
-    
     for abbrev, full in abbreviation_pairs:
-        has_abbrev = re.search(r'\b' + re.escape(abbrev) + r'\b', cv_text)
-        has_full = re.search(r'\b' + re.escape(full) + r'\b', cv_text, re.IGNORECASE)
+        short_pattern = r'\b' + re.escape(abbrev) + r'\b'
+        long_pattern = r'\b' + re.escape(full) + r'\b'
         
-        if has_abbrev and has_full:
-            inconsistencies.append(f"Both '{abbrev}' and '{full}'")
-    
-    if inconsistencies:
-        issues.append({
-            "issue_type": "KEYWORDS_ABBREVIATION_INCONSISTENT",
-            "location": "Throughout CV",
-            "description": "Inconsistent abbreviation usage may confuse ATS",
-            "current": ', '.join(inconsistencies[:3]),
-            "suggestion": "Use consistent terminology - either abbreviation or full term, not both"
-        })
+        short_matches = list(re.finditer(short_pattern, cv_text))
+        long_matches = list(re.finditer(long_pattern, cv_text, re.IGNORECASE))
+        
+        if short_matches and long_matches:
+            first_match = short_matches[0]
+            highlight_text = cv_text[first_match.start():first_match.end()]
+            
+            issues.append({
+                "issue_type": "KEYWORDS_ABBREVIATION_INCONSISTENT",
+                "title": f"Inconsistent abbreviation: {abbrev} / {full}",
+                "location": "Throughout CV",
+                "description": f"Both '{abbrev}' and '{full}' used. Inconsistent terminology may confuse ATS.",
+                "current": highlight_text,
+                "is_highlightable": True,
+                "abbreviation_pair": {
+                    "short": abbrev,
+                    "long": full,
+                    "short_count": len(short_matches),
+                    "long_count": len(long_matches)
+                },
+                "suggested_fix": f"Choose one form and use consistently. '{abbrev}' appears {len(short_matches)} times, '{full}' appears {len(long_matches)} times."
+            })
     
     return issues
