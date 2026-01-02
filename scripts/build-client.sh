@@ -1,20 +1,12 @@
 #!/bin/bash
 set -e
 
-echo "=== Starting client build ==="
-echo "Current directory: $(pwd)"
-echo "Changing to client directory..."
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+CLIENT_DIR="$PROJECT_ROOT/client"
 
-(
-  cd "$(dirname "$0")/../client"
-  echo "Now in: $(pwd)"
-  echo "Package.json contents:"
-  cat package.json | grep -A5 '"scripts"'
-  echo ""
-  echo "Running npm install..."
-  npm install
-  echo "Running npm run build..."
-  npm run build
-)
+echo "Building client from: $CLIENT_DIR"
 
-echo "=== Build complete ==="
+cd "$CLIENT_DIR"
+npm install
+npm run build
