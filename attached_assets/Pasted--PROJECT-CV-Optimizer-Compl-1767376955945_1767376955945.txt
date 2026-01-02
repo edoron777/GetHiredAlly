@@ -1,0 +1,155 @@
+═══════════════════════════════════════════════════════════════════════
+PROJECT: CV Optimizer Complete Fix - PROMPT 13#18: Fixed CV State & Issue Tracking
+═══════════════════════════════════════════════════════════════════════
+
+CONTEXT:
+We need to track which CV version to display (original vs fixed) and
+which issues have been fixed by the user.
+
+───────────────────────────────────────────────────────────────────────
+
+TASK:
+1. Add state management for fixed CV and fixed issues
+2. Add visual indicator for fixed issues in sidebar
+3. Update issues count display to show fixed count
+
+───────────────────────────────────────────────────────────────────────
+
+FILE TO MODIFY:
+client/src/pages/cv-optimizer/ResultsPage.tsx
+client/src/components/cv-optimizer/IssueSidebar/IssueSidebar.tsx
+
+───────────────────────────────────────────────────────────────────────
+
+PART 1: STATE VARIABLES
+
+Add at top of ResultsPage component (if not already added in Prompt 12):
+```typescript
+// Track the modified CV content
+const [fixedCV, setFixedCV] = useState<string | null>(null);
+
+// Track which issues have been fixed (Set of issue IDs)
+const [fixedIssues, setFixedIssues] = useState<Set<string>>(new Set());
+```
+
+───────────────────────────────────────────────────────────────────────
+
+PART 2: DERIVED VALUES
+
+Add computed values:
+```typescript
+// Count of fixed vs remaining issues
+const fixedCount = fixedIssues.size;
+const remainingCount = issues.length - fixedCount;
+
+// Filter issues by fixed status
+const remainingIssues = issues.filter(i => !fixedIssues.has(i.id));
+const completedIssues = issues.filter(i => fixedIssues.has(i.id));
+```
+
+───────────────────────────────────────────────────────────────────────
+
+PART 3: UPDATE SIDEBAR PROPS
+
+Pass fixed status to IssueSidebar:
+```typescript
+<IssueSidebar
+  issues={issues}
+  fixedIssues={fixedIssues}  // Add this prop
+  selectedIssueId={selectedIssueId}
+  onIssueClick={handleIssueClick}
+  score={reportData?.score}
+/>
+```
+
+───────────────────────────────────────────────────────────────────────
+
+PART 4: UPDATE ISSUESIDEBAR COMPONENT
+
+File: client/src/components/cv-optimizer/IssueSidebar/IssueSidebar.tsx
+
+4.1 Add prop type:
+```typescript
+interface IssueSidebarProps {
+  issues: CVIssue[];
+  fixedIssues: Set<string>;  // Add this
+  selectedIssueId: string | null;
+  onIssueClick: (id: string) => void;
+  score?: number;
+}
+```
+
+4.2 Add visual indicator for fixed issues:
+```typescript
+// In the issue list item rendering
+<div 
+  className={`issue-item ${fixedIssues.has(issue.id) ? 'issue-fixed' : ''}`}
+>
+  {fixedIssues.has(issue.id) && (
+    <span className="fixed-indicator">✓</span>
+  )}
+  <span className={fixedIssues.has(issue.id) ? 'line-through opacity-50' : ''}>
+    {issue.title || issue.issue_title}
+  </span>
+</div>
+```
+
+4.3 Add CSS for fixed issues (in component or CSS file):
+```css
+.issue-fixed {
+  opacity: 0.6;
+  text-decoration: line-through;
+}
+
+.fixed-indicator {
+  color: #10B981;
+  margin-right: 4px;
+  font-weight: bold;
+}
+```
+
+───────────────────────────────────────────────────────────────────────
+
+PART 5: SHOW PROGRESS IN SIDEBAR
+
+Add progress display at top of sidebar:
+```typescript
+// In IssueSidebar component
+<div className="progress-summary mb-4 p-3 bg-gray-50 rounded-lg">
+  <div className="text-sm text-gray-600">
+    Progress: {fixedIssues.size} / {issues.length} issues fixed
+  </div>
+  <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+    <div 
+      className="bg-green-500 h-2 rounded-full transition-all"
+      style={{ width: `${(fixedIssues.size / issues.length) * 100}%` }}
+    />
+  </div>
+</div>
+```
+
+───────────────────────────────────────────────────────────────────────
+
+SECURITY REQUIREMENTS:
+- [x] No database operations
+- [x] State-only tracking (lost on refresh - acceptable per decision)
+- [x] Type-safe Set operations
+
+───────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+1. Apply a fix to an issue
+2. Verify: Issue shows checkmark (✓) in sidebar
+3. Verify: Issue text has strikethrough style
+4. Verify: Progress bar updates
+5. Apply more fixes and verify progress increases
+
+───────────────────────────────────────────────────────────────────────
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- Only add the specified state and visual changes
+- Do NOT persist to database
+- Do NOT add undo functionality
+- If anything is unclear, STOP and ask
+
+═══════════════════════════════════════════════════════════════════════
