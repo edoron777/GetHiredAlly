@@ -1,0 +1,189 @@
+═══════════════════════════════════════════════════════════════════════
+PROJECT: CV Optimizer Complete Fix - PROMPT 14#18: Score Recalculation
+═══════════════════════════════════════════════════════════════════════
+
+CONTEXT:
+When user fixes issues, the CV score should update to reflect improvements.
+Score updates immediately after each fix (per Decision 4).
+
+───────────────────────────────────────────────────────────────────────
+
+TASK:
+Implement client-side score recalculation when issues are fixed.
+
+───────────────────────────────────────────────────────────────────────
+
+FILE TO MODIFY:
+client/src/pages/cv-optimizer/ResultsPage.tsx
+
+───────────────────────────────────────────────────────────────────────
+
+PART 1: ADD SCORE STATE
+```typescript
+// Add state for dynamic score
+const [currentScore, setCurrentScore] = useState<number>(0);
+
+// Initialize from API response
+useEffect(() => {
+  if (reportData?.score) {
+    setCurrentScore(reportData.score);
+  }
+}, [reportData]);
+```
+
+───────────────────────────────────────────────────────────────────────
+
+PART 2: SCORE CALCULATION FUNCTION
+
+Based on CV_Optimizer_Foundation_Document.md scoring algorithm:
+```typescript
+/**
+ * Recalculate CV score based on remaining (unfixed) issues
+ * Formula: 100 - total_penalties
+ * Penalty per issue = weight × occurrence_multiplier
+ */
+const recalculateScore = (allIssues: CVIssue[], fixedIssueIds: Set<string>): number => {
+  // Get remaining (unfixed) issues
+  const remainingIssues = allIssues.filter(issue => !fixedIssueIds.has(issue.id));
+  
+  // Calculate penalties
+  let totalPenalty = 0;
+  
+  // Track occurrences per issue type for capping
+  const occurrenceCount: Record<string, number> = {};
+  
+  for (const issue of remainingIssues) {
+    const weight = issue.weight || getDefaultWeight(issue.severity);
+    const issueType = issue.issue_type || issue.issueType || 'UNKNOWN';
+    
+    // Track occurrences
+    occurrenceCount[issueType] = (occurrenceCount[issueType] || 0) + 1;
+    
+    // Cap occurrences based on weight
+    const maxOccurrences = getMaxOccurrences(weight);
+    if (occurrenceCount[issueType] > maxOccurrences) {
+      continue; // Skip if over max occurrences
+    }
+    
+    // Calculate penalty
+    const penalty = getPenaltyPerOccurrence(weight);
+    totalPenalty += penalty;
+  }
+  
+  // Score = 100 - penalties, minimum 0
+  const newScore = Math.max(0, Math.round(100 - totalPenalty));
+  return newScore;
+};
+
+// Helper: Default weight by severity
+const getDefaultWeight = (severity: string): number => {
+  switch (severity) {
+    case 'critical': return 9;
+    case 'important': return 6;
+    case 'consider': return 4;
+    case 'polish': return 2;
+    default: return 5;
+  }
+};
+
+// Helper: Penalty per occurrence based on weight
+const getPenaltyPerOccurrence = (weight: number): number => {
+  if (weight >= 10) return 5;
+  if (weight >= 9) return 4.5;
+  if (weight >= 8) return 4;
+  if (weight >= 7) return 3.5;
+  if (weight >= 6) return 3;
+  if (weight >= 5) return 2.5;
+  if (weight >= 4) return 2;
+  if (weight >= 3) return 1.5;
+  if (weight >= 2) return 1;
+  return 0.5;
+};
+
+// Helper: Max occurrences before cap
+const getMaxOccurrences = (weight: number): number => {
+  if (weight >= 9) return 3;
+  if (weight >= 7) return 5;
+  if (weight >= 5) return 10;
+  return Infinity;
+};
+```
+
+───────────────────────────────────────────────────────────────────────
+
+PART 3: UPDATE SCORE WHEN ISSUE FIXED
+
+Modify handleApplyFix to recalculate score:
+```typescript
+const handleApplyFix = (issueId: string, newText: string) => {
+  // ... existing code ...
+  
+  // 5. Mark issue as fixed
+  const newFixedIssues = new Set([...fixedIssues, issueId]);
+  setFixedIssues(newFixedIssues);
+  
+  // 6. Recalculate score
+  const newScore = recalculateScore(issues, newFixedIssues);
+  setCurrentScore(newScore);
+  
+  // ... rest of existing code ...
+};
+```
+
+───────────────────────────────────────────────────────────────────────
+
+PART 4: UPDATE SIDEBAR TO USE DYNAMIC SCORE
+```typescript
+<IssueSidebar
+  issues={issues}
+  fixedIssues={fixedIssues}
+  selectedIssueId={selectedIssueId}
+  onIssueClick={handleIssueClick}
+  score={currentScore}  // Use dynamic score instead of reportData.score
+  originalScore={reportData?.score}  // For comparison display
+/>
+```
+
+───────────────────────────────────────────────────────────────────────
+
+PART 5: SHOW SCORE IMPROVEMENT IN SIDEBAR
+
+File: client/src/components/cv-optimizer/IssueSidebar/IssueSidebar.tsx
+```typescript
+// Add originalScore prop
+interface IssueSidebarProps {
+  // ... existing props
+  score?: number;
+  originalScore?: number;
+}
+
+// In the score display section
+<div className="score-display">
+  <div className="text-3xl font-bold">{score}</div>
+  {originalScore && score !== originalScore && (
+    <div className="text-sm text-green-600">
+      +{score - originalScore} from {originalScore}
+    </div>
+  )}
+</div>
+```
+
+───────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+1. Note initial score (e.g., 64)
+2. Fix a critical issue (weight 9-10)
+3. Verify: Score increases by ~4-5 points
+4. Fix more issues
+5. Verify: Score continues to increase
+6. Verify: Score improvement shown (e.g., "+8 from 64")
+
+───────────────────────────────────────────────────────────────────────
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- Use the exact penalty values from Foundation Document
+- Do NOT call backend API for recalculation
+- Do NOT persist score to database
+- If anything is unclear, STOP and ask
+
+═══════════════════════════════════════════════════════════════════════
