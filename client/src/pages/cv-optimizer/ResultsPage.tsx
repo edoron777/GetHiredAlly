@@ -73,6 +73,23 @@ export default function ResultsPage() {
   const [isRescanning, setIsRescanning] = useState(false);
   const [scanHistory, setScanHistory] = useState<{score: number, date: Date}[]>([]);
 
+  const normalizeIssue = (issue: CVIssue, index: number) => ({
+    id: issue.id || String(index + 1),
+    severity: issue.severity,
+    issueType: issue.issue_type || issue.issueType || 'UNKNOWN',
+    title: issue.issue || issue.title || issue.issue_title || 'Issue',
+    description: issue.description || issue.issue_description || issue.issue || '',
+    category: issue.category || '',
+    location: issue.location || '',
+    matchText: issue.current_text || issue.problematic_text || issue.matchText || '',
+    currentText: issue.current_text || issue.problematic_text || issue.matchText || '',
+    suggestedText: issue.suggested_fix || issue.suggestedText || '',
+    fixDifficulty: issue.fix_difficulty || 'medium',
+    isAutoFixable: issue.is_auto_fixable || false,
+    impact: issue.impact || '',
+    howToFix: issue.how_to_fix || issue.howToFix || '',
+  });
+
   const normalizedIssues = useMemo(() => {
     if (!reportData?.issues) return [];
     return reportData.issues.map((issue, i) => normalizeIssue(issue, i));
@@ -204,23 +221,6 @@ export default function ResultsPage() {
     
     return Math.max(0, Math.round(100 - totalPenalty));
   };
-
-  const normalizeIssue = (issue: CVIssue, index: number) => ({
-    id: issue.id || String(index + 1),
-    severity: issue.severity,
-    issueType: issue.issue_type || issue.issueType || 'UNKNOWN',
-    title: issue.issue || issue.title || issue.issue_title || 'Issue',
-    description: issue.description || issue.issue_description || issue.issue || '',
-    category: issue.category || '',
-    location: issue.location || '',
-    matchText: issue.current_text || issue.problematic_text || issue.matchText || '',
-    currentText: issue.current_text || issue.problematic_text || issue.matchText || '',
-    suggestedText: issue.suggested_fix || issue.suggestedText || '',
-    fixDifficulty: issue.fix_difficulty || 'medium',
-    isAutoFixable: issue.is_auto_fixable || false,
-    impact: issue.impact || '',
-    howToFix: issue.how_to_fix || issue.howToFix || '',
-  });
 
   const handleIssueClick = (issueId: string) => {
     setSelectedIssueId(issueId);
