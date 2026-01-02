@@ -1,0 +1,295 @@
+═══════════════════════════════════════════════════════════════════════
+TASK: Extend Existing Detectors - Add 22 Missing Issue Detections
+═══════════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL RULES:
+1. EXTEND existing files - do NOT create new files
+2. FOLLOW existing code patterns exactly
+3. Use SAME return format as existing detections
+4. If unclear about anything - STOP and ASK
+
+═══════════════════════════════════════════════════════════════════════
+
+CONTEXT:
+Gap Analysis found 22 missing detections in existing detector files.
+Your task is to ADD these detections to the existing files.
+
+───────────────────────────────────────────────────────────────────────
+FILE 1: backend/common/detection/contact_extractor.py
+ADD 5 MISSING DETECTIONS
+───────────────────────────────────────────────────────────────────────
+
+EXISTING (keep these):
+✅ CONTACT_MISSING_EMAIL
+✅ CONTACT_MISSING_PHONE  
+✅ CONTACT_MISSING_LINKEDIN
+
+ADD THESE 5:
+
+1. CONTACT_MISSING_LOCATION (weight: 6)
+   Detection: Check if CV contains city/state pattern
+   Regex: r'\b[A-Z][a-z]+,\s*[A-Z]{2}\b' (City, ST)
+   Alternative: r'\b[A-Z][a-z]+,\s*[A-Z][a-z]+\b' (City, State)
+   Return issue if NO location found in first 500 chars
+
+2. CONTACT_MISSING_GITHUB (weight: 7)
+   Detection: Check for GitHub URL (tech roles only)
+   Regex: r'github\.com/[\w-]+'
+   Tech keywords: python, java, javascript, developer, engineer, software,
+                  react, node, backend, frontend, fullstack, devops
+   Logic: 
+   - If CV contains tech keywords AND no GitHub → return issue
+   - If CV has no tech keywords → skip (don't flag)
+
+3. CONTACT_UNPROFESSIONAL_EMAIL (weight: 7)
+   Detection: Check email for unprofessional patterns
+   First extract email using existing regex
+   Then check for:
+   - Numbers (except 4-digit years like 1990, 1985): r'\d{3,}' or r'\d(?!\d{3}$)'
+   - Unprofessional words: ['hot', 'sexy', 'cool', 'party', 'babe', 'cute', 
+                           'princess', 'angel', 'devil', 'crazy', 'killer']
+   - Gaming references: ['gamer', 'ninja', 'warrior', 'dragon', 'xxx']
+   Return issue if any unprofessional pattern found
+
+4. CONTACT_INCONSISTENT_FORMAT (weight: 3)
+   Detection: Check contact section for mixed separators
+   Look at first 500 chars (contact area)
+   Separators to detect: ['|', '•', '/', '-', '·', '–']
+   Logic:
+   - Count unique separators used between contact items
+   - If more than 1 separator type used → return issue
+   Example bad: "email@test.com | 555-1234 • linkedin.com/in/name"
+
+5. CONTACT_PHOTO_INCLUDED (weight: 6)
+   Detection: This requires file metadata analysis
+   For now: Check for image-related text indicators
+   Patterns: r'\[photo\]', r'\[image\]', r'\[picture\]', r'<img'
+   Note: Full implementation needs file type detection (skip if too complex)
+
+───────────────────────────────────────────────────────────────────────
+FILE 2: backend/common/detection/format_detector.py
+ADD 6 MISSING DETECTIONS
+───────────────────────────────────────────────────────────────────────
+
+EXISTING (keep these):
+✅ FORMAT_INCONSISTENT_DATES
+✅ FORMAT_INCONSISTENT_BULLETS
+✅ FORMAT_INCONSISTENT_SPACING
+✅ FORMAT_TRAILING_WHITESPACE
+✅ FORMAT_EXCESSIVE_BLANK_LINES
+
+ADD THESE 6:
+
+1. FORMAT_MISSING_SECTION_HEADERS (weight: 8)
+   Detection: CV lacks clear section headers
+   Required sections: ['experience', 'education', 'skills']
+   Pattern for header: Line that is:
+   - ALL CAPS, or
+   - Title Case followed by colon, or
+   - Bold markers (**text** or __text__)
+   Logic: If less than 2 of required sections found as headers → issue
+
+2. FORMAT_MULTIPLE_SPACES (weight: 3)
+   Detection: Multiple consecutive spaces in text
+   Regex: r'  +' (2 or more spaces)
+   Exclude: Beginning of lines (indentation)
+   Count occurrences, if > 5 → return issue
+
+3. FORMAT_TABLES_DETECTED (weight: 7)
+   Detection: CV contains table structures (ATS problem)
+   Patterns:
+   - Tab-separated columns: r'\t.*\t.*\t'
+   - Pipe tables: r'\|.*\|.*\|'
+   - Multiple aligned columns (3+ items with similar spacing)
+   If any pattern found → return issue
+
+4. FORMAT_MULTIPLE_COLUMNS (weight: 7)
+   Detection: Multi-column layout detected
+   Indicators:
+   - Very short lines followed by content: lines < 30 chars with text
+   - Tab characters mid-line: r'[^\t]\t+[^\t]'
+   - Unusual whitespace patterns suggesting columns
+   Heuristic: If > 20% of lines are < 30 chars but have content → possible columns
+
+5. FORMAT_SPECIAL_CHARACTERS (weight: 4)
+   Detection: Non-standard characters that cause ATS issues
+   Characters to flag:
+   - Smart quotes: ['"', '"', ''', ''']
+   - Em/en dashes: ['—', '–']  
+   - Special bullets: ['●', '○', '■', '□', '►', '▪']
+   - Other: ['…', '™', '®', '©', '°']
+   If any found → return issue with list of characters
+
+6. FORMAT_HEADERS_GRAPHICS (weight: 9)
+   Detection: Section headers appear to be images/graphics
+   This is hard to detect from text alone
+   Indicators:
+   - Missing expected header text but content exists
+   - Sections without any header pattern
+   - If extraction shows "[image]" placeholder before sections
+   Note: May need to skip if text-only analysis
+
+───────────────────────────────────────────────────────────────────────
+FILE 3: backend/common/detection/bullet_extractor.py
+ADD 3 MISSING DETECTIONS
+───────────────────────────────────────────────────────────────────────
+
+EXISTING (keep these):
+✅ CONTENT_MISSING_METRICS
+✅ CONTENT_WEAK_ACTION_VERBS
+✅ CONTENT_BULLET_TOO_SHORT
+✅ CONTENT_BULLET_TOO_LONG
+
+ADD THESE 3:
+
+1. CONTENT_TOO_MANY_BULLETS (weight: 4)
+   Detection: Too many bullets per job entry
+   Logic:
+   - Find job entries (company/title patterns)
+   - Count bullets between job entries
+   - If any job has > 8 bullets → return issue
+   Include: Which job has too many, count found
+
+2. CONTENT_TASK_FOCUSED (weight: 10)
+   Detection: Bullets describe tasks instead of achievements
+   Task-focused patterns (at bullet start):
+   - r'^[\s•\-\*]*[Rr]esponsible\s+for\b'
+   - r'^[\s•\-\*]*[Dd]uties\s+include'
+   - r'^[\s•\-\*]*[Ww]orked\s+on\b'
+   - r'^[\s•\-\*]*[Hh]elped\s+(with|to)\b'
+   - r'^[\s•\-\*]*[Aa]ssisted\s+(in|with)\b'
+   - r'^[\s•\-\*]*[Ii]nvolved\s+in\b'
+   - r'^[\s•\-\*]*[Pp]articipated\s+in\b'
+   - r'^[\s•\-\*]*[Ss]upported\b'
+   If > 30% of bullets match task patterns → return issue
+   Include: Count of task-focused bullets, examples
+
+3. CONTENT_MISSING_IMPACT (weight: 6)
+   Detection: Bullets have actions but no results/impact
+   Impact indicators:
+   - r'resulting\s+in'
+   - r'leading\s+to'
+   - r'which\s+(increased|decreased|improved|reduced|saved|generated)'
+   - r'(saving|increasing|reducing|improving|generating)\s+\$?\d'
+   - r'by\s+\d+%'
+   - r'achieved|delivered|accomplished'
+   Logic:
+   - For each bullet, check if it has action verb but NO impact indicator
+   - If > 50% of bullets lack impact → return issue
+
+───────────────────────────────────────────────────────────────────────
+FILE 4: backend/common/detection/section_extractor.py
+ADD 2 MISSING DETECTIONS
+───────────────────────────────────────────────────────────────────────
+
+EXISTING (keep these):
+✅ LENGTH_CV_TOO_LONG
+✅ LENGTH_CV_TOO_SHORT
+✅ FORMAT_POOR_VISUAL_HIERARCHY
+
+ADD THESE 2:
+
+1. LENGTH_EXPERIENCE_TOO_DETAILED (weight: 5)
+   Detection: Old jobs have too much detail
+   Logic:
+   - Find jobs with dates
+   - Calculate years ago for each job
+   - For jobs > 10 years old: count bullets
+   - If old job has > 3 bullets → return issue
+   Include: Which job, how old, bullet count
+
+2. LENGTH_EDUCATION_TOO_DETAILED (weight: 4)
+   Detection: Education section too long for experienced professional
+   Logic:
+   - Find education section
+   - Count lines in education section
+   - If CV has > 5 years experience AND education > 6 lines → issue
+   Note: New grads can have detailed education
+
+───────────────────────────────────────────────────────────────────────
+FILE 5: backend/common/detection/language_detector.py
+ADD 4 MISSING DETECTIONS
+───────────────────────────────────────────────────────────────────────
+
+EXISTING (keep these):
+✅ CONTENT_WEAK_ACTION_VERBS (partial)
+✅ CONTENT_GENERIC_STATEMENTS
+
+ADD THESE 4:
+
+1. CONTENT_FIRST_PERSON_PRONOUNS (weight: 3)
+   Detection: Excessive use of first-person pronouns
+   Pattern: r'\b(I|my|me|myself|I\'m|I\'ve|I\'ll)\b' (case sensitive for I)
+   Threshold: If count > 3 → return issue
+   Note: CVs should be written without "I" statements
+
+2. CONTENT_PASSIVE_VOICE (weight: 4)
+   Detection: Passive voice constructions
+   Patterns:
+   - r'\b(was|were|been|being)\s+\w+ed\b'
+   - r'\bwas\s+(assigned|given|told|asked|tasked|made|selected)\b'
+   - r'\b(is|are|was|were)\s+being\s+\w+ed\b'
+   Count passive constructions
+   If > 5 passive constructions → return issue
+   Include: Examples of passive voice found
+
+3. CONTENT_VAGUE_METRICS (weight: 6)
+   Detection: Vague quantifiers instead of specific numbers
+   Patterns:
+   - r'\b(significantly|greatly|substantially)\s+(increased|improved|reduced)'
+   - r'\b(many|several|numerous|various|multiple)\s+(projects?|clients?|customers?|tasks?)'
+   - r'\b(a lot of|tons of|lots of)\b'
+   - r'\b(some|few|couple)\s+(of\s+)?(projects?|tasks?)'
+   If > 3 vague metrics found → return issue
+   Include: Examples found
+
+4. CONTENT_IRRELEVANT_INFORMATION (weight: 5)
+   Detection: Information that shouldn't be on a CV
+   Patterns to flag:
+   - High school (if college degree present): r'\b(high school|secondary school)\b'
+   - Personal info: r'\b(blood type|horoscope|zodiac|marital status|married|single|divorced)\b'
+   - Age/DOB: r'\b(age|born|date of birth|DOB)\s*:?\s*\d'
+   - Religion: r'\b(religion|religious|christian|muslim|jewish|hindu|buddhist)\b'
+   - Nationality (for US/UK): r'\b(nationality|citizen of|passport)\b'
+   If any found → return issue with what was found
+
+───────────────────────────────────────────────────────────────────────
+RETURN FORMAT (Use this for all new detections)
+───────────────────────────────────────────────────────────────────────
+
+Follow the EXISTING return format in each file. Typically:
+
+{
+    "issue_type": "ISSUE_CODE_HERE",
+    "location": "Where in CV (e.g., 'contact section', 'line 15')",
+    "description": "What was found",
+    "current": "The problematic text (optional)",
+    "suggestion": "Brief fix suggestion (optional)"
+}
+
+───────────────────────────────────────────────────────────────────────
+IMPLEMENTATION STEPS
+───────────────────────────────────────────────────────────────────────
+
+For each file:
+1. Open the file
+2. Find existing detection functions
+3. Add new detection functions following same pattern
+4. Add calls to new functions in main detection function
+5. Test that file still works
+
+───────────────────────────────────────────────────────────────────────
+
+DELIVERABLES:
+1. Modified contact_extractor.py with 5 new detections
+2. Modified format_detector.py with 6 new detections
+3. Modified bullet_extractor.py with 3 new detections
+4. Modified section_extractor.py with 2 new detections
+5. Modified language_detector.py with 4 new detections
+
+Total: 20 new detections added to existing files
+
+⚠️ Do NOT modify master_detector.py yet - that's Prompt 4#4
+⚠️ Do NOT create new files - that's Prompts 2#4 and 3#4
+
+═══════════════════════════════════════════════════════════════════════

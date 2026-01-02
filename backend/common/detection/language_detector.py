@@ -15,6 +15,29 @@ from .word_lists import (
     VAGUE_THRESHOLD,
 )
 
+FIRST_PERSON_PATTERN = re.compile(r"\b(I|my|me|myself|I'm|I've|I'll)\b")
+
+PASSIVE_VOICE_PATTERNS = [
+    re.compile(r'\b(was|were|been|being)\s+\w+ed\b', re.IGNORECASE),
+    re.compile(r'\bwas\s+(assigned|given|told|asked|tasked|made|selected)\b', re.IGNORECASE),
+    re.compile(r'\b(is|are|was|were)\s+being\s+\w+ed\b', re.IGNORECASE),
+]
+
+VAGUE_METRICS_PATTERNS = [
+    re.compile(r'\b(significantly|greatly|substantially)\s+(increased|improved|reduced)', re.IGNORECASE),
+    re.compile(r'\b(many|several|numerous|various|multiple)\s+(projects?|clients?|customers?|tasks?)', re.IGNORECASE),
+    re.compile(r'\b(a lot of|tons of|lots of)\b', re.IGNORECASE),
+    re.compile(r'\b(some|few|couple)\s+(of\s+)?(projects?|tasks?)', re.IGNORECASE),
+]
+
+IRRELEVANT_INFO_PATTERNS = {
+    'high_school': re.compile(r'\b(high school|secondary school|secondary education)\b', re.IGNORECASE),
+    'personal_info': re.compile(r'\b(blood type|horoscope|zodiac|marital status|married|single|divorced|spouse|children)\b', re.IGNORECASE),
+    'age_dob': re.compile(r'\b(age|born|date of birth|DOB|birthdate)\s*:?\s*\d', re.IGNORECASE),
+    'religion': re.compile(r'\b(religion|religious affiliation)\s*:', re.IGNORECASE),
+    'nationality': re.compile(r'\b(nationality|citizen of|passport number)\b', re.IGNORECASE),
+}
+
 
 def detect_weak_verbs(text: str) -> List[Dict]:
     """
@@ -123,6 +146,130 @@ def detect_buzzword_stuffing(text: str) -> List[Dict]:
     return issues
 
 
+def detect_first_person_pronouns(text: str) -> List[Dict]:
+    """
+    Detect excessive use of first-person pronouns.
+    
+    Args:
+        text: Text to analyze
+        
+    Returns:
+        List of CONTENT_FIRST_PERSON_PRONOUNS issues
+    """
+    issues = []
+    
+    matches = FIRST_PERSON_PATTERN.findall(text)
+    
+    if len(matches) > 3:
+        issues.append({
+            'issue_type': 'CONTENT_FIRST_PERSON_PRONOUNS',
+            'location': 'Throughout CV',
+            'description': f'Excessive first-person pronouns ({len(matches)} found): I, my, me, etc.',
+            'current': ', '.join(matches[:5]),
+            'suggestion': 'CVs should be written without "I" statements (e.g., "Led team" not "I led team")',
+        })
+    
+    return issues
+
+
+def detect_passive_voice(text: str) -> List[Dict]:
+    """
+    Detect passive voice constructions.
+    
+    Args:
+        text: Text to analyze
+        
+    Returns:
+        List of CONTENT_PASSIVE_VOICE issues
+    """
+    issues = []
+    passive_examples = []
+    
+    for pattern in PASSIVE_VOICE_PATTERNS:
+        matches = pattern.findall(text)
+        passive_examples.extend(matches[:3])
+    
+    if len(passive_examples) > 5:
+        issues.append({
+            'issue_type': 'CONTENT_PASSIVE_VOICE',
+            'location': 'Throughout CV',
+            'description': f'Passive voice detected ({len(passive_examples)} instances)',
+            'current': '; '.join(passive_examples[:3]),
+            'suggestion': 'Use active voice: "Managed team" instead of "Was assigned to manage team"',
+        })
+    
+    return issues
+
+
+def detect_vague_metrics(text: str) -> List[Dict]:
+    """
+    Detect vague quantifiers instead of specific numbers.
+    
+    Args:
+        text: Text to analyze
+        
+    Returns:
+        List of CONTENT_VAGUE_METRICS issues
+    """
+    issues = []
+    vague_examples = []
+    
+    for pattern in VAGUE_METRICS_PATTERNS:
+        matches = pattern.findall(text)
+        for match in matches:
+            if isinstance(match, tuple):
+                vague_examples.append(' '.join(match))
+            else:
+                vague_examples.append(match)
+    
+    if len(vague_examples) > 3:
+        issues.append({
+            'issue_type': 'CONTENT_VAGUE_METRICS',
+            'location': 'Throughout CV',
+            'description': f'Vague quantifiers used instead of specific numbers ({len(vague_examples)} found)',
+            'current': '; '.join(vague_examples[:3]),
+            'suggestion': 'Replace with specific numbers: "significantly increased" → "increased by 35%"',
+        })
+    
+    return issues
+
+
+def detect_irrelevant_information(text: str, has_college_degree: bool = False) -> List[Dict]:
+    """
+    Detect information that shouldn't be on a CV.
+    
+    Args:
+        text: Text to analyze
+        has_college_degree: Whether CV mentions college education
+        
+    Returns:
+        List of CONTENT_IRRELEVANT_INFORMATION issues
+    """
+    issues = []
+    found_issues = []
+    
+    college_pattern = re.compile(r'\b(bachelor|master|phd|doctorate|university|college|degree)\b', re.IGNORECASE)
+    has_college = bool(college_pattern.search(text))
+    
+    for info_type, pattern in IRRELEVANT_INFO_PATTERNS.items():
+        if info_type == 'high_school' and not has_college:
+            continue
+        
+        match = pattern.search(text)
+        if match:
+            found_issues.append(info_type.replace('_', ' '))
+    
+    if found_issues:
+        issues.append({
+            'issue_type': 'CONTENT_IRRELEVANT_INFORMATION',
+            'location': 'Throughout CV',
+            'description': f'Potentially irrelevant information found: {", ".join(found_issues)}',
+            'suggestion': 'Remove personal details not relevant to job qualifications',
+        })
+    
+    return issues
+
+
 def detect_language_issues(text: str) -> List[Dict]:
     """
     Detect all language quality issues.
@@ -141,5 +288,9 @@ def detect_language_issues(text: str) -> List[Dict]:
     issues.extend(detect_weak_verbs(text))
     issues.extend(detect_vague_language(text))
     issues.extend(detect_buzzword_stuffing(text))
+    issues.extend(detect_first_person_pronouns(text))
+    issues.extend(detect_passive_voice(text))
+    issues.extend(detect_vague_metrics(text))
+    issues.extend(detect_irrelevant_information(text))
     
     return issues

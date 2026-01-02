@@ -1,0 +1,382 @@
+═══════════════════════════════════════════════════════════════════════
+TASK: Create standards_detector.py - 7 New Issue Detections
+═══════════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL RULES:
+1. Create NEW file: backend/common/detection/standards_detector.py
+2. Follow SAME patterns as other detectors in that folder
+3. Use SAME return format
+4. If unclear - STOP and ASK
+
+═══════════════════════════════════════════════════════════════════════
+
+CREATE FILE: backend/common/detection/standards_detector.py
+
+PURPOSE: Detect issues with professional standards and best practices
+
+───────────────────────────────────────────────────────────────────────
+FILE STRUCTURE
+───────────────────────────────────────────────────────────────────────
+
+"""
+Standards Detector for CV Optimizer
+Detects issues with professional standards and best practices.
+"""
+
+import re
+from typing import List, Dict, Any, Optional
+from datetime import datetime
+
+def detect_standards_issues(cv_text: str) -> List[Dict[str, Any]]:
+    """
+    Main function to detect all standards-related issues.
+    
+    Args:
+        cv_text: Full CV text content
+        
+    Returns:
+        List of detected issues
+    """
+    issues = []
+    
+    # Run all standard checks
+    issues.extend(detect_objective_statement(cv_text))
+    issues.extend(detect_references_section(cv_text))
+    issues.extend(detect_outdated_skills(cv_text))
+    issues.extend(detect_hobbies_irrelevant(cv_text))
+    issues.extend(detect_unprofessional_language(cv_text))
+    issues.extend(detect_negative_language(cv_text))
+    issues.extend(detect_employment_gap(cv_text))
+    
+    return issues
+
+───────────────────────────────────────────────────────────────────────
+DETECTION 1: STANDARDS_OBJECTIVE_STATEMENT (weight: 5)
+───────────────────────────────────────────────────────────────────────
+
+def detect_objective_statement(cv_text: str) -> List[Dict[str, Any]]:
+    """
+    Detect outdated objective statement (should use Summary instead).
+    """
+    issues = []
+    
+    # Patterns indicating objective statement
+    patterns = [
+        r'\b[Oo]bjective\s*:',
+        r'\b[Cc]areer\s+[Oo]bjective\b',
+        r'\b[Jj]ob\s+[Oo]bjective\b',
+        r'\b[Ss]eeking\s+(a\s+)?(position|role|opportunity)\b',
+        r'\b[Ll]ooking\s+for\s+(a\s+)?(position|role|opportunity)\b',
+        r'\b[Tt]o\s+obtain\s+(a\s+)?(position|role)\b',
+    ]
+    
+    for pattern in patterns:
+        match = re.search(pattern, cv_text)
+        if match:
+            issues.append({
+                "issue_type": "STANDARDS_OBJECTIVE_STATEMENT",
+                "location": f"Found at position {match.start()}",
+                "description": "CV contains outdated objective statement. Modern CVs use Professional Summary instead.",
+                "current": match.group(),
+                "suggestion": "Replace with a Professional Summary highlighting your value proposition"
+            })
+            break  # Only report once
+    
+    return issues
+
+───────────────────────────────────────────────────────────────────────
+DETECTION 2: STANDARDS_REFERENCES_SECTION (weight: 2)
+───────────────────────────────────────────────────────────────────────
+
+def detect_references_section(cv_text: str) -> List[Dict[str, Any]]:
+    """
+    Detect unnecessary references section.
+    """
+    issues = []
+    
+    patterns = [
+        r'\b[Rr]eferences\s*:?\s*(available\s+)?(upon|on)\s+request\b',
+        r'\b[Rr]eferences\s+[Aa]vailable\b',
+        r'\b[Rr]eferences\s*:\s*\n',
+        r'\b[Pp]rofessional\s+[Rr]eferences\b',
+    ]
+    
+    for pattern in patterns:
+        match = re.search(pattern, cv_text)
+        if match:
+            issues.append({
+                "issue_type": "STANDARDS_REFERENCES_SECTION",
+                "location": "References section",
+                "description": "References section is unnecessary. Employers assume references are available.",
+                "current": match.group(),
+                "suggestion": "Remove references section to save space for achievements"
+            })
+            break
+    
+    return issues
+
+───────────────────────────────────────────────────────────────────────
+DETECTION 3: STANDARDS_OUTDATED_SKILLS (weight: 6)
+───────────────────────────────────────────────────────────────────────
+
+def detect_outdated_skills(cv_text: str) -> List[Dict[str, Any]]:
+    """
+    Detect obsolete technologies/skills that hurt credibility.
+    """
+    issues = []
+    
+    # Outdated technologies with their categories
+    outdated_skills = {
+        # Programming/Web
+        'COBOL': 'programming language',
+        'FORTRAN': 'programming language',
+        'Pascal': 'programming language',
+        'Visual Basic 6': 'programming language',
+        'VB6': 'programming language',
+        'Flash': 'web technology',
+        'ActionScript': 'web technology',
+        'Silverlight': 'web technology',
+        'FrontPage': 'web tool',
+        'Dreamweaver': 'web tool',
+        'ColdFusion': 'web technology',
+        
+        # Operating Systems
+        'Windows XP': 'operating system',
+        'Windows Vista': 'operating system',
+        'Windows 7': 'operating system',
+        'Windows 95': 'operating system',
+        'Windows 98': 'operating system',
+        'MS-DOS': 'operating system',
+        'DOS': 'operating system',
+        
+        # Software
+        'Lotus Notes': 'software',
+        'Lotus 1-2-3': 'software',
+        'WordPerfect': 'software',
+        'FoxPro': 'database',
+        'dBase': 'database',
+        'Clipper': 'database',
+        
+        # Other
+        'Fax machine': 'equipment',
+        'Telex': 'equipment',
+        'Typing speed': 'skill',
+    }
+    
+    found_outdated = []
+    cv_lower = cv_text.lower()
+    
+    for skill, category in outdated_skills.items():
+        if skill.lower() in cv_lower:
+            found_outdated.append(f"{skill} ({category})")
+    
+    if found_outdated:
+        issues.append({
+            "issue_type": "STANDARDS_OUTDATED_SKILLS",
+            "location": "Skills/Technologies section",
+            "description": f"CV lists outdated technologies: {', '.join(found_outdated[:5])}",
+            "current": ', '.join(found_outdated),
+            "suggestion": "Remove outdated skills unless specifically required for the role"
+        })
+    
+    return issues
+
+───────────────────────────────────────────────────────────────────────
+DETECTION 4: STANDARDS_HOBBIES_IRRELEVANT (weight: 3)
+───────────────────────────────────────────────────────────────────────
+
+def detect_hobbies_irrelevant(cv_text: str) -> List[Dict[str, Any]]:
+    """
+    Detect generic hobbies that don't add value.
+    """
+    issues = []
+    
+    # Check if hobbies/interests section exists
+    hobbies_section = re.search(
+        r'\b(Hobbies|Interests|Personal\s+Interests|Activities)\s*:?\s*\n(.*?)(?=\n[A-Z]|\Z)',
+        cv_text,
+        re.IGNORECASE | re.DOTALL
+    )
+    
+    if hobbies_section:
+        section_text = hobbies_section.group(2).lower()
+        
+        # Generic hobbies that don't add value
+        generic_hobbies = [
+            'reading', 'traveling', 'music', 'movies', 'cooking',
+            'sports', 'fitness', 'gym', 'yoga', 'running',
+            'photography', 'gardening', 'hiking', 'camping',
+            'socializing', 'spending time with family', 'friends'
+        ]
+        
+        found_generic = [h for h in generic_hobbies if h in section_text]
+        
+        if len(found_generic) >= 2:  # Multiple generic hobbies
+            issues.append({
+                "issue_type": "STANDARDS_HOBBIES_IRRELEVANT",
+                "location": "Hobbies/Interests section",
+                "description": "Generic hobbies don't differentiate you. Include only if relevant to role.",
+                "current": ', '.join(found_generic[:5]),
+                "suggestion": "Remove generic hobbies or replace with role-relevant activities"
+            })
+    
+    return issues
+
+───────────────────────────────────────────────────────────────────────
+DETECTION 5: STANDARDS_UNPROFESSIONAL_LANGUAGE (weight: 6)
+───────────────────────────────────────────────────────────────────────
+
+def detect_unprofessional_language(cv_text: str) -> List[Dict[str, Any]]:
+    """
+    Detect informal or unprofessional language.
+    """
+    issues = []
+    
+    # Unprofessional patterns
+    patterns = {
+        r'\b(gonna|wanna|gotta|kinda|sorta)\b': 'slang contraction',
+        r'\b(stuff|things|whatever)\b': 'vague informal word',
+        r'!{2,}': 'multiple exclamation marks',
+        r'\.{3,}': 'excessive ellipsis',
+        r'\b(awesome|amazing|incredible|insane)\b': 'hyperbolic word',
+        r'\b(rockstar|ninja|guru|wizard|unicorn)\b': 'buzzword title',
+        r'\b(lol|omg|btw|idk|tbh|imho)\b': 'internet slang',
+        r'[😀😃😄😁😆🤣😂🙂🙃😉😊😇]': 'emoji',
+        r'\b(etc\.?\s*){2,}': 'repeated etc',
+    }
+    
+    found_issues = []
+    
+    for pattern, issue_type in patterns.items():
+        matches = re.findall(pattern, cv_text, re.IGNORECASE)
+        if matches:
+            found_issues.append(f"{issue_type}: {matches[0] if isinstance(matches[0], str) else matches[0]}")
+    
+    if found_issues:
+        issues.append({
+            "issue_type": "STANDARDS_UNPROFESSIONAL_LANGUAGE",
+            "location": "Throughout CV",
+            "description": f"Unprofessional language detected: {', '.join(found_issues[:3])}",
+            "current": ', '.join(found_issues),
+            "suggestion": "Use formal, professional language throughout your CV"
+        })
+    
+    return issues
+
+───────────────────────────────────────────────────────────────────────
+DETECTION 6: STANDARDS_NEGATIVE_LANGUAGE (weight: 6)
+───────────────────────────────────────────────────────────────────────
+
+def detect_negative_language(cv_text: str) -> List[Dict[str, Any]]:
+    """
+    Detect negative language or criticism of past employers.
+    """
+    issues = []
+    
+    negative_patterns = [
+        r'\b(hated|hate|terrible|awful|worst|horrible)\b',
+        r'\b(bad\s+management|poor\s+leadership|toxic)\b',
+        r'\b(fired|terminated|let\s+go|laid\s+off)\b',
+        r'\b(conflict|disagreement|dispute)\s+with\b',
+        r'\b(unfair|discrimination|harassment)\b',
+        r'\b(failure|failed|unsuccessful)\b',
+        r'\b(boring|tedious|mundane)\b',
+        r'\b(unfortunately|regrettably)\b',
+        r'\b(forced\s+to|had\s+to\s+leave)\b',
+    ]
+    
+    found_negative = []
+    
+    for pattern in negative_patterns:
+        match = re.search(pattern, cv_text, re.IGNORECASE)
+        if match:
+            found_negative.append(match.group())
+    
+    if found_negative:
+        issues.append({
+            "issue_type": "STANDARDS_NEGATIVE_LANGUAGE",
+            "location": "Throughout CV",
+            "description": "Negative language can hurt your candidacy",
+            "current": ', '.join(found_negative[:3]),
+            "suggestion": "Reframe negatively using positive language focusing on growth and learning"
+        })
+    
+    return issues
+
+───────────────────────────────────────────────────────────────────────
+DETECTION 7: CAREER_EMPLOYMENT_GAP (weight: 8)
+───────────────────────────────────────────────────────────────────────
+
+def detect_employment_gap(cv_text: str) -> List[Dict[str, Any]]:
+    """
+    Detect employment gaps > 6 months.
+    """
+    issues = []
+    
+    # Extract date ranges from experience section
+    # Common formats: "Jan 2020 - Dec 2021", "2020 - 2021", "01/2020 - 12/2021"
+    date_patterns = [
+        r'(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s*(\d{4})\s*[-–—to]+\s*(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s*(\d{4})',
+        r'(\d{1,2})/(\d{4})\s*[-–—to]+\s*(\d{1,2})/(\d{4})',
+        r'(\d{4})\s*[-–—to]+\s*(\d{4})',
+    ]
+    
+    # Try to find date ranges
+    dates_found = []
+    
+    for pattern in date_patterns:
+        matches = re.findall(pattern, cv_text, re.IGNORECASE)
+        for match in matches:
+            try:
+                if len(match) == 4:  # Month Year - Month Year
+                    month_map = {'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6,
+                                'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12}
+                    start_month = month_map.get(match[0][:3].lower(), 1)
+                    start_year = int(match[1])
+                    end_month = month_map.get(match[2][:3].lower(), 12)
+                    end_year = int(match[3])
+                    dates_found.append((start_year, start_month, end_year, end_month))
+                elif len(match) == 2:  # Year - Year
+                    dates_found.append((int(match[0]), 1, int(match[1]), 12))
+            except (ValueError, IndexError):
+                continue
+    
+    # Sort dates by end date (most recent first)
+    dates_found.sort(key=lambda x: (x[2], x[3]), reverse=True)
+    
+    # Check for gaps between consecutive jobs
+    gaps_found = []
+    for i in range(len(dates_found) - 1):
+        current_job = dates_found[i]
+        previous_job = dates_found[i + 1]
+        
+        # Current job starts after previous job ends
+        current_start = current_job[0] * 12 + current_job[1]
+        previous_end = previous_job[2] * 12 + previous_job[3]
+        
+        gap_months = current_start - previous_end
+        
+        if gap_months > 6:
+            gaps_found.append(f"{gap_months} months gap around {previous_job[2]}-{current_job[0]}")
+    
+    if gaps_found:
+        issues.append({
+            "issue_type": "CAREER_EMPLOYMENT_GAP",
+            "location": "Experience section",
+            "description": f"Employment gap(s) detected: {gaps_found[0]}",
+            "current": ', '.join(gaps_found[:2]),
+            "suggestion": "Address gaps by noting activities (freelance, education, caregiving, etc.)"
+        })
+    
+    return issues
+
+───────────────────────────────────────────────────────────────────────
+
+DELIVERABLES:
+1. Create backend/common/detection/standards_detector.py
+2. Include all 7 detection functions
+3. Include main detect_standards_issues() function
+4. Add proper imports and docstrings
+5. Follow same patterns as other detectors
+
+═══════════════════════════════════════════════════════════════════════

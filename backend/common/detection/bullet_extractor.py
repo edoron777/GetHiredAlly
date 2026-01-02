@@ -56,6 +56,29 @@ STRONG_VERB_STARTS = [
     'won',
 ]
 
+TASK_FOCUSED_PATTERNS = [
+    re.compile(r'^[\s•\-\*]*[Rr]esponsible\s+for\b'),
+    re.compile(r'^[\s•\-\*]*[Dd]uties\s+include'),
+    re.compile(r'^[\s•\-\*]*[Ww]orked\s+on\b'),
+    re.compile(r'^[\s•\-\*]*[Hh]elped\s+(with|to)\b'),
+    re.compile(r'^[\s•\-\*]*[Aa]ssisted\s+(in|with)\b'),
+    re.compile(r'^[\s•\-\*]*[Ii]nvolved\s+in\b'),
+    re.compile(r'^[\s•\-\*]*[Pp]articipated\s+in\b'),
+    re.compile(r'^[\s•\-\*]*[Ss]upported\b'),
+    re.compile(r'^[\s•\-\*]*[Tt]asks?\s+include'),
+]
+
+IMPACT_PATTERNS = [
+    re.compile(r'resulting\s+in', re.IGNORECASE),
+    re.compile(r'leading\s+to', re.IGNORECASE),
+    re.compile(r'which\s+(increased|decreased|improved|reduced|saved|generated)', re.IGNORECASE),
+    re.compile(r'(saving|increasing|reducing|improving|generating)\s+\$?\d', re.IGNORECASE),
+    re.compile(r'by\s+\d+%', re.IGNORECASE),
+    re.compile(r'\b(achieved|delivered|accomplished)\b', re.IGNORECASE),
+    re.compile(r'\$[\d,]+', re.IGNORECASE),
+    re.compile(r'\d+%', re.IGNORECASE),
+]
+
 
 def extract_bullets(text: str) -> List[BulletPoint]:
     """
@@ -135,6 +158,22 @@ def analyze_bullet(text: str, line_number: int) -> BulletPoint:
 MAX_ISSUES_PER_TYPE = 5
 
 
+def is_task_focused(bullet_text: str) -> bool:
+    """Check if bullet is task-focused (describes duties rather than achievements)."""
+    for pattern in TASK_FOCUSED_PATTERNS:
+        if pattern.search(bullet_text):
+            return True
+    return False
+
+
+def has_impact(bullet_text: str) -> bool:
+    """Check if bullet shows impact/results."""
+    for pattern in IMPACT_PATTERNS:
+        if pattern.search(bullet_text):
+            return True
+    return False
+
+
 def get_bullet_issues(bullets: List[BulletPoint], max_per_type: int = MAX_ISSUES_PER_TYPE) -> List[Dict]:
     """
     Generate issues based on bullet analysis.
@@ -191,5 +230,83 @@ def get_bullet_issues(bullets: List[BulletPoint], max_per_type: int = MAX_ISSUES
                 'current': bullet.text,
             })
             too_short_count += 1
+    
+    task_focused_bullets = []
+    for bullet in bullets:
+        if is_task_focused(bullet.text):
+            task_focused_bullets.append(bullet)
+    
+    if len(bullets) > 3:
+        task_ratio = len(task_focused_bullets) / len(bullets)
+        if task_ratio > 0.3:
+            examples = [b.text[:50] + '...' for b in task_focused_bullets[:2]]
+            issues.append({
+                'issue_type': 'CONTENT_TASK_FOCUSED',
+                'location': 'Experience Section',
+                'description': f'{len(task_focused_bullets)} bullets describe tasks instead of achievements',
+                'current': '; '.join(examples),
+                'suggestion': 'Focus on outcomes and results, not just responsibilities',
+            })
+    
+    bullets_without_impact = []
+    for bullet in bullets:
+        if bullet.starts_with_verb and not has_impact(bullet.text):
+            bullets_without_impact.append(bullet)
+    
+    if len(bullets) > 5:
+        no_impact_ratio = len(bullets_without_impact) / len(bullets)
+        if no_impact_ratio > 0.5:
+            issues.append({
+                'issue_type': 'CONTENT_MISSING_IMPACT',
+                'location': 'Experience Section',
+                'description': f'{len(bullets_without_impact)} of {len(bullets)} bullets lack clear impact or results',
+                'suggestion': 'Add outcomes like "resulting in 20% increase" or "saving $50K annually"',
+            })
+    
+    return issues
+
+
+def get_bullets_per_job_issues(text: str) -> List[Dict]:
+    """
+    Check for too many bullets per job entry.
+    
+    Args:
+        text: Full CV text
+        
+    Returns:
+        List of CONTENT_TOO_MANY_BULLETS issues
+    """
+    issues = []
+    
+    job_pattern = re.compile(
+        r'^(?:[A-Z][a-zA-Z\s]+(?:Manager|Engineer|Developer|Analyst|Director|Lead|Specialist|Consultant|Coordinator|Associate|Assistant|Supervisor|Administrator|Executive|Designer|Architect|Scientist|Researcher|Officer|Advisor|Representative|Technician))',
+        re.MULTILINE
+    )
+    
+    lines = text.split('\n')
+    job_lines = []
+    
+    for i, line in enumerate(lines):
+        if job_pattern.search(line.strip()):
+            job_lines.append(i)
+    
+    if len(job_lines) < 2:
+        return issues
+    
+    for i in range(len(job_lines)):
+        start = job_lines[i]
+        end = job_lines[i + 1] if i + 1 < len(job_lines) else len(lines)
+        
+        section_text = '\n'.join(lines[start:end])
+        bullet_count = len(re.findall(r'^\s*[•\-\*]\s+', section_text, re.MULTILINE))
+        
+        if bullet_count > 8:
+            job_title = lines[start].strip()[:50]
+            issues.append({
+                'issue_type': 'CONTENT_TOO_MANY_BULLETS',
+                'location': f'Job: {job_title}',
+                'description': f'Too many bullet points ({bullet_count}) - consider condensing to 5-6 key achievements',
+                'current': f'{bullet_count} bullets',
+            })
     
     return issues

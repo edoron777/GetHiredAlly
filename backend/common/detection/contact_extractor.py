@@ -53,6 +53,35 @@ WEBSITE_PATTERN = re.compile(
     re.IGNORECASE
 )
 
+LOCATION_PATTERNS = [
+    re.compile(r'\b[A-Z][a-z]+,\s*[A-Z]{2}\b'),
+    re.compile(r'\b[A-Z][a-z]+,\s*[A-Z][a-z]+\b'),
+    re.compile(r'\b[A-Z][a-z]+\s+[A-Z][a-z]+,\s*[A-Z]{2}\b'),
+]
+
+TECH_KEYWORDS = [
+    'python', 'java', 'javascript', 'developer', 'engineer', 'software',
+    'react', 'node', 'backend', 'frontend', 'fullstack', 'full-stack',
+    'devops', 'data scientist', 'machine learning', 'ml', 'ai',
+    'programming', 'coding', 'typescript', 'golang', 'rust', 'c++', 'c#',
+]
+
+UNPROFESSIONAL_EMAIL_WORDS = [
+    'hot', 'sexy', 'cool', 'party', 'babe', 'cute', 'princess', 'angel',
+    'devil', 'crazy', 'killer', 'gamer', 'ninja', 'warrior', 'dragon',
+    'xxx', 'love', 'sweetie', 'honey', 'baby', 'dude', 'stud', 'punk',
+]
+
+PHOTO_INDICATORS = [
+    re.compile(r'\[photo\]', re.IGNORECASE),
+    re.compile(r'\[image\]', re.IGNORECASE),
+    re.compile(r'\[picture\]', re.IGNORECASE),
+    re.compile(r'<img', re.IGNORECASE),
+    re.compile(r'photo\s*:', re.IGNORECASE),
+]
+
+CONTACT_SEPARATORS = ['|', '•', '/', '·', '–', '—']
+
 INVALID_EMAIL_PATTERNS = [
     re.compile(r'^[^@]+$'),
     re.compile(r'@[^.]+$'),
@@ -133,6 +162,65 @@ def extract_github(text: str) -> Optional[str]:
     return match.group(0) if match else None
 
 
+def extract_location(text: str) -> Optional[str]:
+    """Extract location (City, State) from first 500 chars of text."""
+    contact_area = text[:500]
+    for pattern in LOCATION_PATTERNS:
+        match = pattern.search(contact_area)
+        if match:
+            return match.group(0)
+    return None
+
+
+def is_tech_cv(text: str) -> bool:
+    """Check if CV is for a tech role."""
+    text_lower = text.lower()
+    return any(keyword in text_lower for keyword in TECH_KEYWORDS)
+
+
+def check_unprofessional_email(email: str) -> Optional[str]:
+    """Check if email contains unprofessional patterns."""
+    if not email:
+        return None
+    
+    email_lower = email.lower()
+    local_part = email_lower.split('@')[0] if '@' in email_lower else email_lower
+    
+    for word in UNPROFESSIONAL_EMAIL_WORDS:
+        if word in local_part:
+            return word
+    
+    numbers_match = re.search(r'\d{3,}', local_part)
+    if numbers_match:
+        num = numbers_match.group(0)
+        if len(num) != 4 or not (1950 <= int(num) <= 2010):
+            return f"excessive numbers ({num})"
+    
+    return None
+
+
+def check_photo_included(text: str) -> bool:
+    """Check for photo/image indicators in CV."""
+    for pattern in PHOTO_INDICATORS:
+        if pattern.search(text):
+            return True
+    return False
+
+
+def check_inconsistent_separators(text: str) -> Optional[List[str]]:
+    """Check for mixed separators in contact section."""
+    contact_area = text[:500]
+    found_separators = []
+    
+    for sep in CONTACT_SEPARATORS:
+        if sep in contact_area:
+            found_separators.append(sep)
+    
+    if len(found_separators) > 1:
+        return found_separators
+    return None
+
+
 def extract_contact_info(text: str) -> ContactInfo:
     """
     Extract all contact information from CV text.
@@ -164,9 +252,13 @@ def extract_contact_info(text: str) -> ContactInfo:
     return info
 
 
-def get_contact_issues(contact: ContactInfo) -> List[Dict]:
+def get_contact_issues(contact: ContactInfo, full_text: str = "") -> List[Dict]:
     """
     Generate issues based on contact info extraction.
+    
+    Args:
+        contact: ContactInfo object with extracted data
+        full_text: Full CV text for additional checks
     
     Returns list of issue dictionaries with issue_type.
     """
@@ -185,6 +277,15 @@ def get_contact_issues(contact: ContactInfo) -> List[Dict]:
             'description': f'Email format appears invalid: {contact.email}',
             'current': contact.email,
         })
+    elif contact.email:
+        unprofessional_reason = check_unprofessional_email(contact.email)
+        if unprofessional_reason:
+            issues.append({
+                'issue_type': 'CONTACT_UNPROFESSIONAL_EMAIL',
+                'location': 'Contact Information',
+                'description': f'Email may appear unprofessional: {unprofessional_reason}',
+                'current': contact.email,
+            })
     
     if not contact.has_phone:
         issues.append({
@@ -206,5 +307,37 @@ def get_contact_issues(contact: ContactInfo) -> List[Dict]:
             'location': 'Contact Information',
             'description': 'No LinkedIn profile URL found',
         })
+    
+    if full_text:
+        location = extract_location(full_text)
+        if not location:
+            issues.append({
+                'issue_type': 'CONTACT_MISSING_LOCATION',
+                'location': 'Contact Information',
+                'description': 'No location (city, state) found in CV header',
+            })
+        
+        if is_tech_cv(full_text) and not contact.github:
+            issues.append({
+                'issue_type': 'CONTACT_MISSING_GITHUB',
+                'location': 'Contact Information',
+                'description': 'No GitHub profile found - recommended for technical roles',
+            })
+        
+        if check_photo_included(full_text):
+            issues.append({
+                'issue_type': 'CONTACT_PHOTO_INCLUDED',
+                'location': 'Contact Information',
+                'description': 'Photo indicator detected - photos may cause bias in US/UK hiring',
+            })
+        
+        mixed_separators = check_inconsistent_separators(full_text)
+        if mixed_separators:
+            issues.append({
+                'issue_type': 'CONTACT_INCONSISTENT_FORMAT',
+                'location': 'Contact Information',
+                'description': f'Mixed separators in contact section: {", ".join(mixed_separators)}',
+                'current': ', '.join(mixed_separators),
+            })
     
     return issues

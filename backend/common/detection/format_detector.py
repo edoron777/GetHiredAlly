@@ -27,6 +27,27 @@ BULLET_STYLES = {
     'number': re.compile(r'^\s*\d+[.)]\s+', re.MULTILINE),
 }
 
+REQUIRED_SECTIONS = ['experience', 'education', 'skills']
+
+SECTION_HEADER_PATTERNS = [
+    re.compile(r'^[A-Z][A-Z\s]{2,}$', re.MULTILINE),
+    re.compile(r'^[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\s*:$', re.MULTILINE),
+    re.compile(r'^\*\*[A-Za-z\s]+\*\*$', re.MULTILINE),
+    re.compile(r'^__[A-Za-z\s]+__$', re.MULTILINE),
+]
+
+SPECIAL_CHARACTERS = {
+    'smart_quotes': ['"', '"', ''', '''],
+    'dashes': ['—', '–'],
+    'bullets': ['●', '○', '■', '□', '►', '▪', '◆', '◇'],
+    'other': ['…', '™', '®', '©', '°', '±', '×', '÷'],
+}
+
+TABLE_PATTERNS = [
+    re.compile(r'\t.*\t.*\t'),
+    re.compile(r'\|.*\|.*\|'),
+]
+
 
 def detect_date_inconsistency(text: str) -> List[Dict]:
     """
@@ -137,6 +158,191 @@ def detect_whitespace_issues(text: str) -> List[Dict]:
     return issues
 
 
+def detect_missing_section_headers(text: str) -> List[Dict]:
+    """
+    Detect if CV lacks clear section headers.
+    
+    Args:
+        text: Text to analyze
+        
+    Returns:
+        List of FORMAT_MISSING_SECTION_HEADERS issues
+    """
+    issues = []
+    text_lower = text.lower()
+    lines = text.split('\n')
+    
+    missing_sections = []
+    
+    for section in REQUIRED_SECTIONS:
+        section_found_as_header = False
+        
+        for line in lines:
+            line_stripped = line.strip()
+            line_lower = line_stripped.lower()
+            
+            if section not in line_lower:
+                continue
+            
+            if line_stripped.isupper() and len(line_stripped) >= 3:
+                section_found_as_header = True
+                break
+            
+            if line_stripped.endswith(':'):
+                section_found_as_header = True
+                break
+            
+            if line_stripped.startswith('**') and line_stripped.endswith('**'):
+                section_found_as_header = True
+                break
+            
+            if line_stripped.startswith('__') and line_stripped.endswith('__'):
+                section_found_as_header = True
+                break
+            
+            words = line_stripped.split()
+            if len(words) <= 3 and words and words[0][0].isupper():
+                section_found_as_header = True
+                break
+        
+        if not section_found_as_header:
+            missing_sections.append(section.title())
+    
+    if len(missing_sections) >= 2:
+        issues.append({
+            'issue_type': 'FORMAT_MISSING_SECTION_HEADERS',
+            'location': 'CV Structure',
+            'description': f'Missing clear section headers: {", ".join(missing_sections)}',
+            'suggestion': 'Add clear section headers like EXPERIENCE, EDUCATION, SKILLS in all caps or title case',
+        })
+    
+    return issues
+
+
+def detect_multiple_spaces(text: str) -> List[Dict]:
+    """
+    Detect multiple consecutive spaces in text.
+    
+    Args:
+        text: Text to analyze
+        
+    Returns:
+        List of FORMAT_MULTIPLE_SPACES issues
+    """
+    issues = []
+    
+    lines = text.split('\n')
+    double_space_count = 0
+    
+    for line in lines:
+        stripped = line.lstrip()
+        matches = re.findall(r'  +', stripped)
+        double_space_count += len(matches)
+    
+    if double_space_count > 5:
+        issues.append({
+            'issue_type': 'FORMAT_MULTIPLE_SPACES',
+            'location': 'Throughout CV',
+            'description': f'Multiple consecutive spaces found ({double_space_count} instances)',
+            'suggestion': 'Replace multiple spaces with single spaces',
+        })
+    
+    return issues
+
+
+def detect_tables(text: str) -> List[Dict]:
+    """
+    Detect table structures that cause ATS issues.
+    
+    Args:
+        text: Text to analyze
+        
+    Returns:
+        List of FORMAT_TABLES_DETECTED issues
+    """
+    issues = []
+    
+    for pattern in TABLE_PATTERNS:
+        if pattern.search(text):
+            issues.append({
+                'issue_type': 'FORMAT_TABLES_DETECTED',
+                'location': 'CV Layout',
+                'description': 'Table structure detected - many ATS systems cannot parse tables correctly',
+                'suggestion': 'Convert table content to simple bullet points',
+            })
+            break
+    
+    return issues
+
+
+def detect_multiple_columns(text: str) -> List[Dict]:
+    """
+    Detect multi-column layouts.
+    
+    Args:
+        text: Text to analyze
+        
+    Returns:
+        List of FORMAT_MULTIPLE_COLUMNS issues
+    """
+    issues = []
+    lines = text.split('\n')
+    
+    short_content_lines = 0
+    total_content_lines = 0
+    
+    for line in lines:
+        stripped = line.strip()
+        if stripped and len(stripped) > 3:
+            total_content_lines += 1
+            if len(stripped) < 30:
+                short_content_lines += 1
+    
+    mid_line_tabs = len(re.findall(r'[^\t\n]\t+[^\t\n]', text))
+    
+    if total_content_lines > 10:
+        short_ratio = short_content_lines / total_content_lines
+        if short_ratio > 0.3 or mid_line_tabs > 10:
+            issues.append({
+                'issue_type': 'FORMAT_MULTIPLE_COLUMNS',
+                'location': 'CV Layout',
+                'description': 'Multi-column layout detected - ATS may read columns incorrectly',
+                'suggestion': 'Use single-column format for better ATS compatibility',
+            })
+    
+    return issues
+
+
+def detect_special_characters(text: str) -> List[Dict]:
+    """
+    Detect non-standard characters that cause ATS issues.
+    
+    Args:
+        text: Text to analyze
+        
+    Returns:
+        List of FORMAT_SPECIAL_CHARACTERS issues
+    """
+    issues = []
+    found_chars = []
+    
+    for category, chars in SPECIAL_CHARACTERS.items():
+        for char in chars:
+            if char in text:
+                found_chars.append(char)
+    
+    if found_chars:
+        issues.append({
+            'issue_type': 'FORMAT_SPECIAL_CHARACTERS',
+            'location': 'Throughout CV',
+            'description': f'Special characters found that may cause ATS issues: {" ".join(found_chars[:5])}',
+            'current': ' '.join(found_chars),
+            'suggestion': 'Replace with standard ASCII characters (e.g., straight quotes, regular dashes)',
+        })
+    
+    return issues
+
+
 def detect_format_issues(text: str) -> List[Dict]:
     """
     Detect all formatting issues.
@@ -155,5 +361,10 @@ def detect_format_issues(text: str) -> List[Dict]:
     issues.extend(detect_date_inconsistency(text))
     issues.extend(detect_bullet_inconsistency(text))
     issues.extend(detect_whitespace_issues(text))
+    issues.extend(detect_missing_section_headers(text))
+    issues.extend(detect_multiple_spaces(text))
+    issues.extend(detect_tables(text))
+    issues.extend(detect_multiple_columns(text))
+    issues.extend(detect_special_characters(text))
     
     return issues

@@ -13,8 +13,14 @@ from typing import List, Dict, Any
 
 from common.catalog import get_catalog_service
 from .contact_extractor import extract_contact_info, get_contact_issues
-from .section_extractor import extract_sections, get_section_issues, get_cv_length_issues
-from .bullet_extractor import extract_bullets, get_bullet_issues
+from .section_extractor import (
+    extract_sections, 
+    get_section_issues, 
+    get_cv_length_issues,
+    get_experience_detail_issues,
+    get_education_detail_issues,
+)
+from .bullet_extractor import extract_bullets, get_bullet_issues, get_bullets_per_job_issues
 # from .spelling_detector import detect_critical_issues  # DISABLED - GRAMMAR_* issues inactive
 from .language_detector import detect_language_issues
 from .format_detector import detect_format_issues
@@ -74,7 +80,7 @@ def detect_all_issues(cv_text: str) -> List[Dict[str, Any]]:
     
     try:
         contact_info = extract_contact_info(cv_text)
-        contact_issues = get_contact_issues(contact_info)
+        contact_issues = get_contact_issues(contact_info, cv_text)
         all_issues.extend(contact_issues)
         logger.info(f"Contact issues found: {len(contact_issues)}")
     except Exception as e:
@@ -88,6 +94,12 @@ def detect_all_issues(cv_text: str) -> List[Dict[str, Any]]:
         
         length_issues = get_cv_length_issues(cv_text)
         all_issues.extend(length_issues)
+        
+        experience_detail_issues = get_experience_detail_issues(cv_text)
+        all_issues.extend(experience_detail_issues)
+        
+        education_detail_issues = get_education_detail_issues(structure)
+        all_issues.extend(education_detail_issues)
     except Exception as e:
         logger.error(f"Error detecting section issues: {e}")
     
@@ -97,6 +109,9 @@ def detect_all_issues(cv_text: str) -> List[Dict[str, Any]]:
         bullet_issues = get_bullet_issues(bullets)
         all_issues.extend(bullet_issues)
         logger.info(f"Bullet issues found: {len(bullet_issues)}")
+        
+        bullets_per_job_issues = get_bullets_per_job_issues(cv_text)
+        all_issues.extend(bullets_per_job_issues)
     except Exception as e:
         logger.error(f"Error detecting bullet issues: {e}")
     

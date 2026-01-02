@@ -259,3 +259,92 @@ def get_cv_length_issues(text: str) -> List[Dict]:
         })
     
     return issues
+
+
+def get_experience_detail_issues(text: str) -> List[Dict]:
+    """
+    Check if old jobs have too much detail.
+    
+    Args:
+        text: Full CV text
+        
+    Returns:
+        List of LENGTH_EXPERIENCE_TOO_DETAILED issues
+    """
+    import datetime
+    issues = []
+    current_year = datetime.datetime.now().year
+    
+    year_pattern = re.compile(r'\b(19|20)\d{2}\b')
+    job_section_pattern = re.compile(
+        r'^([A-Z][a-zA-Z\s,]+)\s*[-–|]\s*.*?((?:19|20)\d{2})',
+        re.MULTILINE
+    )
+    
+    lines = text.split('\n')
+    
+    for match in job_section_pattern.finditer(text):
+        job_title = match.group(1).strip()
+        year_str = match.group(2)
+        
+        try:
+            job_year = int(year_str)
+            years_ago = current_year - job_year
+            
+            if years_ago > 10:
+                start_pos = match.end()
+                next_job = job_section_pattern.search(text[start_pos:])
+                
+                if next_job:
+                    section_text = text[start_pos:start_pos + next_job.start()]
+                else:
+                    section_text = text[start_pos:start_pos + 500]
+                
+                bullet_count = len(re.findall(r'^\s*[•\-\*]\s+', section_text, re.MULTILINE))
+                
+                if bullet_count > 3:
+                    issues.append({
+                        'issue_type': 'LENGTH_EXPERIENCE_TOO_DETAILED',
+                        'location': f'Job: {job_title[:40]}',
+                        'description': f'Job from {job_year} ({years_ago} years ago) has {bullet_count} bullets - older roles should have 2-3 bullets',
+                        'current': f'{bullet_count} bullets',
+                    })
+        except (ValueError, IndexError):
+            continue
+    
+    return issues
+
+
+def get_education_detail_issues(structure: CVStructure) -> List[Dict]:
+    """
+    Check if education section is too detailed for experienced professionals.
+    
+    Args:
+        structure: Parsed CV structure
+        
+    Returns:
+        List of LENGTH_EDUCATION_TOO_DETAILED issues
+    """
+    issues = []
+    
+    if not structure.education:
+        return issues
+    
+    education_lines = len([l for l in structure.education.split('\n') if l.strip()])
+    
+    experience_word_count = 0
+    if structure.experience:
+        experience_word_count = len(structure.experience.split())
+    
+    is_experienced = experience_word_count > 200
+    
+    if is_experienced and education_lines > 6:
+        issues.append({
+            'issue_type': 'LENGTH_EDUCATION_TOO_DETAILED',
+            'location': 'Education Section',
+            'description': f'Education section is {education_lines} lines - experienced professionals should keep to 3-4 lines',
+            'current': f'{education_lines} lines',
+            'suggestion': 'Focus on degree, institution, and graduation year; remove coursework details',
+        })
+    
+    return issues
