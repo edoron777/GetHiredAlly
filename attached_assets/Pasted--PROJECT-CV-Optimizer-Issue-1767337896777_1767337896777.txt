@@ -1,0 +1,195 @@
+═══════════════════════════════════════════════════════════════════════
+PROJECT: CV Optimizer Issue Detection System
+═══════════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL RULE - READ FIRST:
+If at ANY point during this project you:
+- Do not understand an instruction
+- Think an instruction is wrong or incomplete
+- Cannot find a file or component mentioned
+- Are unsure how to proceed
+- Need to make assumptions
+
+Then you MUST:
+1. STOP immediately
+2. Do NOT improvise or "fill in the gaps"
+3. Do NOT guess or assume
+4. Ask for clarification BEFORE proceeding
+
+IMPROVISATION IS STRICTLY FORBIDDEN.
+When in doubt, ASK. Do not invent solutions.
+
+═══════════════════════════════════════════════════════════════════════
+
+CONTEXT:
+This is a multi-step implementation for the CV Optimizer service.
+The database has been populated with 57 issue types including descriptions,
+examples, and static tips. We need to BUILD ON EXISTING CODE to complete
+the detection engine and display system.
+
+IMPORTANT: This project has EXISTING CODE. We are NOT starting from scratch.
+The goal is to identify gaps and fill them, not replace what works.
+
+PROJECT OVERVIEW:
+- Goal: Complete CV issue detection and display system
+- Database: cv_issue_types (57 rows), cv_issue_categories (7), cv_issue_subcategories (23)
+- Database Location: SUPABASE (not local PostgreSQL)
+- Frontend: React components for TipBox display
+- Backend: Python/Flask detection engine
+
+───────────────────────────────────────────────────────────────────────
+EXISTING COMPONENTS TO USE (MANDATORY)
+───────────────────────────────────────────────────────────────────────
+
+This service MUST integrate with these existing shared components:
+
+| Component | Actual Name | Purpose | Path |
+|-----------|-------------|---------|------|
+| ActionBar | StandardToolbar | Toolbar with Copy, PDF, Word | components/common/StandardToolbar.tsx |
+| DocStyler | DocStyler | Document formatting | components/common/DocStyler/ |
+| GHAScanner | GHAScanner | CV text analysis | components/common/GHAScanner/ |
+| GHATooltip | GHATooltip | Standardized tooltips | components/common/Tooltip/GHATooltip.tsx |
+| Marker | TextMarker | Text highlighting | components/common/TextMarker/ |
+| TipBox | TipBox | Issue explanation display | components/common/TipBox/ |
+| UserSessionKeep | UserSessionKeep | Session management | components/common/UserSessionKeep/ |
+
+⚠️ DO NOT create new versions of these components.
+⚠️ IMPORT and USE existing components from their actual paths.
+⚠️ If you cannot find a component, STOP and ask for its location.
+
+───────────────────────────────────────────────────────────────────────
+DATABASE SCHEMA (Supabase)
+───────────────────────────────────────────────────────────────────────
+
+Table: cv_issue_types (57 rows)
+- id: integer (auto-increment PK)
+- subcategory_id: integer FK → cv_issue_subcategories
+- issue_code: varchar (UNIQUE) - e.g., 'CONTACT_MISSING_EMAIL'
+- display_name: varchar
+- description: text (WHY THIS MATTERS content)
+- severity: 'critical' | 'important' | 'consider' | 'polish'
+- weight: integer 1-10
+- can_auto_fix: boolean
+- auto_fix_type: 'full' | 'partial' | 'none' | NULL
+- detection_method: 'regex' | 'rule' | 'nlp' | 'ai' | NULL
+- static_tip: text (instructions)
+- user_effort: 'minimal' | 'medium' | 'extensive' | NULL
+- requires_user_input: text
+- example_before: text
+- example_after: text
+- attributes: jsonb
+- ui_config: jsonb
+
+Table: cv_issue_categories (7 rows)
+- id, code, display_name, icon, color, display_order
+
+Table: cv_issue_subcategories (23 rows)
+- id, category_id, code, display_name, display_order
+
+CATEGORIES (7):
+1. CONTACT - Contact Information (8 issues)
+2. FORMAT - Formatting & Structure (13 issues)
+3. CONTENT - Content Quality (14 issues)
+4. GRAMMAR - Grammar & Language (7 issues)
+5. LENGTH - Length & Conciseness (4 issues)
+6. STANDARDS - Professional Standards (8 issues)
+7. KEYWORDS - Keywords & Optimization (3 issues)
+
+───────────────────────────────────────────────────────────────────────
+ACTUAL FOLDER STRUCTURE (CORRECTED)
+───────────────────────────────────────────────────────────────────────
+
+FRONTEND (React):
+client/
+├── src/
+│   ├── components/
+│   │   ├── common/              ← Shared components (TipBox, StandardToolbar, etc.)
+│   │   │   ├── TipBox/
+│   │   │   ├── TextMarker/
+│   │   │   ├── GHAScanner/
+│   │   │   ├── DocStyler/
+│   │   │   ├── Tooltip/GHATooltip.tsx
+│   │   │   ├── StandardToolbar.tsx
+│   │   │   ├── UserSessionKeep/
+│   │   │   └── index.ts         ← Component Registry
+│   │   └── cv-optimizer/        ← CV Optimizer specific (if exists)
+│   ├── pages/
+│   │   └── cv-optimizer/
+│   │       ├── index.ts
+│   │       └── ResultsPage.tsx
+│   ├── hooks/
+│   ├── lib/
+│   └── services/
+
+BACKEND (Python/Flask):
+backend/
+├── app/
+│   └── cv_optimizer.py          ← API endpoints
+├── services/
+│   └── cv_optimizer/
+│       ├── cv_optimizer.py
+│       └── cv_analyzer.py
+├── common/
+│   ├── catalog/                 ← Issue catalog service
+│   │   ├── repository.py        ← Supabase queries
+│   │   ├── cache.py
+│   │   ├── models.py
+│   │   └── service.py
+│   └── detection/               ← Detection engine modules
+│       ├── master_detector.py   ← Orchestrator
+│       ├── contact_extractor.py
+│       ├── section_extractor.py
+│       ├── bullet_extractor.py
+│       ├── language_detector.py
+│       ├── format_detector.py
+│       ├── polish_detector.py
+│       └── ai_enhancer.py
+└── utils/
+
+⚠️ Use these ACTUAL paths, not the paths from earlier documents.
+
+───────────────────────────────────────────────────────────────────────
+PROMPTS IN THIS PROJECT
+───────────────────────────────────────────────────────────────────────
+
+1. OPENING - Project Overview & Context (this prompt)
+2. GAP ANALYSIS - Existing Detection Engine Audit (CRITICAL)
+3. Component Registry Discovery
+4. Create/Update Issue Type Service Layer
+5. Build Detection Engine - Contact Issues
+6. Build Detection Engine - Content Quality Issues
+7. Build Detection Engine - All Remaining Categories
+8. Integrate TipBox with Database Content
+9. Build Issue Display Component
+10. Integration & Wiring
+11. Security Review & Code Quality
+12. CLOSING - Verification & Testing
+
+───────────────────────────────────────────────────────────────────────
+RULES TO FOLLOW (ALL PROMPTS)
+───────────────────────────────────────────────────────────────────────
+
+1. Follow AGENTS.MD protected files rules
+2. Follow REPLIT.MD development guidelines
+3. Do NOT modify protected files without explicit APPROVED
+4. Use EXISTING common components - do NOT recreate
+5. BUILD ON existing code - do NOT replace what works
+6. All detection logic must be DETERMINISTIC (no AI randomness)
+7. Fetch issue content from SUPABASE DATABASE, do NOT hardcode
+8. If unclear about ANYTHING → STOP and ASK
+
+THIS IS PROMPT 1 OF 12.
+
+───────────────────────────────────────────────────────────────────────
+
+TASK FOR THIS PROMPT:
+
+1. READ and acknowledge this project overview
+2. CONFIRM you understand this builds on existing code
+3. CONFIRM you understand the ACTUAL folder structure
+4. CONFIRM you understand database is in Supabase
+5. LIST all existing CV Optimizer related files you find
+
+DO NOT write any code yet. Just confirm understanding and list findings.
+
+═══════════════════════════════════════════════════════════════════════
