@@ -25,6 +25,7 @@ from .bullet_extractor import extract_bullets, get_bullet_issues, get_bullets_pe
 from .language_detector import detect_language_issues
 from .format_detector import detect_format_issues
 from .polish_detector import detect_polish_issues
+from .standards_detector import detect_standards_issues
 
 logger = logging.getLogger(__name__)
 
@@ -135,6 +136,13 @@ def detect_all_issues(cv_text: str) -> List[Dict[str, Any]]:
         logger.info(f"Polish issues found: {len(polish_issues)}")
     except Exception as e:
         logger.error(f"Error detecting polish issues: {e}")
+    
+    try:
+        standards_issues = detect_standards_issues(cv_text)
+        all_issues.extend(standards_issues)
+        logger.info(f"Standards issues found: {len(standards_issues)}")
+    except Exception as e:
+        logger.error(f"Error detecting standards issues: {e}")
     
     logger.info(f"Static detection complete. Total issues: {len(all_issues)}")
     
