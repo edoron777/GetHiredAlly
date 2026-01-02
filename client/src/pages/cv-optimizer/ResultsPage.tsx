@@ -66,6 +66,8 @@ export default function ResultsPage() {
   const [isApplyingFixes, setIsApplyingFixes] = useState(false);
   const [activeTab, setActiveTab] = useState<'document' | 'list'>('document');
   const [copied, setCopied] = useState(false);
+  const [fixedCV, setFixedCV] = useState<string | null>(null);
+  const [fixedIssues, setFixedIssues] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -146,9 +148,38 @@ export default function ResultsPage() {
     setIsTipBoxOpen(false);
   };
 
-  const handleApplyFix = (issueId: string, suggestedText: string) => {
-    console.log('Apply fix:', issueId, suggestedText);
+  const handleApplyFix = (issueId: string, newText: string) => {
+    const normalizedIssues = reportData?.issues.map((issue, i) => normalizeIssue(issue, i)) || [];
+    const issue = normalizedIssues.find(i => i.id === issueId);
+    if (!issue) {
+      console.error('Issue not found:', issueId);
+      return;
+    }
+    
+    const originalText = issue.matchText || issue.currentText;
+    if (!originalText) {
+      console.error('No original text found for issue:', issueId);
+      setIsTipBoxOpen(false);
+      return;
+    }
+    
+    const replacementText = newText || issue.suggestedText;
+    if (!replacementText) {
+      console.error('No replacement text available');
+      setIsTipBoxOpen(false);
+      return;
+    }
+    
+    const currentCV = fixedCV || reportData?.cv_content || '';
+    const updatedCV = currentCV.replace(originalText, replacementText);
+    setFixedCV(updatedCV);
+    
+    setFixedIssues(prev => new Set([...prev, issueId]));
+    
     setIsTipBoxOpen(false);
+    setUserEditText('');
+    
+    console.log('Fix applied:', { issueId, originalText, replacementText });
   };
 
   const handleAutoFix = (issue: ReturnType<typeof normalizeIssue>) => {
@@ -256,7 +287,7 @@ export default function ResultsPage() {
   const getExportContent = () => {
     if (!reportData) return '';
     
-    const cvMarkdown = `# CV\n\n${reportData.cv_content}`;
+    const cvMarkdown = `# CV\n\n${fixedCV || reportData.cv_content}`;
     const normalizedIssues = reportData.issues.map((issue, i) => normalizeIssue(issue, i));
     const recommendationsMarkdown = normalizedIssues.map(issue => {
       return `## ${issue.title}\n**Severity:** ${issue.severity}\n\n${issue.description}\n\n**Current:** ${issue.matchText}\n**Suggested:** ${issue.suggestedText || 'N/A'}`;
@@ -327,7 +358,7 @@ export default function ResultsPage() {
   const normalizedIssues = reportData.issues.map((issue, i) => normalizeIssue(issue, i));
 
   const cvContent = {
-    fullText: reportData.cv_content
+    fullText: fixedCV || reportData.cv_content
   };
 
   const documentIssues = normalizedIssues.map(issue => ({

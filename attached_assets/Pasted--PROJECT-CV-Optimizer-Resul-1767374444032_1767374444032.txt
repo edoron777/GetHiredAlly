@@ -1,0 +1,146 @@
+═══════════════════════════════════════════════════════════════════════
+PROJECT: CV Optimizer Results Page - PROMPT 2#7: Fix handleApplyFix
+═══════════════════════════════════════════════════════════════════════
+
+CONTEXT:
+The handleApplyFix function currently only logs and doesn't update CV content.
+This prompt implements the actual CV update functionality.
+
+───────────────────────────────────────────────────────────────────────
+
+TASK:
+Implement handleApplyFix to actually update the CV content when user 
+applies a fix from TipBox.
+
+───────────────────────────────────────────────────────────────────────
+
+FILE TO MODIFY:
+client/src/pages/cv-optimizer/ResultsPage.tsx
+
+───────────────────────────────────────────────────────────────────────
+
+CURRENT CODE (to replace):
+```typescript
+const handleApplyFix = (issueId: string, suggestedText: string) => {
+  console.log('Apply fix:', issueId, suggestedText);  // Just logs!
+  setIsTipBoxOpen(false);
+};
+```
+
+───────────────────────────────────────────────────────────────────────
+
+NEW IMPLEMENTATION:
+
+1. Find the issue by ID
+2. Get the original text (current_text or matchText)
+3. Replace original text with user's input or suggested text
+4. Update CV content in state
+5. Mark issue as fixed
+6. Close TipBox
+```typescript
+const handleApplyFix = (issueId: string, newText: string) => {
+  // 1. Find the issue
+  const issue = issues.find(i => i.id === issueId);
+  if (!issue) {
+    console.error('Issue not found:', issueId);
+    return;
+  }
+  
+  // 2. Get original text to replace
+  const originalText = issue.matchText || issue.current_text || issue.problematic_text;
+  if (!originalText) {
+    console.error('No original text found for issue:', issueId);
+    return;
+  }
+  
+  // 3. Get the text to use (user input or suggested)
+  const replacementText = newText || issue.suggestedText || issue.suggested_fix;
+  if (!replacementText) {
+    console.error('No replacement text available');
+    return;
+  }
+  
+  // 4. Update CV content
+  const currentCV = fixedCV || reportData?.cv_content || '';
+  const updatedCV = currentCV.replace(originalText, replacementText);
+  setFixedCV(updatedCV);
+  
+  // 5. Mark issue as fixed
+  setFixedIssues(prev => new Set([...prev, issueId]));
+  
+  // 6. Close TipBox
+  setIsTipBoxOpen(false);
+  setUserEditText('');
+  
+  console.log('Fix applied:', { issueId, originalText, replacementText });
+};
+```
+
+───────────────────────────────────────────────────────────────────────
+
+STATE VARIABLES REQUIRED (add if not exist):
+```typescript
+// Add these state variables at top of component
+const [fixedCV, setFixedCV] = useState<string | null>(null);
+const [fixedIssues, setFixedIssues] = useState<Set<string>>(new Set());
+```
+
+───────────────────────────────────────────────────────────────────────
+
+UPDATE TIPBOX BUTTONS:
+
+The "Apply to CV" button should pass userEditText:
+```typescript
+// In buildTipBoxButtons function
+{
+  id: 'apply',
+  label: 'Apply to CV',
+  variant: 'primary',
+  onClick: () => handleApplyFix(selectedIssueId!, userEditText || selectedIssue?.suggestedText)
+}
+```
+
+───────────────────────────────────────────────────────────────────────
+
+UPDATE CVDOCUMENT CONTENT:
+
+Pass the fixedCV to CVDocument instead of original:
+```typescript
+// In JSX where CVDocument is rendered
+<CVDocument
+  cvContent={{
+    fullText: fixedCV || reportData?.cv_content || ''
+  }}
+  issues={issues}
+  onIssueClick={handleIssueClick}
+/>
+```
+
+───────────────────────────────────────────────────────────────────────
+
+SECURITY REQUIREMENTS:
+- [x] Validate issueId exists before processing
+- [x] Validate originalText and replacementText exist
+- [x] No database operations (state only)
+- [x] Log operations for debugging
+
+───────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+After implementation:
+1. Open CV Optimizer with a scanned CV
+2. Click on an issue in sidebar or TextMarker
+3. In TipBox, edit the "YOUR VERSION" field
+4. Click "Apply to CV"
+5. Verify: CV text is updated with the new text
+6. Verify: Issue is marked as fixed (visual indicator if available)
+
+───────────────────────────────────────────────────────────────────────
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- Do NOT add features not specified
+- Do NOT change file structure
+- Do NOT modify other functions
+- If anything is unclear, STOP and ask
+
+═══════════════════════════════════════════════════════════════════════
