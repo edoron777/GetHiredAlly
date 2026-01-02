@@ -63,12 +63,16 @@ def detect_weak_verbs(text: str) -> List[Dict]:
             
             for match in matches[:2]:
                 if verb.lower() not in [v.lower() for v in found_verbs]:
+                    current_text = match.strip()
                     issues.append({
                         'issue_type': 'CONTENT_WEAK_ACTION_VERBS',
+                        'title': f"Weak action verb: '{verb}'",
                         'location': 'Experience Section',
                         'description': f'Weak/passive phrase detected: "{verb}"',
-                        'current': match.strip(),
-                        'suggestion': 'Replace with a strong action verb like: led, achieved, delivered, implemented',
+                        'current': current_text,
+                        'is_highlightable': bool(current_text and current_text in text),
+                        'weak_verb': verb,
+                        'suggestion': f"Replace '{verb}' with stronger verb: led, achieved, delivered, implemented",
                     })
                     found_verbs.append(verb)
     
@@ -100,11 +104,28 @@ def detect_vague_language(text: str) -> List[Dict]:
     
     if vague_count > VAGUE_THRESHOLD:
         unique_words = list(set(found_words))
+        first_word = unique_words[0] if unique_words else ''
+        
+        current_text = ''
+        if first_word:
+            pattern = re.compile(r'\b' + re.escape(first_word) + r'\b', re.IGNORECASE)
+            match = pattern.search(text)
+            if match:
+                line_start = text.rfind('\n', 0, match.start()) + 1
+                line_end = text.find('\n', match.start())
+                if line_end == -1:
+                    line_end = len(text)
+                current_text = text[line_start:line_end].strip()
+        
         issues.append({
             'issue_type': 'CONTENT_GENERIC_STATEMENTS',
+            'title': 'Vague language detected',
             'location': 'Throughout CV',
             'description': f'Too many vague words ({vague_count} found): {", ".join(unique_words[:5])}',
-            'current': ', '.join(unique_words),
+            'current': current_text if current_text else first_word,
+            'is_highlightable': bool(current_text),
+            'count': vague_count,
+            'all_instances': unique_words[:10],
             'suggestion': 'Replace with specific details and numbers',
         })
     
@@ -135,11 +156,28 @@ def detect_buzzword_stuffing(text: str) -> List[Dict]:
             found_buzzwords.append(buzzword)
     
     if buzzword_count > BUZZWORD_THRESHOLD:
+        first_buzzword = found_buzzwords[0] if found_buzzwords else ''
+        
+        current_text = ''
+        if first_buzzword:
+            pattern = re.compile(r'\b' + re.escape(first_buzzword) + r'\b', re.IGNORECASE)
+            match = pattern.search(text)
+            if match:
+                line_start = text.rfind('\n', 0, match.start()) + 1
+                line_end = text.find('\n', match.start())
+                if line_end == -1:
+                    line_end = len(text)
+                current_text = text[line_start:line_end].strip()
+        
         issues.append({
-            'issue_type': 'CONTENT_GENERIC_STATEMENTS',
+            'issue_type': 'CONTENT_BUZZWORD_STUFFING',
+            'title': 'Excessive buzzwords',
             'location': 'Throughout CV',
             'description': f'Too many buzzwords ({buzzword_count} found): {", ".join(found_buzzwords[:5])}',
-            'current': ', '.join(found_buzzwords[:10]),
+            'current': current_text if current_text else first_buzzword,
+            'is_highlightable': bool(current_text),
+            'count': buzzword_count,
+            'all_instances': found_buzzwords[:10],
             'suggestion': 'Replace buzzwords with specific achievements and results',
         })
     
@@ -206,18 +244,40 @@ def detect_passive_voice(text: str) -> List[Dict]:
         List of CONTENT_PASSIVE_VOICE issues
     """
     issues = []
-    passive_examples = []
+    passive_matches = []
     
     for pattern in PASSIVE_VOICE_PATTERNS:
-        matches = pattern.findall(text)
-        passive_examples.extend(matches[:3])
+        for match in pattern.finditer(text):
+            passive_matches.append(match)
     
-    if len(passive_examples) > 5:
+    if len(passive_matches) > 5:
+        first_match = passive_matches[0]
+        
+        line_start = text.rfind('\n', 0, first_match.start()) + 1
+        line_end = text.find('\n', first_match.start())
+        if line_end == -1:
+            line_end = len(text)
+        first_sentence = text[line_start:line_end].strip()
+        
+        all_instances = []
+        for match in passive_matches[:5]:
+            ls = text.rfind('\n', 0, match.start()) + 1
+            le = text.find('\n', match.start())
+            if le == -1:
+                le = len(text)
+            line_text = text[ls:le].strip()
+            if line_text and line_text not in all_instances:
+                all_instances.append(line_text)
+        
         issues.append({
             'issue_type': 'CONTENT_PASSIVE_VOICE',
+            'title': 'Passive voice detected',
             'location': 'Throughout CV',
-            'description': f'Passive voice detected ({len(passive_examples)} instances)',
-            'current': '; '.join(passive_examples[:3]),
+            'description': f'Passive voice detected ({len(passive_matches)} instances)',
+            'current': first_sentence,
+            'is_highlightable': bool(first_sentence and first_sentence in text),
+            'count': len(passive_matches),
+            'all_instances': all_instances[:5],
             'suggestion': 'Use active voice: "Managed team" instead of "Was assigned to manage team"',
         })
     
@@ -235,22 +295,40 @@ def detect_vague_metrics(text: str) -> List[Dict]:
         List of CONTENT_VAGUE_METRICS issues
     """
     issues = []
-    vague_examples = []
+    vague_matches = []
     
     for pattern in VAGUE_METRICS_PATTERNS:
-        matches = pattern.findall(text)
-        for match in matches:
-            if isinstance(match, tuple):
-                vague_examples.append(' '.join(match))
-            else:
-                vague_examples.append(match)
+        for match in pattern.finditer(text):
+            vague_matches.append(match)
     
-    if len(vague_examples) > 3:
+    if len(vague_matches) > 3:
+        first_match = vague_matches[0]
+        
+        line_start = text.rfind('\n', 0, first_match.start()) + 1
+        line_end = text.find('\n', first_match.start())
+        if line_end == -1:
+            line_end = len(text)
+        first_sentence = text[line_start:line_end].strip()
+        
+        all_instances = []
+        for match in vague_matches[:5]:
+            ls = text.rfind('\n', 0, match.start()) + 1
+            le = text.find('\n', match.start())
+            if le == -1:
+                le = len(text)
+            line_text = text[ls:le].strip()
+            if line_text and line_text not in all_instances:
+                all_instances.append(line_text)
+        
         issues.append({
             'issue_type': 'CONTENT_VAGUE_METRICS',
+            'title': 'Vague metrics detected',
             'location': 'Throughout CV',
-            'description': f'Vague quantifiers used instead of specific numbers ({len(vague_examples)} found)',
-            'current': '; '.join(vague_examples[:3]),
+            'description': f'Vague quantifiers used instead of specific numbers ({len(vague_matches)} found)',
+            'current': first_sentence,
+            'is_highlightable': bool(first_sentence and first_sentence in text),
+            'count': len(vague_matches),
+            'all_instances': all_instances[:5],
             'suggestion': 'Replace with specific numbers: "significantly increased" → "increased by 35%"',
         })
     
@@ -283,10 +361,21 @@ def detect_irrelevant_information(text: str, has_college_degree: bool = False) -
             found_issues.append(info_type.replace('_', ' '))
     
     if found_issues:
+        first_match_text = ''
+        for info_type, pattern in IRRELEVANT_INFO_PATTERNS.items():
+            match = pattern.search(text)
+            if match:
+                first_match_text = match.group()
+                break
+        
         issues.append({
             'issue_type': 'CONTENT_IRRELEVANT_INFORMATION',
+            'title': 'Irrelevant information found',
             'location': 'Throughout CV',
             'description': f'Potentially irrelevant information found: {", ".join(found_issues)}',
+            'current': first_match_text,
+            'is_highlightable': bool(first_match_text and first_match_text in text),
+            'all_instances': found_issues,
             'suggestion': 'Remove personal details not relevant to job qualifications',
         })
     

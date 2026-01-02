@@ -1,0 +1,73 @@
+═══════════════════════════════════════════════════════════════════════
+PROJECT: CV Optimizer Complete Fix - PROMPT 10#18: Fix section_extractor.py
+═══════════════════════════════════════════════════════════════════════
+
+CONTEXT:
+The section_extractor identifies structural issues with CV sections.
+Some issues can be highlighted (missing headers), others cannot
+(section order).
+
+───────────────────────────────────────────────────────────────────────
+
+TASK:
+Review and fix section_extractor output format.
+
+───────────────────────────────────────────────────────────────────────
+
+FILE TO MODIFY:
+backend/common/detection/section_extractor.py
+
+───────────────────────────────────────────────────────────────────────
+
+ISSUE CLASSIFICATION:
+
+| Issue Type | Highlightable? | What to highlight |
+|------------|----------------|-------------------|
+| FORMAT_MISSING_SECTION_HEADERS | NO | Nothing to highlight (it's missing!) |
+| FORMAT_POOR_VISUAL_HIERARCHY | MAYBE | First section without clear header |
+| Content in wrong section | YES | The misplaced content |
+
+───────────────────────────────────────────────────────────────────────
+
+EXPECTED OUTPUT FORMAT:
+
+For MISSING SECTION HEADERS:
+```python
+{
+    "issue_type": "FORMAT_MISSING_SECTION_HEADERS",
+    "title": "Missing clear section headers",
+    "severity": "critical",
+    "current": "",  # Can't highlight what's missing
+    "is_highlightable": False,
+    "missing_sections": ["Education", "Skills"],
+    "suggested_fix": "Add clear headers for: Education, Skills"
+}
+```
+
+For POOR VISUAL HIERARCHY:
+```python
+{
+    "issue_type": "FORMAT_POOR_VISUAL_HIERARCHY",
+    "title": "Unclear section structure",
+    "severity": "important",
+    "current": "",  # Structural issue, not specific text
+    "is_highlightable": False,
+    "suggested_fix": "Use consistent formatting: bold headers, consistent spacing"
+}
+```
+
+───────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+1. Test with CV missing section headers
+2. Verify: Structural issues have `is_highlightable: false`
+3. Verify: Frontend shows these as 📋 (general feedback)
+
+───────────────────────────────────────────────────────────────────────
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- Only update output format
+- Keep section detection logic unchanged
+- If anything is unclear, STOP and ask
+
+═══════════════════════════════════════════════════════════════════════
