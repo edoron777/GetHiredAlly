@@ -106,13 +106,32 @@ async def test_supabase_connection():
     except Exception as e:
         return {"connected": False, "error": str(e)}
 
-static_dir = Path(__file__).parent.parent.parent / "client" / "dist"
-if static_dir.exists():
-    app.mount("/assets", StaticFiles(directory=static_dir / "assets"), name="assets")
+possible_static_dirs = [
+    Path(__file__).parent.parent.parent / "client" / "dist",
+    Path("/home/runner/workspace/client/dist"),
+    Path("client/dist"),
+    Path("./client/dist"),
+]
+
+static_dir = None
+for candidate in possible_static_dirs:
+    if candidate.exists() and (candidate / "index.html").exists():
+        static_dir = candidate
+        print(f"✓ Static files found at: {static_dir}")
+        break
+
+if static_dir:
+    assets_dir = static_dir / "assets"
+    if assets_dir.exists():
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
     
     @app.get("/{full_path:path}")
     async def serve_spa(full_path: str):
+        if full_path.startswith("api/"):
+            return {"error": "Not found"}
         file_path = static_dir / full_path
         if file_path.exists() and file_path.is_file():
             return FileResponse(file_path)
         return FileResponse(static_dir / "index.html")
+else:
+    print("⚠ Warning: Static files not found, frontend will not be served")
