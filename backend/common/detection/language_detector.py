@@ -158,14 +158,37 @@ def detect_first_person_pronouns(text: str) -> List[Dict]:
     """
     issues = []
     
-    matches = FIRST_PERSON_PATTERN.findall(text)
+    matches = list(FIRST_PERSON_PATTERN.finditer(text))
     
     if len(matches) > 3:
+        first_match = matches[0]
+        start = first_match.start()
+        
+        line_start = text.rfind('\n', 0, start) + 1
+        line_end = text.find('\n', start)
+        if line_end == -1:
+            line_end = len(text)
+        
+        first_sentence = text[line_start:line_end].strip()
+        
+        all_instances = []
+        for match in matches[:5]:
+            ls = text.rfind('\n', 0, match.start()) + 1
+            le = text.find('\n', match.start())
+            if le == -1:
+                le = len(text)
+            line_text = text[ls:le].strip()
+            if line_text and line_text not in all_instances:
+                all_instances.append(line_text)
+        
         issues.append({
             'issue_type': 'CONTENT_FIRST_PERSON_PRONOUNS',
             'location': 'Throughout CV',
             'description': f'Excessive first-person pronouns ({len(matches)} found): I, my, me, etc.',
-            'current': ', '.join(matches[:5]),
+            'current': first_sentence,
+            'is_highlightable': bool(first_sentence and first_sentence in text),
+            'count': len(matches),
+            'all_instances': all_instances[:5],
             'suggestion': 'CVs should be written without "I" statements (e.g., "Led team" not "I led team")',
         })
     

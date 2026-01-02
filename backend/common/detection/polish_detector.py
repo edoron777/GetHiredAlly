@@ -32,11 +32,21 @@ def detect_outdated_info(text: str, years_threshold: int = 15) -> List[Dict]:
     old_years = [y for y in years if int(y) < cutoff_year]
     
     if old_years:
+        oldest_year = min(old_years)
+        year_match = re.search(r'\b' + oldest_year + r'\b', text)
+        current_text = ''
+        if year_match:
+            start = max(0, year_match.start() - 20)
+            end = min(len(text), year_match.end() + 20)
+            current_text = text[start:end].strip()
+        
         issues.append({
             'issue_type': 'STANDARDS_OUTDATED_INFORMATION',
             'location': 'Throughout CV',
-            'description': f'CV contains references to {min(old_years)} - consider removing information older than {years_threshold} years',
-            'current': f'Years found: {", ".join(sorted(set(old_years)))}',
+            'description': f'CV contains references to {oldest_year} - consider removing information older than {years_threshold} years',
+            'current': current_text if current_text else oldest_year,
+            'is_highlightable': bool(current_text),
+            'all_instances': sorted(set(old_years)),
             'suggestion': 'Focus on recent experience (last 10-15 years) unless earlier experience is highly relevant',
         })
     
@@ -78,6 +88,8 @@ def detect_header_inconsistency(text: str) -> List[Dict]:
             'issue_type': 'FORMAT_INCONSISTENT_CAPITALIZATION',
             'location': 'Section Headers',
             'description': 'Inconsistent header capitalization (mix of UPPERCASE and Title Case)',
+            'current': '',
+            'is_highlightable': False,
             'suggestion': 'Use consistent capitalization for all section headers',
         })
     
@@ -113,11 +125,14 @@ def detect_repetitive_content(text: str) -> List[Dict]:
         
         for phrase, count in top_repeated:
             if count >= 2 and len(phrase.split()) >= 3:
+                is_in_text = phrase in text.lower()
                 issues.append({
                     'issue_type': 'CONTENT_GENERIC_STATEMENTS',
                     'location': 'Throughout CV',
                     'description': f'Phrase repeated {count} times: "{phrase}"',
                     'current': phrase,
+                    'is_highlightable': is_in_text,
+                    'count': count,
                     'suggestion': 'Vary your language to avoid repetition',
                 })
     

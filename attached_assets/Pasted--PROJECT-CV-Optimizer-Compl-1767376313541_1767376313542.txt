@@ -1,0 +1,105 @@
+═══════════════════════════════════════════════════════════════════════
+PROJECT: CV Optimizer Complete Fix - PROMPT 7#18: Fix standards_detector.py
+═══════════════════════════════════════════════════════════════════════
+
+CONTEXT:
+Employment gap issues return "84 months gap around 2011-2018" which is
+descriptive text, not highlightable CV text.
+
+Employment gaps are between jobs, so there's no text TO highlight.
+These should be marked as non-highlightable.
+
+───────────────────────────────────────────────────────────────────────
+
+TASK:
+Mark employment gap issues as non-highlightable and provide clear
+information in meta fields instead.
+
+───────────────────────────────────────────────────────────────────────
+
+FILE TO MODIFY:
+backend/common/detection/standards_detector.py
+
+───────────────────────────────────────────────────────────────────────
+
+CURRENT BEHAVIOR (WRONG):
+```python
+{
+    "issue_type": "CAREER_EMPLOYMENT_GAP",
+    "current": "84 months gap around 2011-2018",  # Can't highlight this
+    "severity": "important"
+}
+```
+
+EXPECTED BEHAVIOR (CORRECT):
+```python
+{
+    "issue_type": "CAREER_EMPLOYMENT_GAP",
+    "title": "Employment gap detected (84 months)",
+    "severity": "important",
+    "current": "",  # Empty - can't highlight a gap
+    "is_highlightable": False,
+    "gap_info": {
+        "months": 84,
+        "start_date": "2011",
+        "end_date": "2018",
+        "before_job": "Senior Developer at Microsoft",
+        "after_job": "Tech Lead at Amazon"
+    },
+    "suggested_fix": "Consider adding: freelance work, education, volunteering, or family responsibilities during 2011-2018"
+}
+```
+
+───────────────────────────────────────────────────────────────────────
+
+IMPLEMENTATION:
+```python
+def detect_employment_gaps(cv_text: str, positions: list) -> list:
+    gaps = []
+    
+    # Sort positions by end date
+    sorted_positions = sorted(positions, key=lambda x: x.get('end_date', ''), reverse=True)
+    
+    for i in range(len(sorted_positions) - 1):
+        current_pos = sorted_positions[i]
+        prev_pos = sorted_positions[i + 1]
+        
+        gap_months = calculate_gap_months(prev_pos['end_date'], current_pos['start_date'])
+        
+        if gap_months > 6:  # 6+ months gap
+            gaps.append({
+                "issue_type": "CAREER_EMPLOYMENT_GAP",
+                "title": f"Employment gap detected ({gap_months} months)",
+                "severity": "important" if gap_months > 12 else "consider",
+                "current": "",  # Cannot highlight a gap
+                "is_highlightable": False,
+                "gap_info": {
+                    "months": gap_months,
+                    "start_date": prev_pos.get('end_date', ''),
+                    "end_date": current_pos.get('start_date', ''),
+                    "before_job": f"{prev_pos.get('title', '')} at {prev_pos.get('company', '')}",
+                    "after_job": f"{current_pos.get('title', '')} at {current_pos.get('company', '')}"
+                },
+                "suggested_fix": f"Consider adding activities during {prev_pos.get('end_date', '')}-{current_pos.get('start_date', '')}: freelance work, education, volunteering, or family responsibilities"
+            })
+    
+    return gaps
+```
+
+───────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+1. Test with CV that has employment gaps
+2. Verify: Gap issues have `is_highlightable: false`
+3. Verify: `gap_info` contains useful details
+4. Verify: Frontend shows 📋 icon (non-highlightable)
+
+───────────────────────────────────────────────────────────────────────
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- Keep gap detection logic the same
+- Only fix output format
+- Do NOT change gap thresholds
+- If anything is unclear, STOP and ask
+
+═══════════════════════════════════════════════════════════════════════
