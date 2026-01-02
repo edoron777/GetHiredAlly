@@ -97,13 +97,12 @@
 }
 
 .issue-item {
+    display: flex;
+    align-items: center;
     padding: 8px 10px;
     font-size: 13px;
     cursor: pointer;
     border-radius: 4px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
     color: #4b5563;
     transition: background 0.2s;
 }
@@ -159,4 +158,57 @@
     background: #10B981;
     border-radius: 4px;
     transition: width 0.3s ease;
+}
+
+.issue-legend {
+    padding: 10px 12px;
+    background: white;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.legend-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 6px;
+}
+
+.legend-counts {
+    display: flex;
+    gap: 12px;
+    font-size: 11px;
+    color: #6b7280;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.legend-icon.highlightable {
+    color: #2563eb;
+}
+
+.legend-icon.general {
+    color: #9ca3af;
+}
+
+.highlight-indicator {
+    flex-shrink: 0;
+    margin-right: 4px;
+}
+
+.highlight-indicator.highlightable {
+    color: #2563eb;
+}
+
+.highlight-indicator.general {
+    color: #9ca3af;
+}
+
+.general-feedback {
+    color: #6b7280;
 }

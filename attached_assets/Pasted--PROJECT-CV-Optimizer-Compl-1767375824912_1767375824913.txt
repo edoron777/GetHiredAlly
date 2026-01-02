@@ -1,0 +1,100 @@
+═══════════════════════════════════════════════════════════════════════
+PROJECT: CV Optimizer Complete Fix - PROMPT 3#18: Phase 1 Verification
+═══════════════════════════════════════════════════════════════════════
+
+⚠️ VERIFICATION ONLY - DO NOT MAKE CODE CHANGES
+
+───────────────────────────────────────────────────────────────────────
+
+PHASE 1 VERIFICATION CHECKLIST:
+
+Please verify each item and report status:
+
+───────────────────────────────────────────────────────────────────────
+
+PART 1: MARKER FILTERING
+
+[ ] isValidMarker function exists and works
+[ ] Invalid patterns are filtered out:
+    - Empty strings
+    - "X words..." pattern
+    - "X months gap..." pattern
+    - "I, I, I, I..." pattern
+    - Text with "..." truncation
+[ ] Console shows marker stats (total vs valid)
+
+REPORT:
+- Total issues: ___
+- Highlightable: ___
+- Non-highlightable: ___
+
+───────────────────────────────────────────────────────────────────────
+
+PART 2: TEXTMARKER DISPLAY
+
+[ ] Only valid markers are highlighted in CV
+[ ] Highlighted text has colored underline
+[ ] Info icon (ⓘ) appears after highlighted text
+[ ] Clicking icon opens TipBox
+[ ] No console errors about text not found
+
+REPORT:
+- Highlighting working: YES/NO
+- Correct issue count highlighted: YES/NO
+
+───────────────────────────────────────────────────────────────────────
+
+PART 3: SIDEBAR DISPLAY
+
+[ ] All issues appear in sidebar (both types)
+[ ] 📍 icon shows for highlightable issues
+[ ] 📋 icon shows for non-highlightable issues
+[ ] Legend/key visible at top
+[ ] Counts shown (X in document • Y general feedback)
+
+REPORT:
+- Visual distinction working: YES/NO
+- Legend visible: YES/NO
+
+───────────────────────────────────────────────────────────────────────
+
+PART 4: CLICK BEHAVIOR
+
+[ ] Clicking highlightable issue → scrolls to CV location
+[ ] Clicking non-highlightable issue → opens TipBox only (no scroll)
+[ ] TipBox works for both types
+[ ] No errors on click
+
+TEST STEPS:
+1. Click a 📍 issue → Verify scrolls to highlighted text
+2. Click a 📋 issue → Verify TipBox opens, no scroll attempt
+
+REPORT:
+- Scroll behavior correct: YES/NO
+- TipBox works for both: YES/NO
+
+───────────────────────────────────────────────────────────────────────
+
+OVERALL PHASE 1 STATUS:
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Marker filtering | [ ] | |
+| TextMarker display | [ ] | |
+| Sidebar distinction | [ ] | |
+| Click behavior | [ ] | |
+
+PHASE 1 COMPLETE: [ ] YES  [ ] NO
+
+If NO, list issues:
+1. ___
+2. ___
+
+───────────────────────────────────────────────────────────────────────
+
+READY FOR PHASE 2: [ ] YES  [ ] NO
+
+Phase 2 will fix backend detectors to return correct matchText.
+This will increase the highlightable percentage from ~19% to ~80%+.
+
+═══════════════════════════════════════════════════════════════════════

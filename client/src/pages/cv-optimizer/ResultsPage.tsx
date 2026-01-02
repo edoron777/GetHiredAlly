@@ -387,10 +387,13 @@ export default function ResultsPage() {
     title: issue.title,
   }));
 
+  const highlightableIds = new Set(highlightable.map(i => i.id));
+  
   const sidebarIssues = normalizedIssues.map(issue => ({
     id: issue.id,
     title: issue.title,
     severity: issue.severity,
+    isHighlightable: highlightableIds.has(issue.id),
   }));
 
   const issueDetails: Record<string, typeof normalizedIssues[0]> = {};

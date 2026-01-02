@@ -1,9 +1,10 @@
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, MapPin, ClipboardList } from 'lucide-react';
 
 interface Issue {
   id: string;
   title: string;
   severity: 'critical' | 'important' | 'consider' | 'polish';
+  isHighlightable?: boolean;
 }
 
 interface IssueGroupProps {
@@ -72,7 +73,16 @@ export default function IssueGroup({
                 onClick={() => onIssueClick(issue.id)}
               >
                 {isFixed && <span className="fixed-indicator">✓</span>}
-                <span className={isFixed ? 'issue-title-fixed' : ''}>
+                {issue.isHighlightable ? (
+                  <span title="Click to highlight in CV">
+                    <MapPin size={12} className="highlight-indicator highlightable" />
+                  </span>
+                ) : (
+                  <span title="General feedback">
+                    <ClipboardList size={12} className="highlight-indicator general" />
+                  </span>
+                )}
+                <span className={`${isFixed ? 'issue-title-fixed' : ''} ${!issue.isHighlightable ? 'general-feedback' : ''}`}>
                   {issue.title}
                 </span>
               </div>

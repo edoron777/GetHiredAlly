@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { MapPin, ClipboardList } from 'lucide-react';
 import ScoreWidget from './ScoreWidget';
 import IssueGroup from './IssueGroup';
 import '../../../styles/cv-optimizer/sidebar.css';
@@ -7,6 +8,7 @@ interface Issue {
   id: string;
   title: string;
   severity: 'critical' | 'important' | 'consider' | 'polish';
+  isHighlightable?: boolean;
 }
 
 interface IssueSidebarProps {
@@ -55,6 +57,9 @@ export default function IssueSidebar({
   const fixedCount = fixedIssues.size;
   const totalCount = issues.length;
   const progressPercent = totalCount > 0 ? (fixedCount / totalCount) * 100 : 0;
+  
+  const highlightableCount = issues.filter(i => i.isHighlightable).length;
+  const generalCount = issues.filter(i => !i.isHighlightable).length;
 
   return (
     <div className="issue-sidebar">
@@ -75,6 +80,20 @@ export default function IssueSidebar({
       )}
 
       <div className="sidebar-divider" />
+      
+      <div className="issue-legend">
+        <div className="legend-title">Found {totalCount} opportunities</div>
+        <div className="legend-counts">
+          <span className="legend-item">
+            <MapPin size={10} className="legend-icon highlightable" />
+            {highlightableCount} in document
+          </span>
+          <span className="legend-item">
+            <ClipboardList size={10} className="legend-icon general" />
+            {generalCount} general
+          </span>
+        </div>
+      </div>
 
       <div className="issue-groups">
         {(['critical', 'important', 'consider', 'polish'] as const).map(severity => (
