@@ -1,0 +1,116 @@
+═══════════════════════════════════════════════════════════════════════
+🔍 DEBUG INVESTIGATION: TextMarker Not Highlighting CV Issues
+═══════════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL: This is an INVESTIGATION, not a fix.
+Do NOT change any code until root cause is confirmed.
+
+───────────────────────────────────────────────────────────────────────
+
+PROBLEM DESCRIPTION:
+
+The CV Optimizer results page should display the CV text with highlighted 
+issues using the TextMarker component. Users should see colored underlines 
+on problematic text with an info icon (ⓘ) that opens TipBox when clicked.
+
+Expected Behavior: 
+- CV text displays with colored underlines on issues
+- Colors: Red (critical), Orange (important), Yellow (consider), Green (polish)
+- Info icon (ⓘ) appears after each highlighted text
+- Clicking icon opens TipBox modal
+
+Actual Behavior:
+- CV text appears as plain text (no highlighting visible)
+- No colored underlines
+- No info icons visible
+
+───────────────────────────────────────────────────────────────────────
+
+INVESTIGATION QUESTIONS:
+
+1. MARKERS ARRAY CHECK:
+   File: client/src/components/cv-optimizer/DocumentView/CVDocument.tsx
+   
+   - Find where `markers` array is created/populated
+   - Log the `markers` array content: console.log('Markers:', markers)
+   - How many items are in the array?
+   - Show a sample of 3 marker objects with their structure
+
+2. MARKER DATA STRUCTURE:
+   The TextMarker component expects markers in this format:
+```typescript
+   interface MarkerItem {
+     id: string
+     matchText: string    // ← CRITICAL: Text to find in CV
+     tag: string          // 'critical' | 'important' | 'consider' | 'polish'
+   }
+```
+   
+   - Does each marker have a `matchText` property?
+   - Is `matchText` populated with actual text from the CV?
+   - Does the `matchText` value EXACTLY match text in the CV content?
+
+3. ISSUE DATA CHECK:
+   File: client/src/pages/cv-optimizer/ResultsPage.tsx
+   
+   - Show the structure of issues from API response (reportData.issues_json)
+   - Which field contains the text to highlight? Options:
+     - matchText
+     - current_text
+     - problematic_text
+     - location
+   - Are these fields populated in the API response?
+
+4. TRANSFORMATION CHECK:
+   - Show the code that transforms issues → markers
+   - Is there a mapping function?
+   - What field is being used for `matchText`?
+
+5. CV CONTENT CHECK:
+   - What is stored in `cvContent.fullText`?
+   - Is it the full CV text?
+   - Show first 200 characters
+
+6. TEXTMARKER RENDERING:
+   - Add this temporary debug to CVDocument.tsx:
+```typescript
+   console.log('TextMarker Props:', {
+     contentLength: cvContent?.fullText?.length,
+     markersCount: markers?.length,
+     firstMarker: markers?.[0]
+   });
+```
+   - What does this log show?
+
+───────────────────────────────────────────────────────────────────────
+
+REPORT FORMAT:
+
+FINDING 1 - Markers Array:
+- Count: [number of markers]
+- Sample marker: [show object]
+- Has matchText: YES/NO
+
+FINDING 2 - Issue Data:
+- Field used for matchText: [field name]
+- Is field populated: YES/NO
+- Sample value: [show text]
+
+FINDING 3 - Text Matching:
+- Does matchText exist in CV content: YES/NO
+- If NO, what is the mismatch?
+
+ROOT CAUSE:
+[ ] RC-1: Imprecise Prompt (markers not created correctly)
+[ ] RC-2: Partial Implementation (transformation missing)
+[ ] RC-3: Ignored Instructions (wrong field used)
+[ ] RC-4: Wrong AI/Code Mix
+[ ] RC-5: Improvisation
+[ ] RC-6: Other: Data not available from API
+
+───────────────────────────────────────────────────────────────────────
+
+DO NOT FIX ANYTHING YET.
+Report findings first.
+
+═══════════════════════════════════════════════════════════════════════
