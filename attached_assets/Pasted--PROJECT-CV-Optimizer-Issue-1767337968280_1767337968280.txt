@@ -1,0 +1,247 @@
+═══════════════════════════════════════════════════════════════════════
+PROJECT: CV Optimizer Issue Detection System - PROMPT 2 OF 12
+═══════════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL PROMPT - DO NOT SKIP
+This prompt analyzes what already exists before we write new code.
+
+⚠️ ANTI-IMPROVISATION REMINDER:
+Report EXACTLY what you find. Do NOT guess or assume.
+If you cannot access a file, say so.
+
+───────────────────────────────────────────────────────────────────────
+
+TASK: Gap Analysis - Audit Existing Detection Engine
+
+We need to understand what detection capabilities already exist
+before implementing anything new.
+
+───────────────────────────────────────────────────────────────────────
+PART 1: ANALYZE EXISTING DETECTION FILES
+───────────────────────────────────────────────────────────────────────
+
+For EACH file in backend/common/detection/, provide:
+
+1. master_detector.py
+   - Main function(s): ?
+   - What it orchestrates: ?
+   - Issue codes it handles: ?
+
+2. contact_extractor.py
+   - Main function(s): ?
+   - What it detects: ?
+   - Issue codes (if any): ?
+
+3. section_extractor.py
+   - Main function(s): ?
+   - What it detects: ?
+   - Issue codes (if any): ?
+
+4. bullet_extractor.py
+   - Main function(s): ?
+   - What it detects: ?
+   - Issue codes (if any): ?
+
+5. language_detector.py
+   - Main function(s): ?
+   - What it detects: ?
+   - Issue codes (if any): ?
+
+6. format_detector.py
+   - Main function(s): ?
+   - What it detects: ?
+   - Issue codes (if any): ?
+
+7. polish_detector.py
+   - Main function(s): ?
+   - What it detects: ?
+   - Issue codes (if any): ?
+
+8. ai_enhancer.py
+   - Main function(s): ?
+   - What it does: ?
+   - Is it used for detection?: ?
+
+───────────────────────────────────────────────────────────────────────
+PART 2: ANALYZE CATALOG SERVICE
+───────────────────────────────────────────────────────────────────────
+
+For EACH file in backend/common/catalog/:
+
+1. repository.py
+   - How does it connect to Supabase?: ?
+   - What queries does it support?: ?
+   - Does it fetch issue types?: ?
+
+2. service.py
+   - What functions are exposed?: ?
+   - Does it support get_issue_type_by_code()?: ?
+
+3. models.py
+   - What data models are defined?: ?
+   - Do they match cv_issue_types schema?: ?
+
+4. cache.py
+   - Is caching implemented?: ?
+   - Cache duration: ?
+
+───────────────────────────────────────────────────────────────────────
+PART 3: MAP EXISTING VS REQUIRED
+───────────────────────────────────────────────────────────────────────
+
+Required issue codes (57 total). For each, mark:
+- ✅ DETECTED - Existing code detects this
+- ⚠️ PARTIAL - Some detection exists but incomplete
+- ❌ MISSING - No detection code exists
+
+CONTACT (8):
+- [ ] CONTACT_MISSING_EMAIL
+- [ ] CONTACT_MISSING_PHONE
+- [ ] CONTACT_MISSING_LINKEDIN
+- [ ] CONTACT_MISSING_LOCATION
+- [ ] CONTACT_MISSING_GITHUB
+- [ ] CONTACT_UNPROFESSIONAL_EMAIL
+- [ ] CONTACT_INCONSISTENT_FORMAT
+- [ ] CONTACT_PHOTO_INCLUDED
+
+FORMAT (13):
+- [ ] FORMAT_INCONSISTENT_DATES
+- [ ] FORMAT_INCONSISTENT_BULLETS
+- [ ] FORMAT_INCONSISTENT_CAPITALIZATION
+- [ ] FORMAT_INCONSISTENT_SPACING
+- [ ] FORMAT_MISSING_SECTION_HEADERS
+- [ ] FORMAT_POOR_VISUAL_HIERARCHY
+- [ ] FORMAT_TRAILING_WHITESPACE
+- [ ] FORMAT_MULTIPLE_SPACES
+- [ ] FORMAT_EXCESSIVE_BLANK_LINES
+- [ ] FORMAT_TABLES_DETECTED
+- [ ] FORMAT_MULTIPLE_COLUMNS
+- [ ] FORMAT_SPECIAL_CHARACTERS
+- [ ] FORMAT_HEADERS_GRAPHICS
+
+CONTENT (14):
+- [ ] CONTENT_TASK_FOCUSED
+- [ ] CONTENT_MISSING_IMPACT
+- [ ] CONTENT_MISSING_SUMMARY
+- [ ] CONTENT_MISSING_METRICS
+- [ ] CONTENT_VAGUE_METRICS
+- [ ] CONTENT_WEAK_ACTION_VERBS
+- [ ] CONTENT_FIRST_PERSON_PRONOUNS
+- [ ] CONTENT_PASSIVE_VOICE
+- [ ] CONTENT_GENERIC_STATEMENTS
+- [ ] CONTENT_IRRELEVANT_INFORMATION
+- [ ] CONTENT_BULLET_TOO_SHORT
+- [ ] CONTENT_BULLET_TOO_LONG
+- [ ] CONTENT_TOO_MANY_BULLETS
+- [ ] CONTENT_MISSING_CONTEXT
+
+GRAMMAR (7):
+- [ ] GRAMMAR_SPELLING_ERROR
+- [ ] GRAMMAR_COMPANY_NAME_SPELLING
+- [ ] GRAMMAR_GRAMMATICAL_ERROR
+- [ ] GRAMMAR_ARTICLE_MISUSE
+- [ ] GRAMMAR_INCONSISTENT_PERIODS
+- [ ] GRAMMAR_MISSING_PUNCTUATION
+- [ ] GRAMMAR_INCONSISTENT_TENSE
+
+LENGTH (4):
+- [ ] LENGTH_CV_TOO_LONG
+- [ ] LENGTH_CV_TOO_SHORT
+- [ ] LENGTH_EXPERIENCE_TOO_DETAILED
+- [ ] LENGTH_EDUCATION_TOO_DETAILED
+
+STANDARDS (8):
+- [ ] STANDARDS_OBJECTIVE_STATEMENT
+- [ ] STANDARDS_REFERENCES_SECTION
+- [ ] STANDARDS_OUTDATED_INFORMATION
+- [ ] STANDARDS_OUTDATED_SKILLS
+- [ ] STANDARDS_HOBBIES_IRRELEVANT
+- [ ] STANDARDS_UNPROFESSIONAL_LANGUAGE
+- [ ] STANDARDS_NEGATIVE_LANGUAGE
+- [ ] CAREER_EMPLOYMENT_GAP
+
+KEYWORDS (3):
+- [ ] KEYWORDS_MISSING_INDUSTRY
+- [ ] KEYWORDS_SKILLS_FORMAT
+- [ ] KEYWORDS_ABBREVIATION_INCONSISTENT
+
+───────────────────────────────────────────────────────────────────────
+PART 4: IDENTIFY ARCHITECTURE PATTERNS
+───────────────────────────────────────────────────────────────────────
+
+Answer these questions:
+
+1. How do existing detectors return their results?
+   - Return format: ?
+   - Do they return issue_code?: ?
+
+2. How does master_detector.py combine results?
+   - Aggregation method: ?
+   - Score calculation: ?
+
+3. How is the detection engine called from API?
+   - Endpoint: ?
+   - Parameters: ?
+   - Response format: ?
+
+4. Are detections deterministic (code-based) or AI-based?
+   - Contact detection: ?
+   - Format detection: ?
+   - Content detection: ?
+
+───────────────────────────────────────────────────────────────────────
+REPORT FORMAT
+───────────────────────────────────────────────────────────────────────
+
+GAP ANALYSIS REPORT:
+
+## EXISTING DETECTION COVERAGE
+
+Total Issue Types Required: 57
+Currently Detected (✅): [count]
+Partially Detected (⚠️): [count]
+Missing (❌): [count]
+
+Coverage: [percentage]%
+
+## DETECTION BY CATEGORY
+
+| Category | Required | Detected | Coverage |
+|----------|----------|----------|----------|
+| CONTACT | 8 | ? | ?% |
+| FORMAT | 13 | ? | ?% |
+| CONTENT | 14 | ? | ?% |
+| GRAMMAR | 7 | ? | ?% |
+| LENGTH | 4 | ? | ?% |
+| STANDARDS | 8 | ? | ?% |
+| KEYWORDS | 3 | ? | ?% |
+
+## CATALOG SERVICE STATUS
+
+| Function | Exists | Works |
+|----------|--------|-------|
+| get_all_issue_types() | ? | ? |
+| get_issue_type_by_code() | ? | ? |
+| get_issue_types_by_category() | ? | ? |
+| Supabase connection | ? | ? |
+| Caching | ? | ? |
+
+## RECOMMENDATIONS
+
+Based on analysis:
+1. [What needs to be created from scratch]
+2. [What needs to be extended]
+3. [What can be reused as-is]
+
+## FILES THAT NEED MODIFICATION
+
+| File | Action Needed |
+|------|---------------|
+| ? | Create / Modify / None |
+
+───────────────────────────────────────────────────────────────────────
+
+⚠️ DO NOT proceed to Prompt 3 until this analysis is complete.
+⚠️ The results of this analysis will determine what we build next.
+
+═══════════════════════════════════════════════════════════════════════
