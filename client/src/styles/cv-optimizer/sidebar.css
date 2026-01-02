@@ -27,6 +27,7 @@
     align-items: center;
     justify-content: center;
     margin: 0 auto 15px;
+    position: relative;
 }
 
 .score-number {
@@ -37,6 +38,18 @@
 .score-label {
     font-size: 12px;
     color: #666;
+}
+
+.score-improvement {
+    position: absolute;
+    top: -5px;
+    right: -10px;
+    background: #10B981;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 10px;
 }
 
 .issue-counts {

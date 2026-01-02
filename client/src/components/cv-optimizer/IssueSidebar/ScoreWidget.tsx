@@ -1,5 +1,6 @@
 interface ScoreWidgetProps {
   score: number;
+  originalScore?: number;
   issuesCounts: {
     critical: number;
     important: number;
@@ -14,8 +15,9 @@ function getScoreColor(score: number): string {
   return '#16a34a';
 }
 
-export default function ScoreWidget({ score, issuesCounts }: ScoreWidgetProps) {
+export default function ScoreWidget({ score, originalScore, issuesCounts }: ScoreWidgetProps) {
   const scoreColor = getScoreColor(score);
+  const scoreImprovement = originalScore && score > originalScore ? score - originalScore : 0;
 
   return (
     <div className="score-widget">
@@ -27,6 +29,9 @@ export default function ScoreWidget({ score, issuesCounts }: ScoreWidgetProps) {
           {score}
         </span>
         <span className="score-label">CV Score</span>
+        {scoreImprovement > 0 && (
+          <span className="score-improvement">+{scoreImprovement}</span>
+        )}
       </div>
 
       <div className="issue-counts">

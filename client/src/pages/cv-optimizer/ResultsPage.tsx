@@ -68,6 +68,7 @@ export default function ResultsPage() {
   const [copied, setCopied] = useState(false);
   const [fixedCV, setFixedCV] = useState<string | null>(null);
   const [fixedIssues, setFixedIssues] = useState<Set<string>>(new Set());
+  const [currentScore, setCurrentScore] = useState<number>(0);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -114,6 +115,68 @@ export default function ResultsPage() {
 
     fetchReport();
   }, [cvId, navigate]);
+
+  // Initialize score from API response
+  useEffect(() => {
+    if (reportData?.cv_score) {
+      setCurrentScore(reportData.cv_score);
+    }
+  }, [reportData]);
+
+  // Score calculation helper functions
+  const getDefaultWeight = (severity: string): number => {
+    switch (severity) {
+      case 'critical': return 9;
+      case 'important': return 6;
+      case 'consider': return 4;
+      case 'polish': return 2;
+      default: return 5;
+    }
+  };
+
+  const getPenaltyPerOccurrence = (weight: number): number => {
+    if (weight >= 10) return 5;
+    if (weight >= 9) return 4.5;
+    if (weight >= 8) return 4;
+    if (weight >= 7) return 3.5;
+    if (weight >= 6) return 3;
+    if (weight >= 5) return 2.5;
+    if (weight >= 4) return 2;
+    if (weight >= 3) return 1.5;
+    if (weight >= 2) return 1;
+    return 0.5;
+  };
+
+  const getMaxOccurrences = (weight: number): number => {
+    if (weight >= 9) return 3;
+    if (weight >= 7) return 5;
+    if (weight >= 5) return 10;
+    return Infinity;
+  };
+
+  const recalculateScore = (allIssues: CVIssue[], fixedIssueIds: Set<string>): number => {
+    const remainingIssues = allIssues.filter(issue => !fixedIssueIds.has(issue.id));
+    
+    let totalPenalty = 0;
+    const occurrenceCount: Record<string, number> = {};
+    
+    for (const issue of remainingIssues) {
+      const weight = getDefaultWeight(issue.severity);
+      const issueType = issue.issue_type || issue.issueType || 'UNKNOWN';
+      
+      occurrenceCount[issueType] = (occurrenceCount[issueType] || 0) + 1;
+      
+      const maxOccurrences = getMaxOccurrences(weight);
+      if (occurrenceCount[issueType] > maxOccurrences) {
+        continue;
+      }
+      
+      const penalty = getPenaltyPerOccurrence(weight);
+      totalPenalty += penalty;
+    }
+    
+    return Math.max(0, Math.round(100 - totalPenalty));
+  };
 
   const normalizeIssue = (issue: CVIssue, index: number) => ({
     id: issue.id || String(index + 1),
@@ -174,7 +237,15 @@ export default function ResultsPage() {
     const updatedCV = currentCV.replace(originalText, replacementText);
     setFixedCV(updatedCV);
     
-    setFixedIssues(prev => new Set([...prev, issueId]));
+    // Mark issue as fixed and recalculate score
+    const newFixedIssues = new Set([...fixedIssues, issueId]);
+    setFixedIssues(newFixedIssues);
+    
+    // Recalculate score based on remaining issues
+    if (reportData?.issues) {
+      const newScore = recalculateScore(reportData.issues, newFixedIssues);
+      setCurrentScore(newScore);
+    }
     
     setIsTipBoxOpen(false);
     setUserEditText('');
@@ -419,7 +490,8 @@ export default function ResultsPage() {
   return (
     <div className="min-h-screen flex" style={{ backgroundColor: '#FAF9F7' }}>
       <IssueSidebar
-        score={reportData.cv_score}
+        score={currentScore}
+        originalScore={reportData.cv_score}
         issues={sidebarIssues}
         onIssueClick={handleIssueClick}
         selectedIssueId={selectedIssueId || undefined}

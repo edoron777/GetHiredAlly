@@ -1,0 +1,174 @@
+═══════════════════════════════════════════════════════════════════════
+PROJECT: CV Optimizer Complete Fix - PROMPT 15#18: Add Rescan CV Button
+═══════════════════════════════════════════════════════════════════════
+
+CONTEXT:
+After user fixes issues, they should be able to rescan the CV to get 
+a fresh analysis with the updated content.
+
+───────────────────────────────────────────────────────────────────────
+
+TASK:
+Add a "Rescan CV" button that sends the fixed CV for re-analysis.
+
+───────────────────────────────────────────────────────────────────────
+
+FILE TO MODIFY:
+client/src/pages/cv-optimizer/ResultsPage.tsx
+
+───────────────────────────────────────────────────────────────────────
+
+PART 1: ADD RESCAN STATE
+```typescript
+const [isRescanning, setIsRescanning] = useState(false);
+const [scanHistory, setScanHistory] = useState<{score: number, date: Date}[]>([]);
+```
+
+───────────────────────────────────────────────────────────────────────
+
+PART 2: RESCAN HANDLER
+```typescript
+const handleRescan = async () => {
+  // Get the CV content to rescan
+  const cvToScan = fixedCV || reportData?.cv_content;
+  
+  if (!cvToScan) {
+    console.error('No CV content to rescan');
+    return;
+  }
+  
+  setIsRescanning(true);
+  
+  try {
+    // Save current score to history
+    setScanHistory(prev => [...prev, { score: currentScore, date: new Date() }]);
+    
+    // Call the scan API with updated CV
+    const token = localStorage.getItem('authToken');
+    const response = await fetch('/api/cv-optimizer/scan', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        cv_content: cvToScan,
+        // Include job description if available
+        job_description: reportData?.job_description || null
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error('Rescan failed');
+    }
+    
+    const newReport = await response.json();
+    
+    // Update state with new results
+    setReportData(newReport);
+    setCurrentScore(newReport.score);
+    
+    // Reset fixed tracking (new scan = new issues)
+    setFixedCV(null);
+    setFixedIssues(new Set());
+    
+    // Show success message
+    console.log('Rescan complete:', newReport.score);
+    
+  } catch (error) {
+    console.error('Rescan error:', error);
+    // Show error to user (toast or alert)
+  } finally {
+    setIsRescanning(false);
+  }
+};
+```
+
+───────────────────────────────────────────────────────────────────────
+
+PART 3: ADD RESCAN BUTTON TO UI
+
+Add near the export buttons or in a prominent location:
+```typescript
+{/* Rescan Button */}
+<button
+  onClick={handleRescan}
+  disabled={isRescanning || !fixedIssues.size}
+  className={`
+    flex items-center gap-2 px-4 py-2 rounded-lg font-medium
+    ${fixedIssues.size > 0 
+      ? 'bg-blue-600 text-white hover:bg-blue-700' 
+      : 'bg-gray-200 text-gray-500 cursor-not-allowed'}
+    transition-colors
+  `}
+>
+  {isRescanning ? (
+    <>
+      <Loader2 className="w-4 h-4 animate-spin" />
+      Rescanning...
+    </>
+  ) : (
+    <>
+      <RefreshCw className="w-4 h-4" />
+      Rescan CV ({fixedIssues.size} fixes applied)
+    </>
+  )}
+</button>
+```
+
+───────────────────────────────────────────────────────────────────────
+
+PART 4: ADD IMPORT FOR ICONS
+```typescript
+import { RefreshCw, Loader2 } from 'lucide-react';
+```
+
+───────────────────────────────────────────────────────────────────────
+
+PART 5: SHOW SCAN HISTORY (OPTIONAL)
+```typescript
+{/* Scan History */}
+{scanHistory.length > 0 && (
+  <div className="scan-history mt-4 p-3 bg-gray-50 rounded-lg">
+    <h4 className="text-sm font-medium text-gray-700 mb-2">Score History</h4>
+    <div className="flex gap-2 items-center">
+      {scanHistory.map((scan, idx) => (
+        <span key={idx} className="text-sm text-gray-500">
+          {scan.score}
+        </span>
+      ))}
+      <span className="text-sm font-medium text-green-600">
+        → {currentScore}
+      </span>
+    </div>
+  </div>
+)}
+```
+
+───────────────────────────────────────────────────────────────────────
+
+SECURITY REQUIREMENTS:
+- [x] Include auth token in request
+- [x] Validate CV content exists before sending
+- [x] Handle API errors gracefully
+- [x] Disable button during processing
+
+───────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+1. Fix several issues
+2. Click "Rescan CV" button
+3. Verify: Loading state shown
+4. Verify: New analysis results load
+5. Verify: Fixed issues reset (new issue list)
+6. Verify: Score history shows previous score
+
+───────────────────────────────────────────────────────────────────────
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- Use existing API endpoint structure
+- Do NOT create new backend endpoints
+- If API endpoint doesn't exist, report it
+- If anything is unclear, STOP and ask
+
+═══════════════════════════════════════════════════════════════════════

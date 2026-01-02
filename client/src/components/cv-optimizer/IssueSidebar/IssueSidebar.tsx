@@ -13,6 +13,7 @@ interface Issue {
 
 interface IssueSidebarProps {
   score: number;
+  originalScore?: number;
   issues: Issue[];
   onIssueClick: (issueId: string) => void;
   selectedIssueId?: string;
@@ -21,6 +22,7 @@ interface IssueSidebarProps {
 
 export default function IssueSidebar({ 
   score, 
+  originalScore,
   issues, 
   onIssueClick, 
   selectedIssueId,
@@ -63,7 +65,7 @@ export default function IssueSidebar({
 
   return (
     <div className="issue-sidebar">
-      <ScoreWidget score={score} issuesCounts={issuesCounts} />
+      <ScoreWidget score={score} originalScore={originalScore} issuesCounts={issuesCounts} />
 
       {totalCount > 0 && (
         <div className="progress-summary">
