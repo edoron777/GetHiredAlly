@@ -13,6 +13,7 @@ interface IssueGroupProps {
   onToggle: () => void;
   onIssueClick: (issueId: string) => void;
   selectedIssueId?: string;
+  fixedIssues?: Set<string>;
 }
 
 const SEVERITY_LABELS = {
@@ -35,7 +36,8 @@ export default function IssueGroup({
   isExpanded, 
   onToggle, 
   onIssueClick,
-  selectedIssueId 
+  selectedIssueId,
+  fixedIssues = new Set()
 }: IssueGroupProps) {
   if (issues.length === 0) return null;
 
@@ -61,15 +63,21 @@ export default function IssueGroup({
 
       {isExpanded && (
         <div className="issue-group-items">
-          {issues.map(issue => (
-            <div
-              key={issue.id}
-              className={`issue-item ${selectedIssueId === issue.id ? 'selected' : ''}`}
-              onClick={() => onIssueClick(issue.id)}
-            >
-              {issue.title}
-            </div>
-          ))}
+          {issues.map(issue => {
+            const isFixed = fixedIssues.has(issue.id);
+            return (
+              <div
+                key={issue.id}
+                className={`issue-item ${selectedIssueId === issue.id ? 'selected' : ''} ${isFixed ? 'issue-fixed' : ''}`}
+                onClick={() => onIssueClick(issue.id)}
+              >
+                {isFixed && <span className="fixed-indicator">✓</span>}
+                <span className={isFixed ? 'issue-title-fixed' : ''}>
+                  {issue.title}
+                </span>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

@@ -401,6 +401,7 @@ export default function ResultsPage() {
         issues={sidebarIssues}
         onIssueClick={handleIssueClick}
         selectedIssueId={selectedIssueId || undefined}
+        fixedIssues={fixedIssues}
       />
 
       <div className="flex-1 px-4 py-8">

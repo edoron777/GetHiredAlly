@@ -14,13 +14,15 @@ interface IssueSidebarProps {
   issues: Issue[];
   onIssueClick: (issueId: string) => void;
   selectedIssueId?: string;
+  fixedIssues?: Set<string>;
 }
 
 export default function IssueSidebar({ 
   score, 
   issues, 
   onIssueClick, 
-  selectedIssueId 
+  selectedIssueId,
+  fixedIssues = new Set()
 }: IssueSidebarProps) {
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
     critical: true,
@@ -50,9 +52,27 @@ export default function IssueSidebar({
     }));
   };
 
+  const fixedCount = fixedIssues.size;
+  const totalCount = issues.length;
+  const progressPercent = totalCount > 0 ? (fixedCount / totalCount) * 100 : 0;
+
   return (
     <div className="issue-sidebar">
       <ScoreWidget score={score} issuesCounts={issuesCounts} />
+
+      {totalCount > 0 && (
+        <div className="progress-summary">
+          <div className="progress-text">
+            Progress: {fixedCount} / {totalCount} fixed
+          </div>
+          <div className="progress-bar-bg">
+            <div 
+              className="progress-bar-fill"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+        </div>
+      )}
 
       <div className="sidebar-divider" />
 
@@ -66,6 +86,7 @@ export default function IssueSidebar({
             onToggle={() => toggleGroup(severity)}
             onIssueClick={onIssueClick}
             selectedIssueId={selectedIssueId}
+            fixedIssues={fixedIssues}
           />
         ))}
       </div>
