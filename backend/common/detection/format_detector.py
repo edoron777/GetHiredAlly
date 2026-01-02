@@ -72,11 +72,15 @@ def detect_date_inconsistency(text: str) -> List[Dict]:
         for fmt, matches in formats_found.items():
             examples.append(matches[0])
         
+        first_example = examples[0] if examples else ''
+        
         issues.append({
             'issue_type': 'FORMAT_INCONSISTENT_DATES',
             'location': 'Throughout CV',
             'description': f'Multiple date formats used ({len(formats_found)} different formats)',
-            'current': ', '.join(examples[:3]),
+            'current': first_example,
+            'is_highlightable': bool(first_example and first_example in text),
+            'all_instances': examples[:5],
             'suggestion': 'Use a consistent date format throughout (e.g., "Jan 2020" or "January 2020")',
         })
     
@@ -106,7 +110,9 @@ def detect_bullet_inconsistency(text: str) -> List[Dict]:
             'issue_type': 'FORMAT_INCONSISTENT_BULLETS',
             'location': 'Bullet Points',
             'description': f'Inconsistent bullet styles ({len(styles_found)} different styles: {", ".join(styles_found.keys())})',
-            'current': ', '.join(styles_found.keys()),
+            'current': '',
+            'is_highlightable': False,
+            'meta_info': ', '.join(styles_found.keys()),
             'suggestion': 'Use a consistent bullet style throughout',
         })
     
@@ -130,15 +136,21 @@ def detect_whitespace_issues(text: str) -> List[Dict]:
             'issue_type': 'FORMAT_EXCESSIVE_BLANK_LINES',
             'location': 'Throughout CV',
             'description': 'Excessive blank lines detected',
+            'current': '',
+            'is_highlightable': False,
             'suggestion': 'Remove extra blank lines for cleaner appearance',
         })
     
-    trailing_count = len(re.findall(r'[ \t]+$', text, re.MULTILINE))
+    trailing_matches = list(re.finditer(r'[ \t]+$', text, re.MULTILINE))
+    trailing_count = len(trailing_matches)
     if trailing_count > 5:
         issues.append({
             'issue_type': 'FORMAT_TRAILING_WHITESPACE',
             'location': 'Throughout CV',
             'description': f'Trailing whitespace on {trailing_count} lines',
+            'current': '',
+            'is_highlightable': False,
+            'meta_info': f'{trailing_count} lines affected',
             'suggestion': 'Remove trailing spaces for cleaner formatting',
         })
     
@@ -152,6 +164,8 @@ def detect_whitespace_issues(text: str) -> List[Dict]:
                 'issue_type': 'FORMAT_INCONSISTENT_SPACING',
                 'location': 'Indentation',
                 'description': f'Inconsistent indentation ({unique_indents} different levels)',
+                'current': '',
+                'is_highlightable': False,
                 'suggestion': 'Use consistent indentation throughout',
             })
     
@@ -213,6 +227,9 @@ def detect_missing_section_headers(text: str) -> List[Dict]:
             'issue_type': 'FORMAT_MISSING_SECTION_HEADERS',
             'location': 'CV Structure',
             'description': f'Missing clear section headers: {", ".join(missing_sections)}',
+            'current': '',
+            'is_highlightable': False,
+            'meta_info': ', '.join(missing_sections),
             'suggestion': 'Add clear section headers like EXPERIENCE, EDUCATION, SKILLS in all caps or title case',
         })
     
@@ -240,10 +257,19 @@ def detect_multiple_spaces(text: str) -> List[Dict]:
         double_space_count += len(matches)
     
     if double_space_count > 5:
+        spaces_match = re.search(r'\S(  +)\S', text)
+        current_text = ''
+        if spaces_match:
+            start = max(0, spaces_match.start() - 10)
+            end = min(len(text), spaces_match.end() + 10)
+            current_text = text[start:end].strip()
+        
         issues.append({
             'issue_type': 'FORMAT_MULTIPLE_SPACES',
             'location': 'Throughout CV',
             'description': f'Multiple consecutive spaces found ({double_space_count} instances)',
+            'current': current_text,
+            'is_highlightable': bool(current_text),
             'suggestion': 'Replace multiple spaces with single spaces',
         })
     
@@ -263,11 +289,15 @@ def detect_tables(text: str) -> List[Dict]:
     issues = []
     
     for pattern in TABLE_PATTERNS:
-        if pattern.search(text):
+        match = pattern.search(text)
+        if match:
+            table_text = match.group(0)[:50] if len(match.group(0)) > 50 else match.group(0)
             issues.append({
                 'issue_type': 'FORMAT_TABLES_DETECTED',
                 'location': 'CV Layout',
                 'description': 'Table structure detected - many ATS systems cannot parse tables correctly',
+                'current': table_text.strip(),
+                'is_highlightable': True,
                 'suggestion': 'Convert table content to simple bullet points',
             })
             break
@@ -307,6 +337,8 @@ def detect_multiple_columns(text: str) -> List[Dict]:
                 'issue_type': 'FORMAT_MULTIPLE_COLUMNS',
                 'location': 'CV Layout',
                 'description': 'Multi-column layout detected - ATS may read columns incorrectly',
+                'current': '',
+                'is_highlightable': False,
                 'suggestion': 'Use single-column format for better ATS compatibility',
             })
     
@@ -332,11 +364,16 @@ def detect_special_characters(text: str) -> List[Dict]:
                 found_chars.append(char)
     
     if found_chars:
+        first_char = found_chars[0] if found_chars else ''
+        char_in_text = first_char in text if first_char else False
+        
         issues.append({
             'issue_type': 'FORMAT_SPECIAL_CHARACTERS',
             'location': 'Throughout CV',
             'description': f'Special characters found that may cause ATS issues: {" ".join(found_chars[:5])}',
-            'current': ' '.join(found_chars),
+            'current': first_char,
+            'is_highlightable': char_in_text,
+            'all_instances': found_chars[:10],
             'suggestion': 'Replace with standard ASCII characters (e.g., straight quotes, regular dashes)',
         })
     

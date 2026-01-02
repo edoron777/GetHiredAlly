@@ -1,0 +1,107 @@
+═══════════════════════════════════════════════════════════════════════
+PROJECT: CV Optimizer Complete Fix - PROMPT 6#18: Fix polish_detector.py
+═══════════════════════════════════════════════════════════════════════
+
+CONTEXT:
+The polish_detector for first-person pronouns returns "I, I, I, I, I..."
+which is a summary, not actual highlightable text.
+
+───────────────────────────────────────────────────────────────────────
+
+TASK:
+Fix CONTENT_FIRST_PERSON_PRONOUNS to return actual CV text with the
+pronoun, not a list of pronouns.
+
+───────────────────────────────────────────────────────────────────────
+
+FILE TO MODIFY:
+backend/common/detection/polish_detector.py
+
+───────────────────────────────────────────────────────────────────────
+
+CURRENT BEHAVIOR (WRONG):
+```python
+{
+    "issue_type": "CONTENT_FIRST_PERSON_PRONOUNS",
+    "current": "I, I, I, I, I, I",  # Summary, not actual text
+    "severity": "consider"
+}
+```
+
+EXPECTED BEHAVIOR (CORRECT):
+```python
+{
+    "issue_type": "CONTENT_FIRST_PERSON_PRONOUNS",
+    "current": "I developed a new system",  # First occurrence with context
+    "is_highlightable": True,
+    "count": 6,  # Total count for reference
+    "all_instances": [  # All occurrences for TipBox
+        "I developed a new system",
+        "I managed the team",
+        "I created dashboards"
+    ]
+}
+```
+
+───────────────────────────────────────────────────────────────────────
+
+IMPLEMENTATION:
+```python
+def detect_first_person_pronouns(cv_text: str) -> dict | None:
+    # Find all occurrences of "I" as a word
+    pattern = r'\bI\b'
+    matches = list(re.finditer(pattern, cv_text))
+    
+    if len(matches) > 2:  # Threshold for issue
+        # Get first occurrence with context
+        first_match = matches[0]
+        start = first_match.start()
+        
+        # Find the sentence or line containing this "I"
+        line_start = cv_text.rfind('\n', 0, start) + 1
+        line_end = cv_text.find('\n', start)
+        if line_end == -1:
+            line_end = len(cv_text)
+        
+        first_sentence = cv_text[line_start:line_end].strip()
+        
+        # Get all instances with context (for TipBox)
+        all_instances = []
+        for match in matches[:5]:  # First 5 for TipBox
+            ls = cv_text.rfind('\n', 0, match.start()) + 1
+            le = cv_text.find('\n', match.start())
+            if le == -1:
+                le = len(cv_text)
+            all_instances.append(cv_text[ls:le].strip())
+        
+        return {
+            "issue_type": "CONTENT_FIRST_PERSON_PRONOUNS",
+            "title": f"First-person pronouns used ({len(matches)} times)",
+            "severity": "consider",
+            "current": first_sentence,  # Actual text to highlight
+            "is_highlightable": True,
+            "count": len(matches),
+            "all_instances": all_instances,
+            "suggested_fix": "Remove 'I' and start with action verbs: 'Developed...', 'Managed...'"
+        }
+    
+    return None
+```
+
+───────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+1. Test with CV containing "I" pronouns
+2. Verify: `current` contains actual sentence from CV
+3. Verify: Sentence can be found in CV text
+4. Verify: TextMarker highlights the sentence
+
+───────────────────────────────────────────────────────────────────────
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- Keep detection logic the same
+- Only fix the `current` field format
+- Do NOT change severity or thresholds
+- If anything is unclear, STOP and ask
+
+═══════════════════════════════════════════════════════════════════════
