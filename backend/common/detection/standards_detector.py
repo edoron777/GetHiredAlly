@@ -53,6 +53,7 @@ def detect_objective_statement(cv_text: str) -> List[Dict[str, Any]]:
                 "location": f"Found at position {match.start()}",
                 "description": "CV contains outdated objective statement. Modern CVs use Professional Summary instead.",
                 "current": match.group(),
+                "is_highlightable": True,
                 "suggestion": "Replace with a Professional Summary highlighting your value proposition"
             })
             break
@@ -81,6 +82,7 @@ def detect_references_section(cv_text: str) -> List[Dict[str, Any]]:
                 "location": "References section",
                 "description": "References section is unnecessary. Employers assume references are available.",
                 "current": match.group(),
+                "is_highlightable": True,
                 "suggestion": "Remove references section to save space for achievements"
             })
             break
@@ -132,11 +134,15 @@ def detect_outdated_skills(cv_text: str) -> List[Dict[str, Any]]:
             found_outdated.append(f"{skill} ({category})")
     
     if found_outdated:
+        first_skill = found_outdated[0].split(' (')[0] if found_outdated else ''
+        
         issues.append({
             "issue_type": "STANDARDS_OUTDATED_SKILLS",
             "location": "Skills/Technologies section",
             "description": f"CV lists outdated technologies: {', '.join(found_outdated[:5])}",
-            "current": ', '.join(found_outdated),
+            "current": first_skill,
+            "is_highlightable": bool(first_skill and first_skill.lower() in cv_text.lower()),
+            "all_instances": found_outdated,
             "suggestion": "Remove outdated skills unless specifically required for the role"
         })
     
@@ -172,7 +178,9 @@ def detect_hobbies_irrelevant(cv_text: str) -> List[Dict[str, Any]]:
                 "issue_type": "STANDARDS_HOBBIES_IRRELEVANT",
                 "location": "Hobbies/Interests section",
                 "description": "Generic hobbies don't differentiate you. Include only if relevant to role.",
-                "current": ', '.join(found_generic[:5]),
+                "current": '',
+                "is_highlightable": False,
+                "all_instances": found_generic[:5],
                 "suggestion": "Remove generic hobbies or replace with role-relevant activities"
             })
     
@@ -206,11 +214,15 @@ def detect_unprofessional_language(cv_text: str) -> List[Dict[str, Any]]:
             found_issues.append(f"{issue_type}: {match_text}")
     
     if found_issues:
+        first_match_text = found_issues[0].split(': ')[-1] if found_issues else ''
+        
         issues.append({
             "issue_type": "STANDARDS_UNPROFESSIONAL_LANGUAGE",
             "location": "Throughout CV",
             "description": f"Unprofessional language detected: {', '.join(found_issues[:3])}",
-            "current": ', '.join(found_issues),
+            "current": first_match_text,
+            "is_highlightable": bool(first_match_text and first_match_text in cv_text),
+            "all_instances": found_issues,
             "suggestion": "Use formal, professional language throughout your CV"
         })
     
@@ -243,11 +255,15 @@ def detect_negative_language(cv_text: str) -> List[Dict[str, Any]]:
             found_negative.append(match.group())
     
     if found_negative:
+        first_match = found_negative[0] if found_negative else ''
+        
         issues.append({
             "issue_type": "STANDARDS_NEGATIVE_LANGUAGE",
             "location": "Throughout CV",
             "description": "Negative language can hurt your candidacy",
-            "current": ', '.join(found_negative[:3]),
+            "current": first_match,
+            "is_highlightable": bool(first_match and first_match.lower() in cv_text.lower()),
+            "all_instances": found_negative[:5],
             "suggestion": "Reframe negatively using positive language focusing on growth and learning"
         })
     
@@ -302,7 +318,6 @@ def detect_employment_gap(cv_text: str) -> List[Dict[str, Any]]:
     
     dates_found.sort(key=lambda x: (x[2], x[3]), reverse=True)
     
-    gaps_found = []
     for i in range(len(dates_found) - 1):
         current_job = dates_found[i]
         previous_job = dates_found[i + 1]
@@ -313,15 +328,24 @@ def detect_employment_gap(cv_text: str) -> List[Dict[str, Any]]:
         gap_months = current_start - previous_end
         
         if gap_months > 6:
-            gaps_found.append(f"{gap_months} months gap around {previous_job[2]}-{current_job[0]}")
-    
-    if gaps_found:
-        issues.append({
-            "issue_type": "CAREER_EMPLOYMENT_GAP",
-            "location": "Experience section",
-            "description": f"Employment gap(s) detected: {gaps_found[0]}",
-            "current": ', '.join(gaps_found[:2]),
-            "suggestion": "Address gaps by noting activities (freelance, education, caregiving, etc.)"
-        })
+            start_date = f"{previous_job[2]}"
+            end_date = f"{current_job[0]}"
+            severity = "important" if gap_months > 12 else "consider"
+            
+            issues.append({
+                "issue_type": "CAREER_EMPLOYMENT_GAP",
+                "title": f"Employment gap detected ({gap_months} months)",
+                "location": "Experience section",
+                "description": f"Employment gap of {gap_months} months detected between {start_date} and {end_date}",
+                "current": "",
+                "is_highlightable": False,
+                "gap_info": {
+                    "months": gap_months,
+                    "start_date": start_date,
+                    "end_date": end_date
+                },
+                "severity": severity,
+                "suggestion": f"Consider adding activities during {start_date}-{end_date}: freelance work, education, volunteering, or family responsibilities"
+            })
     
     return issues

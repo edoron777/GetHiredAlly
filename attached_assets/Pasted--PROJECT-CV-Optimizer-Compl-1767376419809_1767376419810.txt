@@ -1,0 +1,116 @@
+═══════════════════════════════════════════════════════════════════════
+PROJECT: CV Optimizer Complete Fix - PROMPT 8#18: Fix keywords_detector.py
+═══════════════════════════════════════════════════════════════════════
+
+CONTEXT:
+Abbreviation inconsistency issues return explanatory text like:
+"Both 'AI' and 'Artificial Intelligence' found..."
+
+This should return the actual first occurrence that can be highlighted.
+
+───────────────────────────────────────────────────────────────────────
+
+TASK:
+Fix KEYWORDS_ABBREVIATION_INCONSISTENT to return actual CV text.
+
+───────────────────────────────────────────────────────────────────────
+
+FILE TO MODIFY:
+backend/common/detection/keywords_detector.py
+
+───────────────────────────────────────────────────────────────────────
+
+CURRENT BEHAVIOR (WRONG):
+```python
+{
+    "issue_type": "KEYWORDS_ABBREVIATION_INCONSISTENT",
+    "current": "Both 'AI' and 'Artificial Intelligence' found in CV",
+    "severity": "consider"
+}
+```
+
+EXPECTED BEHAVIOR (CORRECT):
+```python
+{
+    "issue_type": "KEYWORDS_ABBREVIATION_INCONSISTENT",
+    "title": "Inconsistent abbreviation: AI / Artificial Intelligence",
+    "severity": "consider",
+    "current": "AI",  # First occurrence to highlight
+    "is_highlightable": True,
+    "abbreviation_pair": {
+        "short": "AI",
+        "long": "Artificial Intelligence",
+        "short_count": 5,
+        "long_count": 2
+    },
+    "suggested_fix": "Choose one form and use consistently. Recommendation: 'AI' (more common in your CV)"
+}
+```
+
+───────────────────────────────────────────────────────────────────────
+
+IMPLEMENTATION:
+```python
+def detect_abbreviation_inconsistency(cv_text: str) -> list:
+    issues = []
+    
+    # Common abbreviation pairs
+    abbrev_pairs = [
+        ("AI", "Artificial Intelligence"),
+        ("ML", "Machine Learning"),
+        ("API", "Application Programming Interface"),
+        ("UI", "User Interface"),
+        ("UX", "User Experience"),
+        ("PM", "Project Manager"),
+        ("QA", "Quality Assurance"),
+        # Add more as needed
+    ]
+    
+    for short, long in abbrev_pairs:
+        short_pattern = r'\b' + re.escape(short) + r'\b'
+        long_pattern = r'\b' + re.escape(long) + r'\b'
+        
+        short_matches = list(re.finditer(short_pattern, cv_text, re.IGNORECASE))
+        long_matches = list(re.finditer(long_pattern, cv_text, re.IGNORECASE))
+        
+        # If both forms are used, it's inconsistent
+        if short_matches and long_matches:
+            # Get first occurrence (shorter form usually)
+            first_match = short_matches[0]
+            highlight_text = cv_text[first_match.start():first_match.end()]
+            
+            issues.append({
+                "issue_type": "KEYWORDS_ABBREVIATION_INCONSISTENT",
+                "title": f"Inconsistent abbreviation: {short} / {long}",
+                "severity": "consider",
+                "current": highlight_text,  # Actual text to highlight
+                "is_highlightable": True,
+                "abbreviation_pair": {
+                    "short": short,
+                    "long": long,
+                    "short_count": len(short_matches),
+                    "long_count": len(long_matches)
+                },
+                "suggested_fix": f"Choose one form and use consistently. '{short}' appears {len(short_matches)} times, '{long}' appears {len(long_matches)} times."
+            })
+    
+    return issues
+```
+
+───────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+1. Test with CV containing both "AI" and "Artificial Intelligence"
+2. Verify: `current` contains "AI" (or the actual text)
+3. Verify: TextMarker highlights "AI" in CV
+4. Verify: TipBox shows both forms and counts
+
+───────────────────────────────────────────────────────────────────────
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- Keep existing abbreviation pairs
+- Only fix output format
+- Do NOT add new abbreviation pairs without approval
+- If anything is unclear, STOP and ask
+
+═══════════════════════════════════════════════════════════════════════
