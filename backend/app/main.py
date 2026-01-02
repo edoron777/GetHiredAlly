@@ -71,6 +71,45 @@ except Exception as e:
 async def health_check():
     return {"status": "ok"}
 
+@app.get("/api/debug-env")
+async def debug_env():
+    """Debug endpoint to check environment configuration in production."""
+    has_supabase_url = bool(os.environ.get("SUPABASE_URL"))
+    has_supabase_key = bool(os.environ.get("SUPABASE_SERVICE_ROLE_KEY"))
+    has_database_url = bool(os.environ.get("DATABASE_URL"))
+    
+    db_test = "not tested"
+    try:
+        from .auth import get_supabase_client, get_db_connection
+        client = get_supabase_client()
+        if client:
+            result = client.table("user_profiles").select("profile_name").eq("profile_name", "standard").execute()
+            db_test = f"Supabase OK, standard profile exists: {len(result.data) > 0}"
+        else:
+            db_test = "Supabase client is None"
+    except Exception as e:
+        db_test = f"Error: {str(e)}"
+    
+    pg_test = "not tested"
+    try:
+        from .auth import get_db_connection
+        conn = get_db_connection()
+        if conn:
+            conn.close()
+            pg_test = "PostgreSQL connection OK"
+        else:
+            pg_test = "PostgreSQL connection is None"
+    except Exception as e:
+        pg_test = f"Error: {str(e)}"
+    
+    return {
+        "has_supabase_url": has_supabase_url,
+        "has_supabase_key": has_supabase_key,
+        "has_database_url": has_database_url,
+        "supabase_test": db_test,
+        "postgres_test": pg_test
+    }
+
 @app.get("/api/config")
 async def get_config():
     supabase_url = os.environ.get("SUPABASE_URL", "")
