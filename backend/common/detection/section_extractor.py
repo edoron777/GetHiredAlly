@@ -206,16 +206,19 @@ def get_section_issues(structure: CVStructure) -> List[Dict]:
     
     if not structure.has_summary:
         issues.append({
-            'issue_type': 'CONTENT_GENERIC_STATEMENTS',
+            'issue_type': 'CONTENT_MISSING_SUMMARY',
             'location': 'Summary Section',
             'description': 'No summary/profile section found',
+            'current': '',
+            'is_highlightable': False,
         })
     elif structure.summary and len(structure.summary.split()) < 30:
         issues.append({
-            'issue_type': 'CONTENT_GENERIC_STATEMENTS',
+            'issue_type': 'CONTENT_SHORT_SUMMARY',
             'location': 'Summary Section',
             'description': f'Summary is too short ({len(structure.summary.split())} words, recommend 30-60)',
-            'current': structure.summary[:100] + '...' if len(structure.summary) > 100 else structure.summary,
+            'current': structure.summary[:100] if len(structure.summary) > 100 else structure.summary,
+            'is_highlightable': True,
         })
     
     if 'education' in structure.section_order and 'experience' in structure.section_order:
@@ -228,6 +231,8 @@ def get_section_issues(structure: CVStructure) -> List[Dict]:
                     'issue_type': 'FORMAT_POOR_VISUAL_HIERARCHY',
                     'location': 'CV Structure',
                     'description': 'Education appears before Experience - consider reordering for experienced professionals',
+                    'current': '',
+                    'is_highlightable': False,
                 })
     
     return issues
@@ -248,14 +253,18 @@ def get_cv_length_issues(text: str) -> List[Dict]:
             'issue_type': 'LENGTH_CV_TOO_LONG',
             'location': 'Overall CV',
             'description': f'CV is {word_count} words - consider condensing to under 800 words',
-            'current': f'{word_count} words',
+            'current': '',
+            'is_highlightable': False,
+            'meta_info': {'word_count': word_count},
         })
     elif word_count < 200:
         issues.append({
             'issue_type': 'LENGTH_CV_TOO_SHORT',
             'location': 'Overall CV',
             'description': f'CV is only {word_count} words - consider adding more detail',
-            'current': f'{word_count} words',
+            'current': '',
+            'is_highlightable': False,
+            'meta_info': {'word_count': word_count},
         })
     
     return issues
@@ -307,7 +316,9 @@ def get_experience_detail_issues(text: str) -> List[Dict]:
                         'issue_type': 'LENGTH_EXPERIENCE_TOO_DETAILED',
                         'location': f'Job: {job_title[:40]}',
                         'description': f'Job from {job_year} ({years_ago} years ago) has {bullet_count} bullets - older roles should have 2-3 bullets',
-                        'current': f'{bullet_count} bullets',
+                        'current': '',
+                        'is_highlightable': False,
+                        'meta_info': {'bullet_count': bullet_count, 'job_year': job_year, 'years_ago': years_ago},
                     })
         except (ValueError, IndexError):
             continue
@@ -343,7 +354,9 @@ def get_education_detail_issues(structure: CVStructure) -> List[Dict]:
             'issue_type': 'LENGTH_EDUCATION_TOO_DETAILED',
             'location': 'Education Section',
             'description': f'Education section is {education_lines} lines - experienced professionals should keep to 3-4 lines',
-            'current': f'{education_lines} lines',
+            'current': '',
+            'is_highlightable': False,
+            'meta_info': {'line_count': education_lines},
             'suggestion': 'Focus on degree, institution, and graduation year; remove coursework details',
         })
     
