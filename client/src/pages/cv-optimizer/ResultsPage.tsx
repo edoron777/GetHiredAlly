@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { FileText, List, Copy, Check, ArrowLeft, Loader2 } from 'lucide-react';
+import { FileText, List, Copy, Check, ArrowLeft, Loader2, RefreshCw } from 'lucide-react';
 import DocumentView from '../../components/cv-optimizer/DocumentView';
 import { CVDocument, classifyIssues } from '../../components/cv-optimizer/DocumentView';
 import { TipBox } from '../../components/common/TipBox';
@@ -69,6 +69,8 @@ export default function ResultsPage() {
   const [fixedCV, setFixedCV] = useState<string | null>(null);
   const [fixedIssues, setFixedIssues] = useState<Set<string>>(new Set());
   const [currentScore, setCurrentScore] = useState<number>(0);
+  const [isRescanning, setIsRescanning] = useState(false);
+  const [scanHistory, setScanHistory] = useState<{score: number, date: Date}[]>([]);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -397,6 +399,53 @@ export default function ResultsPage() {
     });
   };
 
+  const handleRescan = async () => {
+    const cvToScan = fixedCV || reportData?.cv_content;
+    
+    if (!cvToScan) {
+      console.error('No CV content to rescan');
+      return;
+    }
+    
+    setIsRescanning(true);
+    
+    try {
+      setScanHistory(prev => [...prev, { score: currentScore, date: new Date() }]);
+      
+      const token = getAuthToken();
+      const response = await fetch('/api/cv-optimizer/scan', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          cv_content: cvToScan,
+          job_description: null
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Rescan failed');
+      }
+      
+      const newReport = await response.json();
+      
+      setReportData(newReport);
+      setCurrentScore(newReport.cv_score || newReport.score || 0);
+      
+      setFixedCV(null);
+      setFixedIssues(new Set());
+      
+      console.log('Rescan complete:', newReport.cv_score);
+      
+    } catch (error) {
+      console.error('Rescan error:', error);
+    } finally {
+      setIsRescanning(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#FAF9F7' }}>
@@ -541,9 +590,43 @@ export default function ResultsPage() {
                 >
                   MD
                 </button>
+                
+                {/* Rescan Button */}
+                <button
+                  onClick={handleRescan}
+                  disabled={isRescanning || !fixedIssues.size}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+                    fixedIssues.size > 0 
+                      ? 'bg-green-600 text-white hover:bg-green-700' 
+                      : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                  }`}
+                >
+                  {isRescanning ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Rescanning...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="w-4 h-4" />
+                      Rescan CV {fixedIssues.size > 0 && `(${fixedIssues.size} fixes)`}
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           </div>
+
+          {/* Scan History */}
+          {scanHistory.length > 0 && (
+            <div className="mb-4 p-3 bg-white border border-gray-200 rounded-lg">
+              <span className="text-sm text-gray-600">Score history: </span>
+              <span className="text-sm text-gray-500">
+                {scanHistory.map((scan, idx) => scan.score).join(' → ')} → 
+              </span>
+              <span className="text-sm font-medium text-green-600 ml-1">{currentScore}</span>
+            </div>
+          )}
 
           <div className="flex gap-2 mb-6">
             <button
