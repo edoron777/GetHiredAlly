@@ -12,10 +12,22 @@ logger = logging.getLogger(__name__)
 litellm.drop_params = True
 
 def get_db_connection():
+    """Get direct PostgreSQL connection using individual params to handle special chars in password."""
+    from urllib.parse import urlparse, unquote
     database_url = os.environ.get("DATABASE_URL")
-    if database_url:
-        return psycopg2.connect(database_url)
-    return None
+    if not database_url:
+        return None
+    try:
+        parsed = urlparse(database_url)
+        return psycopg2.connect(
+            host=parsed.hostname,
+            port=parsed.port or 5432,
+            user=unquote(parsed.username) if parsed.username else None,
+            password=unquote(parsed.password) if parsed.password else None,
+            database=parsed.path.lstrip('/') if parsed.path else None
+        )
+    except Exception:
+        return None
 
 async def log_ai_usage(
     user_id: Optional[str],

@@ -6,6 +6,7 @@ import logging
 import hashlib
 import psycopg2
 from psycopg2.extras import RealDictCursor
+from urllib.parse import urlparse, unquote
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from supabase import create_client, Client
 
@@ -21,11 +22,23 @@ ALLOWED_EXTENSIONS = ['pdf', 'docx', 'doc', 'txt', 'md', 'rtf', 'odt']
 
 
 def get_db_connection():
-    """Get direct PostgreSQL connection."""
+    """Get direct PostgreSQL connection using individual params to handle special chars in password."""
     database_url = os.environ.get("DATABASE_URL")
     if not database_url:
         return None
-    return psycopg2.connect(database_url)
+    
+    try:
+        parsed = urlparse(database_url)
+        return psycopg2.connect(
+            host=parsed.hostname,
+            port=parsed.port or 5432,
+            user=unquote(parsed.username) if parsed.username else None,
+            password=unquote(parsed.password) if parsed.password else None,
+            database=parsed.path.lstrip('/') if parsed.path else None
+        )
+    except Exception as e:
+        logger.error(f"Failed to parse DATABASE_URL: {e}")
+        return None
 
 
 def get_supabase_client() -> Client | None:

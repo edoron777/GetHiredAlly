@@ -162,11 +162,22 @@ def extract_cv_data_and_score(cv_text: str) -> dict:
 
 
 def get_db_connection():
-    """Get direct PostgreSQL connection."""
+    """Get direct PostgreSQL connection using individual params to handle special chars in password."""
+    from urllib.parse import urlparse, unquote
     database_url = os.environ.get("DATABASE_URL")
     if not database_url:
         return None
-    return psycopg2.connect(database_url)
+    try:
+        parsed = urlparse(database_url)
+        return psycopg2.connect(
+            host=parsed.hostname,
+            port=parsed.port or 5432,
+            user=unquote(parsed.username) if parsed.username else None,
+            password=unquote(parsed.password) if parsed.password else None,
+            database=parsed.path.lstrip('/') if parsed.path else None
+        )
+    except Exception:
+        return None
 
 
 def get_supabase_client() -> Client | None:
