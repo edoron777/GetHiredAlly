@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { FileText, List, Copy, Check, ArrowLeft, Loader2, RefreshCw } from 'lucide-react';
+import { FileText, List, Copy, Check, ArrowLeft, Loader2, RefreshCw, Columns } from 'lucide-react';
 import DocumentView from '../../components/cv-optimizer/DocumentView';
 import { CVDocument, classifyIssues } from '../../components/cv-optimizer/DocumentView';
 import { TipBox } from '../../components/common/TipBox';
@@ -10,6 +10,7 @@ import IssueSidebar from '../../components/cv-optimizer/IssueSidebar';
 import ContentSelector from '../../components/cv-optimizer/ContentSelector';
 import QuickFormatPanel from '../../components/cv-optimizer/QuickFormatPanel';
 import ListViewTab from '../../components/cv-optimizer/ListViewTab';
+import SideBySideView from '../../components/cv-optimizer/SideBySideView';
 // @ts-ignore - DocStyler types not available
 import { DocStyler } from '../../components/common/DocStyler';
 import { getAuthToken, isAuthenticated } from '../../lib/auth';
@@ -64,7 +65,7 @@ export default function ResultsPage() {
   const [userEditText, setUserEditText] = useState('');
   const [selectedExportContent, setSelectedExportContent] = useState<'cv' | 'recommendations' | 'both'>('cv');
   const [isApplyingFixes, setIsApplyingFixes] = useState(false);
-  const [activeTab, setActiveTab] = useState<'document' | 'list'>('document');
+  const [activeTab, setActiveTab] = useState<'document' | 'list' | 'sidebyside'>('document');
   const [copied, setCopied] = useState(false);
   const [fixedCV, setFixedCV] = useState<string | null>(null);
   const [fixedIssues, setFixedIssues] = useState<Set<string>>(new Set());
@@ -651,6 +652,21 @@ export default function ResultsPage() {
               <List size={16} />
               List View
             </button>
+            
+            <button
+              onClick={() => setActiveTab('sidebyside')}
+              disabled={!fixedIssues.size}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                activeTab === 'sidebyside'
+                  ? 'bg-blue-600 text-white'
+                  : !fixedIssues.size 
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <Columns size={16} />
+              Side by Side
+            </button>
           </div>
           
           {activeTab === 'document' ? (
@@ -671,11 +687,18 @@ export default function ResultsPage() {
                 />
               )}
             </>
-          ) : (
+          ) : activeTab === 'list' ? (
             <ListViewTab
               issues={listViewIssues}
               onIssueClick={handleIssueClick}
               onApplyFix={handleApplyFix}
+            />
+          ) : (
+            <SideBySideView
+              originalCV={reportData?.cv_content || ''}
+              fixedCV={fixedCV || reportData?.cv_content || ''}
+              issues={normalizedIssues}
+              fixedIssues={fixedIssues}
             />
           )}
         </div>

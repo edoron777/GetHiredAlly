@@ -1,0 +1,119 @@
+═══════════════════════════════════════════════════════════════════════
+PROJECT: CV Optimizer Complete Fix - PROMPT 17#18: Full System Verification
+═══════════════════════════════════════════════════════════════════════
+
+⚠️ VERIFICATION ONLY - DO NOT MAKE CODE CHANGES
+
+───────────────────────────────────────────────────────────────────────
+
+FULL SYSTEM VERIFICATION CHECKLIST:
+
+───────────────────────────────────────────────────────────────────────
+
+PART 1: TEXTMARKER HIGHLIGHTING
+
+[ ] Valid markers are highlighted in Document View
+[ ] Colored underlines visible (red, orange, yellow, green)
+[ ] Info icon (ⓘ) appears after highlighted text
+[ ] Clicking icon opens TipBox
+
+STATS:
+- Total issues: ___
+- Highlightable: ___ (___%)
+- Non-highlightable: ___ (___%)
+
+───────────────────────────────────────────────────────────────────────
+
+PART 2: SIDEBAR DISPLAY
+
+[ ] All issues appear (both types)
+[ ] 📍 shows for highlightable issues
+[ ] 📋 shows for non-highlightable issues
+[ ] Legend visible
+[ ] Counts accurate
+[ ] Fixed issues show ✓ and strikethrough
+[ ] Progress bar updates
+
+───────────────────────────────────────────────────────────────────────
+
+PART 3: APPLY FIX
+
+[ ] Click issue → TipBox opens
+[ ] Edit text in TipBox
+[ ] Click "Apply to CV" → CV updates
+[ ] Issue marked as fixed
+[ ] TipBox closes
+
+───────────────────────────────────────────────────────────────────────
+
+PART 4: SCORE RECALCULATION
+
+[ ] Initial score displays correctly
+[ ] Score updates after fixing issue
+[ ] Score improvement shown (+X from Y)
+[ ] Algorithm matches Foundation Document
+
+TEST:
+- Initial score: ___
+- After fixing 1 critical issue: ___
+- After fixing 2 more issues: ___
+
+───────────────────────────────────────────────────────────────────────
+
+PART 5: RESCAN BUTTON
+
+[ ] Button visible
+[ ] Button disabled when no fixes applied
+[ ] Button enabled after fixes
+[ ] Loading state during rescan
+[ ] New results load after rescan
+[ ] Score history displays
+
+───────────────────────────────────────────────────────────────────────
+
+PART 6: SIDE BY SIDE VIEW
+
+[ ] Tab visible
+[ ] Tab disabled when no fixes applied
+[ ] Original CV panel shows all issues
+[ ] Fixed CV panel shows only remaining issues
+[ ] Both panels scroll independently
+[ ] Issue counts correct in headers
+
+───────────────────────────────────────────────────────────────────────
+
+PART 7: BACKEND DETECTORS
+
+| Detector | is_highlightable correct? | current field correct? |
+|----------|---------------------------|------------------------|
+| contact_extractor | [ ] | [ ] |
+| format_detector | [ ] | [ ] |
+| polish_detector | [ ] | [ ] |
+| standards_detector | [ ] | [ ] |
+| keywords_detector | [ ] | [ ] |
+| language_detector | [ ] | [ ] |
+| section_extractor | [ ] | [ ] |
+
+───────────────────────────────────────────────────────────────────────
+
+OVERALL STATUS:
+
+| Feature | Status |
+|---------|--------|
+| TextMarker Highlighting | [ ] |
+| Sidebar Icons (📍/📋) | [ ] |
+| Apply Fix | [ ] |
+| Fixed Issue Tracking | [ ] |
+| Score Recalculation | [ ] |
+| Rescan Button | [ ] |
+| Side by Side View | [ ] |
+| Backend Detectors | [ ] |
+
+ALL FEATURES WORKING: [ ] YES  [ ] NO
+
+If NO, list issues:
+1. ___
+2. ___
+3. ___
+
+═══════════════════════════════════════════════════════════════════════
