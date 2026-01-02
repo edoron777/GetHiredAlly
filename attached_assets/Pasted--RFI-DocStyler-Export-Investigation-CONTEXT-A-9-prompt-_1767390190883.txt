@@ -1,0 +1,201 @@
+# RFI: DocStyler Export Investigation
+
+## CONTEXT
+
+A 9-prompt series was created to implement DocStyler - a document styling component that should generate professionally formatted PDF, WORD, and MD exports.
+
+**Expected behavior:** Exported documents should include header, footer, styled headings, branding, page numbers.
+
+**Actual behavior:** Documents export with NO styling - just plain text.
+
+---
+
+## INVESTIGATION REQUIRED
+
+I need you to investigate and report findings for each section below. Do NOT fix anything yet - only investigate and report.
+
+---
+
+## SECTION 1: FILE EXISTENCE CHECK
+
+Check if these files exist:
+
+```
+client/src/components/common/DocStyler/
+├── index.js
+├── DocStyler.js
+├── generators/
+│   ├── generatePDF.js
+│   ├── generateWord.js
+│   └── generateMD.js
+├── styles/
+│   └── documentStyles.js
+└── utils/
+    └── markdownConverter.js
+```
+
+**Report format:**
+```
+File                          | Exists? | Has Content?
+------------------------------|---------|-------------
+DocStyler/index.js            | YES/NO  | YES/NO/EMPTY
+DocStyler/DocStyler.js        | YES/NO  | YES/NO/EMPTY
+generators/generatePDF.js     | YES/NO  | YES/NO/EMPTY
+generators/generateWord.js    | YES/NO  | YES/NO/EMPTY
+generators/generateMD.js      | YES/NO  | YES/NO/EMPTY
+styles/documentStyles.js      | YES/NO  | YES/NO/EMPTY
+utils/markdownConverter.js    | YES/NO  | YES/NO/EMPTY
+```
+
+---
+
+## SECTION 2: NPM PACKAGES CHECK
+
+Check if required packages are installed:
+
+```bash
+npm list docx pdf-lib file-saver
+```
+
+**Report:**
+- docx: [installed/not installed] - version?
+- pdf-lib: [installed/not installed] - version?
+- file-saver: [installed/not installed] - version?
+
+---
+
+## SECTION 3: ACTIONBAR CONNECTION CHECK
+
+In file: `client/src/components/common/ActionBar/ActionBar.jsx`
+
+Check:
+1. Is there an import for DocStyler?
+   ```javascript
+   import DocStyler from '../DocStyler';  // or similar
+   ```
+
+2. What does handlePDF function look like?
+   - Does it call DocStyler.pdf() ?
+   - Or does it still show "coming soon" alert?
+
+3. What does handleWord function look like?
+   - Does it call DocStyler.word() ?
+   - Or does it still show "coming soon" alert?
+
+4. What does handleMarkdown function look like?
+   - Does it call DocStyler.md() ?
+   - Or does it do basic blob download?
+
+**Report the ACTUAL code for each handler.**
+
+---
+
+## SECTION 4: DOCSTYLER.JS CONTENT CHECK
+
+If DocStyler.js exists, show its content:
+- Does it have a `generate()` function?
+- Does it have `.pdf()`, `.word()`, `.md()` methods?
+- Does it import the generators?
+
+**Report the actual exports/methods available.**
+
+---
+
+## SECTION 5: GENERATOR CONTENT CHECK
+
+For each generator file, report:
+
+**generatePDF.js:**
+- Is it a placeholder/empty?
+- Does it use pdf-lib?
+- Does it apply styling from documentStyles.js?
+
+**generateWord.js:**
+- Is it a placeholder/empty?
+- Does it use docx library?
+- Does it apply styling from documentStyles.js?
+
+**generateMD.js:**
+- Is it a placeholder/empty?
+- Does it add header/footer to markdown?
+
+---
+
+## SECTION 6: CALL CHAIN TRACE
+
+Trace what happens when user clicks "Word" button:
+
+```
+1. User clicks Word button
+2. ActionBar.handleWord() is called
+3. handleWord calls → [what?]
+4. [what] calls → [what?]
+5. Final file download happens how?
+```
+
+**Report the actual call chain you find.**
+
+---
+
+## SECTION 7: CONSOLE/ERROR CHECK
+
+Click the Word button and check:
+- Any console errors?
+- Any console logs?
+- What function is actually being called?
+
+---
+
+## REPORT TEMPLATE
+
+Please provide findings in this format:
+
+```
+═══════════════════════════════════════════════════════════
+DOCSTYLER INVESTIGATION REPORT
+═══════════════════════════════════════════════════════════
+
+SECTION 1: FILE EXISTENCE
+[Your findings]
+
+SECTION 2: NPM PACKAGES
+[Your findings]
+
+SECTION 3: ACTIONBAR CONNECTION
+[Your findings - include actual code]
+
+SECTION 4: DOCSTYLER.JS
+[Your findings - include actual exports]
+
+SECTION 5: GENERATORS
+[Your findings for each generator]
+
+SECTION 6: CALL CHAIN
+[Actual execution path]
+
+SECTION 7: ERRORS
+[Any errors found]
+
+═══════════════════════════════════════════════════════════
+ROOT CAUSE CONCLUSION
+═══════════════════════════════════════════════════════════
+
+The export has no styling because:
+[ ] A. DocStyler files don't exist
+[ ] B. DocStyler files exist but are empty/placeholders
+[ ] C. DocStyler exists but ActionBar doesn't call it
+[ ] D. DocStyler is called but generators are broken
+[ ] E. NPM packages not installed
+[ ] F. Other: [explain]
+
+═══════════════════════════════════════════════════════════
+```
+
+---
+
+## IMPORTANT
+
+- Do NOT fix anything
+- Do NOT modify any files
+- ONLY investigate and report
+- Be thorough - check actual file contents, not assumptions
