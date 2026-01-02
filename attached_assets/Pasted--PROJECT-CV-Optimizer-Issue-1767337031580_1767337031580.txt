@@ -1,0 +1,109 @@
+═══════════════════════════════════════════════════════════════════════
+PROJECT: CV Optimizer Issue Detection System - PROMPT 2 OF 10
+═══════════════════════════════════════════════════════════════════════
+
+⚠️ ANTI-IMPROVISATION REMINDER:
+If you cannot find something, STOP and ASK.
+Do NOT guess file locations or component APIs.
+
+───────────────────────────────────────────────────────────────────────
+
+TASK: Discover and Document Existing Components
+
+Before writing any code, we need to understand what already exists.
+
+INVESTIGATE THE FOLLOWING:
+
+1. COMPONENT REGISTRY
+   - Find the Component Registry file
+   - List all registered components
+   - Note file paths for each
+
+2. SHARED COMPONENTS (Find these specifically):
+
+   a) ActionBar
+      - File location: ?
+      - How to import: ?
+      - Props accepted: ?
+      - Usage example: ?
+
+   b) DocStyler
+      - File location: ?
+      - How to import: ?
+      - Props accepted: ?
+      - Usage example: ?
+
+   c) GHAScanner
+      - File location: ?
+      - How to import: ?
+      - Props accepted: ?
+      - Usage example: ?
+
+   d) GHATooltip
+      - File location: ?
+      - How to import: ?
+      - Props accepted: ?
+      - Usage example: ?
+
+   e) Marker
+      - File location: ?
+      - How to import: ?
+      - Props accepted: ?
+      - Usage example: ?
+
+   f) TipBox
+      - File location: ?
+      - How to import: ?
+      - Props accepted: ?
+      - Usage example: ?
+
+   g) UserSessionKeep
+      - File location: ?
+      - How to import: ?
+      - Props accepted: ?
+      - Usage example: ?
+
+3. DATABASE CONNECTION
+   - How do other services connect to Supabase?
+   - File location of database connection code: ?
+   - Pattern to follow: ?
+
+4. EXISTING CV OPTIMIZER CODE
+   - Are there any existing files for CV Optimizer?
+   - List all files found
+
+───────────────────────────────────────────────────────────────────────
+
+REPORT FORMAT:
+
+COMPONENT REGISTRY:
+- Location: [path]
+- Components found: [count]
+
+COMPONENT: ActionBar
+- Location: [path or NOT FOUND]
+- Import: [import statement]
+- Props: [list props]
+
+COMPONENT: DocStyler
+- Location: [path or NOT FOUND]
+...
+
+DATABASE CONNECTION:
+- Pattern file: [path]
+- Connection method: [description]
+
+EXISTING CV OPTIMIZER FILES:
+- [list files or "None found"]
+
+MISSING COMPONENTS:
+- [list any components NOT found]
+
+───────────────────────────────────────────────────────────────────────
+
+⚠️ If ANY component is NOT FOUND:
+1. Report it clearly
+2. Do NOT proceed to create alternatives
+3. Wait for instructions
+
+═══════════════════════════════════════════════════════════════════════

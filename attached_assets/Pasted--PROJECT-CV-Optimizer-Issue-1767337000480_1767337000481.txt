@@ -1,0 +1,175 @@
+═══════════════════════════════════════════════════════════════════════
+PROJECT: CV Optimizer Issue Detection System
+═══════════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL RULE - READ FIRST:
+If at ANY point during this project you:
+- Do not understand an instruction
+- Think an instruction is wrong or incomplete
+- Cannot find a file or component mentioned
+- Are unsure how to proceed
+- Need to make assumptions
+
+Then you MUST:
+1. STOP immediately
+2. Do NOT improvise or "fill in the gaps"
+3. Do NOT guess or assume
+4. Ask for clarification BEFORE proceeding
+
+IMPROVISATION IS STRICTLY FORBIDDEN.
+When in doubt, ASK. Do not invent solutions.
+
+═══════════════════════════════════════════════════════════════════════
+
+CONTEXT:
+This is a multi-step implementation for the CV Optimizer service.
+The database has been populated with 57 issue types including descriptions,
+examples, and static tips. Now we need to build the detection engine
+and display system.
+
+PROJECT OVERVIEW:
+- Goal: Implement CV issue detection and display system
+- Database: cv_issue_types (57 rows), cv_issue_categories (7), cv_issue_subcategories (23)
+- Frontend: React components for TipBox display
+- Backend: Python/Flask detection engine
+
+───────────────────────────────────────────────────────────────────────
+EXISTING COMPONENTS TO USE (MANDATORY)
+───────────────────────────────────────────────────────────────────────
+
+This service MUST integrate with these existing shared components:
+
+| Component | Purpose | Where Used |
+|-----------|---------|------------|
+| ActionBar | Toolbar with Copy, PDF, Word buttons | Report output page |
+| DocStyler | Document formatting/styling | PDF/Word export |
+| GHAScanner | GetHiredAlly Scanner component | CV text analysis |
+| GHATooltip | Standardized tooltip component | UI tooltips |
+| Marker | Text highlighting/marking | Highlight issues in CV |
+| TipBox | Issue explanation display | Show fix instructions |
+| UserSessionKeep | Session management | Track user state |
+
+⚠️ DO NOT create new versions of these components.
+⚠️ IMPORT and USE existing components from Component Registry.
+⚠️ If you cannot find a component, STOP and ask for its location.
+
+───────────────────────────────────────────────────────────────────────
+DATABASE SCHEMA (cv_issue_types)
+───────────────────────────────────────────────────────────────────────
+
+Table: cv_issue_types (57 rows)
+- id: integer (auto-increment PK)
+- subcategory_id: integer FK → cv_issue_subcategories
+- issue_code: varchar (UNIQUE) - e.g., 'CONTACT_MISSING_EMAIL'
+- display_name: varchar
+- description: text (WHY THIS MATTERS content)
+- severity: 'critical' | 'important' | 'consider' | 'polish'
+- weight: integer 1-10
+- can_auto_fix: boolean
+- auto_fix_type: 'full' | 'partial' | 'none' | NULL
+- detection_method: 'regex' | 'rule' | 'nlp' | 'ai' | NULL
+- static_tip: text (instructions)
+- user_effort: 'minimal' | 'medium' | 'extensive' | NULL
+- requires_user_input: text
+- example_before: text
+- example_after: text
+- attributes: jsonb
+- ui_config: jsonb
+
+Table: cv_issue_categories (7 rows)
+- id, code, display_name, icon, color, display_order
+
+Table: cv_issue_subcategories (23 rows)
+- id, category_id, code, display_name, display_order
+
+CATEGORIES (7):
+1. CONTACT - Contact Information (8 issues)
+2. FORMAT - Formatting & Structure (13 issues)
+3. CONTENT - Content Quality (14 issues)
+4. GRAMMAR - Grammar & Language (7 issues)
+5. LENGTH - Length & Conciseness (4 issues)
+6. STANDARDS - Professional Standards (8 issues)
+7. KEYWORDS - Keywords & Optimization (3 issues)
+
+───────────────────────────────────────────────────────────────────────
+FOLDER STRUCTURE
+───────────────────────────────────────────────────────────────────────
+
+FRONTEND (React):
+client/
+├── src/
+│   ├── components/
+│   │   ├── common/          ← Shared components (TipBox, ActionBar, etc.)
+│   │   ├── cv-optimizer/    ← CV Optimizer specific components
+│   │   └── ui/              ← Base UI components
+│   ├── pages/
+│   │   └── cv-optimizer/    ← CV Optimizer page(s)
+│   ├── hooks/               ← Custom React hooks
+│   ├── lib/                 ← Utility functions
+│   └── services/            ← API call functions
+
+BACKEND (Python/Flask):
+server/
+├── routes/
+│   └── cv_optimizer.py      ← API endpoints
+├── services/
+│   ├── cv_detection/        ← Detection engine modules
+│   │   ├── __init__.py
+│   │   ├── contact_detector.py
+│   │   ├── content_detector.py
+│   │   ├── format_detector.py
+│   │   ├── grammar_detector.py
+│   │   ├── length_detector.py
+│   │   ├── standards_detector.py
+│   │   ├── keywords_detector.py
+│   │   └── detector.py      ← Master detector
+│   └── cv_issue_type_service.py
+└── utils/                   ← Shared utilities
+
+⚠️ VERIFY these paths exist before creating files.
+⚠️ If paths differ, ASK before proceeding.
+
+───────────────────────────────────────────────────────────────────────
+PROMPTS IN THIS PROJECT
+───────────────────────────────────────────────────────────────────────
+
+1. OPENING - Project Overview & Context (this prompt)
+2. Component Registry Discovery
+3. Create Issue Type Service Layer
+4. Build Detection Engine - Contact Issues
+5. Build Detection Engine - Content Quality Issues
+6. Build Detection Engine - All Remaining Categories
+7. Integrate TipBox with Database Content
+8. Build Issue Display Component
+9. Security Review & Code Quality
+10. CLOSING - Verification & Testing
+
+───────────────────────────────────────────────────────────────────────
+RULES TO FOLLOW (ALL PROMPTS)
+───────────────────────────────────────────────────────────────────────
+
+1. Follow AGENTS.MD protected files rules
+2. Follow REPLIT.MD development guidelines
+3. Do NOT modify protected files without explicit APPROVED
+4. Use EXISTING common components - do NOT recreate
+5. Check Component Registry before creating new components
+6. All detection logic must be DETERMINISTIC (no AI randomness)
+7. Fetch issue content from DATABASE, do NOT hardcode
+8. If unclear about ANYTHING → STOP and ASK
+
+THIS IS PROMPT 1 OF 10.
+
+───────────────────────────────────────────────────────────────────────
+
+TASK FOR THIS PROMPT:
+
+1. READ and acknowledge this project overview
+2. CONFIRM you understand the database schema
+3. CONFIRM you understand which existing components to use
+4. VERIFY the folder structure exists as described
+5. LIST any existing CV Optimizer files already in the project
+6. IDENTIFY the Component Registry location
+
+DO NOT write any code yet. Just confirm understanding and report findings.
+
+═══════════════════════════════════════════════════════════════════════
