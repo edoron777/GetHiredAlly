@@ -24,7 +24,7 @@ export const FONTS = {
     h3: 16,
     body: 11,
     small: 9,
-    footer: 8,
+    footer: 10,
   },
 };
 

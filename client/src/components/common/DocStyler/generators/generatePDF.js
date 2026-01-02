@@ -138,76 +138,134 @@ export const generatePDF = async (content, options = {}) => {
     yPosition -= 30;
     
     // === CONTENT ===
-    const plainText = sanitizeForPdf(markdownToPlainText(content));
-    const lines = plainText.split('\n');
+    // Use parseMarkdownSections for structured content with heading detection
+    const sections = parseMarkdownSections(content);
     
-    for (const line of lines) {
-      // Check if need new page
-      if (yPosition < margin + 50) {
+    // Helper function to draw text with word wrap
+    const drawWrappedText = (text, textFont, textSize, textColor, indent = 0) => {
+      const sanitizedText = sanitizeForPdf(text);
+      const lines = sanitizedText.split('\n');
+      
+      for (const line of lines) {
+        if (!line.trim()) {
+          yPosition -= 8;
+          continue;
+        }
+        
+        const words = line.split(' ');
+        let currentLine = '';
+        const effectiveWidth = contentWidth - indent;
+        
+        for (const word of words) {
+          const testLine = currentLine ? `${currentLine} ${word}` : word;
+          const textWidth = textFont.widthOfTextAtSize(testLine, textSize);
+          
+          if (textWidth > effectiveWidth) {
+            if (yPosition < margin + 60) {
+              page = pdfDoc.addPage([pageWidth, pageHeight]);
+              yPosition = pageHeight - margin;
+            }
+            page.drawText(currentLine, {
+              x: margin + indent,
+              y: yPosition,
+              size: textSize,
+              font: textFont,
+              color: textColor,
+            });
+            yPosition -= textSize + 4;
+            currentLine = word;
+          } else {
+            currentLine = testLine;
+          }
+        }
+        
+        if (currentLine) {
+          if (yPosition < margin + 60) {
+            page = pdfDoc.addPage([pageWidth, pageHeight]);
+            yPosition = pageHeight - margin;
+          }
+          page.drawText(currentLine, {
+            x: margin + indent,
+            y: yPosition,
+            size: textSize,
+            font: textFont,
+            color: textColor,
+          });
+          yPosition -= textSize + 4;
+        }
+      }
+    };
+    
+    // Process each section with appropriate styling
+    for (const section of sections) {
+      // Check if need new page before heading
+      if (yPosition < margin + 80) {
         page = pdfDoc.addPage([pageWidth, pageHeight]);
         yPosition = pageHeight - margin;
       }
       
-      // Skip empty lines but add spacing
-      if (!line.trim()) {
-        yPosition -= 10;
-        continue;
-      }
-      
-      // Check for bullet points
-      const isBullet = line.startsWith('• ');
-      const lineText = isBullet ? line : line;
-      
-      // Word wrap
-      const words = lineText.split(' ');
-      let currentLine = '';
-      
-      for (const word of words) {
-        const testLine = currentLine ? `${currentLine} ${word}` : word;
-        const textWidth = font.widthOfTextAtSize(testLine, FONTS.sizes.body);
+      // Draw section heading if present
+      if (section.title) {
+        let headingSize, headingFont;
         
-        if (textWidth > contentWidth) {
-          // Draw current line
-          page.drawText(currentLine, {
-            x: margin,
-            y: yPosition,
-            size: FONTS.sizes.body,
-            font: font,
-            color: rgb(textColor.r, textColor.g, textColor.b),
-          });
-          yPosition -= 16;
-          currentLine = word;
-          
-          // Check for new page
-          if (yPosition < margin + 50) {
-            page = pdfDoc.addPage([pageWidth, pageHeight]);
-            yPosition = pageHeight - margin;
-          }
-        } else {
-          currentLine = testLine;
+        switch (section.type) {
+          case 'h1':
+            headingSize = FONTS.sizes.h2; // 20pt for main sections
+            headingFont = fontBold;
+            yPosition -= 12; // Extra spacing before h1
+            break;
+          case 'h2':
+            headingSize = FONTS.sizes.h3; // 16pt for subsections
+            headingFont = fontBold;
+            yPosition -= 8;
+            break;
+          case 'h3':
+            headingSize = 14;
+            headingFont = fontBold;
+            yPosition -= 6;
+            break;
+          default:
+            headingSize = FONTS.sizes.body;
+            headingFont = font;
         }
-      }
-      
-      // Draw remaining text
-      if (currentLine) {
-        page.drawText(currentLine, {
+        
+        // Draw heading in primary color
+        page.drawText(sanitizeForPdf(section.title), {
           x: margin,
           y: yPosition,
-          size: FONTS.sizes.body,
-          font: font,
-          color: rgb(textColor.r, textColor.g, textColor.b),
+          size: headingSize,
+          font: headingFont,
+          color: rgb(primaryColor.r, primaryColor.g, primaryColor.b),
         });
-        yPosition -= 16;
+        yPosition -= headingSize + 8;
       }
+      
+      // Draw section content
+      if (section.content) {
+        drawWrappedText(
+          section.content,
+          font,
+          FONTS.sizes.body,
+          rgb(textColor.r, textColor.g, textColor.b)
+        );
+        yPosition -= 8; // Spacing after section
+      }
+    }
+    
+    // Fallback: if no sections parsed, use plain text
+    if (sections.length === 0) {
+      const plainText = sanitizeForPdf(markdownToPlainText(content));
+      drawWrappedText(plainText, font, FONTS.sizes.body, rgb(textColor.r, textColor.g, textColor.b));
     }
     
     // === FOOTER (on all pages) ===
     const pages = pdfDoc.getPages();
     const totalPages = pages.length;
+    console.log('PDF: Adding footers to', totalPages, 'pages');
     
     pages.forEach((p, index) => {
       const pageNum = index + 1;
-      const footerY = 30;
+      const footerY = 50;
       
       // Page number
       const pageText = `Page ${pageNum} of ${totalPages}`;
