@@ -106,9 +106,49 @@ async def test_supabase_connection():
     except Exception as e:
         return {"connected": False, "error": str(e)}
 
+@app.get("/api/debug-static")
+async def debug_static():
+    """Debug endpoint to check static file paths in production."""
+    import subprocess
+    cwd = os.getcwd()
+    candidates = [
+        str(Path(__file__).parent.parent.parent / "client" / "dist"),
+        "/home/runner/workspace/client/dist",
+        "client/dist",
+        "./client/dist",
+        str(Path(cwd) / "client" / "dist"),
+    ]
+    results = {}
+    for c in candidates:
+        p = Path(c)
+        exists = p.exists()
+        has_index = (p / "index.html").exists() if exists else False
+        index_content = ""
+        if has_index:
+            try:
+                index_content = (p / "index.html").read_text()[:500]
+            except:
+                index_content = "Error reading"
+        results[c] = {"exists": exists, "has_index": has_index, "index_preview": index_content}
+    
+    ls_output = ""
+    try:
+        ls_output = subprocess.check_output(["ls", "-la", cwd], text=True)[:1000]
+    except:
+        ls_output = "Error running ls"
+    
+    return {
+        "cwd": cwd,
+        "__file__": str(Path(__file__)),
+        "candidates": results,
+        "ls_cwd": ls_output,
+        "static_dir_used": str(static_dir) if static_dir else None
+    }
+
 possible_static_dirs = [
     Path(__file__).parent.parent.parent / "client" / "dist",
     Path("/home/runner/workspace/client/dist"),
+    Path(os.getcwd()) / "client" / "dist",
     Path("client/dist"),
     Path("./client/dist"),
 ]
