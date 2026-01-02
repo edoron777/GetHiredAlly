@@ -26,6 +26,7 @@ from .language_detector import detect_language_issues
 from .format_detector import detect_format_issues
 from .polish_detector import detect_polish_issues
 from .standards_detector import detect_standards_issues
+from .keywords_detector import detect_keywords_issues
 
 logger = logging.getLogger(__name__)
 
@@ -143,6 +144,13 @@ def detect_all_issues(cv_text: str) -> List[Dict[str, Any]]:
         logger.info(f"Standards issues found: {len(standards_issues)}")
     except Exception as e:
         logger.error(f"Error detecting standards issues: {e}")
+    
+    try:
+        keywords_issues = detect_keywords_issues(cv_text)
+        all_issues.extend(keywords_issues)
+        logger.info(f"Keywords issues found: {len(keywords_issues)}")
+    except Exception as e:
+        logger.error(f"Error detecting keywords issues: {e}")
     
     logger.info(f"Static detection complete. Total issues: {len(all_issues)}")
     

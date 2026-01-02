@@ -1,0 +1,74 @@
+═══════════════════════════════════════════════════════════════════════
+TASK: Update master_detector.py + Run Integration Test
+═══════════════════════════════════════════════════════════════════════
+
+⚠️ PREREQUISITES:
+- Prompts 1-3 must be COMPLETE
+- All detector files must be working
+
+═══════════════════════════════════════════════════════════════════════
+
+PART A: UPDATE master_detector.py
+
+FILE: backend/common/detection/master_detector.py
+
+───────────────────────────────────────────────────────────────────────
+CHANGES NEEDED
+───────────────────────────────────────────────────────────────────────
+
+1. ADD IMPORTS for new detectors:
+
+   from .standards_detector import detect_standards_issues
+   from .keywords_detector import detect_keywords_issues
+
+2. UPDATE detect_all_issues() function to call new detectors:
+
+   Find the section where detectors are called and ADD:
+   
+   # Standards issues
+   standards_issues = detect_standards_issues(cv_text)
+   all_issues.extend(standards_issues)
+   
+   # Keywords issues (if job_description available)
+   keywords_issues = detect_keywords_issues(cv_text, job_description)
+   all_issues.extend(keywords_issues)
+
+3. UPDATE function signature if needed:
+
+   If detect_all_issues currently only takes cv_text, update to:
+   
+   def detect_all_issues(cv_text: str, job_description: str = None) -> List[Dict[str, Any]]:
+
+───────────────────────────────────────────────────────────────────────
+VERIFY ALL DETECTORS ARE CALLED
+───────────────────────────────────────────────────────────────────────
+
+After update, master_detector.py should call ALL of these:
+
+- contact_extractor.get_contact_issues() ✓
+- section_extractor.get_section_issues() ✓
+- bullet_extractor.get_bullet_issues() ✓
+- language_detector.detect_language_issues() ✓
+- format_detector.detect_format_issues() ✓
+- polish_detector.detect_polish_issues() ✓
+- standards_detector.detect_standards_issues() ← NEW
+- keywords_detector.detect_keywords_issues() ← NEW
+
+═══════════════════════════════════════════════════════════════════════
+
+PART B: UPDATE __init__.py
+
+FILE: backend/common/detection/__init__.py
+
+Add exports for new modules:
+
+from .standards_detector import detect_standards_issues
+from .keywords_detector import detect_keywords_issues
+
+═══════════════════════════════════════════════════════════════════════
+
+PART C: INTEGRATION TEST
+
+Run a test to verify all detections work together.
+
+TEST CV (use this sample):
