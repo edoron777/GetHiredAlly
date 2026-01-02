@@ -1,0 +1,120 @@
+═══════════════════════════════════════════════════════════════════════
+PROJECT: CV Optimizer Complete Fix - PROMPT 4#18: Fix contact_extractor.py
+═══════════════════════════════════════════════════════════════════════
+
+CONTEXT:
+The contact_extractor detects missing contact information (email, phone,
+LinkedIn, location). These issues CANNOT be highlighted because there's
+no text to highlight - the information is MISSING.
+
+───────────────────────────────────────────────────────────────────────
+
+TASK:
+1. Review current contact_extractor output
+2. Ensure `current` field is empty string for MISSING items (correct)
+3. Ensure `current` field has ACTUAL text for FORMAT issues
+4. Add `is_highlightable: false` flag for missing items
+
+───────────────────────────────────────────────────────────────────────
+
+FILE TO MODIFY:
+backend/common/detection/contact_extractor.py
+
+───────────────────────────────────────────────────────────────────────
+
+INVESTIGATION FIRST:
+
+Show me the current output structure for these issue types:
+1. CONTACT_MISSING_EMAIL
+2. CONTACT_MISSING_PHONE
+3. CONTACT_MISSING_LINKEDIN
+4. CONTACT_MISSING_LOCATION
+5. CONTACT_UNPROFESSIONAL_EMAIL (this SHOULD have text)
+
+───────────────────────────────────────────────────────────────────────
+
+EXPECTED OUTPUT STRUCTURE:
+
+For MISSING items (cannot highlight):
+```python
+{
+    "issue_type": "CONTACT_MISSING_EMAIL",
+    "title": "No email address found",
+    "severity": "critical",
+    "current": "",  # Empty - nothing to highlight
+    "is_highlightable": False,  # Explicit flag
+    "suggested_fix": "Add your professional email address",
+    # ... other fields
+}
+```
+
+For FORMAT issues (CAN highlight):
+```python
+{
+    "issue_type": "CONTACT_UNPROFESSIONAL_EMAIL",
+    "title": "Unprofessional email address",
+    "severity": "important",
+    "current": "cooldude123@gmail.com",  # Actual email found
+    "is_highlightable": True,  # Can be highlighted
+    "suggested_fix": "Use a professional format: firstname.lastname@domain.com",
+    # ... other fields
+}
+```
+
+───────────────────────────────────────────────────────────────────────
+
+IMPLEMENTATION:
+
+Add is_highlightable flag to each issue:
+```python
+def detect_contact_issues(cv_text: str) -> list:
+    issues = []
+    
+    # Check for missing email
+    email_pattern = r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'
+    emails = re.findall(email_pattern, cv_text)
+    
+    if not emails:
+        issues.append({
+            "issue_type": "CONTACT_MISSING_EMAIL",
+            "title": "No email address found",
+            "severity": "critical",
+            "current": "",  # Nothing to highlight
+            "is_highlightable": False,  # Cannot highlight
+            "suggested_fix": "Add your professional email address at the top of your CV"
+        })
+    else:
+        # Check if email is unprofessional
+        for email in emails:
+            if is_unprofessional_email(email):
+                issues.append({
+                    "issue_type": "CONTACT_UNPROFESSIONAL_EMAIL",
+                    "title": "Unprofessional email address",
+                    "severity": "important",
+                    "current": email,  # Actual email to highlight
+                    "is_highlightable": True,  # Can highlight
+                    "suggested_fix": f"Consider using: {suggest_professional_email(email)}"
+                })
+    
+    # Similar pattern for phone, LinkedIn, location...
+    
+    return issues
+```
+
+───────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+1. Run CV analysis on a test CV
+2. Check contact-related issues in output
+3. Verify: Missing items have empty `current` and `is_highlightable: false`
+4. Verify: Format issues have actual text and `is_highlightable: true`
+
+───────────────────────────────────────────────────────────────────────
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- Do NOT change detection logic
+- Only add/fix the `current` and `is_highlightable` fields
+- Keep all existing fields
+- If anything is unclear, STOP and ask
+
+═══════════════════════════════════════════════════════════════════════
