@@ -4,6 +4,8 @@ interface CVIssue {
   id: string;
   severity: 'critical' | 'important' | 'consider' | 'polish';
   matchText?: string;
+  current_text?: string;
+  problematic_text?: string;
   title?: string;
 }
 
@@ -15,21 +17,51 @@ interface CVDocumentProps {
   onIssueClick?: (issueId: string) => void;
 }
 
-export default function CVDocument({ cvContent, issues = [], onIssueClick }: CVDocumentProps) {
-  console.log('=== CVDOCUMENT DEBUG ===');
-  console.log('1. cvContent.fullText length:', cvContent?.fullText?.length);
-  console.log('2. cvContent.fullText preview:', cvContent?.fullText?.substring(0, 200));
-  console.log('3. issues received:', issues?.length);
-  console.log('4. first issue:', issues?.[0]);
-  
-  if (issues?.length > 0 && cvContent?.fullText) {
-    issues.forEach((issue, i) => {
-      const found = issue.matchText ? cvContent.fullText.includes(issue.matchText) : false;
-      console.log(`Issue ${i + 1} matchText "${issue.matchText?.substring(0, 30)}..." found in CV: ${found}`);
-    });
+const isValidMarker = (matchText: string | undefined | null, cvContent: string): boolean => {
+  if (!matchText || matchText.trim() === '') {
+    return false;
   }
-  console.log('=== END DEBUG ===');
+  
+  if (matchText.trim().length < 3) {
+    return false;
+  }
+  
+  const invalidPatterns = [
+    /^\d+\s*words/i,
+    /^\d+\s*months?\s*gap/i,
+    /^years?\s*found/i,
+    /^both\s*['"]/i,
+    /^(I,\s*)+I/i,
+    /\.\.\./,
+  ];
+  
+  for (const pattern of invalidPatterns) {
+    if (pattern.test(matchText)) {
+      return false;
+    }
+  }
+  
+  return cvContent.includes(matchText);
+};
 
+export const classifyIssues = (issues: CVIssue[], cvContent: string) => {
+  const highlightable: CVIssue[] = [];
+  const nonHighlightable: CVIssue[] = [];
+  
+  for (const issue of issues) {
+    const matchText = issue.matchText || issue.current_text || issue.problematic_text || '';
+    
+    if (isValidMarker(matchText, cvContent)) {
+      highlightable.push({ ...issue, matchText });
+    } else {
+      nonHighlightable.push({ ...issue, matchText });
+    }
+  }
+  
+  return { highlightable, nonHighlightable, all: issues };
+};
+
+export default function CVDocument({ cvContent, issues = [], onIssueClick }: CVDocumentProps) {
   if (!cvContent?.fullText) {
     return (
       <div className="text-gray-500 text-center py-10">
@@ -38,19 +70,27 @@ export default function CVDocument({ cvContent, issues = [], onIssueClick }: CVD
     );
   }
 
-  const markers = issues
-    .filter(issue => issue.matchText && issue.matchText.length > 0)
-    .map(issue => ({
-      id: issue.id?.toString() || '',
-      matchText: issue.matchText || '',
-      tag: issue.severity || 'consider'
-    }));
+  const allMarkers = issues.map(issue => ({
+    id: issue.id?.toString() || '',
+    matchText: issue.matchText || issue.current_text || issue.problematic_text || '',
+    tag: issue.severity || 'consider'
+  }));
+
+  const validMarkers = allMarkers.filter(marker => 
+    isValidMarker(marker.matchText, cvContent.fullText)
+  );
+
+  console.log('Markers stats:', {
+    total: allMarkers.length,
+    valid: validMarkers.length,
+    invalid: allMarkers.length - validMarkers.length
+  });
 
   return (
     <div className="cv-document">
       <TextMarker
         content={cvContent.fullText}
-        markers={markers}
+        markers={validMarkers}
         config={{
           style: 'underline',
           tagColors: CV_OPTIMIZER_COLORS,
@@ -59,7 +99,6 @@ export default function CVDocument({ cvContent, issues = [], onIssueClick }: CVD
             position: 'after' 
           },
           onClick: (id) => {
-            console.log('Marker clicked:', id);
             onIssueClick?.(id);
           },
           className: 'cv-content-text'

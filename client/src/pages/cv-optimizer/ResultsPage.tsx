@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { FileText, List, Copy, Check, ArrowLeft, Loader2 } from 'lucide-react';
 import DocumentView from '../../components/cv-optimizer/DocumentView';
-import { CVDocument } from '../../components/cv-optimizer/DocumentView';
+import { CVDocument, classifyIssues } from '../../components/cv-optimizer/DocumentView';
 import { TipBox } from '../../components/common/TipBox';
 import type { TipBoxButton } from '../../components/common/TipBox';
 import type { TipBoxSection } from '../../components/common/TipBox/types';
@@ -357,8 +357,27 @@ export default function ResultsPage() {
 
   const normalizedIssues = reportData.issues.map((issue, i) => normalizeIssue(issue, i));
 
+  const cvContentText = fixedCV || reportData.cv_content;
+  
+  const { highlightable, nonHighlightable } = useMemo(() => {
+    if (!cvContentText || !normalizedIssues.length) {
+      return { highlightable: [], nonHighlightable: [] };
+    }
+    return classifyIssues(normalizedIssues as any, cvContentText);
+  }, [normalizedIssues, cvContentText]);
+
+  useEffect(() => {
+    if (normalizedIssues.length > 0) {
+      console.log('Issue classification:', {
+        total: normalizedIssues.length,
+        highlightable: highlightable.length,
+        nonHighlightable: nonHighlightable.length
+      });
+    }
+  }, [highlightable, nonHighlightable, normalizedIssues.length]);
+
   const cvContent = {
-    fullText: fixedCV || reportData.cv_content
+    fullText: cvContentText
   };
 
   const documentIssues = normalizedIssues.map(issue => ({

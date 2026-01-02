@@ -1,0 +1,200 @@
+═══════════════════════════════════════════════════════════════════════
+PROJECT: CV Optimizer Hybrid Fix - PROMPT 2#12: Update Sidebar Display
+═══════════════════════════════════════════════════════════════════════
+
+CONTEXT:
+After filtering markers, some issues cannot be highlighted in the CV.
+We need to visually distinguish these in the sidebar so users understand
+why some issues don't appear in the document.
+
+───────────────────────────────────────────────────────────────────────
+
+TASK:
+1. Pass isHighlightable flag to sidebar
+2. Show different icon/style for non-highlightable issues
+3. Add tooltip explaining why issue isn't highlighted
+
+───────────────────────────────────────────────────────────────────────
+
+FILES TO MODIFY:
+1. client/src/pages/cv-optimizer/ResultsPage.tsx
+2. client/src/components/cv-optimizer/IssueSidebar/IssueSidebar.tsx
+
+───────────────────────────────────────────────────────────────────────
+
+PART 1: UPDATE RESULTSPAGE TO PASS CLASSIFIED ISSUES
+
+In ResultsPage.tsx, update the issues passed to sidebar:
+```typescript
+// Add isHighlightable flag to all issues
+const classifiedIssues = useMemo(() => {
+  if (!reportData?.cv_content || !issues.length) {
+    return issues;
+  }
+  
+  return issues.map(issue => {
+    const matchText = issue.matchText || issue.current_text || issue.problematic_text || '';
+    const isHighlightable = isValidMarker(matchText, reportData.cv_content);
+    return { ...issue, isHighlightable };
+  });
+}, [issues, reportData?.cv_content]);
+
+// Pass to sidebar
+<IssueSidebar
+  issues={classifiedIssues}  // Use classified issues
+  fixedIssues={fixedIssues}
+  selectedIssueId={selectedIssueId}
+  onIssueClick={handleIssueClick}
+  score={currentScore}
+/>
+```
+
+───────────────────────────────────────────────────────────────────────
+
+PART 2: UPDATE ISSUESIDEBAR INTERFACE
+
+File: client/src/components/cv-optimizer/IssueSidebar/IssueSidebar.tsx
+```typescript
+interface CVIssue {
+  id: string;
+  severity: 'critical' | 'important' | 'consider' | 'polish';
+  title?: string;
+  issue_title?: string;
+  isHighlightable?: boolean;  // Add this field
+  // ... other fields
+}
+```
+
+───────────────────────────────────────────────────────────────────────
+
+PART 3: UPDATE ISSUE ITEM RENDERING
+```typescript
+// In the issue list rendering
+{issues.map(issue => (
+  <div
+    key={issue.id}
+    onClick={() => onIssueClick(issue.id)}
+    className={`
+      issue-item p-2 rounded cursor-pointer
+      ${selectedIssueId === issue.id ? 'bg-blue-100' : 'hover:bg-gray-50'}
+      ${fixedIssues?.has(issue.id) ? 'opacity-50 line-through' : ''}
+    `}
+  >
+    <div className="flex items-center gap-2">
+      {/* Severity indicator */}
+      <span className={`w-2 h-2 rounded-full ${getSeverityColor(issue.severity)}`} />
+      
+      {/* Highlightable indicator */}
+      {issue.isHighlightable ? (
+        <span className="text-blue-500" title="Click to highlight in CV">
+          📍
+        </span>
+      ) : (
+        <span className="text-gray-400" title="Cannot highlight - general feedback">
+          📋
+        </span>
+      )}
+      
+      {/* Issue title */}
+      <span className={`text-sm ${!issue.isHighlightable ? 'text-gray-500' : ''}`}>
+        {issue.title || issue.issue_title || 'Untitled Issue'}
+      </span>
+      
+      {/* Fixed indicator */}
+      {fixedIssues?.has(issue.id) && (
+        <span className="text-green-500 ml-auto">✓</span>
+      )}
+    </div>
+  </div>
+))}
+```
+
+───────────────────────────────────────────────────────────────────────
+
+PART 4: ADD LEGEND/KEY AT TOP OF SIDEBAR
+```typescript
+// Add at top of issue list
+<div className="legend mb-3 p-2 bg-gray-50 rounded text-xs text-gray-600">
+  <div className="flex items-center gap-4">
+    <span className="flex items-center gap-1">
+      <span>📍</span> Highlighted in CV
+    </span>
+    <span className="flex items-center gap-1">
+      <span>📋</span> General feedback
+    </span>
+  </div>
+</div>
+```
+
+───────────────────────────────────────────────────────────────────────
+
+PART 5: UPDATE CLICK BEHAVIOR
+
+When non-highlightable issue is clicked:
+- Still open TipBox (show the issue details)
+- Do NOT try to scroll to marker (it doesn't exist)
+```typescript
+const handleIssueClick = (issueId: string) => {
+  const issue = issues.find(i => i.id === issueId);
+  
+  setSelectedIssueId(issueId);
+  setIsTipBoxOpen(true);
+  
+  // Only scroll if issue is highlightable
+  if (issue?.isHighlightable && activeTab === 'document') {
+    setTimeout(() => {
+      const marker = document.querySelector(`[data-issue-id="${issueId}"]`);
+      if (marker) {
+        marker.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100);
+  } else if (activeTab === 'list') {
+    // If in list view, switch to document only for highlightable issues
+    if (issue?.isHighlightable) {
+      setActiveTab('document');
+    }
+  }
+};
+```
+
+───────────────────────────────────────────────────────────────────────
+
+PART 6: ADD COUNT DISPLAY
+
+Show counts in sidebar header:
+```typescript
+// Calculate counts
+const highlightableCount = issues.filter(i => i.isHighlightable).length;
+const generalCount = issues.filter(i => !i.isHighlightable).length;
+
+// Display
+<div className="sidebar-header mb-4">
+  <div className="text-sm text-gray-600">
+    Found {issues.length} opportunities to improve your CV
+  </div>
+  <div className="text-xs text-gray-500 mt-1">
+    {highlightableCount} in document • {generalCount} general feedback
+  </div>
+</div>
+```
+
+───────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+1. Load results page
+2. Verify: Some issues show 📍 (highlightable)
+3. Verify: Some issues show 📋 (non-highlightable)
+4. Click highlightable issue → scrolls to location in CV
+5. Click non-highlightable issue → opens TipBox but no scroll
+6. Verify: Legend shows at top of sidebar
+7. Verify: Counts are accurate
+
+───────────────────────────────────────────────────────────────────────
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- Keep both types of issues visible
+- Do NOT hide non-highlightable issues
+- Do NOT change TipBox behavior
+- If anything is unclear, STOP and ask
+
+═══════════════════════════════════════════════════════════════════════
