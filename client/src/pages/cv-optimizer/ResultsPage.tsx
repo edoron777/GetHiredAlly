@@ -626,7 +626,7 @@ export default function ResultsPage() {
             <div className="mb-4 p-3 bg-white border border-gray-200 rounded-lg">
               <span className="text-sm text-gray-600">Score history: </span>
               <span className="text-sm text-gray-500">
-                {scanHistory.map((scan, idx) => scan.score).join(' → ')} → 
+                {scanHistory.map((scan) => scan.score).join(' → ')} → 
               </span>
               <span className="text-sm font-medium text-green-600 ml-1">{currentScore}</span>
             </div>

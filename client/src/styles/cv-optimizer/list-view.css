@@ -174,3 +174,84 @@
 .quick-fix-btn:hover {
     background: #1d4ed8;
 }
+
+.expand-collapse-btn {
+    padding: 8px 14px;
+    background: white;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.expand-collapse-btn:hover {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+}
+
+.severity-groups {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.severity-group {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.severity-group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 14px 18px;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.severity-group-header:hover {
+    opacity: 0.9;
+}
+
+.severity-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.severity-header-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: white;
+}
+
+.severity-header-chevron {
+    display: flex;
+    align-items: center;
+}
+
+.severity-group-content {
+    background: #fafafa;
+    padding: 16px;
+}
+
+.severity-group-content.expanded {
+    display: block;
+}
+
+.severity-group-content.collapsed {
+    display: none;
+}
+
+.severity-group-content .issue-card {
+    margin-bottom: 12px;
+}
+
+.severity-group-content .issue-card:last-child {
+    margin-bottom: 0;
+}

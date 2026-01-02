@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AlertCircle, AlertTriangle, Info, Sparkles, ChevronDown } from 'lucide-react';
+import { AlertCircle, AlertTriangle, Info, Sparkles, ChevronDown, ChevronRight } from 'lucide-react';
 import '../../../styles/cv-optimizer/list-view.css';
 
 interface Issue {
@@ -18,30 +18,65 @@ interface ListViewTabProps {
 }
 
 const SEVERITY_CONFIG = {
-  critical: { icon: AlertCircle, color: '#dc2626', bg: '#fef2f2', label: 'CRITICAL' },
-  important: { icon: AlertTriangle, color: '#ea580c', bg: '#fff7ed', label: 'IMPORTANT' },
-  consider: { icon: Info, color: '#ca8a04', bg: '#fefce8', label: 'CONSIDER' },
-  polish: { icon: Sparkles, color: '#16a34a', bg: '#f0fdf4', label: 'POLISH' },
+  critical: { 
+    icon: AlertCircle, 
+    color: '#dc2626', 
+    headerBg: '#EF4444',
+    cardBg: '#fef2f2', 
+    label: 'Critical' 
+  },
+  important: { 
+    icon: AlertTriangle, 
+    color: '#ea580c', 
+    headerBg: '#F97316',
+    cardBg: '#fff7ed', 
+    label: 'Important' 
+  },
+  consider: { 
+    icon: Info, 
+    color: '#ca8a04', 
+    headerBg: '#EAB308',
+    cardBg: '#fefce8', 
+    label: 'Consider' 
+  },
+  polish: { 
+    icon: Sparkles, 
+    color: '#16a34a', 
+    headerBg: '#22C55E',
+    cardBg: '#f0fdf4', 
+    label: 'Polish' 
+  },
 };
 
-const SEVERITY_ORDER = ['critical', 'important', 'consider', 'polish'];
+const SEVERITY_ORDER: Array<'critical' | 'important' | 'consider' | 'polish'> = ['critical', 'important', 'consider', 'polish'];
 
 export default function ListViewTab({ issues, onIssueClick, onApplyFix }: ListViewTabProps) {
-  const [filterSeverity, setFilterSeverity] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<'impact' | 'severity'>('severity');
-  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
-  const [showSortDropdown, setShowSortDropdown] = useState(false);
-
-  const filteredIssues = issues.filter(issue => 
-    filterSeverity === 'all' || issue.severity === filterSeverity
-  );
-
-  const sortedIssues = [...filteredIssues].sort((a, b) => {
-    if (sortBy === 'severity') {
-      return SEVERITY_ORDER.indexOf(a.severity) - SEVERITY_ORDER.indexOf(b.severity);
-    }
-    return 0;
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
+    critical: true,
+    important: true,
+    consider: true,
+    polish: true,
   });
+
+  const groupedIssues = SEVERITY_ORDER.reduce((acc, severity) => {
+    acc[severity] = issues.filter(issue => issue.severity === severity);
+    return acc;
+  }, {} as Record<string, Issue[]>);
+
+  const toggleGroup = (severity: string) => {
+    setExpandedGroups(prev => ({
+      ...prev,
+      [severity]: !prev[severity],
+    }));
+  };
+
+  const expandAll = () => {
+    setExpandedGroups({ critical: true, important: true, consider: true, polish: true });
+  };
+
+  const collapseAll = () => {
+    setExpandedGroups({ critical: false, important: false, consider: false, polish: false });
+  };
 
   return (
     <div className="list-view-container">
@@ -51,87 +86,85 @@ export default function ListViewTab({ issues, onIssueClick, onApplyFix }: ListVi
         </p>
 
         <div className="list-view-controls">
-          <div className="dropdown-wrapper">
-            <button 
-              className="dropdown-trigger"
-              onClick={() => { setShowFilterDropdown(!showFilterDropdown); setShowSortDropdown(false); }}
-            >
-              Show: {filterSeverity === 'all' ? 'All' : SEVERITY_CONFIG[filterSeverity as keyof typeof SEVERITY_CONFIG]?.label}
-              <ChevronDown size={14} />
-            </button>
-            {showFilterDropdown && (
-              <div className="dropdown-menu">
-                <div className="dropdown-item" onClick={() => { setFilterSeverity('all'); setShowFilterDropdown(false); }}>All</div>
-                <div className="dropdown-item" onClick={() => { setFilterSeverity('critical'); setShowFilterDropdown(false); }}>Critical</div>
-                <div className="dropdown-item" onClick={() => { setFilterSeverity('important'); setShowFilterDropdown(false); }}>Important</div>
-                <div className="dropdown-item" onClick={() => { setFilterSeverity('consider'); setShowFilterDropdown(false); }}>Consider</div>
-                <div className="dropdown-item" onClick={() => { setFilterSeverity('polish'); setShowFilterDropdown(false); }}>Polish</div>
-              </div>
-            )}
-          </div>
-
-          <div className="dropdown-wrapper">
-            <button 
-              className="dropdown-trigger"
-              onClick={() => { setShowSortDropdown(!showSortDropdown); setShowFilterDropdown(false); }}
-            >
-              Sort: {sortBy === 'severity' ? 'By Severity' : 'By Impact'}
-              <ChevronDown size={14} />
-            </button>
-            {showSortDropdown && (
-              <div className="dropdown-menu">
-                <div className="dropdown-item" onClick={() => { setSortBy('severity'); setShowSortDropdown(false); }}>By Severity</div>
-                <div className="dropdown-item" onClick={() => { setSortBy('impact'); setShowSortDropdown(false); }}>By Impact</div>
-              </div>
-            )}
-          </div>
+          <button className="expand-collapse-btn" onClick={expandAll}>
+            Expand All
+          </button>
+          <button className="expand-collapse-btn" onClick={collapseAll}>
+            Collapse All
+          </button>
         </div>
       </div>
 
-      <div className="issue-cards-list">
-        {sortedIssues.map(issue => {
-          const config = SEVERITY_CONFIG[issue.severity];
+      <div className="severity-groups">
+        {SEVERITY_ORDER.map(severity => {
+          const config = SEVERITY_CONFIG[severity];
+          const severityIssues = groupedIssues[severity];
+          const isExpanded = expandedGroups[severity];
           const Icon = config.icon;
 
+          if (severityIssues.length === 0) return null;
+
           return (
-            <div key={issue.id} className="issue-card" style={{ borderLeftColor: config.color }}>
-              <div className="issue-card-header">
-                <span 
-                  className="issue-severity-badge"
-                  style={{ background: config.bg, color: config.color }}
-                >
-                  <Icon size={14} />
-                  {config.label}
-                </span>
-                <span className="issue-card-title">{issue.title}</span>
-              </div>
-
-              {issue.description && (
-                <p className="issue-card-description">{issue.description}</p>
-              )}
-
-              {issue.currentText && (
-                <div className="issue-card-context">
-                  <span className="context-label">Current:</span>
-                  <span className="context-text">"{issue.currentText}"</span>
+            <div key={severity} className="severity-group">
+              <button
+                className="severity-group-header"
+                style={{ backgroundColor: config.headerBg }}
+                onClick={() => toggleGroup(severity)}
+              >
+                <div className="severity-header-left">
+                  <Icon size={18} color="white" />
+                  <span className="severity-header-title">
+                    {config.label} ({severityIssues.length} {severityIssues.length === 1 ? 'issue' : 'issues'})
+                  </span>
                 </div>
-              )}
+                <div className="severity-header-chevron">
+                  {isExpanded ? <ChevronDown size={20} color="white" /> : <ChevronRight size={20} color="white" />}
+                </div>
+              </button>
 
-              <div className="issue-card-actions">
-                <button 
-                  className="view-details-btn"
-                  onClick={() => onIssueClick(issue.id)}
-                >
-                  View Details
-                </button>
-                {issue.suggestedText && (
-                  <button 
-                    className="quick-fix-btn"
-                    onClick={() => onApplyFix(issue.id, issue.suggestedText!)}
-                  >
-                    Quick Fix
-                  </button>
-                )}
+              <div className={`severity-group-content ${isExpanded ? 'expanded' : 'collapsed'}`}>
+                {severityIssues.map(issue => (
+                  <div key={issue.id} className="issue-card" style={{ borderLeftColor: config.color }}>
+                    <div className="issue-card-header">
+                      <span 
+                        className="issue-severity-badge"
+                        style={{ background: config.cardBg, color: config.color }}
+                      >
+                        <Icon size={14} />
+                        {config.label.toUpperCase()}
+                      </span>
+                      <span className="issue-card-title">{issue.title}</span>
+                    </div>
+
+                    {issue.description && (
+                      <p className="issue-card-description">{issue.description}</p>
+                    )}
+
+                    {issue.currentText && (
+                      <div className="issue-card-context">
+                        <span className="context-label">Current:</span>
+                        <span className="context-text">"{issue.currentText}"</span>
+                      </div>
+                    )}
+
+                    <div className="issue-card-actions">
+                      <button 
+                        className="view-details-btn"
+                        onClick={() => onIssueClick(issue.id)}
+                      >
+                        View Details
+                      </button>
+                      {issue.suggestedText && (
+                        <button 
+                          className="quick-fix-btn"
+                          onClick={() => onApplyFix(issue.id, issue.suggestedText!)}
+                        >
+                          Quick Fix
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           );
