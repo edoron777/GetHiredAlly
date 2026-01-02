@@ -1,0 +1,95 @@
+═══════════════════════════════════════════════════════════════════════
+PROJECT: CV Optimizer Complete Fix - PROMPT 5#18: Fix format_detector.py
+═══════════════════════════════════════════════════════════════════════
+
+CONTEXT:
+The format_detector returns issues like "1838 words found" which is 
+descriptive text, not actual CV text that can be highlighted.
+
+───────────────────────────────────────────────────────────────────────
+
+TASK:
+1. Review format_detector output
+2. Fix `current` field to contain actual highlightable text OR
+3. Mark as not highlightable if it's meta-information
+
+───────────────────────────────────────────────────────────────────────
+
+FILE TO MODIFY:
+backend/common/detection/format_detector.py
+
+───────────────────────────────────────────────────────────────────────
+
+ISSUE TYPE CLASSIFICATION:
+
+| Issue Type | Highlightable? | What to put in `current` |
+|------------|----------------|-------------------------|
+| LENGTH_CV_TOO_LONG | NO | Empty (meta info) |
+| LENGTH_CV_TOO_SHORT | NO | Empty (meta info) |
+| FORMAT_INCONSISTENT_DATES | YES | First inconsistent date |
+| FORMAT_INCONSISTENT_BULLETS | YES | First inconsistent bullet |
+| FORMAT_MULTIPLE_SPACES | YES | "word  word" (with spaces) |
+| FORMAT_TRAILING_WHITESPACE | YES | "text   " (with trailing) |
+| FORMAT_TABLES_DETECTED | YES | First table row text |
+| FORMAT_MULTIPLE_COLUMNS | NO | Empty (structural issue) |
+
+───────────────────────────────────────────────────────────────────────
+
+FIXES NEEDED:
+
+1. LENGTH ISSUES (NOT highlightable):
+```python
+# WRONG:
+"current": "1838 words found..."
+
+# CORRECT:
+"current": "",
+"is_highlightable": False,
+"meta_info": "1838 words (recommended: 400-800 for 1 page)"
+```
+
+2. INCONSISTENT DATES (IS highlightable):
+```python
+# WRONG:
+"current": "Multiple date formats detected"
+
+# CORRECT:
+"current": "Jan 2020",  # The actual date text from CV
+"is_highlightable": True,
+"all_instances": ["Jan 2020", "2019-06", "March, 2018"]  # All found
+```
+
+3. MULTIPLE SPACES (IS highlightable):
+```python
+# Find actual text with multiple spaces
+spaces_match = re.search(r'\S(  +)\S', cv_text)
+if spaces_match:
+    # Get surrounding context (10 chars each side)
+    start = max(0, spaces_match.start() - 10)
+    end = min(len(cv_text), spaces_match.end() + 10)
+    current_text = cv_text[start:end].strip()
+    
+    issue = {
+        "issue_type": "FORMAT_MULTIPLE_SPACES",
+        "current": current_text,  # Actual text with spaces
+        "is_highlightable": True
+    }
+```
+
+───────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+1. Run analysis on test CV
+2. Check format issues output
+3. Verify: Length issues have `is_highlightable: false`
+4. Verify: Space/date issues have actual text in `current`
+
+───────────────────────────────────────────────────────────────────────
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- Focus on fixing `current` field only
+- Do NOT change detection thresholds
+- Do NOT add new issue types
+- If anything is unclear, STOP and ask
+
+═══════════════════════════════════════════════════════════════════════

@@ -261,6 +261,9 @@ def get_contact_issues(contact: ContactInfo, full_text: str = "") -> List[Dict]:
         full_text: Full CV text for additional checks
     
     Returns list of issue dictionaries with issue_type.
+    Each issue includes:
+        - current: The actual text found (empty string for MISSING items)
+        - is_highlightable: True if current text can be highlighted in CV
     """
     issues = []
     
@@ -269,6 +272,8 @@ def get_contact_issues(contact: ContactInfo, full_text: str = "") -> List[Dict]:
             'issue_type': 'CONTACT_MISSING_EMAIL',
             'location': 'Contact Information',
             'description': 'No email address found in CV',
+            'current': '',
+            'is_highlightable': False,
         })
     elif not contact.email_valid:
         issues.append({
@@ -276,6 +281,7 @@ def get_contact_issues(contact: ContactInfo, full_text: str = "") -> List[Dict]:
             'location': 'Contact Information',
             'description': f'Email format appears invalid: {contact.email}',
             'current': contact.email,
+            'is_highlightable': True,
         })
     elif contact.email:
         unprofessional_reason = check_unprofessional_email(contact.email)
@@ -285,6 +291,7 @@ def get_contact_issues(contact: ContactInfo, full_text: str = "") -> List[Dict]:
                 'location': 'Contact Information',
                 'description': f'Email may appear unprofessional: {unprofessional_reason}',
                 'current': contact.email,
+                'is_highlightable': True,
             })
     
     if not contact.has_phone:
@@ -292,6 +299,8 @@ def get_contact_issues(contact: ContactInfo, full_text: str = "") -> List[Dict]:
             'issue_type': 'CONTACT_MISSING_PHONE',
             'location': 'Contact Information',
             'description': 'No phone number found in CV',
+            'current': '',
+            'is_highlightable': False,
         })
     elif not contact.phone_valid:
         issues.append({
@@ -299,6 +308,7 @@ def get_contact_issues(contact: ContactInfo, full_text: str = "") -> List[Dict]:
             'location': 'Contact Information',
             'description': f'Phone format appears invalid: {contact.phone}',
             'current': contact.phone,
+            'is_highlightable': True,
         })
     
     if not contact.has_linkedin:
@@ -306,6 +316,8 @@ def get_contact_issues(contact: ContactInfo, full_text: str = "") -> List[Dict]:
             'issue_type': 'CONTACT_MISSING_LINKEDIN',
             'location': 'Contact Information',
             'description': 'No LinkedIn profile URL found',
+            'current': '',
+            'is_highlightable': False,
         })
     
     if full_text:
@@ -315,6 +327,8 @@ def get_contact_issues(contact: ContactInfo, full_text: str = "") -> List[Dict]:
                 'issue_type': 'CONTACT_MISSING_LOCATION',
                 'location': 'Contact Information',
                 'description': 'No location (city, state) found in CV header',
+                'current': '',
+                'is_highlightable': False,
             })
         
         if is_tech_cv(full_text) and not contact.github:
@@ -322,6 +336,8 @@ def get_contact_issues(contact: ContactInfo, full_text: str = "") -> List[Dict]:
                 'issue_type': 'CONTACT_MISSING_GITHUB',
                 'location': 'Contact Information',
                 'description': 'No GitHub profile found - recommended for technical roles',
+                'current': '',
+                'is_highlightable': False,
             })
         
         if check_photo_included(full_text):
@@ -329,6 +345,8 @@ def get_contact_issues(contact: ContactInfo, full_text: str = "") -> List[Dict]:
                 'issue_type': 'CONTACT_PHOTO_INCLUDED',
                 'location': 'Contact Information',
                 'description': 'Photo indicator detected - photos may cause bias in US/UK hiring',
+                'current': '[photo]',
+                'is_highlightable': True,
             })
         
         mixed_separators = check_inconsistent_separators(full_text)
@@ -338,6 +356,7 @@ def get_contact_issues(contact: ContactInfo, full_text: str = "") -> List[Dict]:
                 'location': 'Contact Information',
                 'description': f'Mixed separators in contact section: {", ".join(mixed_separators)}',
                 'current': ', '.join(mixed_separators),
+                'is_highlightable': False,
             })
     
     return issues
