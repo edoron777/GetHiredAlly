@@ -524,6 +524,8 @@ async def analyze_cv_with_ai(cv_content: str, user_id: str, is_markdown: bool = 
                 issue['fix_difficulty'] = _get_fix_difficulty(issue.get('issue_type', ''))
             if 'is_auto_fixable' not in issue:
                 issue['is_auto_fixable'] = _is_auto_fixable(issue.get('issue_type', ''))
+            if 'current' in issue and 'current_text' not in issue:
+                issue['current_text'] = issue['current']
         
         logger.info(f"[CV_SCAN] Static detection complete. Total issues: {len(issues)}")
         
