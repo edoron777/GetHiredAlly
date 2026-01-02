@@ -1,0 +1,250 @@
+# REQUEST FOR INFORMATION: CV Optimizer Results Page
+
+## PURPOSE
+Before making any code changes, I need to understand the current implementation of the CV Optimizer results page. Please provide detailed information about the existing code structure.
+
+## INSTRUCTIONS
+- Answer each question with specific file paths and code snippets where relevant
+- If you don't have information, clearly state "NO INFORMATION AVAILABLE"
+- Do NOT make any code changes - this is information gathering only
+
+---
+
+## SECTION 1: FILE STRUCTURE
+
+### Question 1.1
+List ALL files in `client/src/pages/cv-optimizer/` directory.
+For each file, provide:
+- File name
+- File size (lines of code)
+- Main purpose (1 sentence)
+
+### Question 1.2
+List ALL files in `client/src/components/common/` directory that are related to CV Optimizer:
+- TextMarker/
+- TipBox/
+- ActionBar/
+- DocStyler/
+- Any other relevant components
+
+### Question 1.3
+List ALL backend files related to CV Optimizer:
+- `backend/app/cv_optimizer.py`
+- `backend/common/detection/` directory
+- Any other relevant files
+
+---
+
+## SECTION 2: RESULTS PAGE IMPLEMENTATION
+
+### Question 2.1
+In the main CV Optimizer results page (likely `ResultsPage.tsx` or similar):
+- What is the exact file path?
+- What components are imported?
+- Is `TextMarker` imported and used? Show the import statement.
+- Is `TipBox` imported and used? Show the import statement.
+
+### Question 2.2
+Show me the JSX structure of the results page. Specifically:
+- What view modes exist (Document View, List View, Side by Side)?
+- How are tabs/buttons implemented for switching views?
+- What is the parent container structure?
+
+### Question 2.3
+Is there a component or code section for "Side by Side" view?
+- If YES: What file is it in? Is it currently rendered or hidden?
+- If NO: Was it ever implemented?
+
+### Question 2.4
+Is there a component or code section for "Original" and "Fixed" CV views?
+- If YES: What files contain this code?
+- If NO: How is the CV content currently displayed?
+
+---
+
+## SECTION 3: TEXTMARKER IMPLEMENTATION
+
+### Question 3.1
+Is the TextMarker component located at `client/src/components/common/TextMarker/`?
+- List all files in this directory
+- Is it exported in index.ts?
+
+### Question 3.2
+Show me where TextMarker is used (if anywhere) in the CV Optimizer results:
+- Which file imports it?
+- How is it configured? (show the props passed)
+- Is the `onClick` handler connected to TipBox?
+
+### Question 3.3
+If TextMarker is NOT used, how is CV content currently displayed?
+- Plain text in a div?
+- Markdown renderer?
+- Something else?
+
+---
+
+## SECTION 4: TIPBOX IMPLEMENTATION
+
+### Question 4.1
+Is the TipBox component located at `client/src/components/common/TipBox/`?
+- List all files in this directory
+- Is it exported in index.ts?
+
+### Question 4.2
+Show me where TipBox is used in the CV Optimizer results:
+- Which file imports it?
+- What triggers the TipBox to open?
+- How is state managed (useState, context, etc.)?
+
+### Question 4.3
+What data is passed to TipBox?
+- Show the props being passed
+- Where does the issue data come from?
+
+---
+
+## SECTION 5: LEFT SIDEBAR IMPLEMENTATION
+
+### Question 5.1
+Is there a sidebar component for issue navigation?
+- What is the file path?
+- Is it a separate component or inline code?
+
+### Question 5.2
+What happens when user clicks an issue in the sidebar?
+- Does it scroll to the issue location?
+- Does it open TipBox?
+- Does nothing happen?
+
+### Question 5.3
+Is there filter functionality in the sidebar?
+- Filter by severity (Critical, Important, Consider, Polish)?
+- Filter by category?
+- Sort options?
+
+---
+
+## SECTION 6: DATA FLOW
+
+### Question 6.1
+When the results page loads, what API endpoint is called?
+- Show the fetch/axios call
+- What data structure is returned?
+
+### Question 6.2
+Show me a sample of the issue data structure returned by the API:
+```typescript
+interface Issue {
+  id: ?
+  issue_type: ?
+  current_text: ?  // Text to highlight
+  match_text: ?    // Same or different?
+  line_number: ?   // Does this exist?
+  severity: ?
+  // ... other fields?
+}
+```
+
+### Question 6.3
+Is the original CV text stored and accessible?
+- Where is `cvContent` or equivalent stored?
+- Is there an "optimized" or "fixed" version stored separately?
+
+---
+
+## SECTION 7: ACTION BAR & EXPORTS
+
+### Question 7.1
+Is there an ActionBar component for exports?
+- What file path?
+- What export options are available?
+
+### Question 7.2
+What happens when user clicks PDF/Word/Copy buttons?
+- Show the click handler code
+- Is DocStyler used?
+
+### Question 7.3
+Show me the export dropdown options code:
+- "Optimized CV"
+- "Recommendations Only"
+- "Both (Full Report)"
+
+---
+
+## SECTION 8: STATE MANAGEMENT
+
+### Question 8.1
+How is state managed in the results page?
+- useState hooks (list them)
+- useContext?
+- External state management (Zustand, Redux)?
+
+### Question 8.2
+List all useState hooks in the results page with their purpose:
+```typescript
+const [issues, setIssues] = useState(?)  // purpose
+const [selectedIssue, setSelectedIssue] = useState(?)  // purpose
+// ... etc
+```
+
+### Question 8.3
+Is there a context provider for CV Optimizer?
+- File path?
+- What data does it provide?
+
+---
+
+## SECTION 9: MISSING FEATURES CHECK
+
+### Question 9.1
+Is there a "Rescan CV" button?
+- If YES: Where is it and what does it do?
+- If NO: Is there related code that was removed?
+
+### Question 9.2
+Is there score recalculation after user fixes issues?
+- How is score displayed?
+- Does it update in real-time?
+
+### Question 9.3
+Is there "Apply to CV" functionality?
+- What happens when user applies a fix?
+- Is the CV content updated in state?
+
+---
+
+## SECTION 10: DATABASE QUERIES
+
+### Question 10.1
+Show me the backend query that fetches issues for a CV analysis:
+- SQL query or ORM code
+- What fields are selected?
+- Is `match_text` or `current_text` included?
+
+### Question 10.2
+Is there a query to fetch the original CV text and optimized CV text?
+- Show the relevant code
+
+---
+
+## OUTPUT FORMAT
+
+Please provide your answers in this format:
+
+### SECTION X: [Section Name]
+
+**Question X.Y:**
+- Answer: [Your answer]
+- File Path: [If applicable]
+- Code Snippet:
+```
+[Relevant code]
+```
+
+---
+
+## REMINDER
+- Information gathering ONLY
+- Do NOT modify any code
+- Say "NO INFORMATION AVAILABLE" if you cannot find something
