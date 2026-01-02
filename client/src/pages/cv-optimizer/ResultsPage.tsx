@@ -73,6 +73,30 @@ export default function ResultsPage() {
   const [isRescanning, setIsRescanning] = useState(false);
   const [scanHistory, setScanHistory] = useState<{score: number, date: Date}[]>([]);
 
+  const normalizedIssues = useMemo(() => {
+    if (!reportData?.issues) return [];
+    return reportData.issues.map((issue, i) => normalizeIssue(issue, i));
+  }, [reportData?.issues]);
+
+  const cvContentText = fixedCV || reportData?.cv_content || '';
+  
+  const { highlightable, nonHighlightable } = useMemo(() => {
+    if (!cvContentText || !normalizedIssues.length) {
+      return { highlightable: [], nonHighlightable: [] };
+    }
+    return classifyIssues(normalizedIssues as any, cvContentText);
+  }, [normalizedIssues, cvContentText]);
+
+  useEffect(() => {
+    if (normalizedIssues.length > 0) {
+      console.log('Issue classification:', {
+        total: normalizedIssues.length,
+        highlightable: highlightable.length,
+        nonHighlightable: nonHighlightable.length
+      });
+    }
+  }, [highlightable, nonHighlightable, normalizedIssues.length]);
+
   useEffect(() => {
     if (!isAuthenticated()) {
       navigate('/login');
@@ -475,27 +499,6 @@ export default function ResultsPage() {
       </div>
     );
   }
-
-  const normalizedIssues = reportData.issues.map((issue, i) => normalizeIssue(issue, i));
-
-  const cvContentText = fixedCV || reportData.cv_content;
-  
-  const { highlightable, nonHighlightable } = useMemo(() => {
-    if (!cvContentText || !normalizedIssues.length) {
-      return { highlightable: [], nonHighlightable: [] };
-    }
-    return classifyIssues(normalizedIssues as any, cvContentText);
-  }, [normalizedIssues, cvContentText]);
-
-  useEffect(() => {
-    if (normalizedIssues.length > 0) {
-      console.log('Issue classification:', {
-        total: normalizedIssues.length,
-        highlightable: highlightable.length,
-        nonHighlightable: nonHighlightable.length
-      });
-    }
-  }, [highlightable, nonHighlightable, normalizedIssues.length]);
 
   const cvContent = {
     fullText: cvContentText
