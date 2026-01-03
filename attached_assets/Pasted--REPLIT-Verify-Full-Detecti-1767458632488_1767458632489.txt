@@ -1,0 +1,184 @@
+═══════════════════════════════════════════════════════════════════════
+REPLIT: Verify Full Detection Pipeline
+═══════════════════════════════════════════════════════════════════════
+
+PREREQUISITE: REPLIT-2#3 must be completed.
+
+TASK:
+Test that all 6 new issue types are being detected correctly.
+
+───────────────────────────────────────────────────────────────────────
+TEST 1: Skills Detection (already working)
+───────────────────────────────────────────────────────────────────────
+
+Test CV without skills section:
+- Should detect: FORMAT_SKILLS_SECTION_MISSING
+
+Test CV with skills at bottom:
+- Should detect: FORMAT_SKILLS_SECTION_POSITION
+
+───────────────────────────────────────────────────────────────────────
+TEST 2: Summary Length Detection
+───────────────────────────────────────────────────────────────────────
+
+Test CV with long summary (>100 words or >5 sentences):
+- Should detect: CONTENT_SUMMARY_TOO_LONG
+
+───────────────────────────────────────────────────────────────────────
+TEST 3: Job Description Length Detection
+───────────────────────────────────────────────────────────────────────
+
+Test CV with brief job entry (<3 bullets or <50 words):
+- Should detect: CONTENT_JOB_DESCRIPTION_TOO_SHORT
+
+Test CV with excessive job entry (>8 bullets or >200 words):
+- Should detect: CONTENT_JOB_DESCRIPTION_TOO_LONG
+
+───────────────────────────────────────────────────────────────────────
+TEST 4: Education Description Detection
+───────────────────────────────────────────────────────────────────────
+
+Test CV with minimal education (recent grad, <10 words detail):
+- Should detect: CONTENT_EDUCATION_DESCRIPTION_TOO_SHORT
+
+Test CV with experienced professional (5+ years):
+- Should NOT detect education issue (threshold applies)
+
+───────────────────────────────────────────────────────────────────────
+CREATE TEST FILE:
+───────────────────────────────────────────────────────────────────────
+
+FILE: backend/common/detection/test_full_pipeline.py
+
+"""Full pipeline test for all 6 new issue types"""
+
+# Import the main detection function
+from master_detector import detect_all_issues  # adjust import as needed
+
+# Test CV 1: Missing skills, short job, sparse education
+TEST_CV_1 = """
+John Smith
+Software Engineer
+john@email.com
+
+SUMMARY
+Experienced developer.
+
+EXPERIENCE
+Developer at TechCorp (2023-Present)
+- Wrote code
+- Fixed bugs
+
+EDUCATION
+BS Computer Science, MIT 2023
+"""
+
+# Test CV 2: Skills at bottom, long summary
+TEST_CV_2 = """
+Jane Doe
+Product Manager
+
+SUMMARY
+Results-driven product manager with over 10 years of experience in technology companies specializing in building scalable products and leading cross-functional teams. I am passionate about creating innovative solutions that drive business growth and improve user experiences. Throughout my career I have consistently delivered successful product launches and mentored junior team members. I am a collaborative leader who thrives in fast-paced environments and I am always eager to learn new methodologies and technologies. I believe in data-driven decision making and staying up-to-date with industry best practices and emerging trends in product management.
+
+EXPERIENCE
+Senior PM at BigCorp (2020-Present)
+- Led product roadmap for flagship product
+- Managed team of 5 engineers
+- Launched 3 major features
+- Increased user engagement by 40%
+
+EDUCATION
+MBA, Stanford 2015
+Relevant coursework in strategy and leadership.
+
+SKILLS
+Product Strategy, Agile, SQL, Jira
+"""
+
+def run_pipeline_test():
+    print("\\n=== Full Pipeline Test ===\\n")
+    
+    print("TEST CV 1: Should detect multiple issues")
+    issues_1 = detect_all_issues(TEST_CV_1)
+    
+    expected_1 = [
+        'FORMAT_SKILLS_SECTION_MISSING',
+        'CONTENT_JOB_DESCRIPTION_TOO_SHORT',
+        'CONTENT_EDUCATION_DESCRIPTION_TOO_SHORT'
+    ]
+    
+    found_1 = [i['issue_type'] for i in issues_1]
+    
+    for expected in expected_1:
+        if expected in found_1:
+            print(f"  ✅ {expected}")
+        else:
+            print(f"  ❌ {expected} NOT DETECTED")
+    
+    print("\\nTEST CV 2: Should detect skills position and long summary")
+    issues_2 = detect_all_issues(TEST_CV_2)
+    
+    expected_2 = [
+        'FORMAT_SKILLS_SECTION_POSITION',
+        'CONTENT_SUMMARY_TOO_LONG'
+    ]
+    
+    found_2 = [i['issue_type'] for i in issues_2]
+    
+    for expected in expected_2:
+        if expected in found_2:
+            print(f"  ✅ {expected}")
+        else:
+            print(f"  ❌ {expected} NOT DETECTED")
+    
+    print("\\n=== Pipeline Test Complete ===\\n")
+
+if __name__ == '__main__':
+    run_pipeline_test()
+
+───────────────────────────────────────────────────────────────────────
+RUN TEST:
+───────────────────────────────────────────────────────────────────────
+
+cd backend/common/detection
+python test_full_pipeline.py
+
+───────────────────────────────────────────────────────────────────────
+EXPECTED OUTPUT:
+───────────────────────────────────────────────────────────────────────
+
+=== Full Pipeline Test ===
+
+TEST CV 1: Should detect multiple issues
+  ✅ FORMAT_SKILLS_SECTION_MISSING
+  ✅ CONTENT_JOB_DESCRIPTION_TOO_SHORT
+  ✅ CONTENT_EDUCATION_DESCRIPTION_TOO_SHORT
+
+TEST CV 2: Should detect skills position and long summary
+  ✅ FORMAT_SKILLS_SECTION_POSITION
+  ✅ CONTENT_SUMMARY_TOO_LONG
+
+=== Pipeline Test Complete ===
+
+───────────────────────────────────────────────────────────────────────
+REPORT RESULTS:
+───────────────────────────────────────────────────────────────────────
+
+Report which tests passed/failed.
+If any issues not detected, report for debugging.
+
+───────────────────────────────────────────────────────────────────────
+CLEANUP (after tests pass):
+───────────────────────────────────────────────────────────────────────
+
+rm backend/common/detection/test_full_pipeline.py
+
+───────────────────────────────────────────────────────────────────────
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- Run tests EXACTLY as specified
+- Report ALL results
+- Do NOT fix issues in this prompt - report for follow-up
+
+═══════════════════════════════════════════════════════════════════════

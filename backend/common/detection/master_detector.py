@@ -177,12 +177,22 @@ def detect_all_issues(cv_text: str, job_description: str = None) -> List[Dict[st
         logger.error(f"Error detecting skills issues: {e}")
     
     # Length-Based Detection (v1.5)
-    # Note: These detectors require parsed sections (summary_text, experience_entries, education_entries)
-    # which are not yet available in the expected format. To enable:
-    # 1. Parse summary_text from structure.summary
-    # 2. Parse experience_entries as List[Dict] with company, title, bullets
-    # 3. Parse education_entries as List[Dict] with institution, degree, description
-    # 4. Calculate years_experience from experience dates
+    try:
+        # Summary length detection - structure.summary is available as raw text
+        if structure and structure.summary:
+            summary_issues = detect_summary_too_long(structure.summary)
+            all_issues.extend(summary_issues)
+            logger.info(f"Summary length issues found: {len(summary_issues)}")
+        
+        # Note: Experience and Education length detectors require parsed entries
+        # in List[Dict] format (company/title/bullets, institution/degree/description).
+        # Currently structure.experience and structure.education are raw text.
+        # TODO: Add experience/education parsing functions to enable:
+        # - detect_job_description_too_short(experience_entries)
+        # - detect_job_description_too_long(experience_entries)
+        # - detect_education_description_too_short(education_entries, years_experience)
+    except Exception as e:
+        logger.error(f"Error detecting length issues: {e}")
     
     logger.info(f"Static detection complete. Total issues: {len(all_issues)}")
     
