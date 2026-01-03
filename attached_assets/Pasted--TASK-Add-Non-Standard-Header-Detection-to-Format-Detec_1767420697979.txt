@@ -1,0 +1,69 @@
+# TASK: Add Non-Standard Header Detection to Format Detector
+
+## CONTEXT
+ATS systems expect standard section headers like "Experience" not creative alternatives 
+like "Career Journey" or "My Story". Non-standard headers may not be recognized.
+
+## WHAT TO MODIFY
+
+### File: backend/common/detection/format_detector.py
+
+### Detection Logic
+
+**Standard headers (accepted):**
+- Experience, Work Experience, Professional Experience, Employment History
+- Education, Academic Background
+- Skills, Technical Skills, Core Competencies
+- Summary, Professional Summary, Profile
+
+**Non-standard headers (flag):**
+- Career Journey, My Journey
+- What I Do, About Me
+- My Story, Background
+- Toolkit, Arsenal (for skills)
+- Learning, Studies (for education)
+
+### Code to Add
+```python
+STANDARD_HEADERS = {
+    'experience': ['experience', 'work experience', 'professional experience', 'employment', 'employment history', 'work history'],
+    'education': ['education', 'academic', 'academic background', 'qualifications'],
+    'skills': ['skills', 'technical skills', 'core competencies', 'competencies', 'expertise', 'technologies'],
+    'summary': ['summary', 'professional summary', 'profile', 'professional profile', 'executive summary'],
+}
+
+NONSTANDARD_HEADERS = [
+    'career journey', 'my journey', 'journey',
+    'what i do', 'about me', 'about',
+    'my story', 'background', 'bio',
+    'toolkit', 'arsenal', 'tech stack',
+    'learning', 'studies', 'schooling',
+]
+
+def detect_nonstandard_headers(cv_text: str) -> List[Dict]:
+    """Detect creative/non-standard section headers that ATS may not recognize."""
+    issues = []
+    lines = cv_text.split('\n')
+    
+    for line in lines:
+        line_lower = line.strip().lower()
+        # Check if line looks like a header (short, possibly all caps or title case)
+        if len(line.strip()) < 30 and line.strip():
+            for nonstandard in NONSTANDARD_HEADERS:
+                if nonstandard in line_lower:
+                    issues.append({
+                        'issue_type': 'FORMAT_NONSTANDARD_HEADERS',
+                        'location': 'Section Headers',
+                        'description': f'Non-standard section header detected. ATS may not recognize creative headers.',
+                        'current': line.strip(),
+                        'is_highlightable': True,
+                    })
+                    break
+    
+    return issues
+```
+
+## CONSTRAINTS
+- Add to existing format_detector.py
+- Only flag clearly non-standard headers
+- Don't flag standard variations

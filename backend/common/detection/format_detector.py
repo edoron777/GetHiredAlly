@@ -48,6 +48,14 @@ TABLE_PATTERNS = [
     re.compile(r'\|.*\|.*\|'),
 ]
 
+NONSTANDARD_HEADERS = [
+    'career journey', 'my journey', 'journey',
+    'what i do', 'about me',
+    'my story', 'bio',
+    'toolkit', 'arsenal', 'tech stack',
+    'learning', 'studies', 'schooling',
+]
+
 
 def detect_date_inconsistency(text: str) -> List[Dict]:
     """
@@ -380,6 +388,40 @@ def detect_special_characters(text: str) -> List[Dict]:
     return issues
 
 
+def detect_nonstandard_headers(cv_text: str) -> List[Dict]:
+    """
+    Detect creative/non-standard section headers that ATS may not recognize.
+    
+    Args:
+        cv_text: Full CV text
+        
+    Returns:
+        List of FORMAT_NONSTANDARD_HEADERS issues
+    """
+    issues = []
+    lines = cv_text.split('\n')
+    found_headers = set()
+    
+    for line in lines:
+        line_stripped = line.strip()
+        line_lower = line_stripped.lower()
+        
+        if len(line_stripped) < 30 and line_stripped:
+            for nonstandard in NONSTANDARD_HEADERS:
+                if nonstandard in line_lower and nonstandard not in found_headers:
+                    found_headers.add(nonstandard)
+                    issues.append({
+                        'issue_type': 'FORMAT_NONSTANDARD_HEADERS',
+                        'location': 'Section Headers',
+                        'description': f'Non-standard section header detected. ATS may not recognize creative headers.',
+                        'current': line_stripped,
+                        'is_highlightable': True,
+                    })
+                    break
+    
+    return issues
+
+
 def detect_skills_format_issues(text: str) -> List[Dict]:
     """
     Detect if skills are written as paragraphs instead of lists.
@@ -445,6 +487,7 @@ def detect_format_issues(text: str) -> List[Dict]:
     issues.extend(detect_tables(text))
     issues.extend(detect_multiple_columns(text))
     issues.extend(detect_special_characters(text))
+    issues.extend(detect_nonstandard_headers(text))
     issues.extend(detect_skills_format_issues(text))
     
     return issues
