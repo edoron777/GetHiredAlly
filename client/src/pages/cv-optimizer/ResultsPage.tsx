@@ -23,21 +23,30 @@ interface CVIssue {
   issue?: string;
   title?: string;
   issue_title?: string;
+  display_name?: string;
   description?: string;
   issue_description?: string;
   category?: string;
+  subcategory_name?: string;
   location?: string;
   problematic_text?: string;
   matchText?: string;
   current_text?: string;
   current?: string;
+  example_before?: string;
+  example_after?: string;
   suggested_fix?: string;
   suggestedText?: string;
+  suggestion?: string;
+  static_tip?: string;
   fix_difficulty?: string;
   is_auto_fixable?: boolean;
+  can_auto_fix?: boolean;
   impact?: string;
   howToFix?: string;
   how_to_fix?: string;
+  what_to_avoid?: string;
+  show_what_to_avoid?: boolean;
 }
 
 interface ReportData {
@@ -76,19 +85,36 @@ export default function ResultsPage() {
 
   const normalizeIssue = (issue: CVIssue, index: number) => ({
     id: issue.id || String(index + 1),
-    severity: issue.severity,
+    severity: issue.severity || 'consider',
     issueType: issue.issue_type || issue.issueType || 'UNKNOWN',
-    title: issue.issue || issue.title || issue.issue_title || 'Issue',
-    description: issue.description || issue.issue_description || issue.issue || '',
-    category: issue.category || '',
+    
+    title: issue.display_name || issue.issue || issue.title || issue.issue_title || 'Issue',
+    display_name: issue.display_name || '',
+    
+    category: issue.category || issue.subcategory_name || '',
+    subcategory_name: issue.subcategory_name || '',
     location: issue.location || '',
-    matchText: issue.current || issue.current_text || issue.problematic_text || issue.matchText || '',
-    currentText: issue.current || issue.current_text || issue.problematic_text || issue.matchText || '',
-    suggestedText: issue.suggested_fix || issue.suggestedText || '',
+    
+    matchText: issue.current || issue.current_text || issue.example_before || issue.problematic_text || issue.matchText || '',
+    currentText: issue.current || issue.current_text || issue.example_before || issue.problematic_text || issue.matchText || '',
+    current: issue.current || issue.current_text || '',
+    example_before: issue.example_before || '',
+    
+    description: issue.description || issue.issue_description || '',
+    
+    howToFix: issue.static_tip || issue.suggestion || issue.how_to_fix || issue.howToFix || '',
+    static_tip: issue.static_tip || '',
+    suggestion: issue.suggestion || '',
+    
+    suggestedText: issue.example_after || issue.suggestion || issue.suggested_fix || issue.suggestedText || '',
+    example_after: issue.example_after || '',
+    
+    what_to_avoid: issue.what_to_avoid || '',
+    show_what_to_avoid: issue.show_what_to_avoid || false,
+    
     fixDifficulty: issue.fix_difficulty || 'medium',
-    isAutoFixable: issue.is_auto_fixable || false,
+    isAutoFixable: issue.is_auto_fixable || issue.can_auto_fix || false,
     impact: issue.impact || '',
-    howToFix: issue.how_to_fix || issue.howToFix || '',
   });
 
   const normalizedIssues = useMemo(() => {

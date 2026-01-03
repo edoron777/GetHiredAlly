@@ -1,0 +1,56 @@
+# TASK: Fix normalizeIssue() - Pass Through All Fields
+
+## ROOT CAUSE
+normalizeIssue() function filters out new database fields.
+TipBox v2.0 is correct but receives empty data.
+
+## FILE TO MODIFY
+client/src/pages/cv-optimizer/ResultsPage.tsx
+
+## FIND THIS FUNCTION (around lines 77-92)
+const normalizeIssue = (issue: CVIssue, index: number) => ({
+  ...existing code...
+});
+
+## REPLACE WITH
+
+const normalizeIssue = (issue: CVIssue, index: number) => ({
+  // Core identifiers
+  id: issue.id || String(index + 1),
+  severity: issue.severity || 'consider',
+  issueType: issue.issue_type || issue.issueType || 'UNKNOWN',
+  
+  // Title - prefer display_name (short) over issue (long)
+  title: issue.display_name || issue.issue || issue.title || issue.issue_title || 'Issue',
+  display_name: issue.display_name || '',
+  
+  // Category
+  category: issue.category || issue.subcategory_name || '',
+  subcategory_name: issue.subcategory_name || '',
+  
+  // Location
+  location: issue.location || '',
+  
+  // Current text (what's wrong in CV)
+  matchText: issue.current || issue.current_text || issue.example_before || issue.problematic_text || issue.matchText || '',
+  currentText: issue.current || issue.current_text || issue.example_before || issue.problematic_text || issue.matchText || '',
+  example_before: issue.example_before || '',
+  
+  // Description (Why This Matters)
+  description: issue.description || issue.issue_description || '',
+  
+  // How to fix
+  howToFix: issue.static_tip || issue.suggestion || issue.how_to_fix || issue.howToFix || '',
+  static_tip: issue.static_tip || '',
+  suggestion: issue.suggestion || '',
+  
+  // Good example (suggested text)
+  suggestedText: issue.example_after || issue.suggestion || issue.suggested_fix || issue.suggestedText || '',
+  example_after: issue.example_after || '',
+  
+  // What to avoid (NEW for v2.0)
+  what_to_avoid: issue.what_to_avoid || '',
+  show_what_to_avoid: issue.show_what_to_avoid || false,
+  
+  // Auto-fix
+  isAutoFixable: i
