@@ -49,11 +49,11 @@ export interface DocumentEditorProps {
  * Default configuration values
  */
 export const DEFAULT_DOCUMENT_CONFIG: DocumentEditorConfig = {
-  maxWidth: 1235,
+  maxWidth: 1600,
   minHeight: 800,
   padding: 60,
   fontFamily: "'Source Sans Pro', -apple-system, BlinkMacSystemFont, sans-serif",
-  fontSize: 18,
+  fontSize: 20,
   lineHeight: 1.7,
   showWordMargins: true,
   marginColor: '#e8eaed',

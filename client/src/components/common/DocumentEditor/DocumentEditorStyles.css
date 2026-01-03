@@ -11,7 +11,7 @@
 
 .document-editor-paper {
   background: var(--doc-paper-color, #ffffff);
-  max-width: var(--doc-max-width, 1400px);
+  max-width: var(--doc-max-width, 1600px);
   width: 100%;
   min-height: var(--doc-min-height, 800px);
   padding: var(--doc-padding, 60px);
@@ -25,7 +25,7 @@
 
 .document-editor-content {
   font-family: var(--doc-font-family, 'Source Sans Pro', sans-serif);
-  font-size: var(--doc-font-size, 18px);
+  font-size: var(--doc-font-size, 20px);
   line-height: var(--doc-line-height, 1.7);
   color: #1a1a1a;
 }

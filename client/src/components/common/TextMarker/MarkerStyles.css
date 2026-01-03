@@ -113,3 +113,22 @@
 .marker-icon-after {
   margin-left: 4px;
 }
+
+/* Colored marker icon - matches severity color */
+.marker-icon-colored {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: currentColor;
+  margin-left: 6px;
+  vertical-align: middle;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8);
+}
+
+.marker-icon-colored:hover {
+  transform: scale(1.4);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 1), 0 0 8px currentColor;
+}

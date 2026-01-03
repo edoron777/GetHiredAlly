@@ -41,7 +41,7 @@ export const MarkdownRenderer: React.FC<RendererProps> = ({
                   config={{
                     style: 'rectangle',
                     tagColors: CV_OPTIMIZER_COLORS,
-                    icon: { icon: 'ⓘ', position: 'after' },
+                    icon: { icon: '●', position: 'after', className: 'marker-icon-colored' },
                     onClick: onMarkerClick,
                     ...markerConfig
                   }}
