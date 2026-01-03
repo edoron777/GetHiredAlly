@@ -1,0 +1,92 @@
+═══════════════════════════════════════════════════════════════════
+DEBUG PROMPT: DocumentEditor Border & Markdown Issues
+═══════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL: This is an INVESTIGATION, not a fix.
+Do NOT change any code until root cause is confirmed.
+
+───────────────────────────────────────────────────────────────────
+
+PROBLEM DESCRIPTION:
+
+Problem 1: White border appears around document paper
+- Expected: Gray background (#e8eaed) directly touching white paper, no border
+- Actual: White border/frame visible between gray and white areas
+
+Problem 2: Markdown not rendering
+- Expected: **bold** displays as bold text
+- Actual: **bold** displays as raw ** characters
+
+───────────────────────────────────────────────────────────────────
+
+INVESTIGATION QUESTIONS:
+
+1. BORDER SOURCE:
+   - Run this in browser DevTools on div.document-editor-paper:
+   - What CSS rules set border or border-color?
+   - Which file/stylesheet applies the border?
+   
+2. CSS SPECIFICITY CHECK:
+   - Does DocumentEditorStyles.css load AFTER global styles?
+   - Check: Is there any other CSS file that styles .document-editor-paper?
+   
+   Run: grep -r "document-editor-paper" client/src --include="*.css"
+   
+3. TAILWIND/SHADCN CHECK:
+   - Does the component use any Tailwind classes that add borders?
+   - Check: Are there any global styles in index.css or globals.css?
+   
+   Run: grep -r "border" client/src/index.css client/src/globals.css 2>/dev/null
+   Run: cat client/src/index.css | head -50
+
+4. MARKDOWN DETECTION CHECK:
+   - Add console.log to see what's happening:
+   
+   In DocumentEditor.tsx, add after line 24 (after detectedFormat is set):
+   console.log('DEBUG DocumentEditor:', { 
+     detectedFormat, 
+     originalFileName, 
+     contentPreview: content?.substring(0, 100),
+     hasDoubleAsterisks: content?.includes('**')
+   })
+   
+   - Refresh page and check browser Console (F12)
+   - Report what the console shows
+
+5. RENDERER CHECK:
+   - In MarkdownRenderer.tsx, add at the start of the component:
+   console.log('DEBUG MarkdownRenderer called with content length:', content?.length)
+   
+   - Is MarkdownRenderer even being called?
+
+───────────────────────────────────────────────────────────────────
+
+REPORT FORMAT:
+
+FINDING 1 - Border Source:
+- CSS rule applying border: __________
+- Source file: __________
+- Specificity issue: YES/NO
+
+FINDING 2 - Markdown Detection:
+- Console log shows detectedFormat: __________
+- Console log shows hasDoubleAsterisks: __________
+- MarkdownRenderer called: YES/NO
+
+FINDING 3 - Global Styles:
+- index.css has border styles: YES/NO
+- Other CSS files affect component: YES/NO
+
+ROOT CAUSE:
+[ ] RC-1: Imprecise Prompt
+[ ] RC-2: Partial Implementation  
+[ ] RC-3: Ignored Instructions
+[ ] RC-4: Wrong AI/Code Mix
+[ ] RC-5: Other: __________
+
+───────────────────────────────────────────────────────────────────
+
+DO NOT FIX ANYTHING YET.
+Report findings first.
+
+═══════════════════════════════════════════════════════════════════

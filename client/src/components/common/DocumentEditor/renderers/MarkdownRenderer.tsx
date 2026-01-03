@@ -34,7 +34,7 @@ export const MarkdownRenderer: React.FC<RendererProps> = ({
             }
             
             return (
-              <p>
+              <div className="markdown-paragraph">
                 <TextMarker
                   content={text}
                   markers={relevantMarkers}
@@ -46,7 +46,7 @@ export const MarkdownRenderer: React.FC<RendererProps> = ({
                     ...markerConfig
                   }}
                 />
-              </p>
+              </div>
             )
           }
         }}

@@ -1,8 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { FileText, List, Copy, Check, ArrowLeft, Loader2, RefreshCw, Columns } from 'lucide-react';
-import DocumentView from '../../components/cv-optimizer/DocumentView';
-// import { CVDocument, classifyIssues } from '../../components/cv-optimizer/DocumentView';
 import { classifyIssues } from '../../components/cv-optimizer/DocumentView';
 import { DocumentEditor } from '../../components/common/DocumentEditor';
 import { TipBox } from '../../components/common/TipBox';
@@ -704,8 +702,7 @@ export default function ResultsPage() {
           
           {activeTab === 'document' ? (
             <>
-              <DocumentView>
-                <DocumentEditor
+              <DocumentEditor
                   content={cvContent?.fullText || ''}
                   format="auto"
                   markers={documentIssues.map(issue => ({
@@ -722,7 +719,6 @@ export default function ResultsPage() {
                     enableHighlighting: true
                   }}
                 />
-              </DocumentView>
 
               {formatIssues.length > 0 && (
                 <QuickFormatPanel
