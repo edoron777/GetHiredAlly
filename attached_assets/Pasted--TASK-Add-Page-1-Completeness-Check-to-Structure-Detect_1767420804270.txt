@@ -1,0 +1,77 @@
+# TASK: Add Page 1 Completeness Check to Structure Detector
+
+## CONTEXT
+Research shows -50% ATS ranking if first page is missing Summary or Skills sections.
+The most important information must appear on page 1.
+
+## WHAT TO MODIFY
+
+### File: backend/common/detection/structure_detector.py (created in Issue #1)
+
+### Detection Logic
+
+**Page 1 must contain:**
+- Contact Information (obvious)
+- Professional Summary OR Profile
+- Skills section (at minimum start of it)
+
+**Violation triggers:**
+- No Summary/Profile in first ~40 lines (approximately 1 page)
+- No Skills section in first ~50 lines
+
+**Note:** Without actual page detection, estimate 40-50 lines = 1 page
+
+### Code to Add
+```python
+def detect_page1_completeness(cv_text: str) -> List[Dict]:
+    """Check if Page 1 contains essential sections."""
+    issues = []
+    lines = cv_text.split('\n')
+    first_page_lines = lines[:45]  # Approximate first page
+    first_page_text = '\n'.join(first_page_lines)
+    
+    # Check for Summary/Profile on page 1
+    has_summary = bool(re.search(
+        r'(?i)(professional\s+)?summary|profile|objective',
+        first_page_text
+    ))
+    
+    # Check for Skills on page 1
+    has_skills = bool(re.search(
+        r'(?i)(technical\s+)?skills|competencies|expertise',
+        first_page_text
+    ))
+    
+    if not has_summary and not has_skills:
+        issues.append({
+            'issue_type': 'FORMAT_PAGE1_INCOMPLETE',
+            'location': 'First Page',
+            'description': 'First page is missing both Summary and Skills sections. Key information should appear on page 1.',
+            'current': '',
+            'is_highlightable': False,
+        })
+    elif not has_summary:
+        issues.append({
+            'issue_type': 'FORMAT_PAGE1_INCOMPLETE',
+            'location': 'First Page',
+            'description': 'First page is missing a Professional Summary section.',
+            'current': '',
+            'is_highlightable': False,
+        })
+    
+    return issues
+```
+
+### Add call in detect_structure_issues():
+```python
+def detect_structure_issues(cv_text: str) -> List[Dict]:
+    issues = []
+    issues.extend(detect_section_order_issues(cv_text))
+    issues.extend(detect_page1_completeness(cv_text))  # Add this
+    return issues
+```
+
+## CONSTRAINTS
+- Add to structure_detector.py
+- Use line count as page estimate
+- Non-highlightable (structural issue)

@@ -212,14 +212,24 @@ def get_section_issues(structure: CVStructure) -> List[Dict]:
             'current': '',
             'is_highlightable': False,
         })
-    elif structure.summary and len(structure.summary.split()) < 30:
-        issues.append({
-            'issue_type': 'CONTENT_SHORT_SUMMARY',
-            'location': 'Summary Section',
-            'description': f'Summary is too short ({len(structure.summary.split())} words, recommend 30-60)',
-            'current': structure.summary[:100] if len(structure.summary) > 100 else structure.summary,
-            'is_highlightable': True,
-        })
+    elif structure.summary:
+        word_count = len(structure.summary.split())
+        if word_count < 30:
+            issues.append({
+                'issue_type': 'CONTENT_SHORT_SUMMARY',
+                'location': 'Summary Section',
+                'description': f'Summary is too short ({word_count} words, recommend 30-60)',
+                'current': structure.summary[:100] if len(structure.summary) > 100 else structure.summary,
+                'is_highlightable': True,
+            })
+        elif word_count > 80:
+            issues.append({
+                'issue_type': 'LENGTH_SUMMARY_TOO_LONG',
+                'location': 'Professional Summary',
+                'description': f'Summary is {word_count} words. Summaries over 80 words become walls of text that recruiters skip.',
+                'current': structure.summary[:150] + '...' if len(structure.summary) > 150 else structure.summary,
+                'is_highlightable': True,
+            })
     
     if 'education' in structure.section_order and 'experience' in structure.section_order:
         edu_idx = structure.section_order.index('education')
