@@ -15,6 +15,8 @@
   width: 100%;
   min-height: var(--doc-min-height, 800px);
   padding: var(--doc-padding, 60px);
+  border: none !important;
+  border-color: transparent !important;
 }
 
 .document-editor-paper.with-shadow {
