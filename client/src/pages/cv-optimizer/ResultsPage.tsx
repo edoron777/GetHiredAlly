@@ -712,8 +712,8 @@ export default function ResultsPage() {
                   })).filter(m => m.matchText && m.matchText.length > 0)}
                   onMarkerClick={(id) => handleIssueClick(id)}
                   config={{
-                    maxWidth: 1400,
-                    fontSize: 18,
+                    maxWidth: 1600,
+                    fontSize: 20,
                     padding: 60,
                     showWordMargins: true,
                     enableHighlighting: true
