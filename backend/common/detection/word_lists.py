@@ -226,3 +226,36 @@ MONTH_NAMES = [
 CURRENT_INDICATORS = [
     "present", "current", "now", "ongoing", "today",
 ]
+
+# ═══════════════════════════════════════════════════════════════════════
+# LENGTH THRESHOLDS (v1.5)
+# Added: January 3, 2026
+# Purpose: Constants for length-based detection of CV issues
+# ═══════════════════════════════════════════════════════════════════════
+
+# Professional Summary Thresholds
+SUMMARY_MIN_WORDS = 30
+SUMMARY_MAX_WORDS = 100
+SUMMARY_MAX_SENTENCES = 5
+
+# Bullet Point Thresholds
+BULLET_MIN_WORDS = 10
+BULLET_MAX_WORDS = 30
+
+# Job Description Thresholds (per role)
+JOB_DESCRIPTION_MIN_BULLETS = 3
+JOB_DESCRIPTION_MAX_BULLETS = 8
+JOB_DESCRIPTION_MIN_WORDS = 50
+JOB_DESCRIPTION_MAX_WORDS = 200
+
+# Education Entry Thresholds
+EDUCATION_MIN_WORDS = 10
+EDUCATION_EXPERIENCE_THRESHOLD = 3
+
+# CV Overall Thresholds
+CV_MIN_WORDS = 300
+CV_MAX_WORDS_ONE_PAGE = 600
+CV_MAX_WORDS_TWO_PAGES = 1200
+
+# Skills Section Thresholds
+SKILLS_POSITION_THRESHOLD = 0.4
