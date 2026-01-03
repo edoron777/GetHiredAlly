@@ -580,7 +580,7 @@ export default function ResultsPage() {
       />
 
       <div className="flex-1 px-4 py-8">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-2xl font-bold" style={{ color: '#1E3A5F' }}>
               CV Analysis Results
