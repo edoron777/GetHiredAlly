@@ -2,7 +2,9 @@ import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { FileText, List, Copy, Check, ArrowLeft, Loader2, RefreshCw, Columns } from 'lucide-react';
 import DocumentView from '../../components/cv-optimizer/DocumentView';
-import { CVDocument, classifyIssues } from '../../components/cv-optimizer/DocumentView';
+// import { CVDocument, classifyIssues } from '../../components/cv-optimizer/DocumentView';
+import { classifyIssues } from '../../components/cv-optimizer/DocumentView';
+import { DocumentEditor } from '../../components/common/DocumentEditor';
 import { TipBox } from '../../components/common/TipBox';
 import type { TipBoxButton } from '../../components/common/TipBox';
 import type { TipBoxSection } from '../../components/common/TipBox/types';
@@ -703,10 +705,22 @@ export default function ResultsPage() {
           {activeTab === 'document' ? (
             <>
               <DocumentView>
-                <CVDocument 
-                  cvContent={cvContent} 
-                  issues={documentIssues}
-                  onIssueClick={handleIssueClick}
+                <DocumentEditor
+                  content={cvContent?.fullText || ''}
+                  format="text"
+                  markers={documentIssues.map(issue => ({
+                    id: issue.id?.toString() || '',
+                    matchText: issue.matchText || '',
+                    tag: issue.severity || 'consider'
+                  })).filter(m => m.matchText && m.matchText.length > 0)}
+                  onMarkerClick={(id) => handleIssueClick(id)}
+                  config={{
+                    maxWidth: 1235,
+                    fontSize: 18,
+                    padding: 60,
+                    showWordMargins: true,
+                    enableHighlighting: true
+                  }}
                 />
               </DocumentView>
 
