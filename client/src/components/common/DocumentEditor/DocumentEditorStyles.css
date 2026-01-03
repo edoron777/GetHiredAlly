@@ -142,6 +142,43 @@
   font-weight: 600;
 }
 
+.word-content {
+  line-height: 1.7;
+}
+
+.word-content p {
+  margin: 1em 0;
+}
+
+.word-content h1,
+.word-content h2,
+.word-content h3 {
+  font-weight: 700;
+  margin: 1em 0 0.5em;
+}
+
+.word-content ul,
+.word-content ol {
+  margin: 1em 0;
+  padding-left: 2em;
+}
+
+.word-content li {
+  margin: 0.5em 0;
+}
+
+.word-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  color: #6b7280;
+}
+
+.loading-spinner {
+  font-style: italic;
+}
+
 @media (max-width: 768px) {
   .document-editor-container {
     padding: 10px;
