@@ -44,23 +44,25 @@ export const TipBox: React.FC<TipBoxProps> = ({
       >
         <div className="tipbox-header" style={{ backgroundColor: colorScheme.primary }}>
           <div className="tipbox-header-content">
-            <span 
-              className="tipbox-severity-badge"
-              style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: colorScheme.text }}
-            >
-              {severity.toUpperCase()}
-            </span>
-            {category && (
-              <span 
-                className="tipbox-category-badge-header"
-                style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: colorScheme.text }}
-              >
-                {category}
-              </span>
-            )}
             <h3 className="tipbox-title" style={{ color: colorScheme.text }}>
               {title}
             </h3>
+            <div className="tipbox-tags">
+              <span 
+                className="tipbox-severity-badge"
+                style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: colorScheme.text }}
+              >
+                {severity.toUpperCase()}
+              </span>
+              {category && (
+                <span 
+                  className="tipbox-category-badge-header"
+                  style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: colorScheme.text }}
+                >
+                  {category}
+                </span>
+              )}
+            </div>
           </div>
           <button className="tipbox-close-btn" onClick={onClose} style={{ color: colorScheme.text }}>
             ✕

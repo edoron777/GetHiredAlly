@@ -380,7 +380,8 @@ export default function ResultsPage() {
       buttons.push({
         id: 'auto-fix',
         label: 'Auto Fix',
-        variant: 'success',
+        variant: 'secondary',
+        icon: '💡',
         onClick: () => handleAutoFix(issue)
       });
     }

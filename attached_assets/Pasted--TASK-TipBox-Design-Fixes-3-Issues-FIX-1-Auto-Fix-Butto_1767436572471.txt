@@ -1,0 +1,200 @@
+# TASK: TipBox Design Fixes - 3 Issues
+
+## FIX 1: Auto Fix Button - Consistent Style
+
+### FILE: client/src/components/common/TipBox/TipBoxStyles.css
+
+ADD or UPDATE Auto Fix button style:
+
+.tipbox-btn-autofix {
+  background-color: #f3f4f6 !important;  /* Light gray - ALWAYS */
+  color: #374151 !important;              /* Dark gray text */
+  border: 1px solid #d1d5db !important;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tipbox-btn-autofix:hover {
+  background-color: #e5e7eb !important;
+}
+
+### FILE: Where Auto Fix button is rendered (TipBox.tsx or ResultsPage.tsx)
+
+Find the Auto Fix button and add lamp icon:
+
+<button className="tipbox-btn tipbox-btn-autofix">
+  <span>💡</span>
+  <span>Auto Fix</span>
+</button>
+
+Or if using Lucide icons:
+import { Lightbulb } from 'lucide-react';
+
+<button className="tipbox-btn tipbox-btn-autofix">
+  <Lightbulb size={16} />
+  <span>Auto Fix</span>
+</button>
+
+## FIX 2: Move Tags Below Title
+
+### FILE: client/src/components/common/TipBox/TipBox.tsx
+
+FIND the header structure and CHANGE layout:
+
+CURRENT (tags on same line):
+┌─────────────────────────────────────────┐
+│ [SEVERITY] [CATEGORY] Title Here    [X] │
+└─────────────────────────────────────────┘
+
+NEW (tags below title):
+┌─────────────────────────────────────────┐
+│ Title Here                          [X] │
+│ [SEVERITY] [CATEGORY]                   │
+└─────────────────────────────────────────┘
+
+REPLACE header JSX with:
+
+<div className="tipbox-header" style={{ backgroundColor: colorScheme.primary }}>
+  <div className="tipbox-header-content">
+    <h3 className="tipbox-title" style={{ color: colorScheme.text }}>
+      {title}
+    </h3>
+    <div className="tipbox-tags">
+      <span className="tipbox-severity-badge" style={{ 
+        backgroundColor: 'rgba(255,255,255,0.2)', 
+        color: colorScheme.text 
+      }}>
+        {severity.toUpperCase()}
+      </span>
+      {category && (
+        <span className="tipbox-category-badge" style={{ 
+          backgroundColor: 'rgba(255,255,255,0.15)', 
+          color: colorScheme.text 
+        }}>
+          {category}
+        </span>
+      )}
+    </div>
+  </div>
+  <button className="tipbox-close-btn" onClick={onClose} style={{ color: colorScheme.text }}>
+    ✕
+  </button>
+</div>
+
+### FILE: client/src/components/common/TipBox/TipBoxStyles.css
+
+ADD:
+
+.tipbox-header-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tipbox-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tipbox-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+## FIX 3: Larger, Readable Font (Mobile-Friendly)
+
+### FILE: client/src/components/common/TipBox/TipBoxStyles.css
+
+UPDATE font settings throughout TipBox:
+
+/* Base TipBox font */
+.tipbox {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* Title */
+.tipbox-title {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* Section labels */
+.tipbox-section-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+/* Section content */
+.tipbox-text,
+.tipbox-instructions-text,
+.tipbox-example-text,
+.tipbox-warning-text {
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* Badges */
+.tipbox-severity-badge,
+.tipbox-category-badge {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+/* Input field */
+.tipbox-input {
+  font-size: 15px;
+  line-height: 1.5;
+  padding: 12px;
+}
+
+/* Buttons */
+.tipbox-btn {
+  font-size: 14px;
+  padding: 10px 16px;
+  font-weight: 500;
+}
+
+/* Mobile responsive */
+@media (max-width: 640px) {
+  .tipbox {
+    font-size: 16px;  /* Larger on mobile for readability */
+  }
+  
+  .tipbox-title {
+    font-size: 17px;
+  }
+  
+  .tipbox-text,
+  .tipbox-instructions-text,
+  .tipbox-example-text {
+    font-size: 16px;
+  }
+  
+  .tipbox-btn {
+    font-size: 15px;
+    padding: 12px 18px;
+  }
+}
+
+## SUMMARY
+
+| Fix | Change |
+|-----|--------|
+| Auto Fix | Light gray (#f3f4f6) + 💡 lamp icon |
+| Tags | Move below title (flex-direction: column) |
+| Font | Inter font, 15px base, mobile-friendly |
+
+## VERIFICATION
+1. Auto Fix button always light gray with lamp icon
+2. Title on top, tags below
+3. Text readable on desktop and mobile

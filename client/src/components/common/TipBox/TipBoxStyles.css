@@ -26,6 +26,9 @@
   display: flex;
   flex-direction: column;
   animation: tipbox-slide-up 0.3s ease;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
 }
 
 @keyframes tipbox-slide-up {
@@ -49,30 +52,38 @@
 
 .tipbox-header-content {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.tipbox-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .tipbox-severity-badge {
-  font-size: 10px;
-  font-weight: 700;
-  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
   border-radius: 4px;
   letter-spacing: 0.5px;
 }
 
 .tipbox-category-badge-header {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
-  padding: 4px 8px;
+  padding: 4px 10px;
   border-radius: 4px;
   letter-spacing: 0.3px;
 }
 
 .tipbox-title {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
   margin: 0;
+  line-height: 1.3;
 }
 
 .tipbox-close-btn {
@@ -106,7 +117,7 @@
 }
 
 .tipbox-section-label {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   color: #6b7280;
   text-transform: uppercase;
@@ -115,7 +126,7 @@
 }
 
 .tipbox-text {
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.6;
   color: #374151;
   margin: 0;
@@ -135,8 +146,8 @@
   gap: 10px;
   padding: 12px;
   border-radius: 8px;
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 15px;
+  line-height: 1.6;
 }
 
 .tipbox-example-wrong {
@@ -169,12 +180,13 @@
   padding: 12px;
   border: 1px solid #d1d5db;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 15px;
   font-family: inherit;
   resize: vertical;
   min-height: 80px;
   transition: border-color 0.2s, box-shadow 0.2s;
   box-sizing: border-box;
+  line-height: 1.5;
 }
 
 .tipbox-input:focus {
@@ -188,7 +200,7 @@
 }
 
 .tipbox-instructions {
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.6;
   color: #4b5563;
   background-color: #f9fafb;
@@ -283,8 +295,45 @@
 
 .tipbox-warning-text {
   color: #92400e;
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* Auto Fix Button Style */
+.tipbox-btn-autofix {
+  background-color: #f3f4f6 !important;
+  color: #374151 !important;
+  border: 1px solid #d1d5db !important;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tipbox-btn-autofix:hover {
+  background-color: #e5e7eb !important;
+}
+
+/* Mobile responsive */
+@media (max-width: 640px) {
+  .tipbox-modal {
+    font-size: 16px;
+  }
+  
+  .tipbox-title {
+    font-size: 17px;
+  }
+  
+  .tipbox-text,
+  .tipbox-instructions,
+  .tipbox-example,
+  .tipbox-warning-text {
+    font-size: 16px;
+  }
+  
+  .tipbox-btn {
+    font-size: 15px;
+    padding: 12px 18px;
+  }
 }
 
 /* Part 3.1: Why This Matters - Framed Text */
