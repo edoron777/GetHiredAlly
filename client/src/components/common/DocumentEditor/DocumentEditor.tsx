@@ -1,14 +1,16 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import type { DocumentEditorProps } from './types'
 import { DEFAULT_DOCUMENT_CONFIG } from './types'
 import { detectFormat } from './utils/formatDetector'
 import { MarkdownRenderer } from './renderers/MarkdownRenderer'
+import { WordRenderer } from './renderers/WordRenderer'
 import { TextRenderer } from './renderers/TextRenderer'
 import './DocumentEditorStyles.css'
 
 export const DocumentEditor: React.FC<DocumentEditorProps> = ({
   content,
   format = 'auto',
+  originalFileUrl,
   originalFileName,
   config = {},
   markers = [],
@@ -17,47 +19,53 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
   className = ''
 }) => {
   const mergedConfig = { ...DEFAULT_DOCUMENT_CONFIG, ...config }
-  const detectedFormat = format === 'auto' ? detectFormat(content, originalFileName) : format
   
-  const containerStyle: React.CSSProperties = {
-    backgroundColor: mergedConfig.showWordMargins ? mergedConfig.marginColor : mergedConfig.paperColor,
-    padding: mergedConfig.showWordMargins ? '30px' : '0'
-  }
+  const detectedFormat = useMemo(() => {
+    if (format !== 'auto') return format
+    return detectFormat(content, originalFileName)
+  }, [format, content, originalFileName])
   
-  const paperStyle: React.CSSProperties = {
-    maxWidth: `${mergedConfig.maxWidth}px`,
-    minHeight: `${mergedConfig.minHeight}px`,
-    padding: `${mergedConfig.padding}px`,
-    backgroundColor: mergedConfig.paperColor,
-    fontFamily: mergedConfig.fontFamily,
-    fontSize: `${mergedConfig.fontSize}px`,
-    lineHeight: mergedConfig.lineHeight,
-    boxShadow: mergedConfig.paperShadow ? '0 2px 10px rgba(0, 0, 0, 0.1)' : 'none'
-  }
-
+  const cssVariables = {
+    '--doc-max-width': `${mergedConfig.maxWidth}px`,
+    '--doc-min-height': `${mergedConfig.minHeight}px`,
+    '--doc-padding': `${mergedConfig.padding}px`,
+    '--doc-font-family': mergedConfig.fontFamily,
+    '--doc-font-size': `${mergedConfig.fontSize}px`,
+    '--doc-line-height': String(mergedConfig.lineHeight),
+    '--doc-margin-color': mergedConfig.marginColor,
+    '--doc-paper-color': mergedConfig.paperColor,
+  } as React.CSSProperties
+  
   const renderContent = () => {
     const rendererProps = {
       content,
+      originalFileUrl,
       markers: mergedConfig.enableHighlighting ? markers : [],
       markerConfig,
       onMarkerClick
     }
-
+    
     switch (detectedFormat) {
       case 'markdown':
         return <MarkdownRenderer {...rendererProps} />
       case 'word':
+        return <WordRenderer {...rendererProps} />
       case 'pdf':
       case 'text':
       default:
         return <TextRenderer {...rendererProps} />
     }
   }
-
+  
   return (
-    <div className={`document-editor-container ${className}`} style={containerStyle}>
-      <div className="document-editor-paper" style={paperStyle}>
-        {renderContent()}
+    <div 
+      className={`document-editor-container ${className}`}
+      style={cssVariables}
+    >
+      <div className={`document-editor-paper ${mergedConfig.paperShadow ? 'with-shadow' : ''}`}>
+        <div className="document-editor-content">
+          {renderContent()}
+        </div>
       </div>
     </div>
   )
