@@ -1,0 +1,111 @@
+# TASK: Code Structure Investigation - TipBox & TextMarker
+
+## DO NOT MODIFY ANY CODE - REPORT ONLY
+
+═══════════════════════════════════════════════════════════════════════
+PART A: TipBox Component
+═══════════════════════════════════════════════════════════════════════
+
+### A1: File Structure
+List ALL files in: client/src/components/common/TipBox/
+Show file names and line counts.
+
+### A2: types.ts
+Show COMPLETE file content with line numbers.
+
+### A3: TipBox.tsx
+Show COMPLETE file content with line numbers.
+Document:
+- All imports
+- Props interface
+- Color scheme logic
+- Render structure
+
+### A4: TipBoxSection.tsx
+Show COMPLETE file content with line numbers.
+Document:
+- All section types handled in switch statement
+- How each section type renders
+
+### A5: TipBoxStyles.css
+Show COMPLETE file content with line numbers.
+Document:
+- All CSS classes
+- Color variables if any
+- Responsive breakpoints
+
+### A6: index.ts (exports)
+Show what is exported from the component.
+
+### A7: Usage in ResultsPage
+Show:
+- Import statement
+- buildTipBoxSections() function
+- buildTipBoxButtons() function
+- Where <TipBox> is rendered
+- normalizeIssue() function
+
+═══════════════════════════════════════════════════════════════════════
+PART B: TextMarker Component
+═══════════════════════════════════════════════════════════════════════
+
+### B1: File Structure
+List ALL files in: client/src/components/common/TextMarker/
+Show file names and line counts.
+
+### B2: types.ts
+Show COMPLETE file content with line numbers.
+
+### B3: TextMarker.tsx
+Show COMPLETE file content with line numbers.
+
+### B4: MarkerService.ts
+Show COMPLETE file content with line numbers.
+Document:
+- findMarkerPositions() function
+- getMarkerStyleClass() function
+- getMarkerColorStyle() function
+
+### B5: MarkerStyles.css
+Show COMPLETE file content with line numbers.
+
+### B6: index.ts (exports)
+Show:
+- All exports
+- CV_OPTIMIZER_COLORS definition
+- NOTION_COLORS definition
+
+### B7: Usage in CVDocument or ResultsPage
+Show how TextMarker is used:
+- Import statement
+- How markers array is created
+- Config object passed
+- Style used (underline/rectangle)
+
+═══════════════════════════════════════════════════════════════════════
+PART C: Connection Between Components
+═══════════════════════════════════════════════════════════════════════
+
+### C1: How clicking a marker opens TipBox
+Trace the flow:
+1. User clicks marked text
+2. What function is called?
+3. How is selectedIssue set?
+4. How does TipBox open?
+
+### C2: Shared Colors
+Are TipBox and TextMarker using the same color constants?
+Show where colors are defined for each.
+
+### C3: Data Flow
+Show how issue data flows:
+Backend API → normalizeIssue() → TextMarker markers
+                              → TipBox sections
+
+═══════════════════════════════════════════════════════════════════════
+REPORT FORMAT
+═══════════════════════════════════════════════════════════════════════
+
+## PART A: TipBox
+
+### A1: File Structure
