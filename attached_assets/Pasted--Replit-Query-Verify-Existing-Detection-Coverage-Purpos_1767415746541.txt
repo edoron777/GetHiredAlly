@@ -1,0 +1,135 @@
+# Replit Query: Verify Existing Detection Coverage
+
+**Purpose:** Determine which issue types already have detection code vs need new code  
+**Type:** INVESTIGATION (not implementation)  
+**Date:** January 3, 2026
+
+---
+
+## CONTEXT
+
+I need to add new CV issue types. Before deciding whether to update only the database or also write new detection code, I need to verify what the existing detectors already return.
+
+---
+
+## QUESTIONS
+
+### Question 1: Contact Extractor Coverage
+
+**File:** `backend/common/detection/contact_extractor.py`
+
+Please show me:
+1. All `issue_type` values this detector can return
+2. Does it detect `CONTACT_MISSING_GITHUB` or similar?
+
+**Search for:** All strings that look like `'issue_type': 'CONTACT_...'`
+
+---
+
+### Question 2: Section Extractor Coverage
+
+**File:** `backend/common/detection/section_extractor.py`
+
+Please show me:
+1. All `issue_type` values this detector can return
+2. Does it detect `CONTENT_MISSING_SUMMARY` or similar?
+3. Does it detect section order issues?
+
+**Search for:** All strings that look like `'issue_type': '...'`
+
+---
+
+### Question 3: Employment Gap Detection
+
+**Search all detection files** for:
+- "gap" (case insensitive)
+- "employment"
+- "CAREER_EMPLOYMENT_GAP"
+
+Does any detector check for employment gaps between jobs?
+
+---
+
+### Question 4: Format Detector Coverage
+
+**File:** `backend/common/detection/format_detector.py`
+
+Please show me:
+1. All `issue_type` values this detector can return
+2. Does it detect any of these?
+   - Section order violations
+   - Skills in paragraph format
+   - Non-standard section headers
+   - Content in headers/footers
+
+---
+
+### Question 5: Length/Section Detector Coverage
+
+**Files:** `backend/common/detection/section_extractor.py` or any length-related detector
+
+Does any detector check:
+- Summary word count (too long/too short)?
+- Experience dates older than 15 years?
+
+---
+
+### Question 6: Complete Issue Type List
+
+**Run this search across ALL files in `backend/common/detection/`:**
+
+```bash
+grep -r "issue_type" backend/common/detection/ | grep -oP "'issue_type':\s*'[A-Z_]+'" | sort | uniq
+```
+
+Or manually list ALL unique `issue_type` values returned by all detectors.
+
+---
+
+## EXPECTED OUTPUT FORMAT
+
+```markdown
+## Detector Coverage Report
+
+### 1. contact_extractor.py
+Issues detected:
+- CONTACT_MISSING_EMAIL ✅
+- CONTACT_MISSING_PHONE ✅
+- CONTACT_MISSING_LINKEDIN ✅
+- CONTACT_MISSING_GITHUB ❌ NOT FOUND
+- ...
+
+### 2. section_extractor.py
+Issues detected:
+- CONTENT_... ✅
+- ...
+
+### 3. Employment Gap
+Found: YES/NO
+Location: [file if found]
+
+### 4. format_detector.py
+Issues detected:
+- FORMAT_... ✅
+- ...
+
+### 5. Summary Length / Old Experience
+Summary length check: YES/NO
+Experience age check: YES/NO
+
+### 6. COMPLETE LIST OF ALL ISSUE_TYPES IN CODE
+[Full list of every issue_type string found in detection code]
+```
+
+---
+
+## WHY THIS MATTERS
+
+| If issue_type EXISTS in code | If issue_type NOT in code |
+|------------------------------|---------------------------|
+| Only need DB INSERT | Need code change + DB INSERT |
+| TipBox will work immediately | Must write detection logic first |
+
+---
+
+**END OF QUERY**
