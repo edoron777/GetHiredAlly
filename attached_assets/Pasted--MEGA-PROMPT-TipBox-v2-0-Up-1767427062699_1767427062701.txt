@@ -1,0 +1,219 @@
+═══════════════════════════════════════════════════════════════════════
+MEGA-PROMPT: TipBox v2.0 Update
+═══════════════════════════════════════════════════════════════════════
+
+OVERVIEW:
+Update TipBox component to v2.0 structure with new labels, sections, and styling.
+
+CHANGES SUMMARY:
+┌─────────────────────────────────────────────────────────────────────┐
+│ File                        │ Change                               │
+├─────────────────────────────────────────────────────────────────────┤
+│ ResultsPage.tsx             │ Update buildTipBoxSections()         │
+│ TipBoxStyles.css            │ Add new CSS styles                   │
+│ TipBoxSection.tsx           │ Add 'warning' section type           │
+│ types.ts                    │ Add 'warning' to SectionType         │
+└─────────────────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════
+CHANGE 1 OF 4: Update types.ts
+═══════════════════════════════════════════════════════════════════════
+
+FILE: client/src/components/common/TipBox/types.ts
+
+FIND THIS (around line 1-5):
+export type SectionType = 
+  | 'header' | 'text' | 'category' | 'example-wrong' 
+  | 'example-correct' | 'input' | 'instructions' | 'custom'
+
+REPLACE WITH:
+export type SectionType = 
+  | 'header' | 'text' | 'category' | 'example-wrong' 
+  | 'example-correct' | 'input' | 'instructions' | 'custom'
+  | 'warning'  // NEW: For "What to Avoid" section
+
+═══════════════════════════════════════════════════════════════════════
+CHANGE 2 OF 4: Update TipBoxSection.tsx
+═══════════════════════════════════════════════════════════════════════
+
+FILE: client/src/components/common/TipBox/TipBoxSection.tsx
+
+FIND the switch statement that handles section types.
+ADD this new case BEFORE the default case:
+
+    case 'warning':
+      return (
+        <div className="tipbox-section tipbox-section-warning">
+          {renderLabel()}
+          <div className="tipbox-warning-box">
+            <span className="tipbox-warning-icon">⚠</span>
+            <span className="tipbox-warning-text">{content}</span>
+          </div>
+        </div>
+      );
+
+═══════════════════════════════════════════════════════════════════════
+CHANGE 3 OF 4: Update TipBoxStyles.css
+═══════════════════════════════════════════════════════════════════════
+
+FILE: client/src/components/common/TipBox/TipBoxStyles.css
+
+ADD at the END of the file:
+
+/* ═══════════════════════════════════════════════════════════════════
+   TipBox v2.0 Styles - Added January 3, 2026
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Part 3.4: What to Avoid - Warning Box */
+.tipbox-section-warning {
+  padding: 12px 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.tipbox-warning-box {
+  background: #fffbeb;
+  border-left: 3px solid #f59e0b;
+  padding: 12px 14px;
+  border-radius: 0 6px 6px 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.tipbox-warning-icon {
+  color: #f59e0b;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.tipbox-warning-text {
+  color: #92400e;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Part 3.1: Why This Matters - Framed Text */
+.tipbox-section-text .tipbox-text-content {
+  background: #fafafa;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-top: 8px;
+}
+
+/* Part 2.2: Issue Quote - Rename styling (already exists but verify) */
+.tipbox-section-example-wrong .tipbox-example-content {
+  background: #fef2f2;
+  border-left: 3px solid #e03e3e;
+}
+
+/* Part 3.3: Good Example - Green styling (already exists but verify) */
+.tipbox-section-example-correct .tipbox-example-content {
+  background: #f0fdf4;
+  border-left: 3px solid #22c55e;
+}
+
+═══════════════════════════════════════════════════════════════════════
+CHANGE 4 OF 4: Update buildTipBoxSections() in ResultsPage.tsx
+═══════════════════════════════════════════════════════════════════════
+
+FILE: client/src/pages/cv-optimizer/ResultsPage.tsx
+
+FIND function buildTipBoxSections (around line 296-348)
+
+REPLACE THE ENTIRE FUNCTION with:
+
+const buildTipBoxSections = (issue: any): TipBoxSection[] => {
+  const sections: TipBoxSection[] = [];
+  
+  // Part 1.2: Category
+  if (issue.category || issue.issueType) {
+    sections.push({
+      type: 'category',
+      label: 'CATEGORY',
+      content: issue.category || issue.issueType
+    });
+  }
+  
+  // Part 2.2: Issue Quote (was "CURRENT TEXT")
+  if (issue.currentText || issue.current || issue.matchText || issue.example_before) {
+    sections.push({
+      type: 'example-wrong',
+      label: 'ISSUE IN YOUR CV',
+      content: issue.currentText || issue.current || issue.matchText || issue.example_before
+    });
+  }
+  
+  // Part 3.1: Why This Matters (was after Part 1)
+  if (issue.description) {
+    sections.push({
+      type: 'text',
+      label: 'WHY THIS MATTERS',
+      content: issue.description
+    });
+  }
+  
+  // Part 3.2: How to Fix
+  if (issue.howToFix || issue.suggestion || issue.static_tip) {
+    sections.push({
+      type: 'instructions',
+      label: 'HOW TO FIX',
+      content: issue.howToFix || issue.suggestion || issue.static_tip
+    });
+  }
+  
+  // Part 3.3: Good Example (was "SUGGESTED")
+  if (issue.suggestedText || issue.example_after) {
+    sections.push({
+      type: 'example-correct',
+      label: 'GOOD EXAMPLE',
+      content: issue.suggestedText || issue.example_after
+    });
+  }
+  
+  // Part 3.4: What to Avoid (NEW - only if data exists and flag is true)
+  if (issue.what_to_avoid && issue.show_what_to_avoid) {
+    sections.push({
+      type: 'warning',
+      label: 'WHAT TO AVOID',
+      content: issue.what_to_avoid
+    });
+  }
+  
+  // Part 4: User Input (renamed label)
+  sections.push({
+    type: 'input',
+    label: 'WRITE YOUR IMPROVED VERSION',
+    id: 'user-edit',
+    placeholder: 'Type your improved version here...',
+    defaultValue: issue.suggestedText || issue.example_after || ''
+  });
+  
+  return sections;
+};
+
+═══════════════════════════════════════════════════════════════════════
+ANTI-IMPROVISATION DIRECTIVE
+═══════════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL: If you encounter ANY of the following, STOP and ASK:
+- Function buildTipBoxSections not found at expected location
+- TipBoxSection.tsx has different structure than expected
+- Any import errors or type conflicts
+- Existing code differs significantly from what's described
+
+DO NOT guess or improvise. Report the difference and wait for instructions.
+
+═══════════════════════════════════════════════════════════════════════
+VERIFICATION
+═══════════════════════════════════════════════════════════════════════
+
+After making ALL changes, confirm:
+1. types.ts has 'warning' in SectionType
+2. TipBoxSection.tsx has case 'warning' in switch
+3. TipBoxStyles.css has .tipbox-warning-box styles
+4. buildTipBoxSections has all 6 sections in correct order
+
+Report: "All 4 changes completed" or list any issues.
+
+═══════════════════════════════════════════════════════════════════════

@@ -246,3 +246,56 @@
     justify-content: center;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   TipBox v2.0 Styles - Added January 3, 2026
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Part 3.4: What to Avoid - Warning Box */
+.tipbox-section-warning {
+  padding: 12px 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.tipbox-warning-box {
+  background: #fffbeb;
+  border-left: 3px solid #f59e0b;
+  padding: 12px 14px;
+  border-radius: 0 6px 6px 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.tipbox-warning-icon {
+  color: #f59e0b;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.tipbox-warning-text {
+  color: #92400e;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Part 3.1: Why This Matters - Framed Text */
+.tipbox-section-text .tipbox-text-content {
+  background: #fafafa;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-top: 8px;
+}
+
+/* Part 2.2: Issue Quote - Rename styling (already exists but verify) */
+.tipbox-section-example-wrong .tipbox-example-content {
+  background: #fef2f2;
+  border-left: 3px solid #e03e3e;
+}
+
+/* Part 3.3: Good Example - Green styling (already exists but verify) */
+.tipbox-section-example-correct .tipbox-example-content {
+  background: #f0fdf4;
+  border-left: 3px solid #22c55e;
+}

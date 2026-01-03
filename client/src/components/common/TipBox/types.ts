@@ -9,6 +9,7 @@ export type SectionType =
   | 'input'
   | 'instructions'
   | 'custom'
+  | 'warning'
 
 export interface TipBoxSection {
   type: SectionType

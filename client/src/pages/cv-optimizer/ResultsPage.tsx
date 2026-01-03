@@ -304,11 +304,11 @@ export default function ResultsPage() {
       });
     }
     
-    if (issue.currentText || issue.current || issue.matchText) {
+    if (issue.currentText || issue.current || issue.matchText || issue.example_before) {
       sections.push({
         type: 'example-wrong',
         label: 'ISSUE IN YOUR CV',
-        content: issue.currentText || issue.current || issue.matchText
+        content: issue.currentText || issue.current || issue.matchText || issue.example_before
       });
     }
     
@@ -338,7 +338,7 @@ export default function ResultsPage() {
     
     if (issue.what_to_avoid && issue.show_what_to_avoid) {
       sections.push({
-        type: 'text',
+        type: 'warning',
         label: 'WHAT TO AVOID',
         content: issue.what_to_avoid
       });

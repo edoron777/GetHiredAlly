@@ -93,6 +93,17 @@ export const TipBoxSection: React.FC<Props> = ({
         </div>
       )
 
+    case 'warning':
+      return (
+        <div className="tipbox-section tipbox-section-warning">
+          {renderLabel()}
+          <div className="tipbox-warning-box">
+            <span className="tipbox-warning-icon">⚠</span>
+            <span className="tipbox-warning-text">{content}</span>
+          </div>
+        </div>
+      )
+
     default:
       return null
   }
