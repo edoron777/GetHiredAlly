@@ -18,6 +18,15 @@
   word-wrap: break-word;
 }
 
+.text-content {
+  line-height: 1.7;
+}
+
+.text-preformatted {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
 .markdown-content h1 {
   font-size: 2em;
   font-weight: 700;

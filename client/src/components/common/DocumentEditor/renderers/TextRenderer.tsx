@@ -6,30 +6,30 @@ export const TextRenderer: React.FC<RendererProps> = ({
   content,
   markers = [],
   markerConfig,
-  onMarkerClick,
-  className = ''
+  onMarkerClick
 }) => {
   if (markers.length === 0) {
     return (
-      <div className={`document-editor-content ${className}`}>
-        {content}
+      <div className="text-content">
+        <div className="text-preformatted">{content}</div>
       </div>
     )
   }
-
+  
   return (
-    <TextMarker
-      content={content}
-      markers={markers}
-      config={{
-        style: 'rectangle',
-        tagColors: CV_OPTIMIZER_COLORS,
-        icon: { icon: 'ⓘ', position: 'after' },
-        onClick: onMarkerClick,
-        className: `document-editor-content ${className}`,
-        ...markerConfig
-      }}
-    />
+    <div className="text-content">
+      <TextMarker
+        content={content}
+        markers={markers}
+        config={{
+          style: 'rectangle',
+          tagColors: CV_OPTIMIZER_COLORS,
+          icon: { icon: 'ⓘ', position: 'after' },
+          onClick: onMarkerClick,
+          ...markerConfig
+        }}
+      />
+    </div>
   )
 }
 
