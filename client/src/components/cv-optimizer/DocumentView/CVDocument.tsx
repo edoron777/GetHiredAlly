@@ -93,7 +93,7 @@ export default function CVDocument({ cvContent, issues = [], onIssueClick }: CVD
         content={cvContent.fullText}
         markers={validMarkers}
         config={{
-          style: 'underline',
+          style: 'rectangle',
           tagColors: CV_OPTIMIZER_COLORS,
           icon: { 
             icon: 'ⓘ', 

@@ -38,23 +38,23 @@ export interface TipBoxColor {
 
 export const TIPBOX_COLORS: Record<string, TipBoxColor> = {
   critical: {
-    primary: '#e03e3e',
-    light: '#fef2f2',
+    primary: '#990033',
+    light: '#fff0f5',
     text: '#ffffff'
   },
   important: {
-    primary: '#d9730d',
-    light: '#fff7ed',
+    primary: '#990099',
+    light: '#fdf0fd',
     text: '#ffffff'
   },
   consider: {
-    primary: '#cb932f',
-    light: '#fefce8',
+    primary: '#008080',
+    light: '#f0ffff',
     text: '#ffffff'
   },
   polish: {
-    primary: '#448361',
-    light: '#f0fdf4',
+    primary: '#1E5A85',
+    light: '#f0f7ff',
     text: '#ffffff'
   },
   info: {

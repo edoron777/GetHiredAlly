@@ -28,35 +28,35 @@
 }
 
 .marker-color-red.marker-underline {
-  background: linear-gradient(to bottom, transparent 60%, rgba(224, 62, 62, 0.4) 60%);
-  border-bottom: 2px solid #e03e3e;
+  background: linear-gradient(to bottom, transparent 60%, rgba(153, 0, 51, 0.4) 60%);
+  border-bottom: 2px solid #990033;
 }
 .marker-color-red.marker-rectangle {
-  background-color: rgba(224, 62, 62, 0.2);
+  background-color: rgba(153, 0, 51, 0.2);
 }
 
 .marker-color-orange.marker-underline {
-  background: linear-gradient(to bottom, transparent 60%, rgba(217, 115, 13, 0.4) 60%);
-  border-bottom: 2px solid #d9730d;
+  background: linear-gradient(to bottom, transparent 60%, rgba(153, 0, 153, 0.4) 60%);
+  border-bottom: 2px solid #990099;
 }
 .marker-color-orange.marker-rectangle {
-  background-color: rgba(217, 115, 13, 0.2);
+  background-color: rgba(153, 0, 153, 0.2);
 }
 
 .marker-color-yellow.marker-underline {
-  background: linear-gradient(to bottom, transparent 60%, rgba(203, 145, 47, 0.4) 60%);
-  border-bottom: 2px solid #cb932f;
+  background: linear-gradient(to bottom, transparent 60%, rgba(0, 128, 128, 0.4) 60%);
+  border-bottom: 2px solid #008080;
 }
 .marker-color-yellow.marker-rectangle {
-  background-color: rgba(203, 145, 47, 0.2);
+  background-color: rgba(0, 128, 128, 0.2);
 }
 
 .marker-color-green.marker-underline {
-  background: linear-gradient(to bottom, transparent 60%, rgba(68, 131, 97, 0.4) 60%);
-  border-bottom: 2px solid #448361;
+  background: linear-gradient(to bottom, transparent 60%, rgba(30, 90, 133, 0.4) 60%);
+  border-bottom: 2px solid #1E5A85;
 }
 .marker-color-green.marker-rectangle {
-  background-color: rgba(68, 131, 97, 0.2);
+  background-color: rgba(30, 90, 133, 0.2);
 }
 
 .marker-color-blue.marker-underline {
