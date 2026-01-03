@@ -1,0 +1,123 @@
+═══════════════════════════════════════════════════════════════════════
+REPLIT: Integrate Length Detectors with Section Extraction
+═══════════════════════════════════════════════════════════════════════
+
+PREREQUISITE: REPLIT-1#3 must be completed first.
+Use the findings from RFI to complete this task.
+
+CONTEXT:
+length_detector.py needs these inputs:
+- summary_text: str
+- experience_entries: List[Dict] with keys: company, title, bullets
+- education_entries: List[Dict] with keys: institution, degree, description  
+- years_experience: int
+
+───────────────────────────────────────────────────────────────────────
+TASK: Create adapter/transformer functions if needed
+───────────────────────────────────────────────────────────────────────
+
+Based on RFI findings, you may need to:
+
+OPTION A: If sections are already extracted but in different format:
+- Create transformer functions to convert to expected format
+
+OPTION B: If sections are not extracted:
+- Create extraction functions
+
+OPTION C: If format matches:
+- Just wire up the connection in master_detector.py
+
+───────────────────────────────────────────────────────────────────────
+EXPECTED FORMAT FOR length_detector.py:
+───────────────────────────────────────────────────────────────────────
+
+# Experience entries format:
+experience_entries = [
+    {
+        'company': 'TechCorp',
+        'title': 'Software Engineer',
+        'bullets': [
+            'Built microservices architecture...',
+            'Led team of 5 developers...',
+            'Implemented CI/CD pipeline...'
+        ]
+    },
+    {
+        'company': 'StartupXYZ',
+        'title': 'Developer',
+        'bullets': [
+            'Developed features...',
+            'Fixed bugs...'
+        ]
+    }
+]
+
+# Education entries format:
+education_entries = [
+    {
+        'institution': 'MIT',
+        'degree': 'BS Computer Science',
+        'description': 'Relevant coursework: ML, Databases. GPA: 3.8'
+    }
+]
+
+# Summary text format:
+summary_text = "Results-driven software engineer with 10+ years..."
+
+# Years experience:
+years_experience = 5  # integer
+
+───────────────────────────────────────────────────────────────────────
+INTEGRATION IN master_detector.py:
+───────────────────────────────────────────────────────────────────────
+
+Add these calls (adjust variable names based on RFI findings):
+
+# Length-Based Detection (v1.5)
+from .length_detector import (
+    detect_summary_too_long,
+    detect_job_description_too_short,
+    detect_job_description_too_long,
+    detect_education_description_too_short
+)
+
+# In the main detection function:
+
+# Transform data if needed (create these functions based on RFI)
+summary_text = extract_summary_text(parsed_cv)  # or use existing
+experience_entries = transform_experience_to_format(parsed_cv)  # or use existing
+education_entries = transform_education_to_format(parsed_cv)  # or use existing
+years_experience = calculate_years_experience(parsed_cv)  # or use existing
+
+# Call detectors
+if summary_text:
+    issues.extend(detect_summary_too_long(summary_text))
+
+if experience_entries:
+    issues.extend(detect_job_description_too_short(experience_entries))
+    issues.extend(detect_job_description_too_long(experience_entries))
+
+if education_entries:
+    issues.extend(detect_education_description_too_short(
+        education_entries,
+        years_experience=years_experience
+    ))
+
+───────────────────────────────────────────────────────────────────────
+VERIFICATION:
+───────────────────────────────────────────────────────────────────────
+
+After implementation, verify:
+1. No import errors
+2. Detection pipeline still works
+3. New length issues are detected when appropriate
+
+───────────────────────────────────────────────────────────────────────
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- Use ONLY data structures identified in RFI
+- Do NOT invent new parsing logic without approval
+- If format conversion is complex, STOP and report
+- Keep transformations simple and focused
+
+═══════════════════════════════════════════════════════════════════════

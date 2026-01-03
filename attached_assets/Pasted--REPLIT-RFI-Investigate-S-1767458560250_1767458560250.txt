@@ -1,0 +1,94 @@
+═══════════════════════════════════════════════════════════════════════
+REPLIT: RFI - Investigate Section Extraction (DO NOT MODIFY CODE)
+═══════════════════════════════════════════════════════════════════════
+
+⚠️ THIS IS AN INVESTIGATION PROMPT - DO NOT CHANGE ANY CODE ⚠️
+
+CONTEXT:
+We added length_detector.py which requires parsed CV sections:
+- summary_text (string)
+- experience_entries (list of dicts with: company, title, bullets)
+- education_entries (list of dicts with: institution, degree, description)
+- years_experience (int)
+
+We need to understand how sections are currently extracted.
+
+───────────────────────────────────────────────────────────────────────
+INVESTIGATION QUESTIONS:
+───────────────────────────────────────────────────────────────────────
+
+1. SECTION EXTRACTION FILE:
+   - Is there a section_extractor.py or similar file?
+   - File path: __________
+   - What functions does it export?
+
+2. CV PARSING FLOW:
+   - Where does CV text get parsed into sections?
+   - What is the data structure returned?
+   - Show the relevant function signature and return type.
+
+3. EXPERIENCE EXTRACTION:
+   - Is work experience currently being parsed?
+   - What format is it in? Show example structure.
+   - Are bullet points extracted separately?
+
+4. EDUCATION EXTRACTION:
+   - Is education currently being parsed?
+   - What format is it in? Show example structure.
+
+5. SUMMARY EXTRACTION:
+   - Is the Professional Summary being extracted?
+   - What format is it in?
+
+6. MASTER DETECTOR INTEGRATION:
+   - In master_detector.py, what variables are available?
+   - Show the main detection function and its parameters.
+   - What parsed data is passed to it?
+
+7. DATA FLOW:
+   Trace: CV Upload → Parsing → Detection
+   - Where does parsing happen?
+   - What gets passed to detectors?
+
+───────────────────────────────────────────────────────────────────────
+REPORT FORMAT:
+───────────────────────────────────────────────────────────────────────
+
+Please report findings in this format:
+
+FINDING 1 - Section Extraction Location:
+- File: [path]
+- Functions: [list]
+- Returns: [data structure]
+
+FINDING 2 - Experience Data Structure:
+- Currently extracted: YES/NO
+- Format: [show structure]
+- Includes bullets: YES/NO
+
+FINDING 3 - Education Data Structure:
+- Currently extracted: YES/NO
+- Format: [show structure]
+
+FINDING 4 - Summary Data Structure:
+- Currently extracted: YES/NO
+- Format: [show structure]
+
+FINDING 5 - Integration Point:
+- File: [master_detector.py or other]
+- Function: [name]
+- Available variables: [list]
+
+GAP ANALYSIS:
+What's missing to connect length_detector.py?
+- [ ] Summary text extraction
+- [ ] Experience entries in correct format
+- [ ] Education entries in correct format
+- [ ] Years of experience calculation
+
+───────────────────────────────────────────────────────────────────────
+
+⚠️ DO NOT FIX ANYTHING YET.
+Report findings first. We will create fix prompt based on findings.
+
+═══════════════════════════════════════════════════════════════════════
