@@ -33,6 +33,17 @@ client/src/
 │   │   │   ├── useServiceSession.ts
 │   │   │   ├── sessionTypes.ts
 │   │   │   └── index.ts
+│   │   ├── DocumentEditor/        # Document display with formatting
+│   │   │   ├── DocumentEditor.tsx
+│   │   │   ├── DocumentEditorStyles.css
+│   │   │   ├── types.ts
+│   │   │   ├── index.ts
+│   │   │   ├── renderers/
+│   │   │   │   ├── TextRenderer.tsx
+│   │   │   │   ├── MarkdownRenderer.tsx
+│   │   │   │   └── WordRenderer.tsx
+│   │   │   └── utils/
+│   │   │       └── formatDetector.ts
 │   │   └── index.ts               # Exports all common components
 │   │
 │   ├── cv-optimizer/              # CV Optimizer specific
@@ -111,6 +122,7 @@ import StandardToolbar from '../components/common/StandardToolbar';
 | GoogleSignInButton | Google OAuth sign-in with loading state and error handling | LoginPage, RegisterPage |
 | OrDivider | "or" text divider between auth methods | LoginPage, RegisterPage |
 | UserSessionKeep | "Continue work" banner with session resume/archive | CV Optimizer, X-Ray, Smart Questions |
+| DocumentEditor | Display documents with formatting (MD, Word, PDF, Text) + TextMarker | CV Optimizer |
 
 ---
 

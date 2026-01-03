@@ -29,3 +29,5 @@ export { TextMarker, CV_OPTIMIZER_COLORS, NOTION_COLORS } from './TextMarker';
 export type { MarkerItem, TagColorMap, MarkerStyle, MarkerIcon, MarkerConfig, TextMarkerProps } from './TextMarker';
 export { TipBox, TIPBOX_COLORS } from './TipBox';
 export type { TipBoxProps, TipBoxButton, TipBoxColor, SectionType } from './TipBox';
+export { DocumentEditor, DEFAULT_DOCUMENT_CONFIG, detectFormat } from './DocumentEditor';
+export type { DocumentFormat, DocumentEditorConfig, DocumentEditorProps, RendererProps } from './DocumentEditor';
