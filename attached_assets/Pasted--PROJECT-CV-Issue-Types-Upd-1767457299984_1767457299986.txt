@@ -1,0 +1,110 @@
+═══════════════════════════════════════════════════════════════════════
+PROJECT: CV Issue Types Update - PROMPT 1#8: Add New Subcategories
+═══════════════════════════════════════════════════════════════════════
+
+CONTEXT:
+We are adding 4 new subcategories to the cv_issue_subcategories table
+as part of the v1.4 (competitor analysis) and v1.5 (length detection) updates.
+
+───────────────────────────────────────────────────────────────────────
+TASK: Execute SQL to add new subcategories
+───────────────────────────────────────────────────────────────────────
+
+DATABASE: Supabase
+TABLE: cv_issue_subcategories
+
+Execute the following SQL statements:
+
+-- 1. FORMAT_SKILLS subcategory (v1.4)
+INSERT INTO cv_issue_subcategories (
+    category_id,
+    subcategory_code,
+    subcategory_name,
+    description,
+    display_order
+) VALUES (
+    2,  -- FORMAT category
+    'FORMAT_SKILLS',
+    'Skills Section Structure',
+    'Issues related to the presence and positioning of the Skills section',
+    5
+);
+
+-- 2. CONTENT_SUMMARY subcategory (v1.4)
+INSERT INTO cv_issue_subcategories (
+    category_id,
+    subcategory_code,
+    subcategory_name,
+    description,
+    display_order
+) VALUES (
+    3,  -- CONTENT category
+    'CONTENT_SUMMARY',
+    'Professional Summary Quality',
+    'Issues related to the length and quality of the Professional Summary section',
+    6
+);
+
+-- 3. CONTENT_EXPERIENCE subcategory (v1.5)
+INSERT INTO cv_issue_subcategories (
+    category_id,
+    subcategory_code,
+    subcategory_name,
+    description,
+    display_order
+) VALUES (
+    3,  -- CONTENT category
+    'CONTENT_EXPERIENCE',
+    'Work Experience Descriptions',
+    'Issues related to the length and quality of job descriptions within work experience entries',
+    7
+);
+
+-- 4. CONTENT_EDUCATION subcategory (v1.5)
+INSERT INTO cv_issue_subcategories (
+    category_id,
+    subcategory_code,
+    subcategory_name,
+    description,
+    display_order
+) VALUES (
+    3,  -- CONTENT category
+    'CONTENT_EDUCATION',
+    'Education Descriptions',
+    'Issues related to the length and quality of education section entries',
+    8
+);
+
+───────────────────────────────────────────────────────────────────────
+VERIFICATION:
+───────────────────────────────────────────────────────────────────────
+
+After executing, run this query and report the results:
+
+SELECT 
+    s.id,
+    c.category_name,
+    s.subcategory_code,
+    s.subcategory_name,
+    s.display_order
+FROM cv_issue_subcategories s
+JOIN cv_issue_categories c ON s.category_id = c.id
+WHERE s.subcategory_code IN (
+    'FORMAT_SKILLS',
+    'CONTENT_SUMMARY', 
+    'CONTENT_EXPERIENCE',
+    'CONTENT_EDUCATION'
+)
+ORDER BY s.id;
+
+EXPECTED: 4 rows returned with the new subcategories.
+
+───────────────────────────────────────────────────────────────────────
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- Execute EXACTLY the SQL provided
+- Do NOT modify column names or values
+- Do NOT add extra subcategories
+- If any INSERT fails, STOP and report the error
+
+═══════════════════════════════════════════════════════════════════════
