@@ -1,0 +1,190 @@
+═══════════════════════════════════════════════════════════════════════
+REPLIT: Simple Job Description Length Detection (Quick Win)
+═══════════════════════════════════════════════════════════════════════
+
+CONTEXT:
+We have `structure.experience` as raw text. We need to detect:
+- CONTENT_JOB_DESCRIPTION_TOO_SHORT (jobs with <3 bullets)
+- CONTENT_JOB_DESCRIPTION_TOO_LONG (jobs with >8 bullets)
+
+We'll use simple regex - no complex parsing needed.
+
+───────────────────────────────────────────────────────────────────────
+TASK: Update length_detector.py with simple functions
+───────────────────────────────────────────────────────────────────────
+
+FILE: backend/common/detection/length_detector.py
+
+ADD these new functions (keep existing functions, add these):
+```python
+# ═══════════════════════════════════════════════════════════════════════
+# SIMPLE JOB DESCRIPTION DETECTION (Quick Win)
+# Works with raw experience text - no complex parsing needed
+# ═══════════════════════════════════════════════════════════════════════
+
+import re
+
+# Patterns to identify job blocks
+JOB_HEADER_PATTERN = re.compile(
+    r'(?:^|\n\n)'                           # Start or double newline
+    r'([A-Z][^•\-\*\n]+?)'                   # Job title/company (starts with capital)
+    r'(?:\s*[\(\|]\s*)?'                     # Optional separator
+    r'(\d{4}\s*[-–—]\s*(?:\d{4}|[Pp]resent|[Cc]urrent))?'  # Date range
+    r'\s*\n',                                # End of header line
+    re.MULTILINE
+)
+
+# Patterns for bullet points
+BULLET_PATTERN = re.compile(r'^[\s]*[•\-\*▪▸►]\s*\S', re.MULTILINE)
+
+
+def split_into_job_blocks(experience_text: str) -> List[Dict]:
+    """
+    Split raw experience text into job blocks.
+    Returns list of dicts with: header, bullet_count, total_words
+    """
+    if not experience_text or not experience_text.strip():
+        return []
+    
+    # Find all job headers
+    headers = list(JOB_HEADER_PATTERN.finditer(experience_text))
+    
+    if not headers:
+        # No clear job headers found - treat entire text as one block
+        bullet_count = len(BULLET_PATTERN.findall(experience_text))
+        return [{
+            'header': 'Work Experience',
+            'bullet_count': bullet_count,
+            'total_words': count_words(experience_text)
+        }]
+    
+    job_blocks = []
+    
+    for i, match in enumerate(headers):
+        # Get text from this header to next header (or end)
+        start = match.start()
+        end = headers[i + 1].start() if i + 1 < len(headers) else len(experience_text)
+        block_text = experience_text[start:end]
+        
+        # Count bullets in this block
+        bullet_count = len(BULLET_PATTERN.findall(block_text))
+        
+        # Get header text (job title / company)
+        header = match.group(1).strip() if match.group(1) else 'Unknown Position'
+        
+        job_blocks.append({
+            'header': header[:50],  # Truncate long headers
+            'bullet_count': bullet_count,
+            'total_words': count_words(block_text)
+        })
+    
+    return job_blocks
+
+
+def detect_job_description_issues_simple(experience_text: str) -> List[Dict]:
+    """
+    Simple detection for job description length issues.
+    Works with raw experience text.
+    
+    Detects:
+    - CONTENT_JOB_DESCRIPTION_TOO_SHORT: <3 bullets per job
+    - CONTENT_JOB_DESCRIPTION_TOO_LONG: >8 bullets per job
+    """
+    issues = []
+    
+    if not experience_text:
+        return issues
+    
+    job_blocks = split_into_job_blocks(experience_text)
+    
+    for job in job_blocks:
+        header = job['header']
+        bullet_count = job['bullet_count']
+        
+        # Too short: less than 3 bullets
+        if bullet_count < JOB_DESCRIPTION_MIN_BULLETS:
+            issues.append({
+                'issue_type': 'CONTENT_JOB_DESCRIPTION_TOO_SHORT',
+                'severity': 'important',
+                'location': header,
+                'details': f'Only {bullet_count} bullet points. Add at least {JOB_DESCRIPTION_MIN_BULLETS} achievements with measurable results.'
+            })
+        
+        # Too long: more than 8 bullets
+        elif bullet_count > JOB_DESCRIPTION_MAX_BULLETS:
+            issues.append({
+                'issue_type': 'CONTENT_JOB_DESCRIPTION_TOO_LONG',
+                'severity': 'consider',
+                'location': header,
+                'details': f'Has {bullet_count} bullet points. Consider reducing to {JOB_DESCRIPTION_MAX_BULLETS} most impactful achievements.'
+            })
+    
+    return issues
+```
+
+───────────────────────────────────────────────────────────────────────
+TASK: Update master_detector.py to use simple function
+───────────────────────────────────────────────────────────────────────
+
+FILE: backend/common/detection/master_detector.py
+
+FIND where experience detection should go (near other detections).
+
+ADD import:
+```python
+from .length_detector import detect_job_description_issues_simple
+```
+
+ADD call (where structure.experience is available):
+```python
+# Job Description Length Detection (Simple)
+if hasattr(structure, 'experience') and structure.experience:
+    issues.extend(detect_job_description_issues_simple(structure.experience))
+```
+
+───────────────────────────────────────────────────────────────────────
+VERIFICATION:
+───────────────────────────────────────────────────────────────────────
+
+Test with this sample:
+```python
+test_experience = """
+Senior Developer at TechCorp (2020-2023)
+- Built web applications
+- Led team projects
+
+Junior Developer at StartupXYZ (2018-2020)
+- Wrote code
+"""
+
+from length_detector import detect_job_description_issues_simple
+issues = detect_job_description_issues_simple(test_experience)
+print(issues)
+
+# Expected: 
+# - TechCorp: 2 bullets → TOO SHORT
+# - StartupXYZ: 1 bullet → TOO SHORT
+```
+
+───────────────────────────────────────────────────────────────────────
+EXPECTED RESULTS:
+───────────────────────────────────────────────────────────────────────
+
+After implementation, scanning a CV should detect:
+
+| Job | Bullets | Detection |
+|-----|---------|-----------|
+| TechCorp (2 bullets) | <3 | CONTENT_JOB_DESCRIPTION_TOO_SHORT ✓ |
+| StartupXYZ (1 bullet) | <3 | CONTENT_JOB_DESCRIPTION_TOO_SHORT ✓ |
+| BigCorp (10 bullets) | >8 | CONTENT_JOB_DESCRIPTION_TOO_LONG ✓ |
+| MediumCorp (5 bullets) | 3-8 | No issue (OK) |
+
+───────────────────────────────────────────────────────────────────────
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- Use ONLY the regex patterns provided
+- Keep the logic simple - we're counting bullets, not parsing details
+- If experience text format is unexpected, STOP and report
+- Do NOT try to extract company names precisely - just use header text
+
+═══════════════════════════════════════════════════════════════════════

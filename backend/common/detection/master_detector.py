@@ -33,7 +33,8 @@ from .length_detector import (
     detect_summary_too_long,
     detect_job_description_too_short,
     detect_job_description_too_long,
-    detect_education_description_too_short
+    detect_education_description_too_short,
+    detect_job_description_issues_simple
 )
 
 logger = logging.getLogger(__name__)
@@ -184,12 +185,15 @@ def detect_all_issues(cv_text: str, job_description: str = None) -> List[Dict[st
             all_issues.extend(summary_issues)
             logger.info(f"Summary length issues found: {len(summary_issues)}")
         
-        # Note: Experience and Education length detectors require parsed entries
-        # in List[Dict] format (company/title/bullets, institution/degree/description).
-        # Currently structure.experience and structure.education are raw text.
-        # TODO: Add experience/education parsing functions to enable:
-        # - detect_job_description_too_short(experience_entries)
-        # - detect_job_description_too_long(experience_entries)
+        # Job Description Length Detection (Simple) - works with raw experience text
+        if structure and structure.experience:
+            job_desc_issues = detect_job_description_issues_simple(structure.experience)
+            all_issues.extend(job_desc_issues)
+            logger.info(f"Job description length issues found: {len(job_desc_issues)}")
+        
+        # Note: Education length detector requires parsed entries
+        # in List[Dict] format (institution/degree/description).
+        # TODO: Add education parsing function to enable:
         # - detect_education_description_too_short(education_entries, years_experience)
     except Exception as e:
         logger.error(f"Error detecting length issues: {e}")

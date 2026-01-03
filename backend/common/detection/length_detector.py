@@ -156,3 +156,103 @@ def detect_all_length_issues(
         ))
     
     return issues
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# SIMPLE JOB DESCRIPTION DETECTION (Quick Win)
+# Works with raw experience text - no complex parsing needed
+# ═══════════════════════════════════════════════════════════════════════
+
+# Patterns to identify job blocks - simplified for reliability
+# Matches lines that look like job headers (contain date ranges or "at Company")
+JOB_HEADER_PATTERN = re.compile(
+    r'^([A-Z][^\n•\-\*]+?(?:at\s+[A-Z][^\n]+|\s*\([^)]*\d{4}[^)]*\)|\s+\d{4}\s*[-–—]))[^\n]*$',
+    re.MULTILINE
+)
+
+# Patterns for bullet points
+BULLET_PATTERN = re.compile(r'^[\s]*[•\-\*▪▸►]\s*\S', re.MULTILINE)
+
+
+def split_into_job_blocks(experience_text: str) -> List[Dict]:
+    """
+    Split raw experience text into job blocks.
+    Returns list of dicts with: header, bullet_count, total_words
+    """
+    if not experience_text or not experience_text.strip():
+        return []
+    
+    # Find all job headers
+    headers = list(JOB_HEADER_PATTERN.finditer(experience_text))
+    
+    if not headers:
+        # No clear job headers found - treat entire text as one block
+        bullet_count = len(BULLET_PATTERN.findall(experience_text))
+        return [{
+            'header': 'Work Experience',
+            'bullet_count': bullet_count,
+            'total_words': count_words(experience_text)
+        }]
+    
+    job_blocks = []
+    
+    for i, match in enumerate(headers):
+        # Get text from this header to next header (or end)
+        start = match.start()
+        end = headers[i + 1].start() if i + 1 < len(headers) else len(experience_text)
+        block_text = experience_text[start:end]
+        
+        # Count bullets in this block
+        bullet_count = len(BULLET_PATTERN.findall(block_text))
+        
+        # Get header text (job title / company)
+        header = match.group(1).strip() if match.group(1) else 'Unknown Position'
+        
+        job_blocks.append({
+            'header': header[:50],  # Truncate long headers
+            'bullet_count': bullet_count,
+            'total_words': count_words(block_text)
+        })
+    
+    return job_blocks
+
+
+def detect_job_description_issues_simple(experience_text: str) -> List[Dict]:
+    """
+    Simple detection for job description length issues.
+    Works with raw experience text.
+    
+    Detects:
+    - CONTENT_JOB_DESCRIPTION_TOO_SHORT: <3 bullets per job
+    - CONTENT_JOB_DESCRIPTION_TOO_LONG: >8 bullets per job
+    """
+    issues = []
+    
+    if not experience_text:
+        return issues
+    
+    job_blocks = split_into_job_blocks(experience_text)
+    
+    for job in job_blocks:
+        header = job['header']
+        bullet_count = job['bullet_count']
+        
+        # Too short: less than 3 bullets
+        if bullet_count < JOB_DESCRIPTION_MIN_BULLETS:
+            issues.append({
+                'issue_type': 'CONTENT_JOB_DESCRIPTION_TOO_SHORT',
+                'severity': 'important',
+                'location': header,
+                'details': f'Only {bullet_count} bullet points. Add at least {JOB_DESCRIPTION_MIN_BULLETS} achievements with measurable results.'
+            })
+        
+        # Too long: more than 8 bullets
+        elif bullet_count > JOB_DESCRIPTION_MAX_BULLETS:
+            issues.append({
+                'issue_type': 'CONTENT_JOB_DESCRIPTION_TOO_LONG',
+                'severity': 'consider',
+                'location': header,
+                'details': f'Has {bullet_count} bullet points. Consider reducing to {JOB_DESCRIPTION_MAX_BULLETS} most impactful achievements.'
+            })
+    
+    return issues
