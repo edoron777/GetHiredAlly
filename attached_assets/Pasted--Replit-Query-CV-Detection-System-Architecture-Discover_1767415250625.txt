@@ -1,0 +1,142 @@
+# Replit Query: CV Detection System Architecture Discovery
+
+**Purpose:** Understand the current architecture for CV issue detection to enable adding new issue types  
+**Type:** INVESTIGATION (not implementation)  
+**Date:** January 3, 2026
+
+---
+
+## CONTEXT
+
+I need to understand how the CV Optimizer detection system is structured so I can:
+1. Add new CV issue types (both database AND code)
+2. Document the process for future updates
+3. Create proper Replit prompts for implementing new detectors
+
+---
+
+## QUESTIONS TO ANSWER
+
+### Section 1: File Structure
+
+**Q1.1:** What is the current file structure for CV detection modules?
+
+Please show me the directory tree for:
+```
+backend/common/detection/
+```
+
+**Q1.2:** Are there other directories involved in CV issue detection? If yes, show their structure too.
+
+---
+
+### Section 2: Detection Module Architecture
+
+**Q2.1:** Looking at an existing detector (e.g., `contact_extractor.py` or `language_detector.py`), what is the pattern/structure of a detector module?
+
+Please show me:
+- Import statements used
+- Main function signature
+- Return format (what does a detected issue look like?)
+- How severity is assigned
+
+**Q2.2:** How does `master_detector.py` orchestrate all detectors? Show me:
+- How it imports individual detectors
+- How it aggregates results
+- The main entry point function
+
+---
+
+### Section 3: Issue Type Configuration
+
+**Q3.1:** Where is `ISSUE_TYPE_CONFIG` defined? Show me:
+- File location
+- Structure of the config
+- Example of one issue type entry
+
+**Q3.2:** How does code connect to database issue types? Is there:
+- A mapping file?
+- Direct database queries?
+- Configuration sync?
+
+---
+
+### Section 4: Adding New Detectors
+
+**Q4.1:** If I want to add a new detector (e.g., `structure_detector.py` for section order violations), what files need to be:
+- Created?
+- Modified?
+
+**Q4.2:** What is the exact format for returning a detected issue from a detector function?
+
+---
+
+### Section 5: Database Connection
+
+**Q5.1:** How does the detection code relate to the `cv_issue_types` database table?
+
+**Q5.2:** When an issue is detected, how does it get the TipBox content (description, static_tip, examples) from the database?
+
+---
+
+## EXPECTED OUTPUT FORMAT
+
+Please provide your answers in this format:
+
+```markdown
+## Answer 1.1: Detection File Structure
+
+[Directory tree]
+
+## Answer 1.2: Other Directories
+
+[Yes/No + tree if yes]
+
+## Answer 2.1: Detector Module Pattern
+
+[Code example with annotations]
+
+## Answer 2.2: Master Detector Flow
+
+[Code example showing orchestration]
+
+## Answer 3.1: ISSUE_TYPE_CONFIG
+
+[File path + structure example]
+
+## Answer 3.2: Code-Database Connection
+
+[Explanation + code if applicable]
+
+## Answer 4.1: Files to Create/Modify for New Detector
+
+[List with file paths]
+
+## Answer 4.2: Issue Return Format
+
+[JSON/Dict structure]
+
+## Answer 5.1: Detection-Database Relationship
+
+[Explanation]
+
+## Answer 5.2: TipBox Content Retrieval
+
+[Explanation + code flow]
+```
+
+---
+
+## ADDITIONAL CONTEXT
+
+From my documentation, I understand:
+- The system uses CODE for 80% detection (deterministic) + AI for 20% (enhancement)
+- Detectors include: contact_extractor, section_extractor, bullet_extractor, spelling_detector, language_detector, format_detector, polish_detector
+- There's an `ai_enhancer.py` that adds suggestions but doesn't detect
+- Severity is assigned via ISSUE_TYPE_CONFIG lookup after detection
+
+I need to verify this understanding and get the exact implementation details.
+
+---
+
+**END OF QUERY**
