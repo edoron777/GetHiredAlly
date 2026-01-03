@@ -32,6 +32,8 @@ function isMarkdownContent(content: string): boolean {
     /^\s*[-*+]\s+.+$/m,
     /^\s*\d+\.\s+.+$/m,
     /\[.+\]\(.+\)/,
+    /__[^_]+__/,
+    /`[^`]+`/,
   ]
   
   let matchCount = 0
@@ -39,6 +41,10 @@ function isMarkdownContent(content: string): boolean {
     if (pattern.test(content)) {
       matchCount++
     }
+  }
+  
+  if (matchCount >= 1 && /\*\*[^*]+\*\*/.test(content)) {
+    return true
   }
   
   return matchCount >= 2
