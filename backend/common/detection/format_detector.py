@@ -388,6 +388,49 @@ def detect_special_characters(text: str) -> List[Dict]:
     return issues
 
 
+def detect_footer_content(cv_text: str) -> List[Dict]:
+    """
+    Detect if important content appears in footer area.
+    
+    ATS systems typically skip header and footer content.
+    
+    Args:
+        cv_text: Full CV text
+        
+    Returns:
+        List of FORMAT_CONTENT_IN_FOOTER issues
+    """
+    issues = []
+    lines = cv_text.strip().split('\n')
+    
+    if len(lines) < 5:
+        return issues
+    
+    footer_lines = lines[-3:]
+    footer_text = '\n'.join(footer_lines).lower()
+    
+    footer_patterns = [
+        r'page\s*\d+\s*(of\s*\d+)?',
+        r'[\w.]+@[\w.]+\.\w+',
+        r'\d{3}[-.\s]?\d{3}[-.\s]?\d{4}',
+        r'linkedin\.com',
+    ]
+    
+    for pattern in footer_patterns:
+        if re.search(pattern, footer_text):
+            if re.search(r'@|linkedin|phone|\d{3}[-.\s]?\d{3}', footer_text):
+                issues.append({
+                    'issue_type': 'FORMAT_CONTENT_IN_FOOTER',
+                    'location': 'Document Footer',
+                    'description': 'Contact information detected in footer area. ATS systems typically skip footers.',
+                    'current': footer_lines[-1].strip() if footer_lines else '',
+                    'is_highlightable': True,
+                })
+                break
+    
+    return issues
+
+
 def detect_nonstandard_headers(cv_text: str) -> List[Dict]:
     """
     Detect creative/non-standard section headers that ATS may not recognize.
@@ -487,6 +530,7 @@ def detect_format_issues(text: str) -> List[Dict]:
     issues.extend(detect_tables(text))
     issues.extend(detect_multiple_columns(text))
     issues.extend(detect_special_characters(text))
+    issues.extend(detect_footer_content(text))
     issues.extend(detect_nonstandard_headers(text))
     issues.extend(detect_skills_format_issues(text))
     
