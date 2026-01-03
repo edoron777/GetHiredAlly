@@ -1,0 +1,123 @@
+# TASK: Fix TipBox Styling - 2 Issues
+
+## FIX 1: Remove special styling from "HOW TO FIX"
+
+### FILE: client/src/components/common/TipBox/TipBoxStyles.css
+
+FIND styles for instructions section (has left border + shadow):
+
+.tipbox-instructions-box {
+  border-left: 3px solid #3b82f6;
+  /* or any shadow/special styling */
+}
+
+REPLACE WITH (match other sections - simple gray frame):
+
+.tipbox-instructions-box {
+  background: #fafafa;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+
+Make sure it looks IDENTICAL to "WHY THIS MATTERS" box.
+
+## FIX 2: Make input area clearly editable
+
+### FILE: client/src/components/common/TipBox/TipBoxSection.tsx
+
+FIND the 'input' case in the switch statement.
+
+UPDATE to add pencil icon and visual hint:
+
+case 'input':
+  return (
+    <div className="tipbox-section tipbox-section-input">
+      <div className="tipbox-input-label">
+        <span className="tipbox-input-icon">✏️</span>
+        <span>{label}</span>
+      </div>
+      <div className="tipbox-input-wrapper">
+        <textarea
+          className="tipbox-input"
+          placeholder={placeholder || 'Type your improved version here...'}
+          defaultValue={defaultValue}
+          onChange={(e) => onInputChange?.(e.target.value)}
+        />
+      </div>
+    </div>
+  );
+
+### FILE: client/src/components/common/TipBox/TipBoxStyles.css
+
+ADD styles for editable input:
+
+/* Input section - editable area */
+.tipbox-section-input {
+  padding: 12px 20px;
+}
+
+.tipbox-input-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+}
+
+.tipbox-input-icon {
+  font-size: 14px;
+}
+
+.tipbox-input-wrapper {
+  position: relative;
+}
+
+.tipbox-input {
+  width: 100%;
+  min-height: 100px;
+  padding: 14px;
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  border: 2px dashed #d1d5db;
+  border-radius: 8px;
+  background: #ffffff;
+  resize: vertical;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.tipbox-input:hover {
+  border-color: #9ca3af;
+}
+
+.tipbox-input:focus {
+  outline: none;
+  border-color: #6366f1;
+  border-style: solid;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.tipbox-input::placeholder {
+  color: #9ca3af;
+  font-style: italic;
+}
+
+## SUMMARY
+
+| Element | Before | After |
+|---------|--------|-------|
+| HOW TO FIX | Blue left border + shadow | Simple gray frame (like others) |
+| Input label | Plain text | ✏️ icon + text |
+| Input border | Solid | Dashed (indicates editable) |
+| Input focus | None | Purple border + glow |
+
+## VERIFICATION
+1. "HOW TO FIX" box looks identical to "WHY THIS MATTERS"
+2. Input area has ✏️ pencil icon
+3. Input has dashed border (visual hint: editable)
+4. Input turns solid purple on focus

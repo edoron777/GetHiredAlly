@@ -66,14 +66,18 @@ export const TipBoxSection: React.FC<Props> = ({
     case 'input':
       return (
         <div className="tipbox-section tipbox-section-input">
-          {renderLabel()}
-          <textarea
-            className="tipbox-input"
-            placeholder={placeholder}
-            defaultValue={defaultValue}
-            onChange={(e) => onInputChange?.(id || 'default', e.target.value)}
-            rows={3}
-          />
+          <div className="tipbox-input-label">
+            <span className="tipbox-input-icon">✏️</span>
+            <span>{label || 'WRITE YOUR IMPROVED VERSION'}</span>
+          </div>
+          <div className="tipbox-input-wrapper">
+            <textarea
+              className="tipbox-input"
+              placeholder={placeholder || 'Type your improved version here...'}
+              defaultValue={defaultValue}
+              onChange={(e) => onInputChange?.(id || 'default', e.target.value)}
+            />
+          </div>
         </div>
       )
 
