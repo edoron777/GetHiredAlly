@@ -162,7 +162,7 @@ def detect_abbreviation_inconsistency(cv_text: str) -> List[Dict[str, Any]]:
                     "short_count": len(short_matches),
                     "long_count": len(long_matches)
                 },
-                "suggested_fix": f"Choose one form and use consistently. '{abbrev}' appears {len(short_matches)} times, '{full}' appears {len(long_matches)} times."
+                "suggestion": f"Choose one form and use consistently. '{abbrev}' appears {len(short_matches)} times, '{full}' appears {len(long_matches)} times."
             })
     
     return issues
