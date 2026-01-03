@@ -293,7 +293,7 @@ export default function ResultsPage() {
     }
   };
 
-  const buildTipBoxSections = (issue: ReturnType<typeof normalizeIssue>): TipBoxSection[] => {
+  const buildTipBoxSections = (issue: any): TipBoxSection[] => {
     const sections: TipBoxSection[] = [];
     
     if (issue.category || issue.issueType) {
@@ -301,6 +301,14 @@ export default function ResultsPage() {
         type: 'category',
         label: 'CATEGORY',
         content: issue.category || issue.issueType
+      });
+    }
+    
+    if (issue.currentText || issue.current || issue.matchText) {
+      sections.push({
+        type: 'example-wrong',
+        label: 'ISSUE IN YOUR CV',
+        content: issue.currentText || issue.current || issue.matchText
       });
     }
     
@@ -312,36 +320,36 @@ export default function ResultsPage() {
       });
     }
     
-    if (issue.currentText) {
-      sections.push({
-        type: 'example-wrong',
-        label: 'CURRENT TEXT',
-        content: issue.currentText
-      });
-    }
-    
-    if (issue.suggestedText) {
-      sections.push({
-        type: 'example-correct',
-        label: 'SUGGESTED',
-        content: issue.suggestedText
-      });
-    }
-    
-    if (issue.howToFix) {
+    if (issue.howToFix || issue.suggestion || issue.static_tip) {
       sections.push({
         type: 'instructions',
         label: 'HOW TO FIX',
-        content: issue.howToFix
+        content: issue.howToFix || issue.suggestion || issue.static_tip
+      });
+    }
+    
+    if (issue.suggestedText || issue.example_after) {
+      sections.push({
+        type: 'example-correct',
+        label: 'GOOD EXAMPLE',
+        content: issue.suggestedText || issue.example_after
+      });
+    }
+    
+    if (issue.what_to_avoid && issue.show_what_to_avoid) {
+      sections.push({
+        type: 'text',
+        label: 'WHAT TO AVOID',
+        content: issue.what_to_avoid
       });
     }
     
     sections.push({
       type: 'input',
-      label: 'YOUR VERSION',
+      label: 'WRITE YOUR IMPROVED VERSION',
       id: 'user-edit',
       placeholder: 'Type your improved version here...',
-      defaultValue: issue.suggestedText || ''
+      defaultValue: issue.suggestedText || issue.example_after || ''
     });
     
     return sections;
