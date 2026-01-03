@@ -1,0 +1,63 @@
+# TASK: Add Footer Content Detection to Format Detector
+
+## CONTEXT
+ATS systems typically skip header and footer content. Important information placed
+in footers (like contact info, page numbers with names) may be completely ignored.
+
+## WHAT TO MODIFY
+
+### File: backend/common/detection/format_detector.py
+
+### Detection Logic
+
+**Footer indicators:**
+- Content in last 3 lines of document
+- Contains: page numbers, "Page X of Y", contact info
+- Repeated on what appears to be page boundaries
+
+**Note:** This is difficult to detect perfectly in plain text. Focus on:
+- Last 3 lines containing contact-like info
+- Patterns like "Page 1 of 2"
+
+### Code to Add
+```python
+def detect_footer_content(cv_text: str) -> List[Dict]:
+    """Detect if important content appears in footer area."""
+    issues = []
+    lines = cv_text.strip().split('\n')
+    
+    if len(lines) < 5:
+        return issues
+    
+    # Check last 3 lines for footer-like content
+    footer_lines = lines[-3:]
+    footer_text = '\n'.join(footer_lines).lower()
+    
+    # Patterns indicating footer with important info
+    footer_patterns = [
+        r'page\s*\d+\s*(of\s*\d+)?',  # Page numbers
+        r'[\w.]+@[\w.]+\.\w+',  # Email in footer
+        r'\d{3}[-.\s]?\d{3}[-.\s]?\d{4}',  # Phone in footer
+        r'linkedin\.com',  # LinkedIn in footer
+    ]
+    
+    for pattern in footer_patterns:
+        if re.search(pattern, footer_text):
+            # Check if this looks like duplicate contact info
+            if re.search(r'@|linkedin|phone|\d{3}[-.\s]?\d{3}', footer_text):
+                issues.append({
+                    'issue_type': 'FORMAT_CONTENT_IN_FOOTER',
+                    'location': 'Document Footer',
+                    'description': 'Contact information detected in footer area. ATS systems typically skip footers.',
+                    'current': footer_lines[-1].strip() if footer_lines else '',
+                    'is_highlightable': True,
+                })
+                break
+    
+    return issues
+```
+
+## CONSTRAINTS
+- Add to existing format_detector.py
+- Only flag if contact-like info found in footer
+- Don't over-detect (only clear footer patterns)

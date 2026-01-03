@@ -108,4 +108,53 @@ def detect_structure_issues(cv_text: str) -> List[Dict]:
                 'is_highlightable': bool(skills_line),
             })
     
+    issues.extend(detect_page1_completeness(cv_text))
+    
+    return issues
+
+
+def detect_page1_completeness(cv_text: str) -> List[Dict]:
+    """
+    Check if Page 1 contains essential sections.
+    
+    Research shows -50% ATS ranking if first page is missing Summary or Skills.
+    
+    Args:
+        cv_text: Full CV text
+        
+    Returns:
+        List of FORMAT_PAGE1_INCOMPLETE issues
+    """
+    issues = []
+    lines = cv_text.split('\n')
+    first_page_lines = lines[:45]
+    first_page_text = '\n'.join(first_page_lines)
+    
+    has_summary = bool(re.search(
+        r'(?i)(professional\s+)?summary|profile|objective',
+        first_page_text
+    ))
+    
+    has_skills = bool(re.search(
+        r'(?i)(technical\s+)?skills|competencies|expertise',
+        first_page_text
+    ))
+    
+    if not has_summary and not has_skills:
+        issues.append({
+            'issue_type': 'FORMAT_PAGE1_INCOMPLETE',
+            'location': 'First Page',
+            'description': 'First page is missing both Summary and Skills sections. Key information should appear on page 1.',
+            'current': '',
+            'is_highlightable': False,
+        })
+    elif not has_summary:
+        issues.append({
+            'issue_type': 'FORMAT_PAGE1_INCOMPLETE',
+            'location': 'First Page',
+            'description': 'First page is missing a Professional Summary section.',
+            'current': '',
+            'is_highlightable': False,
+        })
+    
     return issues
