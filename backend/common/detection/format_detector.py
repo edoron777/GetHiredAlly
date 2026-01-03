@@ -380,6 +380,48 @@ def detect_special_characters(text: str) -> List[Dict]:
     return issues
 
 
+def detect_skills_format_issues(text: str) -> List[Dict]:
+    """
+    Detect if skills are written as paragraphs instead of lists.
+    
+    ATS systems often fail to parse skills in paragraph format.
+    
+    Args:
+        text: Full CV text
+        
+    Returns:
+        List of FORMAT_SKILLS_IN_PARAGRAPH issues
+    """
+    issues = []
+    
+    skills_match = re.search(
+        r'(?i)(skills|technical skills|competencies)[:\s]*\n(.*?)(?=\n\s*\n|\n[A-Z]|\Z)',
+        text,
+        re.DOTALL
+    )
+    
+    if skills_match:
+        skills_content = skills_match.group(2).strip()
+        
+        lines = skills_content.split('\n')
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+            if len(line) > 50 and not re.match(r'^[\•\-\*\●\►]', line):
+                if line.count(',') >= 3:
+                    issues.append({
+                        'issue_type': 'FORMAT_SKILLS_IN_PARAGRAPH',
+                        'location': 'Skills Section',
+                        'description': 'Skills written as comma-separated paragraph instead of list format.',
+                        'current': line[:100] + '...' if len(line) > 100 else line,
+                        'is_highlightable': True,
+                    })
+                    break
+    
+    return issues
+
+
 def detect_format_issues(text: str) -> List[Dict]:
     """
     Detect all formatting issues.
@@ -403,5 +445,6 @@ def detect_format_issues(text: str) -> List[Dict]:
     issues.extend(detect_tables(text))
     issues.extend(detect_multiple_columns(text))
     issues.extend(detect_special_characters(text))
+    issues.extend(detect_skills_format_issues(text))
     
     return issues
