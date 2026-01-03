@@ -707,7 +707,7 @@ export default function ResultsPage() {
               <DocumentView>
                 <DocumentEditor
                   content={cvContent?.fullText || ''}
-                  format="text"
+                  format="auto"
                   markers={documentIssues.map(issue => ({
                     id: issue.id?.toString() || '',
                     matchText: issue.matchText || '',
@@ -715,7 +715,7 @@ export default function ResultsPage() {
                   })).filter(m => m.matchText && m.matchText.length > 0)}
                   onMarkerClick={(id) => handleIssueClick(id)}
                   config={{
-                    maxWidth: 1235,
+                    maxWidth: 1400,
                     fontSize: 18,
                     padding: 60,
                     showWordMargins: true,
