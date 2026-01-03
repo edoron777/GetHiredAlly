@@ -28,6 +28,13 @@ from .polish_detector import detect_polish_issues
 from .standards_detector import detect_standards_issues
 from .keywords_detector import detect_keywords_issues
 from .structure_detector import detect_structure_issues
+from .skills_detector import detect_all_skills_issues
+from .length_detector import (
+    detect_summary_too_long,
+    detect_job_description_too_short,
+    detect_job_description_too_long,
+    detect_education_description_too_short
+)
 
 logger = logging.getLogger(__name__)
 
@@ -160,6 +167,22 @@ def detect_all_issues(cv_text: str, job_description: str = None) -> List[Dict[st
         logger.info(f"Structure issues found: {len(structure_issues)}")
     except Exception as e:
         logger.error(f"Error detecting structure issues: {e}")
+    
+    # Skills Section Detection (v1.4)
+    try:
+        skills_issues = detect_all_skills_issues(cv_text)
+        all_issues.extend(skills_issues)
+        logger.info(f"Skills issues found: {len(skills_issues)}")
+    except Exception as e:
+        logger.error(f"Error detecting skills issues: {e}")
+    
+    # Length-Based Detection (v1.5)
+    # Note: These detectors require parsed sections (summary_text, experience_entries, education_entries)
+    # which are not yet available in the expected format. To enable:
+    # 1. Parse summary_text from structure.summary
+    # 2. Parse experience_entries as List[Dict] with company, title, bullets
+    # 3. Parse education_entries as List[Dict] with institution, degree, description
+    # 4. Calculate years_experience from experience dates
     
     logger.info(f"Static detection complete. Total issues: {len(all_issues)}")
     

@@ -1,0 +1,84 @@
+═══════════════════════════════════════════════════════════════════════
+REPLIT: Run Verification Tests
+═══════════════════════════════════════════════════════════════════════
+
+TASK:
+Create and run verification tests for the new detectors.
+
+───────────────────────────────────────────────────────────────────────
+STEP 1: Create test file
+───────────────────────────────────────────────────────────────────────
+
+FILE: backend/common/detection/test_new_detectors.py
+
+"""Test file for new CV detectors"""
+
+from skills_detector import detect_all_skills_issues
+from length_detector import detect_summary_too_long, detect_job_description_too_short
+
+def test_skills_missing():
+    cv = "John Smith\nEXPERIENCE\nDeveloper at TechCorp"
+    issues = detect_all_skills_issues(cv)
+    assert any(i['issue_type'] == 'FORMAT_SKILLS_SECTION_MISSING' for i in issues)
+    print("✅ Skills missing detection: PASSED")
+
+def test_skills_present():
+    cv = "John Smith\nSKILLS\nPython, JavaScript\nEXPERIENCE\nDeveloper"
+    issues = detect_all_skills_issues(cv)
+    assert not any(i['issue_type'] == 'FORMAT_SKILLS_SECTION_MISSING' for i in issues)
+    print("✅ Skills present detection: PASSED")
+
+def test_summary_too_long():
+    long_summary = " ".join(["word"] * 120)  # 120 words
+    issues = detect_summary_too_long(long_summary)
+    assert any(i['issue_type'] == 'CONTENT_SUMMARY_TOO_LONG' for i in issues)
+    print("✅ Summary too long detection: PASSED")
+
+def test_job_too_short():
+    entries = [{'company': 'TechCorp', 'title': 'Dev', 'bullets': ['Did stuff']}]
+    issues = detect_job_description_too_short(entries)
+    assert any(i['issue_type'] == 'CONTENT_JOB_DESCRIPTION_TOO_SHORT' for i in issues)
+    print("✅ Job description too short detection: PASSED")
+
+if __name__ == '__main__':
+    print("\n=== Running Verification Tests ===\n")
+    test_skills_missing()
+    test_skills_present()
+    test_summary_too_long()
+    test_job_too_short()
+    print("\n✅ ALL TESTS PASSED\n")
+
+───────────────────────────────────────────────────────────────────────
+STEP 2: Run tests
+───────────────────────────────────────────────────────────────────────
+
+cd backend/common/detection
+python test_new_detectors.py
+
+───────────────────────────────────────────────────────────────────────
+EXPECTED OUTPUT:
+───────────────────────────────────────────────────────────────────────
+
+=== Running Verification Tests ===
+
+✅ Skills missing detection: PASSED
+✅ Skills present detection: PASSED
+✅ Summary too long detection: PASSED
+✅ Job description too short detection: PASSED
+
+✅ ALL TESTS PASSED
+
+───────────────────────────────────────────────────────────────────────
+STEP 3: Cleanup (after tests pass)
+───────────────────────────────────────────────────────────────────────
+
+rm backend/common/detection/test_new_detectors.py
+
+───────────────────────────────────────────────────────────────────────
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- Report ALL test results
+- Do NOT attempt fixes if tests fail
+- Report errors for follow-up
+
+═══════════════════════════════════════════════════════════════════════
