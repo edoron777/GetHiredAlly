@@ -5,6 +5,7 @@ interface CVIssue {
   severity: 'critical' | 'important' | 'consider' | 'polish';
   matchText?: string;
   current_text?: string;
+  current?: string;
   problematic_text?: string;
   title?: string;
 }
@@ -49,7 +50,7 @@ export const classifyIssues = (issues: CVIssue[], cvContent: string) => {
   const nonHighlightable: CVIssue[] = [];
   
   for (const issue of issues) {
-    const matchText = issue.matchText || issue.current_text || issue.problematic_text || '';
+    const matchText = issue.current || issue.matchText || issue.current_text || issue.problematic_text || '';
     
     if (isValidMarker(matchText, cvContent)) {
       highlightable.push({ ...issue, matchText });
@@ -72,7 +73,7 @@ export default function CVDocument({ cvContent, issues = [], onIssueClick }: CVD
 
   const allMarkers = issues.map(issue => ({
     id: issue.id?.toString() || '',
-    matchText: issue.matchText || issue.current_text || issue.problematic_text || '',
+    matchText: issue.current || issue.matchText || issue.current_text || issue.problematic_text || '',
     tag: issue.severity || 'consider'
   }));
 

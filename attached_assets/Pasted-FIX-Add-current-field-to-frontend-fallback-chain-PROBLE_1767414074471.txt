@@ -1,0 +1,63 @@
+FIX: Add 'current' field to frontend fallback chain
+
+PROBLEM:
+Backend sends field 'current' but frontend never checks for it.
+Highlight text is lost.
+
+FIX 3 LOCATIONS:
+
+═══════════════════════════════════════════════════════════
+LOCATION 1: CVIssue Interface
+═══════════════════════════════════════════════════════════
+FILE: client/src/pages/cv-optimizer/ResultsPage.tsx
+FIND (around line 18-40): interface CVIssue
+
+ADD this field (after current_text):
+  current?: string;
+
+═══════════════════════════════════════════════════════════
+LOCATION 2: normalizeIssue Function  
+═══════════════════════════════════════════════════════════
+FILE: client/src/pages/cv-optimizer/ResultsPage.tsx
+FIND (around line 76-91): normalizeIssue function
+
+CHANGE:
+  matchText: issue.current_text || issue.problematic_text || issue.matchText || '',
+
+TO:
+  matchText: issue.current || issue.current_text || issue.problematic_text || issue.matchText || '',
+
+ALSO CHANGE:
+  currentText: issue.current_text || issue.problematic_text || issue.matchText || '',
+
+TO:
+  currentText: issue.current || issue.current_text || issue.problematic_text || issue.matchText || '',
+
+═══════════════════════════════════════════════════════════
+LOCATION 3: CVDocument.tsx - Two places
+═══════════════════════════════════════════════════════════
+FILE: client/src/components/cv-optimizer/DocumentView/CVDocument.tsx
+
+FIND (around line 73-77): allMarkers creation
+CHANGE:
+  matchText: issue.matchText || issue.current_text || issue.problematic_text || '',
+
+TO:
+  matchText: issue.current || issue.matchText || issue.current_text || issue.problematic_text || '',
+
+
+FIND (around line 47-62): classifyIssues function
+CHANGE:
+  const matchText = issue.matchText || issue.current_text || issue.problematic_text || '';
+
+TO:
+  const matchText = issue.current || issue.matchText || issue.current_text || issue.problematic_text || '';
+
+═══════════════════════════════════════════════════════════
+
+SUMMARY OF CHANGES:
+- Add 'current' as FIRST option in all fallback chains
+- This ensures backend's 'current' field is read
+
+TEST:
+After fix, highlight text from backend should appear in TextMarker.

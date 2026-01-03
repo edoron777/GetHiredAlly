@@ -30,6 +30,7 @@ interface CVIssue {
   problematic_text?: string;
   matchText?: string;
   current_text?: string;
+  current?: string;
   suggested_fix?: string;
   suggestedText?: string;
   fix_difficulty?: string;
@@ -81,8 +82,8 @@ export default function ResultsPage() {
     description: issue.description || issue.issue_description || issue.issue || '',
     category: issue.category || '',
     location: issue.location || '',
-    matchText: issue.current_text || issue.problematic_text || issue.matchText || '',
-    currentText: issue.current_text || issue.problematic_text || issue.matchText || '',
+    matchText: issue.current || issue.current_text || issue.problematic_text || issue.matchText || '',
+    currentText: issue.current || issue.current_text || issue.problematic_text || issue.matchText || '',
     suggestedText: issue.suggested_fix || issue.suggestedText || '',
     fixDifficulty: issue.fix_difficulty || 'medium',
     isAutoFixable: issue.is_auto_fixable || false,
