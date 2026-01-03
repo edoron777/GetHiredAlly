@@ -1,0 +1,66 @@
+# RFI: DocumentEditor - Current State Investigation
+
+## DO NOT MODIFY ANY CODE - REPORT ONLY
+
+═══════════════════════════════════════════════════════════════════════
+PURPOSE
+═══════════════════════════════════════════════════════════════════════
+
+I need to understand the current document viewing/editing implementation
+to design a reusable DocumentEditor component that supports:
+- PDF display
+- Word (.docx) display with formatting
+- Markdown display with formatting
+
+═══════════════════════════════════════════════════════════════════════
+PART A: Current Document Viewer Implementation
+═══════════════════════════════════════════════════════════════════════
+
+### A1: CVDocument Component
+Show the complete file: client/src/components/cv-optimizer/CVDocument.tsx
+- How is CV content currently displayed?
+- What component/method renders the text?
+- What is the container structure?
+
+### A2: Document Container Styling
+- What is the current width of the document container?
+- What CSS creates the "Word-like" gray margins?
+- What is the current font-family and font-size?
+
+### A3: File Upload Handling
+- Where is file upload processed?
+- What file types are accepted? (PDF, DOCX, MD, TXT)
+- How is text extracted from each file type?
+- Is formatting preserved or lost during extraction?
+
+═══════════════════════════════════════════════════════════════════════
+PART B: Backend Document Processing
+═══════════════════════════════════════════════════════════════════════
+
+### B1: File Processing Endpoint
+- What API endpoint handles file uploads?
+- Show the file processing code
+- What libraries are used for PDF/DOCX parsing?
+
+### B2: Text Extraction
+- How is text extracted from PDF?
+- How is text extracted from DOCX?
+- Is any formatting metadata preserved?
+- What is returned to frontend?
+
+═══════════════════════════════════════════════════════════════════════
+PART C: Current Styling & Layout
+═══════════════════════════════════════════════════════════════════════
+
+### C1: Document Container CSS
+Show all CSS related to the document viewer:
+- Container width
+- Margins (gray margins like Word)
+- Font settings
+- Background styling
+
+### C2: Current Dimensions
+Report current values:
+- Container max-width: ___px
+- Font-size: ___px
+- Fon
