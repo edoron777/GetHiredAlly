@@ -1,0 +1,107 @@
+// ═══════════════════════════════════════════════════════════════════════
+// DocumentEditor Types
+// ═══════════════════════════════════════════════════════════════════════
+
+import { MarkerItem, MarkerConfig } from '../TextMarker'
+
+/**
+ * Supported document formats
+ */
+export type DocumentFormat = 'markdown' | 'word' | 'pdf' | 'text' | 'auto'
+
+/**
+ * Configuration for DocumentEditor appearance
+ */
+export interface DocumentEditorConfig {
+  // Dimensions
+  maxWidth?: number                // Default: 1235px (+30% from 950)
+  minHeight?: number               // Default: 800px
+  padding?: number                 // Default: 60px
+  
+  // Typography
+  fontFamily?: string              // Default: 'Source Sans Pro'
+  fontSize?: number                // Default: 18px (+30% from 14)
+  lineHeight?: number              // Default: 1.7
+  
+  // Appearance
+  showWordMargins?: boolean        // Default: true
+  marginColor?: string             // Default: '#e8eaed'
+  paperColor?: string              // Default: '#ffffff'
+  paperShadow?: boolean            // Default: true
+  
+  // Behavior
+  enableHighlighting?: boolean     // Default: true
+}
+
+/**
+ * Main props for DocumentEditor component
+ */
+export interface DocumentEditorProps {
+  // Content (required)
+  content: string                  // Extracted text (for TextMarker matching)
+  
+  // Format detection
+  format?: DocumentFormat          // 'markdown' | 'word' | 'pdf' | 'text' | 'auto'
+  
+  // Original file (for formatted rendering)
+  originalFileUrl?: string         // Supabase Storage URL for DOCX/PDF
+  originalFileName?: string        // Original filename with extension
+  
+  // Configuration
+  config?: DocumentEditorConfig
+  
+  // TextMarker integration
+  markers?: MarkerItem[]           // Issues to highlight
+  markerConfig?: Partial<MarkerConfig>
+  onMarkerClick?: (id: string, tag: string) => void
+  
+  // Styling
+  className?: string
+}
+
+/**
+ * Default configuration values
+ */
+export const DEFAULT_DOCUMENT_CONFIG: DocumentEditorConfig = {
+  maxWidth: 1235,
+  minHeight: 800,
+  padding: 60,
+  fontFamily: "'Source Sans Pro', -apple-system, BlinkMacSystemFont, sans-serif",
+  fontSize: 18,
+  lineHeight: 1.7,
+  showWordMargins: true,
+  marginColor: '#e8eaed',
+  paperColor: '#ffffff',
+  paperShadow: true,
+  enableHighlighting: true
+}
+
+/**
+ * Props for individual renderers
+ */
+export interface RendererProps {
+  content: string
+  originalFileUrl?: string
+  markers?: MarkerItem[]
+  markerConfig?: Partial<MarkerConfig>
+  onMarkerClick?: (id: string, tag: string) => void
+  className?: string
+}
+
+/**
+ * Result from Word/PDF processing
+ */
+export interface ProcessedDocument {
+  html: string                     // Rendered HTML
+  textMapping: TextPositionMap[]   // For TextMarker alignment
+}
+
+/**
+ * Maps original text positions to rendered positions
+ * Used for TextMarker integration with formatted content
+ */
+export interface TextPositionMap {
+  originalStart: number
+  originalEnd: number
+  renderedSelector: string         // CSS selector or data attribute
+}
