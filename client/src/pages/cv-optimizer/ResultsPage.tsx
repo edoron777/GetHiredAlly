@@ -296,14 +296,6 @@ export default function ResultsPage() {
   const buildTipBoxSections = (issue: any): TipBoxSection[] => {
     const sections: TipBoxSection[] = [];
     
-    if (issue.category || issue.issueType) {
-      sections.push({
-        type: 'category',
-        label: 'CATEGORY',
-        content: issue.category || issue.issueType
-      });
-    }
-    
     if (issue.currentText || issue.current || issue.matchText || issue.example_before) {
       sections.push({
         type: 'example-wrong',
@@ -720,7 +712,8 @@ export default function ResultsPage() {
         <TipBox
           isOpen={isTipBoxOpen}
           onClose={handleCloseTipBox}
-          title={selectedIssue.title || 'Issue Details'}
+          title={selectedIssue.display_name || selectedIssue.title || 'Issue Details'}
+          category={selectedIssue.category || selectedIssue.issueType}
           severity={selectedIssue.severity}
           sections={buildTipBoxSections(selectedIssue)}
           buttons={buildTipBoxButtons(selectedIssue)}

@@ -68,6 +68,7 @@ export interface TipBoxProps {
   isOpen: boolean
   onClose: () => void
   title: string
+  category?: string
   severity?: 'critical' | 'important' | 'consider' | 'polish' | 'info'
   color?: TipBoxColor
   sections: TipBoxSection[]

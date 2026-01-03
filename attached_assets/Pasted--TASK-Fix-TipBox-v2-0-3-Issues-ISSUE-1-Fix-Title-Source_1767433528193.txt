@@ -1,0 +1,72 @@
+# TASK: Fix TipBox v2.0 - 3 Issues
+
+## ISSUE 1: Fix Title Source
+FILE: client/src/pages/cv-optimizer/ResultsPage.tsx
+
+FIND (around line 720):
+title={selectedIssue.title || 'Issue Details'}
+
+REPLACE WITH:
+title={selectedIssue.display_name || selectedIssue.title || 'Issue Details'}
+
+## ISSUE 2: Move Category to Header
+FILE: client/src/components/common/TipBox/TipBox.tsx
+
+FIND the header div (around line 44-72):
+<div className="tipbox-header" ...>
+  <div className="tipbox-header-content">
+    <span className="tipbox-severity-badge" ...>
+      {severity.toUpperCase()}
+    </span>
+    <h3 className="tipbox-title" ...>
+      {title}
+    </h3>
+  </div>
+  ...
+</div>
+
+REPLACE WITH:
+<div className="tipbox-header" style={{ backgroundColor: colorScheme.primary }}>
+  <div className="tipbox-header-content">
+    <span className="tipbox-severity-badge"
+      style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: colorScheme.text }}
+    >
+      {severity.toUpperCase()}
+    </span>
+    {category && (
+      <span className="tipbox-category-badge"
+        style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: colorScheme.text }}
+      >
+        {category}
+      </span>
+    )}
+    <h3 className="tipbox-title" style={{ color: colorScheme.text }}>
+      {title}
+    </h3>
+  </div>
+  <button className="tipbox-close-btn" onClick={onClose} style={{ color: colorScheme.text }}>✕</button>
+</div>
+
+ALSO ADD category prop to TipBox component:
+- In types.ts TipBoxProps interface, add: category?: string;
+- In TipBox.tsx, destructure: const { category, ... } = props;
+
+## ISSUE 3: Fix CSS Class Mismatch
+FILE: client/src/components/common/TipBox/TipBoxStyles.css
+
+FIND:
+.tipbox-section-text .tipbox-text-content {
+
+REPLACE WITH:
+.tipbox-section-text .tipbox-text {
+
+## ISSUE 4: Remove Category from Sections
+FILE: client/src/pages/cv-optimizer/ResultsPage.tsx
+
+In buildTipBoxSections(), REMOVE the category section (it's now in header):
+
+DELETE THIS BLOCK:
+  // Part 1.2: Category
+  if (issue.category || issue.issueType) {
+    sections.push({
+      type: 'category',

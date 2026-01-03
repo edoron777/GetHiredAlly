@@ -8,6 +8,7 @@ export const TipBox: React.FC<TipBoxProps> = ({
   isOpen,
   onClose,
   title,
+  category,
   severity = 'info',
   color,
   sections,
@@ -41,32 +42,27 @@ export const TipBox: React.FC<TipBoxProps> = ({
         style={{ width }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div 
-          className="tipbox-header"
-          style={{ backgroundColor: colorScheme.primary }}
-        >
+        <div className="tipbox-header" style={{ backgroundColor: colorScheme.primary }}>
           <div className="tipbox-header-content">
             <span 
               className="tipbox-severity-badge"
-              style={{ 
-                backgroundColor: 'rgba(255,255,255,0.2)',
-                color: colorScheme.text 
-              }}
+              style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: colorScheme.text }}
             >
               {severity.toUpperCase()}
             </span>
-            <h3 
-              className="tipbox-title"
-              style={{ color: colorScheme.text }}
-            >
+            {category && (
+              <span 
+                className="tipbox-category-badge-header"
+                style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: colorScheme.text }}
+              >
+                {category}
+              </span>
+            )}
+            <h3 className="tipbox-title" style={{ color: colorScheme.text }}>
               {title}
             </h3>
           </div>
-          <button 
-            className="tipbox-close-btn"
-            onClick={onClose}
-            style={{ color: colorScheme.text }}
-          >
+          <button className="tipbox-close-btn" onClick={onClose} style={{ color: colorScheme.text }}>
             ✕
           </button>
         </div>

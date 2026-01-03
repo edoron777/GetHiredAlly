@@ -61,6 +61,14 @@
   letter-spacing: 0.5px;
 }
 
+.tipbox-category-badge-header {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.3px;
+}
+
 .tipbox-title {
   font-size: 16px;
   font-weight: 600;
@@ -280,7 +288,7 @@
 }
 
 /* Part 3.1: Why This Matters - Framed Text */
-.tipbox-section-text .tipbox-text-content {
+.tipbox-section-text .tipbox-text {
   background: #fafafa;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
