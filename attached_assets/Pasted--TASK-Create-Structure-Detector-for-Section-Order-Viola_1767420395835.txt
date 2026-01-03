@@ -1,0 +1,131 @@
+# TASK: Create Structure Detector for Section Order Violations
+
+## CONTEXT
+The CV Optimizer needs to detect when CV sections appear in non-standard order.
+Research shows 15-30% ATS score reduction for incorrect section order (Lever 2024).
+
+## WHAT TO CREATE
+
+### File: backend/common/detection/structure_detector.py
+
+Create a NEW detector module that checks CV section order.
+
+### Detection Logic
+
+**Expected order for experienced professionals:**
+1. Contact Information (header) - Position 0
+2. Professional Summary / Profile - Position 1
+3. Skills / Technical Skills - Position 2
+4. Work Experience / Professional Experience - Position 3
+5. Education - Position 4
+6. Certifications (optional) - Position 5
+7. Projects (optional) - Position 6
+
+**Violation triggers:**
+- Education appears BEFORE Experience (for non-recent-grads)
+- Skills appears AFTER Education
+- Experience is not in position 3-4
+- Summary is missing or not at top
+
+### Code Structure
+```python
+"""
+Structure Detector - Detects CV structural issues
+"""
+import re
+from typing import Dict, List, Optional
+
+# Section header patterns
+SECTION_PATTERNS = {
+    'summary': r'(?i)^(professional\s+)?summary|profile|objective',
+    'skills': r'(?i)^(technical\s+)?skills|competencies|expertise',
+    'experience': r'(?i)^(professional\s+|work\s+)?experience|employment|work\s+history',
+    'education': r'(?i)^education|academic|qualifications',
+    'certifications': r'(?i)^certifications?|licenses?|credentials',
+    'projects': r'(?i)^projects?|portfolio',
+}
+
+EXPECTED_ORDER = ['summary', 'skills', 'experience', 'education', 'certifications', 'projects']
+
+def detect_section_positions(cv_text: str) -> Dict[str, int]:
+    """Find position (line number) of each section in CV."""
+    positions = {}
+    lines = cv_text.split('\n')
+    
+    for i, line in enumerate(lines):
+        line_stripped = line.strip()
+        for section, pattern in SECTION_PATTERNS.items():
+            if re.match(pattern, line_stripped) and section not in positions:
+                positions[section] = i
+                break
+    
+    return positions
+
+def detect_structure_issues(cv_text: str) -> List[Dict]:
+    """
+    Detect CV structure issues.
+    
+    Returns list of issues with:
+    - issue_type: str
+    - location: str
+    - description: str
+    - current: str (problematic text or '')
+    - is_highlightable: bool
+    """
+    issues = []
+    positions = detect_section_positions(cv_text)
+    
+    # Check: Education before Experience (major violation)
+    if 'education' in positions and 'experience' in positions:
+        if positions['education'] < positions['experience']:
+            # Get the education header line for highlighting
+            lines = cv_text.split('\n')
+            edu_line = lines[positions['education']].strip() if positions['education'] < len(lines) else ''
+            
+            issues.append({
+                'issue_type': 'FORMAT_SECTION_ORDER_VIOLATION',
+                'location': 'Document Structure',
+                'description': 'Education section appears before Experience section. For experienced professionals, Experience should come first.',
+                'current': edu_line,
+                'is_highlightable': True,
+            })
+    
+    # Check: Skills after Education (minor violation)
+    if 'skills' in positions and 'education' in positions:
+        if positions['skills'] > positions['education']:
+            lines = cv_text.split('\n')
+            skills_line = lines[positions['skills']].strip() if positions['skills'] < len(lines) else ''
+            
+            issues.append({
+                'issue_type': 'FORMAT_SECTION_ORDER_VIOLATION',
+                'location': 'Document Structure',
+                'description': 'Skills section appears after Education. Skills should be near the top for better visibility.',
+                'current': skills_line,
+                'is_highlightable': True,
+            })
+    
+    return issues
+```
+
+### MODIFY: backend/common/detection/master_detector.py
+
+Add these lines:
+```python
+# At top with other imports
+from .structure_detector import detect_structure_issues
+
+# In detect_all_issues() function, add:
+all_issues.extend(detect_structure_issues(cv_text))
+```
+
+## CONSTRAINTS
+- Pure Python code (no AI calls)
+- Deterministic: same input → same output
+- Follow existing detector patterns in the codebase
+- Return issues in the standard format
+
+## TESTING
+After implementation, test with a CV that has:
+1. Education before Experience → Should detect violation
+2. Skills after Education → Should detect violation
+3. Correct order → Should return empty list

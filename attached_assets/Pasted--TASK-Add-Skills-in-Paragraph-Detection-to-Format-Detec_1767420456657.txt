@@ -1,0 +1,69 @@
+# TASK: Add Skills-in-Paragraph Detection to Format Detector
+
+## CONTEXT
+ATS systems often fail to parse skills when written as paragraphs instead of lists.
+Need to detect when skills section uses paragraph format instead of bullet/list format.
+
+## WHAT TO MODIFY
+
+### File: backend/common/detection/format_detector.py
+
+Add a new detection function for skills in paragraph format.
+
+### Detection Logic
+
+**Violation triggers:**
+- Skills section exists
+- Skills section contains 50+ characters without bullet points or line breaks
+- No bullet characters (•, -, *, ●) found in skills section
+- Multiple skills on same line separated only by commas
+
+### Code to Add
+```python
+def detect_skills_format_issues(cv_text: str) -> List[Dict]:
+    """Detect if skills are written as paragraphs instead of lists."""
+    issues = []
+    
+    # Find skills section
+    skills_match = re.search(
+        r'(?i)(skills|technical skills|competencies)[:\s]*\n(.*?)(?=\n\s*\n|\n[A-Z]|\Z)',
+        cv_text,
+        re.DOTALL
+    )
+    
+    if skills_match:
+        skills_content = skills_match.group(2).strip()
+        
+        # Check if it's paragraph format (long line without bullets)
+        lines = skills_content.split('\n')
+        for line in lines:
+            line = line.strip()
+            # Skip empty lines
+            if not line:
+                continue
+            # Check: Long line (50+ chars) without bullet
+            if len(line) > 50 and not re.match(r'^[\•\-\*\●\►]', line):
+                # Check if it has multiple comma-separated items
+                if line.count(',') >= 3:
+                    issues.append({
+                        'issue_type': 'FORMAT_SKILLS_IN_PARAGRAPH',
+                        'location': 'Skills Section',
+                        'description': 'Skills written as comma-separated paragraph instead of list format.',
+                        'current': line[:100] + '...' if len(line) > 100 else line,
+                        'is_highlightable': True,
+                    })
+                    break  # Only report once
+    
+    return issues
+```
+
+### Also add call in main detection function:
+```python
+# In detect_format_issues() function:
+issues.extend(detect_skills_format_issues(cv_text))
+```
+
+## CONSTRAINTS
+- Add to existing format_detector.py
+- Follow existing code patterns
+- Only detect once per CV (not per line)

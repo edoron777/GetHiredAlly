@@ -27,6 +27,7 @@ from .format_detector import detect_format_issues
 from .polish_detector import detect_polish_issues
 from .standards_detector import detect_standards_issues
 from .keywords_detector import detect_keywords_issues
+from .structure_detector import detect_structure_issues
 
 logger = logging.getLogger(__name__)
 
@@ -152,6 +153,13 @@ def detect_all_issues(cv_text: str, job_description: str = None) -> List[Dict[st
         logger.info(f"Keywords issues found: {len(keywords_issues)}")
     except Exception as e:
         logger.error(f"Error detecting keywords issues: {e}")
+    
+    try:
+        structure_issues = detect_structure_issues(cv_text)
+        all_issues.extend(structure_issues)
+        logger.info(f"Structure issues found: {len(structure_issues)}")
+    except Exception as e:
+        logger.error(f"Error detecting structure issues: {e}")
     
     logger.info(f"Static detection complete. Total issues: {len(all_issues)}")
     
