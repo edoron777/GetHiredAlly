@@ -1,0 +1,149 @@
+# TASK: Create DocumentEditor Component - Types & Structure
+
+## CREATE FOLDER STRUCTURE
+
+Create these folders and files:
+
+client/src/components/common/DocumentEditor/
+├── index.ts
+├── types.ts
+├── DocumentEditor.tsx (empty for now)
+├── DocumentEditorStyles.css (empty for now)
+├── renderers/
+│   ├── MarkdownRenderer.tsx (empty for now)
+│   ├── WordRenderer.tsx (empty for now)
+│   └── TextRenderer.tsx (empty for now)
+└── utils/
+    └── formatDetector.ts
+
+## FILE 1: types.ts
+
+Create file: client/src/components/common/DocumentEditor/types.ts
+
+import { MarkerItem, MarkerConfig } from '../TextMarker'
+
+export type DocumentFormat = 'markdown' | 'word' | 'pdf' | 'text' | 'auto'
+
+export interface DocumentEditorConfig {
+  maxWidth?: number
+  minHeight?: number
+  padding?: number
+  fontFamily?: string
+  fontSize?: number
+  lineHeight?: number
+  showWordMargins?: boolean
+  marginColor?: string
+  paperColor?: string
+  paperShadow?: boolean
+  enableHighlighting?: boolean
+}
+
+export interface DocumentEditorProps {
+  content: string
+  format?: DocumentFormat
+  originalFileUrl?: string
+  originalFileName?: string
+  config?: DocumentEditorConfig
+  markers?: MarkerItem[]
+  markerConfig?: Partial<MarkerConfig>
+  onMarkerClick?: (id: string, tag: string) => void
+  className?: string
+}
+
+export const DEFAULT_DOCUMENT_CONFIG: DocumentEditorConfig = {
+  maxWidth: 1235,
+  minHeight: 800,
+  padding: 60,
+  fontFamily: "'Source Sans Pro', -apple-system, BlinkMacSystemFont, sans-serif",
+  fontSize: 18,
+  lineHeight: 1.7,
+  showWordMargins: true,
+  marginColor: '#e8eaed',
+  paperColor: '#ffffff',
+  paperShadow: true,
+  enableHighlighting: true
+}
+
+export interface RendererProps {
+  content: string
+  originalFileUrl?: string
+  markers?: MarkerItem[]
+  markerConfig?: Partial<MarkerConfig>
+  onMarkerClick?: (id: string, tag: string) => void
+  className?: string
+}
+
+## FILE 2: formatDetector.ts
+
+Create file: client/src/components/common/DocumentEditor/utils/formatDetector.ts
+
+import { DocumentFormat } from '../types'
+
+export function detectFormat(content: string, filename?: string): DocumentFormat {
+  if (filename) {
+    const ext = filename.split('.').pop()?.toLowerCase()
+    switch (ext) {
+      case 'md':
+      case 'markdown':
+        return 'markdown'
+      case 'docx':
+      case 'doc':
+        return 'word'
+      case 'pdf':
+        return 'pdf'
+      case 'txt':
+        return 'text'
+    }
+  }
+  
+  if (isMarkdownContent(content)) {
+    return 'markdown'
+  }
+  
+  return 'text'
+}
+
+function isMarkdownContent(content: string): boolean {
+  const markdownPatterns = [
+    /^#{1,6}\s+.+$/m,
+    /\*\*[^*]+\*\*/,
+    /\*[^*]+\*/,
+    /^\s*[-*+]\s+.+$/m,
+    /^\s*\d+\.\s+.+$/m,
+    /\[.+\]\(.+\)/,
+  ]
+  
+  let matchCount = 0
+  for (const pattern of markdownPatterns) {
+    if (pattern.test(content)) {
+      matchCount++
+    }
+  }
+  
+  return matchCount >= 2
+}
+
+export default detectFormat
+
+## FILE 3: index.ts
+
+Create file: client/src/components/common/DocumentEditor/index.ts
+
+export { DocumentEditor, default } from './DocumentEditor'
+export { detectFormat } from './utils/formatDetector'
+export type {
+  DocumentFormat,
+  DocumentEditorConfig,
+  DocumentEditorProps,
+  RendererProps
+} from './types'
+export { DEFAULT_DOCUMENT_CONFIG } from './types'
+
+## VERIFICATION
+
+Confirm these files exist and compile:
+1. client/src/components/common/DocumentEditor/types.ts
+2. client/src/components/common/DocumentEditor/utils/formatDetector.ts
+3. client/src/components/common/DocumentEditor/index.ts
+
+Report: "Files created" or list errors.
