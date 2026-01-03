@@ -1,0 +1,74 @@
+═══════════════════════════════════════════════════════════════════════
+REPLIT: Register New Detectors in master_detector.py
+═══════════════════════════════════════════════════════════════════════
+
+PREREQUISITE: REPLIT-2#5 and REPLIT-3#5 must be completed first.
+
+TASK:
+Update master_detector.py to import and call the new detectors.
+
+FILE: backend/common/detection/master_detector.py
+
+───────────────────────────────────────────────────────────────────────
+STEP 1: ADD IMPORTS (at top with other detector imports)
+───────────────────────────────────────────────────────────────────────
+
+from .skills_detector import detect_all_skills_issues
+from .length_detector import (
+    detect_summary_too_long,
+    detect_job_description_too_short,
+    detect_job_description_too_long,
+    detect_education_description_too_short
+)
+
+───────────────────────────────────────────────────────────────────────
+STEP 2: ADD DETECTOR CALLS (in detect_all_issues function)
+───────────────────────────────────────────────────────────────────────
+
+Find the main detection function and add:
+
+# Skills Section Detection (v1.4)
+skills_issues = detect_all_skills_issues(cv_text)
+issues.extend(skills_issues)
+
+# Length-Based Detection (v1.5)
+# Note: Requires parsed sections from section_extractor
+if summary_text:
+    issues.extend(detect_summary_too_long(summary_text))
+
+if experience_entries:
+    issues.extend(detect_job_description_too_short(experience_entries))
+    issues.extend(detect_job_description_too_long(experience_entries))
+
+if education_entries:
+    issues.extend(detect_education_description_too_short(
+        education_entries,
+        years_experience=calculated_years
+    ))
+
+───────────────────────────────────────────────────────────────────────
+IMPORTANT NOTES:
+───────────────────────────────────────────────────────────────────────
+
+The length detectors require PARSED sections. Check if these variables exist:
+- summary_text (from section extraction)
+- experience_entries (list of dicts with company, title, bullets)
+- education_entries (list of dicts with institution, degree, description)
+- calculated_years (years of experience)
+
+If these don't exist in the expected format, STOP and report.
+
+───────────────────────────────────────────────────────────────────────
+VERIFICATION:
+───────────────────────────────────────────────────────────────────────
+
+Run: python -c "from backend.common.detection.master_detector import *; print('OK')"
+
+───────────────────────────────────────────────────────────────────────
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- Add ONLY the imports and calls specified
+- Do NOT modify other detector calls
+- If section parsing format doesn't match, STOP and report
+
+═══════════════════════════════════════════════════════════════════════
