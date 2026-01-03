@@ -59,6 +59,7 @@ export function getMarkerColorStyle(
   } else {
     return {
       backgroundColor: `${color}30`,
+      color: color,
       borderRadius: '3px',
       padding: '1px 3px'
     }
