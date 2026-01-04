@@ -20,6 +20,7 @@ interface CVDocumentProps {
 }
 
 const NO_MARKER_ISSUES = [
+  // Length/structure issues - no specific text to highlight
   'LENGTH_CV_TOO_LONG',
   'LENGTH_CV_TOO_SHORT',
   'LENGTH_SUMMARY_TOO_LONG',
@@ -31,6 +32,16 @@ const NO_MARKER_ISSUES = [
   'CONTENT_JOB_DESCRIPTION_TOO_SHORT',
   'FORMAT_POOR_VISUAL_HIERARCHY',
   'STRUCTURE_EDUCATION_BEFORE_EXPERIENCE',
+  // Presence issues - "Not found in:" matched text won't exist in CV
+  'CONTACT_MISSING_LINKEDIN',
+  'CONTACT_MISSING_GITHUB',
+  'CONTACT_MISSING_EMAIL',
+  'CONTACT_MISSING_PHONE',
+  'CONTENT_MISSING_SUMMARY',
+  'CONTENT_MISSING_METRICS',
+  'CONTENT_MISSING_IMPACT',
+  'FORMAT_MISSING_SECTION_HEADERS',
+  'FORMAT_SKILLS_SECTION_MISSING',
 ];
 
 const findWordBoundaryMatch = (content: string, matchText: string): boolean => {
