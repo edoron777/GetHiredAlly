@@ -1,0 +1,107 @@
+"""
+Regex Handler
+
+Detects issues using regular expression pattern matching.
+
+detection_config format:
+{
+    "type": "regex",
+    "pattern": "\\b(I|my|me)\\b",
+    "flags": "gi",
+    "target_section": "all",
+    "min_matches": 3,
+    "max_matches": null,
+    "return_matches": true
+}
+"""
+
+import re
+import logging
+from typing import List
+
+from .base import BaseHandler, DetectedIssue
+from ...section_extractor import CVStructure
+from ..cache import DetectionRule
+
+logger = logging.getLogger(__name__)
+
+
+class RegexHandler(BaseHandler):
+    """
+    Handler for regex-based detection.
+    
+    Matches a pattern against CV text and triggers issue based on match count.
+    """
+    
+    def detect(
+        self, 
+        cv_text: str, 
+        cv_structure: CVStructure, 
+        rule: DetectionRule
+    ) -> List[DetectedIssue]:
+        """
+        Detect regex pattern matches.
+        
+        Triggers issue if:
+        - min_matches is set and count >= min_matches
+        - max_matches is set and count > max_matches
+        """
+        issues = []
+        config = rule.detection_config
+        
+        if not self.validate_config(rule, ['pattern']):
+            return issues
+        
+        pattern_str = config.get('pattern')
+        flags_str = config.get('flags', 'i')
+        target_section = config.get('target_section', 'all')
+        min_matches = config.get('min_matches')
+        max_matches = config.get('max_matches')
+        return_matches = config.get('return_matches', True)
+        
+        flags = 0
+        if 'i' in flags_str.lower():
+            flags |= re.IGNORECASE
+        if 'm' in flags_str.lower():
+            flags |= re.MULTILINE
+        
+        text = self.get_target_text(cv_structure, target_section)
+        if not text:
+            return issues
+        
+        try:
+            pattern = re.compile(pattern_str, flags)
+            matches = pattern.findall(text)
+            match_count = len(matches)
+        except re.error as e:
+            logger.error(f"Invalid regex pattern in {rule.issue_code}: {e}")
+            return issues
+        
+        should_trigger = False
+        
+        if min_matches is not None and match_count >= min_matches:
+            should_trigger = True
+        
+        if max_matches is not None and match_count > max_matches:
+            should_trigger = True
+        
+        if should_trigger:
+            if return_matches and matches:
+                unique_matches = list(set(str(m) for m in matches[:10]))
+                match_text = f"{match_count} found: {', '.join(unique_matches)}"
+            else:
+                match_text = f"{match_count} matches found"
+            
+            issue = self.create_issue(
+                rule=rule,
+                match_text=match_text,
+                location=target_section,
+                details={
+                    'match_count': match_count,
+                    'matches': [str(m) for m in matches[:20]] if return_matches else [],
+                    'target_section': target_section
+                }
+            )
+            issues.append(issue)
+        
+        return issues
