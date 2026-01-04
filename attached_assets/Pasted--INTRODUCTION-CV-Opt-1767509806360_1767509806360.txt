@@ -1,0 +1,79 @@
+═══════════════════════════════════════════════════════════════════════════
+📋 INTRODUCTION: CV Optimizer P1 Core Functionality
+═══════════════════════════════════════════════════════════════════════════
+
+PROJECT CONTEXT:
+
+This is a series of 9 prompts to implement P1 (Core Functionality) features
+for the CV Optimizer Results Page.
+
+Reference Document: CV_Optimizer_UX_Specification_v1.1.md
+
+───────────────────────────────────────────────────────────────────────────
+
+WHAT WE'RE BUILDING:
+
+1. BULK AUTO FIX
+   - Yellow section at top of results page
+   - "⚡ Auto Fix {count} Issues" button
+   - Confirmation modal before executing
+   - Auto-rescans after bulk fix
+
+2. PROGRESS TRACKING
+   - Weighted progress bar (severity-based)
+   - Pending changes indicator
+   - "Update & See New Score" button
+
+3. RESULT MODAL
+   - Shows after rescan completes
+   - 3 variants: Improved / Unchanged / Dropped
+
+4. TIPBOX UPDATES
+   - Auto Fix button only shows when applicable
+   - Hides after bulk auto fix is used
+
+5. EXPORT ENHANCEMENT
+   - Auto-rescan before export if pending changes exist
+
+───────────────────────────────────────────────────────────────────────────
+
+KEY FILES TO MODIFY:
+
+| File | Changes |
+|------|---------|
+| ResultsPage.tsx | Add state, handlers, integrate new components |
+| New: BulkAutoFixSection.tsx | New component |
+| New: BulkAutoFixModal.tsx | New component |
+| New: ProgressSection.tsx | New component |
+| New: ResultModal.tsx | New component |
+| TipBox component | Update button logic |
+
+───────────────────────────────────────────────────────────────────────────
+
+EXISTING FUNCTIONS TO USE:
+
+| Function | Location | Purpose |
+|----------|----------|---------|
+| handleRescan | ResultsPage.tsx:455 | Rescans CV |
+| isAutoFixable | Normalized issue field | Check if issue can be auto-fixed |
+| handleApplyFix | ResultsPage.tsx | Applies fix to CV |
+
+───────────────────────────────────────────────────────────────────────────
+
+EXECUTION ORDER:
+
+Execute prompts in order (1→9). Each prompt builds on the previous.
+
+───────────────────────────────────────────────────────────────────────────
+
+⚠️ GLOBAL ANTI-IMPROVISATION DIRECTIVE:
+
+For ALL prompts in this series:
+1. Implement EXACTLY what is specified - nothing more, nothing less
+2. If ANY instruction is unclear, STOP and ask for clarification
+3. Do NOT "fill in gaps" with assumed logic
+4. Do NOT add features not explicitly requested
+5. Do NOT modify files not listed in each prompt
+6. If you encounter unexpected code structure, STOP and report
+
+═══════════════════════════════════════════════════════════════════════════
