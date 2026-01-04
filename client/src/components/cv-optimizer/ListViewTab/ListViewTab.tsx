@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { AlertCircle, AlertTriangle, Info, Sparkles, ChevronDown, ChevronRight } from 'lucide-react';
+import { SEVERITY_COLORS } from '@/constants/severityColors';
 import '../../../styles/cv-optimizer/list-view.css';
 
 interface Issue {
@@ -18,30 +19,30 @@ interface ListViewTabProps {
 const SEVERITY_CONFIG = {
   critical: { 
     icon: AlertCircle, 
-    color: '#DC2626', 
-    headerBg: '#DC2626',
-    cardBg: '#FEE2E2', 
+    color: SEVERITY_COLORS.critical.primary, 
+    headerBg: SEVERITY_COLORS.critical.primary,
+    cardBg: SEVERITY_COLORS.critical.background, 
     label: 'Critical' 
   },
   important: { 
     icon: AlertTriangle, 
-    color: '#D97706', 
-    headerBg: '#F59E0B',
-    cardBg: '#FEF3C7', 
+    color: SEVERITY_COLORS.important.primary, 
+    headerBg: SEVERITY_COLORS.important.primary,
+    cardBg: SEVERITY_COLORS.important.background, 
     label: 'Important' 
   },
   consider: { 
     icon: Info, 
-    color: '#2563EB', 
-    headerBg: '#3B82F6',
-    cardBg: '#DBEAFE', 
+    color: SEVERITY_COLORS.consider.primary, 
+    headerBg: SEVERITY_COLORS.consider.primary,
+    cardBg: SEVERITY_COLORS.consider.background, 
     label: 'Consider' 
   },
   polish: { 
     icon: Sparkles, 
-    color: '#4B5563', 
-    headerBg: '#6B7280',
-    cardBg: '#F3F4F6', 
+    color: SEVERITY_COLORS.polish.primary, 
+    headerBg: SEVERITY_COLORS.polish.primary,
+    cardBg: SEVERITY_COLORS.polish.background, 
     label: 'Polish' 
   },
 };
