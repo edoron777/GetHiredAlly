@@ -1,0 +1,157 @@
+═══════════════════════════════════════════════════════════════════════════
+PROJECT: Side by Side Fix - PROMPT 2#11: Add Change Markers
+═══════════════════════════════════════════════════════════════════════════
+
+TASK:
+Add visual markers to highlight sections in Fixed CV where changes were made.
+This is DIFFERENT from issue highlighting (severity colors).
+This shows WHERE TEXT WAS ACTUALLY REPLACED.
+
+───────────────────────────────────────────────────────────────────────────
+
+VISUAL SPECIFICATION:
+
+Changed sections should have:
+- Blue border: #3B82F6
+- Border width: 2px
+- Light blue background: rgba(59, 130, 246, 0.1)
+- Border radius: 4px
+- Padding: 2px 4px
+
+This is SEPARATE from issue highlighting (red/yellow/orange).
+Issues = problems to fix
+Change markers = text that was actually changed/replaced
+
+───────────────────────────────────────────────────────────────────────────
+
+IMPLEMENTATION APPROACH:
+
+STEP 1: Track Applied Changes
+
+In ResultsPage.tsx, add state to track what was changed:
+
+// Add this state variable (if not exists)
+const [appliedChanges, setAppliedChanges] = useState<Array<{
+  originalText: string;
+  newText: string;
+  issueId: string;
+}>>([]);
+
+STEP 2: Update When Fix is Applied
+
+In handleApplyFix (or wherever fixes are applied), track the change:
+
+// When applying a fix, save what was changed
+setAppliedChanges(prev => [...prev, {
+  originalText: matchText,  // the original problematic text
+  newText: newText,         // the replacement text
+  issueId: issueId
+}]);
+
+STEP 3: Create Change Highlight Function
+
+// Add this function to highlight changed text in Fixed CV
+function highlightChangedText(
+  content: string, 
+  changes: Array<{newText: string}>
+): React.ReactNode[] {
+  if (!changes || changes.length === 0 || !content) {
+    return [content];
+  }
+
+  let result = content;
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+
+  // Find each change in the content
+  changes.forEach((change, i) => {
+    const index = result.indexOf(change.newText, lastIndex);
+    if (index !== -1) {
+      // Add text before this change
+      if (index > lastIndex) {
+        parts.push(
+          <span key={`text-${i}`}>
+            {result.substring(lastIndex, index)}
+          </span>
+        );
+      }
+      
+      // Add highlighted change
+      parts.push(
+        <span key={`change-${i}`} className="change-marker">
+          {change.newText}
+        </span>
+      );
+      
+      lastIndex = index + change.newText.length;
+    }
+  });
+
+  // Add remaining text
+  if (lastIndex < result.length) {
+    parts.push(
+      <span key="remaining">
+        {result.substring(lastIndex)}
+      </span>
+    );
+  }
+
+  return parts.length > 0 ? parts : [content];
+}
+
+STEP 4: Add CSS Styles
+
+.change-marker {
+  background-color: rgba(59, 130, 246, 0.1);
+  border: 2px solid #3B82F6;
+  border-radius: 4px;
+  padding: 1px 3px;
+  display: inline;
+}
+
+STEP 5: Use in Fixed CV Panel (Side by Side)
+
+Find where Fixed CV content is rendered in Side by Side view.
+Replace plain text rendering with highlighted version:
+
+BEFORE:
+<div className="fixed-cv-content">
+  {stripMarkdown(fixedCVContent)}
+</div>
+
+AFTER:
+<div className="fixed-cv-content">
+  {highlightChangedText(stripMarkdown(fixedCVContent), appliedChanges)}
+</div>
+
+───────────────────────────────────────────────────────────────────────────
+
+IMPORTANT DISTINCTION:
+
+| Type | Color | Purpose |
+|------|-------|---------|
+| Issue highlighting | Red/Yellow/Orange (severity) | Shows PROBLEMS in Original CV |
+| Change markers | Blue (#3B82F6) | Shows FIXES in Fixed CV |
+
+These are TWO DIFFERENT things and should coexist.
+
+───────────────────────────────────────────────────────────────────────────
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- Add change tracking state
+- Add highlight function
+- Apply ONLY to Fixed CV panel in Side by Side view
+- Use EXACT blue color (#3B82F6)
+- Do NOT remove or modify existing issue highlighting
+- Do NOT change other functionality
+
+───────────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+[ ] appliedChanges state tracks replaced text
+[ ] Blue markers appear on Fixed CV panel
+[ ] Markers show only WHERE text was changed
+[ ] Original CV has NO blue markers (only issue colors)
+[ ] Blue markers are separate from issue highlighting
+
+═══════════════════════════════════════════════════════════════════════════
