@@ -36,6 +36,8 @@ from .length_detector import (
     detect_education_description_too_short,
     detect_job_description_issues_simple
 )
+from .abbreviation_detector import detect_all_abbreviation_issues
+from .certification_detector import detect_all_certification_issues
 
 logger = logging.getLogger(__name__)
 
@@ -197,6 +199,22 @@ def detect_all_issues(cv_text: str, job_description: str = None) -> List[Dict[st
         # - detect_education_description_too_short(education_entries, years_experience)
     except Exception as e:
         logger.error(f"Error detecting length issues: {e}")
+    
+    # Abbreviation consistency detection
+    try:
+        abbreviation_issues = detect_all_abbreviation_issues(cv_text)
+        all_issues.extend(abbreviation_issues)
+        logger.info(f"Abbreviation issues found: {len(abbreviation_issues)}")
+    except Exception as e:
+        logger.error(f"Error detecting abbreviation issues: {e}")
+    
+    # Certification count detection
+    try:
+        certification_issues = detect_all_certification_issues(cv_text)
+        all_issues.extend(certification_issues)
+        logger.info(f"Certification issues found: {len(certification_issues)}")
+    except Exception as e:
+        logger.error(f"Error detecting certification issues: {e}")
     
     logger.info(f"Static detection complete. Total issues: {len(all_issues)}")
     
