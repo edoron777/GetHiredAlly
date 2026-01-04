@@ -11,6 +11,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import List, Dict, Any, Optional
 import logging
+import re
 
 from ...section_extractor import CVStructure, extract_sections
 
@@ -148,17 +149,62 @@ class BaseHandler(ABC):
     
     def _extract_contact(self, cv_structure: CVStructure) -> str:
         """
-        Extract contact information from CV.
+        Extract ONLY contact information from CV.
         
-        Contact info is typically at the TOP of the CV (name, email, phone, LinkedIn).
-        We use first 800 characters which reliably captures all contact details.
+        Contact info includes: name, email, phone, LinkedIn, location.
+        Does NOT include: headline, summary, job titles, or other content.
+        
+        Strategy:
+        1. First, try to use CVStructure.contact if available
+        2. Otherwise, extract only lines with contact patterns
         """
+        if hasattr(cv_structure, 'contact') and cv_structure.contact:
+            return cv_structure.contact
+        
         raw_text = cv_structure.raw_text
         if not raw_text:
             return ''
         
-        contact_text = raw_text[:800]
-        return contact_text
+        lines = raw_text.split('\n')
+        contact_lines = []
+        
+        contact_patterns = [
+            r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}',
+            r'\+?\d{1,3}[-.\s]?\(?\d{1,4}\)?[-.\s]?\d{1,4}[-.\s]?\d{1,9}',
+            r'linkedin\.com/in/[\w-]+',
+            r'github\.com/[\w-]+',
+            r'\b[A-Z][a-z]+,\s*[A-Z]{2}\b',
+            r'\b[A-Z][a-z]+,\s*[A-Z][a-z]+\b.*\b(USA|UK|Israel|Canada|Australia)\b',
+        ]
+        
+        for line in lines[:10]:
+            line_stripped = line.strip()
+            if not line_stripped:
+                continue
+                
+            if line_stripped.count('|') >= 2 and len(line_stripped) > 100:
+                for pattern in contact_patterns[:2]:
+                    if re.search(pattern, line_stripped):
+                        contact_lines.append(line_stripped)
+                        break
+                continue
+            
+            if line_stripped.lower() in ['about', 'about me', 'summary', 'profile']:
+                break
+            
+            for pattern in contact_patterns:
+                if re.search(pattern, line_stripped, re.IGNORECASE):
+                    contact_lines.append(line_stripped)
+                    break
+            else:
+                if len(contact_lines) == 0 and len(line_stripped) < 50:
+                    contact_lines.append(line_stripped)
+        
+        result = '\n'.join(contact_lines)
+        
+        logger.debug(f"[CONTACT EXTRACTION] Extracted {len(result)} chars from {len(contact_lines)} lines")
+        
+        return result
     
     def _extract_certifications(self, cv_structure: CVStructure) -> str:
         """
