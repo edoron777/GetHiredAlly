@@ -1,0 +1,142 @@
+═══════════════════════════════════════════════════════════════════════════════
+💻 FIX-1#2: Separate CV Content from Database Examples
+═══════════════════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE ⚠️
+- Execute ONLY instructions below
+- Do NOT add features not specified
+- Do NOT modify files not listed
+
+───────────────────────────────────────────────────────────────────────────────
+ROOT CAUSE (CONFIRMED):
+───────────────────────────────────────────────────────────────────────────────
+
+1. Backend ALWAYS sends example_before/example_after from database
+2. For "missing" issues (like Missing LinkedIn), current='' (empty)
+3. Frontend shows example_before when current is empty
+4. Result: User sees "Alex Johnson" (DB example) instead of CV content
+
+───────────────────────────────────────────────────────────────────────────────
+THE FIX:
+───────────────────────────────────────────────────────────────────────────────
+
+We need to clearly separate:
+- `current` = The ACTUAL text from user's CV that triggered the issue
+- `example_before` = A GENERIC example showing what bad looks like (from DB)
+- `example_after` = A GENERIC example showing what good looks like (from DB)
+
+Frontend should display these DIFFERENTLY:
+- "Issue in YOUR CV: {current}" - Only if current has actual content
+- "Example (before): {example_before}" - Clearly labeled as example
+- "Example (after): {example_after}" - Clearly labeled as example
+
+───────────────────────────────────────────────────────────────────────────────
+STEP 1: Fix Backend - PresenceHandler (missing items)
+───────────────────────────────────────────────────────────────────────────────
+
+File: backend/common/detection/rule_engine/handlers/presence_handler.py
+
+For "missing" issues, instead of current='', pass useful context:
+
+FIND this code (around line 110-112):
+```python
+issue = self.create_issue(
+    rule=rule,
+    current='',  # ← This is the problem
+```
+
+CHANGE TO:
+```python
+# For "missing" issues, show the section that SHOULD contain the item
+section_preview = target_text[:200] if target_text else "Section not found"
+issue = self.create_issue(
+    rule=rule,
+    current=f"Not found in: {section_preview}...",
+```
+
+───────────────────────────────────────────────────────────────────────────────
+STEP 2: Fix Frontend - Display Logic
+───────────────────────────────────────────────────────────────────────────────
+
+File: client/src/components/cv-optimizer/EffortGroupView.tsx
+
+FIND the code that displays example_before (around line 250-268):
+```tsx
+{issue.example_before && (
+  <p className="text-red-800 text-sm italic">"{issue.example_before}"</p>
+)}
+```
+
+CHANGE TO display BOTH current (user's CV) and example (from DB) clearly:
+```tsx
+{/* USER'S ACTUAL CV CONTENT */}
+{issue.current && issue.current.length > 0 && !issue.current.startsWith('Not found') && (
+  <div className="mb-2">
+    <span className="text-xs font-semibold text-gray-600 uppercase">Issue in your CV:</span>
+    <p className="text-red-800 text-sm bg-red-50 p-2 rounded mt-1">"{issue.current}"</p>
+  </div>
+)}
+
+{/* FOR MISSING ITEMS - Show where we looked */}
+{issue.current && issue.current.startsWith('Not found') && (
+  <div className="mb-2">
+    <span className="text-xs font-semibold text-gray-600 uppercase">Searched in:</span>
+    <p className="text-gray-600 text-sm bg-gray-50 p-2 rounded mt-1 italic">{issue.current}</p>
+  </div>
+)}
+
+{/* GENERIC EXAMPLE FROM DATABASE - Clearly labeled */}
+{issue.example_before && (
+  <div className="mb-2">
+    <span className="text-xs font-semibold text-gray-500 uppercase">Example (needs improvement):</span>
+    <p className="text-gray-500 text-sm italic">"{issue.example_before}"</p>
+  </div>
+)}
+```
+
+───────────────────────────────────────────────────────────────────────────────
+STEP 3: Also fix TipBox if it has same issue
+───────────────────────────────────────────────────────────────────────────────
+
+Check TipBox.tsx or similar component. Apply same logic:
+- "Issue in YOUR CV" = current (from CV)
+- "Example" = example_before (from DB, clearly labeled)
+
+───────────────────────────────────────────────────────────────────────────────
+FILES TO MODIFY:
+───────────────────────────────────────────────────────────────────────────────
+
+1. backend/common/detection/rule_engine/handlers/presence_handler.py
+2. client/src/components/cv-optimizer/EffortGroupView.tsx
+3. Any TipBox component that shows examples
+
+DO NOT TOUCH:
+- Database
+- Other handlers (regex_handler, etc.)
+- Other components
+
+───────────────────────────────────────────────────────────────────────────────
+VERIFICATION:
+───────────────────────────────────────────────────────────────────────────────
+
+After fix:
+1. Analyze David Cohen CV
+2. Check "No LinkedIn Profile URL" issue
+3. Should NOT show "Alex Johnson" anymore
+4. Should show actual CV contact section or clear "Not found" message
+5. Examples should be clearly labeled as generic examples
+
+───────────────────────────────────────────────────────────────────────────────
+
+WHEN COMPLETE:
+
+Confirm:
+□ presence_handler.py updated - missing items show context
+□ EffortGroupView.tsx updated - distinguishes current vs example
+□ TipBox (if exists) updated similarly
+□ No "Alex Johnson" appears for David Cohen CV
+□ Examples are clearly labeled
+
+Type "FIX-1 COMPLETE" when done.
+
+═══════════════════════════════════════════════════════════════════════════════
