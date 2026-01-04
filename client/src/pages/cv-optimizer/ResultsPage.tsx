@@ -83,6 +83,31 @@ export default function ResultsPage() {
   const [isRescanning, setIsRescanning] = useState(false);
   const [scanHistory, setScanHistory] = useState<{score: number, date: Date}[]>([]);
 
+  // ═══════════════════════════════════════════════════════════════════════
+  // NEW STATE VARIABLES - P1 Core Functionality
+  // ═══════════════════════════════════════════════════════════════════════
+
+  // Bulk Auto Fix tracking
+  const [bulkAutoFixUsed, setBulkAutoFixUsed] = useState<boolean>(false);
+  const [showBulkAutoFixModal, setShowBulkAutoFixModal] = useState<boolean>(false);
+
+  // Change tracking
+  const [pendingChanges, setPendingChanges] = useState<number>(0);
+  const [pendingIssues, setPendingIssues] = useState<Set<string>>(new Set());
+
+  // Score tracking
+  const [previousScore, setPreviousScore] = useState<number | null>(null);
+
+  // Result Modal
+  const [showResultModal, setShowResultModal] = useState<boolean>(false);
+  const [resultModalData, setResultModalData] = useState<{
+    previousScore: number;
+    newScore: number;
+    fixedCount: number;
+    remainingCount: number;
+    scoreChange: 'improved' | 'unchanged' | 'dropped';
+  } | null>(null);
+
   const normalizeIssue = (issue: CVIssue, index: number) => ({
     id: issue.id || String(index + 1),
     severity: issue.severity || 'consider',
@@ -121,6 +146,20 @@ export default function ResultsPage() {
     if (!reportData?.issues) return [];
     return reportData.issues.map((issue, i) => normalizeIssue(issue, i));
   }, [reportData?.issues]);
+
+  // Count of auto-fixable issues (not yet fixed)
+  const autoFixableCount = useMemo(() => {
+    if (!reportData?.issues) return 0;
+    return reportData.issues.filter(issue => {
+      const normalized = normalizeIssue(issue, 0);
+      return normalized.isAutoFixable && 
+             !fixedIssues.has(issue.id || issue.issue_type || '') &&
+             !pendingIssues.has(issue.id || issue.issue_type || '');
+    }).length;
+  }, [reportData, fixedIssues, pendingIssues]);
+
+  // Show bulk auto fix section?
+  const showBulkAutoFix = autoFixableCount > 0 && !bulkAutoFixUsed;
 
   const cvContentText = fixedCV || reportData?.cv_content || '';
   
@@ -301,6 +340,10 @@ export default function ResultsPage() {
       setCurrentScore(newScore);
     }
     
+    // Track pending changes for rescan
+    setPendingChanges(prev => prev + 1);
+    setPendingIssues(prev => new Set(prev).add(issueId));
+    
     setIsTipBoxOpen(false);
     setUserEditText('');
     
@@ -460,6 +503,10 @@ export default function ResultsPage() {
       return;
     }
     
+    // Save previous score for comparison
+    const prevScore = currentScore;
+    setPreviousScore(prevScore);
+    
     setIsRescanning(true);
     
     try {
@@ -483,14 +530,33 @@ export default function ResultsPage() {
       }
       
       const newReport = await response.json();
+      const newScore = newReport.cv_score || newReport.score || 0;
       
       setReportData(newReport);
-      setCurrentScore(newReport.cv_score || newReport.score || 0);
+      setCurrentScore(newScore);
       
       setFixedCV(null);
       setFixedIssues(new Set());
       
-      console.log('Rescan complete:', newReport.cv_score);
+      // Clear pending tracking
+      setPendingChanges(0);
+      setPendingIssues(new Set());
+      
+      // Calculate score change and show result modal
+      const scoreChange = newScore > prevScore ? 'improved' 
+                        : newScore < prevScore ? 'dropped' 
+                        : 'unchanged';
+      
+      setResultModalData({
+        previousScore: prevScore,
+        newScore: newScore,
+        fixedCount: fixedIssues.size,
+        remainingCount: newReport.issues?.length || 0,
+        scoreChange
+      });
+      setShowResultModal(true);
+      
+      console.log('Rescan complete:', newScore);
       
     } catch (error) {
       console.error('Rescan error:', error);

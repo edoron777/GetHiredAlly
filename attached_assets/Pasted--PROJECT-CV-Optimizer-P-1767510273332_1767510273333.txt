@@ -1,0 +1,155 @@
+═══════════════════════════════════════════════════════════════════════════
+PROJECT: CV Optimizer P1 - PROMPT 2#9: Create Bulk Auto Fix Section
+═══════════════════════════════════════════════════════════════════════════
+
+TASK:
+Create the Bulk Auto Fix section component that appears at top of results.
+
+───────────────────────────────────────────────────────────────────────────
+
+CREATE NEW FILE:
+client/src/components/cv-optimizer/BulkAutoFixSection.tsx
+
+───────────────────────────────────────────────────────────────────────────
+
+COMPONENT CODE:
+
+import React from 'react';
+import { Zap } from 'lucide-react';
+
+interface BulkAutoFixSectionProps {
+  autoFixableCount: number;
+  totalIssues: number;
+  onAutoFixClick: () => void;
+  isLoading?: boolean;
+}
+
+export const BulkAutoFixSection: React.FC<BulkAutoFixSectionProps> = ({
+  autoFixableCount,
+  totalIssues,
+  onAutoFixClick,
+  isLoading = false
+}) => {
+  const manualCount = totalIssues - autoFixableCount;
+
+  return (
+    <div className="bulk-auto-fix-section">
+      <div className="bulk-auto-fix-header">
+        <Zap className="bulk-auto-fix-icon" size={20} />
+        <span className="bulk-auto-fix-title">Quick Improvement Available</span>
+      </div>
+      
+      <p className="bulk-auto-fix-description">
+        <strong>{autoFixableCount}</strong> of {totalIssues} issues can be fixed automatically
+      </p>
+      
+      <button
+        className="bulk-auto-fix-button"
+        onClick={onAutoFixClick}
+        disabled={isLoading}
+      >
+        {isLoading ? (
+          <>Processing...</>
+        ) : (
+          <>
+            <Zap size={16} />
+            Auto Fix {autoFixableCount} Issues
+          </>
+        )}
+      </button>
+      
+      {manualCount > 0 && (
+        <p className="bulk-auto-fix-note">
+          The remaining {manualCount} issues need your personal input
+        </p>
+      )}
+    </div>
+  );
+};
+
+export default BulkAutoFixSection;
+
+───────────────────────────────────────────────────────────────────────────
+
+ADD CSS STYLES:
+
+Add to the component's CSS file or a global styles file:
+
+.bulk-auto-fix-section {
+  background: #FEF9E7;
+  border: 1px solid #F59E0B;
+  border-radius: 8px;
+  padding: 16px 24px;
+  margin-bottom: 16px;
+}
+
+.bulk-auto-fix-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.bulk-auto-fix-icon {
+  color: #F59E0B;
+}
+
+.bulk-auto-fix-title {
+  font-weight: 600;
+  font-size: 16px;
+  color: #1E3A5F;
+}
+
+.bulk-auto-fix-description {
+  color: #4B5563;
+  margin-bottom: 12px;
+}
+
+.bulk-auto-fix-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #1E3A5F;
+  color: white;
+  width: 100%;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.bulk-auto-fix-button:hover:not(:disabled) {
+  background: #2D4A6F;
+}
+
+.bulk-auto-fix-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.bulk-auto-fix-note {
+  margin-top: 12px;
+  font-size: 13px;
+  color: #6B7280;
+  text-align: center;
+}
+
+───────────────────────────────────────────────────────────────────────────
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- Create the file EXACTLY as shown
+- Do NOT add extra features or props
+- Do NOT integrate into ResultsPage yet (that comes later)
+
+───────────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+[ ] File created at correct path
+[ ] Component renders without errors
+[ ] Styles applied correctly
+
+═══════════════════════════════════════════════════════════════════════════

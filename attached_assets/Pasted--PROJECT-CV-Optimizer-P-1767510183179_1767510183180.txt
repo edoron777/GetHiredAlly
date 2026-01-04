@@ -1,0 +1,125 @@
+═══════════════════════════════════════════════════════════════════════════
+PROJECT: CV Optimizer P1 - PROMPT 1#9: Add New State Variables
+═══════════════════════════════════════════════════════════════════════════
+
+TASK:
+Add new state variables needed for P1 features.
+
+───────────────────────────────────────────────────────────────────────────
+
+FILE TO MODIFY:
+client/src/pages/cv-optimizer/ResultsPage.tsx
+
+───────────────────────────────────────────────────────────────────────────
+
+STEP 1: Add New State Variables
+
+Find the existing useState declarations (around lines 70-90).
+ADD these new state variables:
+
+// ═══════════════════════════════════════════════════════════════════════
+// NEW STATE VARIABLES - P1 Core Functionality
+// ═══════════════════════════════════════════════════════════════════════
+
+// Bulk Auto Fix tracking
+const [bulkAutoFixUsed, setBulkAutoFixUsed] = useState<boolean>(false);
+const [showBulkAutoFixModal, setShowBulkAutoFixModal] = useState<boolean>(false);
+
+// Change tracking
+const [pendingChanges, setPendingChanges] = useState<number>(0);
+const [pendingIssues, setPendingIssues] = useState<Set<string>>(new Set());
+
+// Score tracking
+const [previousScore, setPreviousScore] = useState<number | null>(null);
+
+// Result Modal
+const [showResultModal, setShowResultModal] = useState<boolean>(false);
+const [resultModalData, setResultModalData] = useState<{
+  previousScore: number;
+  newScore: number;
+  fixedCount: number;
+  remainingCount: number;
+  scoreChange: 'improved' | 'unchanged' | 'dropped';
+} | null>(null);
+
+───────────────────────────────────────────────────────────────────────────
+
+STEP 2: Add Computed Values
+
+Add these computed values (useMemo or simple calculations):
+
+// Count of auto-fixable issues (not yet fixed)
+const autoFixableCount = useMemo(() => {
+  if (!reportData?.issues_json) return 0;
+  return reportData.issues_json.filter(issue => {
+    const normalized = normalizeIssue(issue, 0);
+    return normalized.isAutoFixable && 
+           !fixedIssues.has(issue.id || issue.issue_code) &&
+           !pendingIssues.has(issue.id || issue.issue_code);
+  }).length;
+}, [reportData, fixedIssues, pendingIssues]);
+
+// Show bulk auto fix section?
+const showBulkAutoFix = autoFixableCount > 0 && !bulkAutoFixUsed;
+
+───────────────────────────────────────────────────────────────────────────
+
+STEP 3: Update handleApplyFix
+
+Find the existing handleApplyFix function.
+ADD tracking of pending changes:
+
+// Inside handleApplyFix, after applying the fix:
+setPendingChanges(prev => prev + 1);
+setPendingIssues(prev => new Set(prev).add(issueId));
+
+───────────────────────────────────────────────────────────────────────────
+
+STEP 4: Update handleRescan
+
+Find the existing handleRescan function.
+MODIFY to track score changes and show result modal:
+
+// At the START of handleRescan, save previous score:
+const prevScore = currentScore;
+setPreviousScore(prevScore);
+
+// At the END of handleRescan, after setting new data:
+// Clear pending tracking
+setPendingChanges(0);
+setPendingIssues(new Set());
+
+// Calculate score change
+const newScore = result.score; // or however the new score is accessed
+const scoreChange = newScore > prevScore ? 'improved' 
+                  : newScore < prevScore ? 'dropped' 
+                  : 'unchanged';
+
+// Show result modal
+setResultModalData({
+  previousScore: prevScore,
+  newScore: newScore,
+  fixedCount: fixedIssues.size,
+  remainingCount: result.issues_json?.length || 0,
+  scoreChange
+});
+setShowResultModal(true);
+
+───────────────────────────────────────────────────────────────────────────
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- Add ONLY the state variables listed above
+- Do NOT create new components yet (that's in later prompts)
+- Do NOT modify the UI yet
+- If existing code structure differs, STOP and report
+
+───────────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+[ ] New state variables added
+[ ] autoFixableCount computed correctly
+[ ] handleApplyFix tracks pending changes
+[ ] handleRescan saves previous score and shows modal data
+[ ] No TypeScript errors
+
+═══════════════════════════════════════════════════════════════════════════
