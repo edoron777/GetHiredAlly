@@ -107,9 +107,15 @@ class PresenceHandler(BaseHandler):
         )
         
         if should_trigger:
+            if issue_when == 'missing':
+                section_preview = text[:150] if text else "Section not found"
+                current_text = f"Not found in: {section_preview}..."
+            else:
+                current_text = ''
+            
             issue = self.create_issue(
                 rule=rule,
-                current='',
+                current=current_text,
                 location=target_section,
                 is_highlightable=False,
                 details={

@@ -238,11 +238,24 @@ function IssueCard({
             </div>
           </div>
 
-          {issue.current && (
+          {issue.current && issue.current.length > 0 && !issue.current.startsWith('Not found') && (
             <div className="mb-3">
-              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Found in Your CV</p>
+              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1 flex items-center gap-1">
+                <span className="text-amber-500">⚠</span> Issue in Your CV
+              </p>
               <div className="bg-amber-50 border border-amber-200 rounded p-2">
                 <p className="text-amber-800 font-mono text-sm">"{issue.current}"</p>
+              </div>
+            </div>
+          )}
+
+          {issue.current && issue.current.startsWith('Not found') && (
+            <div className="mb-3">
+              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1 flex items-center gap-1">
+                <span className="text-gray-400">🔍</span> Searched In
+              </p>
+              <div className="bg-gray-50 border border-gray-200 rounded p-2">
+                <p className="text-gray-600 text-sm italic">{issue.current}</p>
               </div>
             </div>
           )}
@@ -250,7 +263,7 @@ function IssueCard({
           {issue.example_before && (
             <div className="mb-3">
               <p className="text-xs text-gray-500 uppercase tracking-wide mb-1 flex items-center gap-1">
-                <span className="text-red-500">✗</span> Weak Example
+                <span className="text-red-500">✗</span> Example (needs improvement)
               </p>
               <div className="bg-red-50 border border-red-200 rounded p-2">
                 <p className="text-red-800 text-sm italic">"{issue.example_before}"</p>
@@ -261,7 +274,7 @@ function IssueCard({
           {issue.example_after && (
             <div className="mb-3">
               <p className="text-xs text-gray-500 uppercase tracking-wide mb-1 flex items-center gap-1">
-                <span className="text-green-500">✓</span> Strong Example
+                <span className="text-green-500">✓</span> Example (improved)
               </p>
               <div className="bg-green-50 border border-green-200 rounded p-2">
                 <p className="text-green-800 text-sm">"{issue.example_after}"</p>
