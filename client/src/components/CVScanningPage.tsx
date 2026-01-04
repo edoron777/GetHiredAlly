@@ -184,22 +184,22 @@ export function CVScanningPage() {
 
           <div className="flex justify-center gap-4 flex-wrap">
             <div className="flex items-center gap-2">
-              <span className="w-4 h-4 rounded-full bg-red-500"></span>
+              <span className="w-4 h-4 rounded-full" style={{ backgroundColor: '#DC2626' }}></span>
               <span className="text-gray-700 font-medium">{issues.critical}</span>
               <span className="text-gray-400 text-sm">Critical</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-4 h-4 rounded-full bg-orange-500"></span>
+              <span className="w-4 h-4 rounded-full" style={{ backgroundColor: '#F59E0B' }}></span>
               <span className="text-gray-700 font-medium">{issues.high}</span>
               <span className="text-gray-400 text-sm">Important</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-4 h-4 rounded-full bg-yellow-400"></span>
+              <span className="w-4 h-4 rounded-full" style={{ backgroundColor: '#3B82F6' }}></span>
               <span className="text-gray-700 font-medium">{issues.medium}</span>
               <span className="text-gray-400 text-sm">Consider</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-4 h-4 rounded-full bg-green-400"></span>
+              <span className="w-4 h-4 rounded-full" style={{ backgroundColor: '#6B7280' }}></span>
               <span className="text-gray-700 font-medium">{issues.low}</span>
               <span className="text-gray-400 text-sm">Polish</span>
             </div>

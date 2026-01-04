@@ -1,0 +1,78 @@
+═══════════════════════════════════════════════════════════════════════════
+FIX: Scanner Page - Color Convention + Severity Order
+═══════════════════════════════════════════════════════════════════════════
+
+PROBLEM 1: Colors don't match the standard convention
+PROBLEM 2: Order is reversed (shows Polish first, should show Critical first)
+
+───────────────────────────────────────────────────────────────────────────
+
+FILE TO FIND:
+Look for the Scanner/Scanning page component. Likely locations:
+- client/src/pages/cv-optimizer/ScanningPage.tsx
+- client/src/components/cv-optimizer/Scanner/
+- client/src/components/cv-optimizer/ScanProgress/
+
+───────────────────────────────────────────────────────────────────────────
+
+FIX 1: CORRECT COLORS
+
+Use these colors EVERYWHERE on the Scanner page:
+
+| Severity   | Dot/Icon Color |
+|------------|----------------|
+| Critical   | #DC2626 (red)  |
+| Important  | #F59E0B (amber)|
+| Consider   | #3B82F6 (blue) |
+| Polish     | #6B7280 (gray) |
+
+Apply to:
+- Legend at bottom of scanner grid (● Polish ● Consider ● Important ● Critical)
+- "Issues found" section (● 0 Critical ● 0 Important ● 0 Consider ● 0 Polish)
+- Scanner grid cells (if they use severity colors)
+
+───────────────────────────────────────────────────────────────────────────
+
+FIX 2: CORRECT ORDER
+
+The order should ALWAYS be: Critical → Important → Consider → Polish
+(Most severe first, least severe last)
+
+WRONG ORDER (current):
+● Polish ● Consider ● Important ● Critical
+
+CORRECT ORDER:
+● Critical ● Important ● Consider ● Polish
+
+Fix in BOTH places:
+1. Legend at bottom of scanner grid
+2. "Issues found" summary section
+
+───────────────────────────────────────────────────────────────────────────
+
+EXPECTED RESULT:
+
+Scanner grid legend:
+● Critical  ● Important  ● Consider  ● Polish
+  (red)       (amber)      (blue)     (gray)
+
+Issues found section:
+● 0 Critical  ● 0 Important  ● 0 Consider  ● 0 Polish
+  (red)         (amber)        (blue)       (gray)
+
+───────────────────────────────────────────────────────────────────────────
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- Use ONLY the colors specified above
+- Use ONLY the order specified above (Critical first)
+- Do NOT change scanner functionality
+- If file location is different, find correct file and apply changes
+
+───────────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+[ ] Scanner legend shows: Critical (red), Important (amber), Consider (blue), Polish (gray)
+[ ] Issues found shows same order and colors
+[ ] Order is Critical → Important → Consider → Polish (not reversed)
+
+═══════════════════════════════════════════════════════════════════════════

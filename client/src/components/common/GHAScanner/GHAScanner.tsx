@@ -192,20 +192,20 @@ export function GHAScanner({ progress, showLegend = true, showProgress = true }:
         <div className="flex justify-between mt-3 text-xs">
           <div className="flex gap-3">
             <span className="flex items-center gap-1">
-              <span className="w-3 h-3 rounded-sm bg-green-500"></span>
-              <span className="text-gray-400">Polish</span>
+              <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#DC2626' }}></span>
+              <span className="text-gray-400">Critical</span>
             </span>
             <span className="flex items-center gap-1">
-              <span className="w-3 h-3 rounded-sm bg-yellow-400"></span>
-              <span className="text-gray-400">Consider</span>
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-3 h-3 rounded-sm bg-orange-500"></span>
+              <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#F59E0B' }}></span>
               <span className="text-gray-400">Important</span>
             </span>
             <span className="flex items-center gap-1">
-              <span className="w-3 h-3 rounded-sm bg-red-500"></span>
-              <span className="text-gray-400">Critical</span>
+              <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#3B82F6' }}></span>
+              <span className="text-gray-400">Consider</span>
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#6B7280' }}></span>
+              <span className="text-gray-400">Polish</span>
             </span>
           </div>
           <div className="flex gap-3">
