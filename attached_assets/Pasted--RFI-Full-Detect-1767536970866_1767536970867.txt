@@ -1,0 +1,229 @@
+═══════════════════════════════════════════════════════════════════════════════
+🔍 RFI: Full Detection System Investigation - EVIDENCE REQUIRED
+═══════════════════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL INSTRUCTIONS:
+1. This is INVESTIGATION only - DO NOT change any code
+2. DO NOT claim "code is correct" without EVIDENCE
+3. For each finding, show ACTUAL CODE or ACTUAL OUTPUT as proof
+4. If you cannot provide evidence, say "I cannot verify this"
+
+───────────────────────────────────────────────────────────────────────────────
+KNOWN PROBLEMS:
+───────────────────────────────────────────────────────────────────────────────
+
+1. MARKER COUNT: 15 issues detected → Only 4-5 markers in Document View
+2. MARKER POSITION: Markers appear inside words ("I●nnovation")
+3. TIPBOX FIELDS: "WHY THIS MATTERS" shows "8 found: My, my, I" instead of DB description
+4. POSSIBLE: Detection may not actually use DB rules correctly
+
+═══════════════════════════════════════════════════════════════════════════════
+PART A: VERIFY DETECTION ACTUALLY USES DATABASE RULES
+═══════════════════════════════════════════════════════════════════════════════
+
+───────────────────────────────────────────────────────────────────────────────
+TASK A1: Prove Database Connection
+───────────────────────────────────────────────────────────────────────────────
+
+QUESTION: Does the code actually read from cv_issue_types table?
+
+EVIDENCE REQUIRED:
+1. Show the EXACT code that queries cv_issue_types table
+2. Show the file path and line numbers
+3. Add this temporary log and show the output:
+```python
+# Add at the point where rules are loaded:
+print("=" * 60)
+print("[DB PROOF] Loading rules from database...")
+rules = <your query here>
+print(f"[DB PROOF] Loaded {len(rules)} rules from cv_issue_types")
+print(f"[DB PROOF] First 3 rule codes: {[r.issue_code for r in rules[:3]]}")
+print(f"[DB PROOF] Rule 1 detection_config: {rules[0].detection_config}")
+print("=" * 60)
+```
+
+Show me the ACTUAL console output after running this.
+
+───────────────────────────────────────────────────────────────────────────────
+TASK A2: Prove All 62 Rules Are Loaded
+───────────────────────────────────────────────────────────────────────────────
+
+QUESTION: Does the code load ALL 62 rules or only some?
+
+EVIDENCE REQUIRED:
+1. Add this log and show output:
+```python
+print("[DB PROOF] All loaded rule codes:")
+for i, rule in enumerate(rules):
+    print(f"  {i+1}. {rule.issue_code} - type: {rule.detection_config.get('type', 'NONE')}")
+print(f"[DB PROOF] TOTAL: {len(rules)} rules")
+```
+
+2. The output should show exactly 62 rules
+3. If less than 62, explain WHY some rules are missing
+
+───────────────────────────────────────────────────────────────────────────────
+TASK A3: Prove Detection Config Is Used
+───────────────────────────────────────────────────────────────────────────────
+
+QUESTION: When detecting issues, does code actually USE detection_config from DB?
+
+EVIDENCE REQUIRED:
+Pick rule CONTENT_FIRST_PERSON_PRONOUNS and trace its execution:
+
+1. Show the detection_config from database:
+```json
+{
+  "type": "regex",
+  "pattern": "\\b(I|my|me|myself)\\b",
+  "target_section": "all",
+  "min_matches": 3
+}
+```
+
+2. Show the EXACT code that:
+   - Reads this pattern
+   - Applies it to CV text
+   - Checks min_matches
+   - Creates the issue
+
+3. Add logging to PROVE it uses DB config:
+```python
+print(f"[RULE EXEC] Rule: {rule.issue_code}")
+print(f"[RULE EXEC] Pattern from DB: {rule.detection_config.get('pattern')}")
+print(f"[RULE EXEC] Target section: {rule.detection_config.get('target_section')}")
+print(f"[RULE EXEC] Min matches required: {rule.detection_config.get('min_matches')}")
+print(f"[RULE EXEC] Actual matches found: {len(matches)}")
+print(f"[RULE EXEC] Issue created: {len(matches) >= min_matches}")
+```
+
+───────────────────────────────────────────────────────────────────────────────
+TASK A4: Prove target_section Is Respected
+───────────────────────────────────────────────────────────────────────────────
+
+QUESTION: When rule says target_section="experience", does code ONLY search experience section?
+
+EVIDENCE REQUIRED:
+1. Show the code that extracts sections from CV
+2. Show how target_section is used to filter text
+3. Add this log for rule CONTENT_BULLET_TOO_SHORT (target_section=experience):
+```python
+print(f"[SECTION] Rule: CONTENT_BULLET_TOO_SHORT")
+print(f"[SECTION] target_section from DB: experience")
+print(f"[SECTION] Text being searched (first 200 chars): {search_text[:200]}")
+print(f"[SECTION] Is this ONLY experience section or FULL CV?")
+```
+
+If the text includes contact info or summary, the code is NOT respecting target_section.
+
+═══════════════════════════════════════════════════════════════════════════════
+PART B: VERIFY DETECTION RESULTS ARE CORRECT
+═══════════════════════════════════════════════════════════════════════════════
+
+───────────────────────────────────────────────────────────────────────────────
+TASK B1: Verify Issue Is Real (Not False Positive)
+───────────────────────────────────────────────────────────────────────────────
+
+For each of these 3 issues detected in David Cohen CV, PROVE it's real:
+
+ISSUE 1: CONTENT_FIRST_PERSON_PRONOUNS
+- DB rule requires: min_matches=3, pattern=\b(I|my|me)\b
+- SHOW: Exactly which 3+ matches were found in the CV
+- PROVE: These are standalone "I/my/me", not inside other words
+
+ISSUE 2: CONTENT_WEAK_ACTION_VERBS  
+- DB rule requires: words like "assisted", "helped", "supported"
+- SHOW: Exactly which weak verbs were found
+- PROVE: They exist in the CV at the reported locations
+
+ISSUE 3: CONTACT_MISSING_LINKEDIN
+- DB rule: presence check for linkedin.com/in/
+- SHOW: The contact section that was searched
+- PROVE: linkedin.com/in/ URL is truly missing (not just "LinkedIn" word)
+
+───────────────────────────────────────────────────────────────────────────────
+TASK B2: Verify Issue Count Makes Sense
+───────────────────────────────────────────────────────────────────────────────
+
+The system reports 15 issues. For EACH issue:
+
+| # | Issue Code | Is It Real? | Evidence |
+|---|------------|-------------|----------|
+| 1 | ??? | YES/NO | [what was found] |
+| 2 | ??? | YES/NO | [what was found] |
+| ... | ... | ... | ... |
+| 15 | ??? | YES/NO | [what was found] |
+
+═══════════════════════════════════════════════════════════════════════════════
+PART C: INVESTIGATE DISPLAY PROBLEMS
+═══════════════════════════════════════════════════════════════════════════════
+
+───────────────────────────────────────────────────────────────────────────────
+TASK C1: Why Only 4-5 Markers?
+───────────────────────────────────────────────────────────────────────────────
+
+15 issues detected but only 4-5 markers shown.
+
+EVIDENCE REQUIRED:
+1. Show the code that creates markers
+2. Is there a filter? (is_highlightable, has_position, etc.)
+3. For each of 15 issues, show:
+
+| Issue | Has Marker? | Why/Why Not |
+|-------|-------------|-------------|
+| FIRST_PERSON_PRONOUNS | YES | has match_text |
+| CV_TOO_LONG | NO | no specific text to mark |
+| WEAK_ACTION_VERBS | ??? | ??? |
+| ... | ... | ... |
+
+───────────────────────────────────────────────────────────────────────────────
+TASK C2: Why Markers Inside Words?
+───────────────────────────────────────────────────────────────────────────────
+
+Marker appears inside "I●nnovation" instead of standalone "I".
+
+EVIDENCE REQUIRED:
+1. Show the marker positioning code
+2. Does it use:
+   - Simple indexOf("I") → WRONG, finds any "I"
+   - Regex with word boundary \bI\b → CORRECT
+3. Show EXACTLY how position is calculated
+
+───────────────────────────────────────────────────────────────────────────────
+TASK C3: Why TipBox Shows Wrong Data?
+───────────────────────────────────────────────────────────────────────────────
+
+"WHY THIS MATTERS" shows "8 found: My, my, I" instead of description.
+
+EVIDENCE REQUIRED:
+1. Show DetectedIssue fields (backend)
+2. Show API JSON response (what's sent)
+3. Show TipBox component (what field it reads)
+4. Create mapping table:
+
+| TipBox Label | Frontend Reads | API Sends | Backend Field | DB Column |
+|--------------|----------------|-----------|---------------|-----------|
+| WHY THIS MATTERS | ??? | ??? | ??? | description |
+| HOW TO FIX | ??? | ??? | ??? | static_tip |
+| GOOD EXAMPLE | ??? | ??? | ??? | example_after |
+
+═══════════════════════════════════════════════════════════════════════════════
+REPORT FORMAT
+═══════════════════════════════════════════════════════════════════════════════
+
+For EACH task, provide:
+
+✅ VERIFIED WITH EVIDENCE: [explanation + actual code/output]
+or
+❌ CANNOT VERIFY: [what's missing]
+or
+⚠️ PROBLEM FOUND: [description of bug]
+
+───────────────────────────────────────────────────────────────────────────────
+
+DO NOT claim code is correct without showing PROOF.
+DO NOT FIX anything. Report findings only.
+
+Type "RFI COMPLETE - EVIDENCE PROVIDED" when done.
+
+═══════════════════════════════════════════════════════════════════════════════
