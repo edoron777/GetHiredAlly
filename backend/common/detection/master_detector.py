@@ -41,6 +41,24 @@ from .certification_detector import detect_all_certification_issues
 
 logger = logging.getLogger(__name__)
 
+import os
+
+USE_NEW_ENGINE = os.environ.get('CV_USE_NEW_DETECTION_ENGINE', 'false').lower() == 'true'
+PARALLEL_MODE = os.environ.get('CV_DETECTION_PARALLEL_MODE', 'false').lower() == 'true'
+
+_rule_engine = None
+
+def _get_rule_engine():
+    """Lazy initialization of RuleEngine."""
+    global _rule_engine
+    if _rule_engine is None:
+        try:
+            from .rule_engine import get_rule_engine
+            _rule_engine = get_rule_engine()
+        except Exception as e:
+            logger.error(f"Failed to initialize RuleEngine: {e}")
+    return _rule_engine
+
 
 def enrich_issues_from_catalog(issues: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
@@ -219,6 +237,34 @@ def detect_all_issues(cv_text: str, job_description: str = None) -> List[Dict[st
     logger.info(f"Static detection complete. Total issues: {len(all_issues)}")
     
     all_issues = enrich_issues_from_catalog(all_issues)
+    
+    if PARALLEL_MODE or USE_NEW_ENGINE:
+        try:
+            rule_engine = _get_rule_engine()
+            if rule_engine:
+                new_issues = rule_engine.detect_all_issues(cv_text)
+                
+                if PARALLEL_MODE and not USE_NEW_ENGINE:
+                    old_codes = set(i.get('issue_type') or i.get('issue_code') for i in all_issues)
+                    new_codes = set(i.get('issue_type') or i.get('issue_code') for i in new_issues)
+                    
+                    only_old = old_codes - new_codes
+                    only_new = new_codes - old_codes
+                    common = old_codes & new_codes
+                    
+                    logger.info(f"[PARALLEL MODE] Detection comparison:")
+                    logger.info(f"  - Old engine: {len(old_codes)} issues")
+                    logger.info(f"  - New engine: {len(new_codes)} issues")
+                    logger.info(f"  - Common: {len(common)}")
+                    logger.info(f"  - Only in old: {only_old}")
+                    logger.info(f"  - Only in new: {only_new}")
+                
+                if USE_NEW_ENGINE:
+                    logger.info(f"[NEW ENGINE] Using database-driven detection: {len(new_issues)} issues")
+                    return new_issues
+                    
+        except Exception as e:
+            logger.error(f"New detection engine error: {e}", exc_info=True)
     
     return all_issues
 
