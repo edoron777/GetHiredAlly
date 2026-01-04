@@ -8,6 +8,7 @@ interface CVIssue {
   current?: string;
   problematic_text?: string;
   title?: string;
+  issue_code?: string;
 }
 
 interface CVDocumentProps {
@@ -17,6 +18,20 @@ interface CVDocumentProps {
   issues?: CVIssue[];
   onIssueClick?: (issueId: string) => void;
 }
+
+const NO_MARKER_ISSUES = [
+  'LENGTH_CV_TOO_LONG',
+  'LENGTH_CV_TOO_SHORT',
+  'LENGTH_SUMMARY_TOO_LONG',
+  'LENGTH_EXPERIENCE_TOO_DETAILED',
+  'LENGTH_EDUCATION_TOO_DETAILED',
+  'CONTENT_SUMMARY_TOO_LONG',
+  'CONTENT_JOB_DESCRIPTION_TOO_LONG',
+  'CONTENT_EDUCATION_DESCRIPTION_TOO_SHORT',
+  'CONTENT_JOB_DESCRIPTION_TOO_SHORT',
+  'FORMAT_POOR_VISUAL_HIERARCHY',
+  'STRUCTURE_EDUCATION_BEFORE_EXPERIENCE',
+];
 
 const findWordBoundaryMatch = (content: string, matchText: string): boolean => {
   if (!matchText || !content) return false;
@@ -32,15 +47,25 @@ const findWordBoundaryMatch = (content: string, matchText: string): boolean => {
   return content.includes(trimmedMatch);
 };
 
-const isValidMarker = (matchText: string | undefined | null, cvContent: string): boolean => {
+const isValidMarkerForIssue = (issue: CVIssue, cvContent: string): { valid: boolean; matchText: string } => {
+  if (issue.issue_code && NO_MARKER_ISSUES.includes(issue.issue_code)) {
+    return { valid: false, matchText: '' };
+  }
+  
+  const matchText = issue.current || issue.matchText || issue.current_text || issue.problematic_text || '';
+  
   if (!matchText || matchText.trim() === '') {
-    return false;
+    return { valid: false, matchText: '' };
   }
   
   const trimmed = matchText.trim();
   
-  if (trimmed.length < 2) {
-    return false;
+  if (trimmed.startsWith('Not found in:')) {
+    return { valid: false, matchText: '' };
+  }
+  
+  if (trimmed.length < 1) {
+    return { valid: false, matchText: '' };
   }
   
   const invalidPatterns = [
@@ -51,16 +76,19 @@ const isValidMarker = (matchText: string | undefined | null, cvContent: string):
     /^(I,\s*)+I/i,
     /\.\.\./,
     /^\d+\s*found:/i,
-    /^Not found in:/i,
   ];
   
   for (const pattern of invalidPatterns) {
     if (pattern.test(matchText)) {
-      return false;
+      return { valid: false, matchText: '' };
     }
   }
   
-  return findWordBoundaryMatch(cvContent, matchText);
+  if (findWordBoundaryMatch(cvContent, matchText)) {
+    return { valid: true, matchText: trimmed };
+  }
+  
+  return { valid: false, matchText: '' };
 };
 
 export const classifyIssues = (issues: CVIssue[], cvContent: string) => {
@@ -68,12 +96,12 @@ export const classifyIssues = (issues: CVIssue[], cvContent: string) => {
   const nonHighlightable: CVIssue[] = [];
   
   for (const issue of issues) {
-    const matchText = issue.current || issue.matchText || issue.current_text || issue.problematic_text || '';
+    const result = isValidMarkerForIssue(issue, cvContent);
     
-    if (isValidMarker(matchText, cvContent)) {
-      highlightable.push({ ...issue, matchText });
+    if (result.valid) {
+      highlightable.push({ ...issue, matchText: result.matchText });
     } else {
-      nonHighlightable.push({ ...issue, matchText });
+      nonHighlightable.push({ ...issue, matchText: '' });
     }
   }
   
@@ -89,21 +117,18 @@ export default function CVDocument({ cvContent, issues = [], onIssueClick }: CVD
     );
   }
 
-  const allMarkers = issues.map(issue => ({
-    id: issue.id?.toString() || '',
-    matchText: issue.current || issue.matchText || issue.current_text || issue.problematic_text || '',
-    tag: issue.severity || 'consider'
-  }));
-
-  const validMarkers = allMarkers.filter(marker => 
-    isValidMarker(marker.matchText, cvContent.fullText)
-  );
-
-  console.log('Markers stats:', {
-    total: allMarkers.length,
-    valid: validMarkers.length,
-    invalid: allMarkers.length - validMarkers.length
-  });
+  const validMarkers: { id: string; matchText: string; tag: string }[] = [];
+  
+  for (const issue of issues) {
+    const result = isValidMarkerForIssue(issue, cvContent.fullText);
+    if (result.valid) {
+      validMarkers.push({
+        id: issue.id?.toString() || '',
+        matchText: result.matchText,
+        tag: issue.severity || 'consider'
+      });
+    }
+  }
 
   return (
     <div className="cv-document">
