@@ -1,0 +1,221 @@
+🔍 DETECTIVE RFI: Find the Guilty Component
+═══════════════════════════════════════════════════════════════════════════════
+🔍 DETECTIVE INVESTIGATION: Section Parser & Detection Flow
+═══════════════════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL: This is INVESTIGATION only. DO NOT change any code.
+Treat EVERY component as a suspect until proven innocent.
+
+───────────────────────────────────────────────────────────────────────────────
+THE CRIME:
+───────────────────────────────────────────────────────────────────────────────
+
+1. When asking for "experience" section → Returns SUMMARY content
+2. When asking for "summary" section → Returns FULL CV (14201 chars)
+3. When asking for "skills" section → Returns EMPTY
+4. TWO detection systems run (old: 35 issues, new: 15 issues)
+
+Result: Rules cannot detect real issues because they search WRONG text.
+
+═══════════════════════════════════════════════════════════════════════════════
+SUSPECT 1: CVStructure Class
+═══════════════════════════════════════════════════════════════════════════════
+
+Find the CVStructure class that holds parsed CV sections.
+
+INVESTIGATE:
+1. File path and class definition
+2. What fields does it have? (summary, experience, skills, education, etc.)
+3. HOW is each field populated?
+4. Is there a parse() or extract_sections() method?
+
+SHOW ME:
+```python
+class CVStructure:
+    # Show the full class
+```
+
+QUESTION: Does CVStructure correctly identify section boundaries?
+
+═══════════════════════════════════════════════════════════════════════════════
+SUSPECT 2: Section Extraction Logic
+═══════════════════════════════════════════════════════════════════════════════
+
+Find the code that extracts sections from raw CV text.
+
+INVESTIGATE:
+1. File path and function name
+2. What patterns/headers does it look for?
+3. How does it determine where "experience" starts and ends?
+4. What happens when there's NO explicit header?
+
+EVIDENCE FROM CONSOLE:
+text first 300 chars: Passionate about helping organizations navigate
+complex technology and security challenges...
+
+This is the "About" section, NOT experience!
+David Cohen CV has "About" header, not "Experience" header.
+
+QUESTION: Does the extraction confuse "About" with "Experience"?
+
+═══════════════════════════════════════════════════════════════════════════════
+SUSPECT 3: get_target_text() Function
+═══════════════════════════════════════════════════════════════════════════════
+
+File: backend/common/detection/rule_engine/handlers/base.py
+
+SHOW ME the full get_target_text() function:
+```python
+def get_target_text(self, cv_structure: CVStructure, target_section: str) -> str:
+    # Show ALL code
+```
+
+INVESTIGATE:
+1. What is the section_map mapping?
+2. Does cv_structure.experience actually contain experience?
+3. Does cv_structure.summary actually contain summary?
+
+ADD THIS DEBUG LOG and show output:
+```python
+def get_target_text(self, cv_structure: CVStructure, target_section: str) -> str:
+    print(f"[DEBUG get_target_text] target_section requested: {target_section}")
+    print(f"[DEBUG get_target_text] cv_structure.summary length: {len(cv_structure.summary or '')}")
+    print(f"[DEBUG get_target_text] cv_structure.summary first 100: {(cv_structure.summary or '')[:100]}")
+    print(f"[DEBUG get_target_text] cv_structure.experience length: {len(cv_structure.experience or '')}")
+    print(f"[DEBUG get_target_text] cv_structure.experience first 100: {(cv_structure.experience or '')[:100]}")
+    print(f"[DEBUG get_target_text] cv_structure.skills length: {len(cv_structure.skills or '')}")
+    # ... rest of function
+```
+
+═══════════════════════════════════════════════════════════════════════════════
+SUSPECT 4: Old Detection System (master_detector)
+═══════════════════════════════════════════════════════════════════════════════
+
+Console shows TWO systems running:
+INFO:common.detection.master_detector:Static detection complete. Total issues: 35
+...
+INFO:common.detection.rule_engine.engine:[RULE ENGINE] TOTAL: 15 issues detected
+
+INVESTIGATE:
+1. File: common/detection/master_detector.py
+2. WHY does it run BEFORE the rule engine?
+3. Are the 35 issues from OLD hardcoded logic?
+4. Which issues are actually sent to frontend - 35 or 15?
+
+SHOW ME:
+1. The entry point that calls both systems
+2. Which result is used at the end
+3. Is there code mixing old (hardcoded) with new (DB rules)?
+
+═══════════════════════════════════════════════════════════════════════════════
+SUSPECT 5: CV Parsing Entry Point
+═══════════════════════════════════════════════════════════════════════════════
+
+Find where CV text is first parsed into CVStructure.
+
+INVESTIGATE:
+1. File path and function
+2. What parser/logic creates the CVStructure object?
+3. Is there a markdown-to-structure conversion?
+4. Does it correctly identify David Cohen CV sections:
+   - "About" (should map to summary)
+   - Job entries without "Experience" header
+   - Education
+   - Certifications
+
+═══════════════════════════════════════════════════════════════════════════════
+SUSPECT 6: Section Mapping Configuration
+═══════════════════════════════════════════════════════════════════════════════
+
+Is there a config that maps header names to sections?
+
+For example:
+- "About" → summary
+- "Professional Summary" → summary  
+- "Work Experience" → experience
+- "Employment History" → experience
+
+INVESTIGATE:
+1. Where is this mapping defined?
+2. Is "About" mapped to "summary"?
+3. What happens with CVs that have NO explicit "Experience" header?
+
+═══════════════════════════════════════════════════════════════════════════════
+THE KEY EVIDENCE:
+═══════════════════════════════════════════════════════════════════════════════
+
+David Cohen CV structure:
+David Cohen CV | Email: ... | Phone: ... | LinkedIn
+Cybersecurity Innovation Leader | AI Security...
+About
+I bridge the gap between cutting-edge technology...
+Specializing in cybersecurity innovation...
+My Professional Evolution & Passion for AI
+Citi
+VP, Cybersecurity Innovation
+Jul 2020 - Present
+...
+Microsoft
+...
+Education
+...
+
+NOTICE:
+- There is NO "Experience" header
+- "About" exists (should be summary)
+- Jobs are listed directly under company names
+- Jobs start with "Citi", "Microsoft", etc.
+
+QUESTION: Does the parser understand this structure?
+
+═══════════════════════════════════════════════════════════════════════════════
+REPORT FORMAT:
+═══════════════════════════════════════════════════════════════════════════════
+
+SUSPECT 1 (CVStructure): 
+- Status: GUILTY / INNOCENT / SUSPICIOUS
+- Evidence: [what you found]
+- File: [path]
+
+SUSPECT 2 (Section Extraction):
+- Status: GUILTY / INNOCENT / SUSPICIOUS
+- Evidence: [what you found]
+- File: [path]
+
+SUSPECT 3 (get_target_text):
+- Status: GUILTY / INNOCENT / SUSPICIOUS
+- Evidence: [what you found]
+- File: [path]
+
+SUSPECT 4 (Old Detection):
+- Status: GUILTY / INNOCENT / SUSPICIOUS
+- Evidence: [what you found]
+- Is it mixing with new system?
+
+SUSPECT 5 (CV Parsing Entry):
+- Status: GUILTY / INNOCENT / SUSPICIOUS
+- Evidence: [what you found]
+- File: [path]
+
+SUSPECT 6 (Section Mapping):
+- Status: GUILTY / INNOCENT / SUSPICIOUS
+- Evidence: [what you found]
+- Where is mapping defined?
+
+───────────────────────────────────────────────────────────────────────────────
+
+FINAL VERDICT:
+
+THE GUILTY COMPONENT(S): [list]
+
+ROOT CAUSE: [explanation]
+
+WHY THIS BREAKS DETECTION: [explanation]
+
+───────────────────────────────────────────────────────────────────────────────
+
+DO NOT FIX. Report findings only.
+
+Type "INVESTIGATION COMPLETE - GUILTY FOUND" when done.
+
+═════════════════════════════════════════════
