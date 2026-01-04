@@ -1,0 +1,121 @@
+═══════════════════════════════════════════════════════════════════════════
+PROJECT: Side by Side Fix - PROMPT 1#11: Fix Markdown Rendering
+═══════════════════════════════════════════════════════════════════════════
+
+TASK:
+Fix the Fixed CV panel to properly render Markdown instead of showing
+raw characters like **text** and [**links**].
+
+───────────────────────────────────────────────────────────────────────────
+
+PROBLEM:
+Currently showing:
+  **David Cohen CV TechCorp | Developer | 2020 - 2023
+  **Cybersecurity Innovation Leader |
+  [**LinkedIn**]
+
+Should show:
+  David Cohen CV TechCorp | Developer | 2020 - 2023  (formatted)
+  Cybersecurity Innovation Leader |  (formatted)
+  LinkedIn  (as text, no asterisks)
+
+───────────────────────────────────────────────────────────────────────────
+
+SOLUTION APPROACH:
+
+Option A: Use react-markdown library (PREFERRED)
+Option B: Strip Markdown characters (SIMPLER)
+
+───────────────────────────────────────────────────────────────────────────
+
+OPTION A: Install and Use react-markdown
+
+STEP 1: Install library
+npm install react-markdown
+
+STEP 2: Import in component
+import ReactMarkdown from 'react-markdown';
+
+STEP 3: Wrap CV content
+BEFORE:
+<div className="cv-content">
+  {fixedCVContent}
+</div>
+
+AFTER:
+<div className="cv-content">
+  <ReactMarkdown>{fixedCVContent}</ReactMarkdown>
+</div>
+
+STEP 4: Add CSS for rendered markdown
+.cv-content h1, .cv-content h2, .cv-content h3 {
+  font-weight: 600;
+  margin: 8px 0;
+}
+
+.cv-content strong {
+  font-weight: 600;
+}
+
+.cv-content p {
+  margin: 4px 0;
+}
+
+.cv-content ul, .cv-content ol {
+  margin-left: 20px;
+}
+
+───────────────────────────────────────────────────────────────────────────
+
+OPTION B: Strip Markdown Characters (ALTERNATIVE)
+
+If react-markdown causes issues, use this simpler approach:
+
+function stripMarkdown(text: string): string {
+  if (!text) return '';
+  return text
+    // Remove bold/italic markers
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/\*([^*]+)\*/g, '$1')
+    .replace(/__([^_]+)__/g, '$1')
+    .replace(/_([^_]+)_/g, '$1')
+    // Remove link syntax [text](url) -> text
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    // Remove headers
+    .replace(/^#{1,6}\s+/gm, '')
+    // Clean up extra whitespace
+    .replace(/\n{3,}/g, '\n\n');
+}
+
+Usage:
+<div className="cv-content">
+  {stripMarkdown(fixedCVContent)}
+</div>
+
+───────────────────────────────────────────────────────────────────────────
+
+APPLY TO BOTH PANELS:
+
+Apply the same rendering to BOTH panels for consistency:
+- Original CV panel
+- Fixed CV panel
+
+───────────────────────────────────────────────────────────────────────────
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- Use Option A (react-markdown) if possible
+- If Option A causes issues, fall back to Option B
+- Apply to BOTH CV panels
+- Do NOT change layout or styling beyond markdown rendering
+- Do NOT add extra features
+
+───────────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+[ ] No raw ** or __ characters visible
+[ ] Bold text displays as bold
+[ ] Links display as plain text (not clickable, just text)
+[ ] Both panels render consistently
+[ ] No layout issues after fix
+
+═══════════════════════════════════════════════════════════════════════════
