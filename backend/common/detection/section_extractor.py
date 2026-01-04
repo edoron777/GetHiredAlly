@@ -159,27 +159,33 @@ def _is_section_header(line: str) -> Tuple[bool, Optional[str]]:
 
 
 def _detect_job_entry_start(line: str, next_lines: List[str]) -> bool:
-    """Detect if this line starts a job entry."""
+    """
+    Detect if this line starts a job entry.
+    
+    Requirements for job entry detection:
+    - Must have date pattern (e.g., "Jul 2020 - Present") on current line OR next few lines
+    - Must have company name OR job title
+    - Company name alone is NOT enough (prevents false positives like "worked at Citi, Microsoft...")
+    """
     line_stripped = line.strip()
     if not line_stripped:
         return False
     
-    for company in KNOWN_COMPANIES:
-        if company.lower() in line_stripped.lower():
-            return True
-    
+    has_company = any(company.lower() in line_stripped.lower() for company in KNOWN_COMPANIES)
     has_title = any(re.search(p, line_stripped, re.IGNORECASE) for p in JOB_TITLE_PATTERNS)
     has_date = any(re.search(p, line_stripped, re.IGNORECASE) for p in DATE_PATTERNS)
     
-    if has_title and has_date:
+    if has_date and (has_company or has_title):
         return True
     
-    if len(line_stripped) < 60 and line_stripped and line_stripped[0].isupper():
-        upcoming_text = ' '.join(next_lines[:4])
-        has_title_nearby = any(re.search(p, upcoming_text, re.IGNORECASE) for p in JOB_TITLE_PATTERNS)
+    if len(line_stripped) > 100:
+        return False
+    
+    if (has_company or has_title) and line_stripped and line_stripped[0].isupper():
+        upcoming_text = ' '.join(next_lines[:3])
         has_date_nearby = any(re.search(p, upcoming_text, re.IGNORECASE) for p in DATE_PATTERNS)
         
-        if has_title_nearby and has_date_nearby:
+        if has_date_nearby:
             return True
     
     return False

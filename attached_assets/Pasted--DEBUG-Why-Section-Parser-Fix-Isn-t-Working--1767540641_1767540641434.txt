@@ -1,0 +1,211 @@
+🔍 DEBUG: Why Section Parser Fix Isn't Working
+═══════════════════════════════════════════════════════════════════════════════
+🔍 DEBUG: Section Parser - Find Why Fix Isn't Working
+═══════════════════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL: This is INVESTIGATION only. DO NOT change any code.
+
+───────────────────────────────────────────────────────────────────────────────
+THE SYMPTOM:
+───────────────────────────────────────────────────────────────────────────────
+
+Console shows:
+[SECTION PARSER] Complete: summary=0 chars, experience=12320 chars, education=95 chars, skills=0 chars
+
+PROBLEMS:
+1. summary = 0 chars (should be ~500 chars from "About" section)
+2. experience = 12320 chars (includes summary content - WRONG!)
+3. skills = 0 chars (should detect skills by pattern)
+
+The "About" header EXISTS in CV but is NOT being recognized.
+
+═══════════════════════════════════════════════════════════════════════════════
+DEBUG TASK 1: Verify extract_sections() is the NEW code
+═══════════════════════════════════════════════════════════════════════════════
+
+File: backend/common/detection/section_extractor.py
+
+Show me:
+1. The FIRST 50 lines of extract_sections() function
+2. Does it have the multi-pass logic?
+3. Does it have "[SECTION PARSER] Starting extraction" log?
+
+If the old code is still there, the fix wasn't applied.
+
+═══════════════════════════════════════════════════════════════════════════════
+DEBUG TASK 2: Add Debug Logging to Header Detection
+═══════════════════════════════════════════════════════════════════════════════
+
+Find the function that checks if a line is a header.
+It should be something like: _is_section_header() or _is_header_line()
+
+ADD this debug logging:
+```python
+def _is_section_header(line: str) -> Tuple[bool, Optional[str]]:
+    """Check if line is a section header."""
+    print(f"[DEBUG HEADER] Checking line: '{line[:50]}...' if len(line) > 50 else '{line}'")
+    
+    normalized = _normalize_header(line)
+    print(f"[DEBUG HEADER] Normalized: '{normalized}'")
+    
+    # Check against known headers
+    for header in SUMMARY_HEADERS:
+        if normalized == header or normalized.startswith(header + ' '):
+            print(f"[DEBUG HEADER] ✓ MATCH! '{normalized}' matches SUMMARY header '{header}'")
+            return True, 'summary'
+    
+    # ... rest of function
+```
+
+Then scan David Cohen CV and show the console output.
+
+═══════════════════════════════════════════════════════════════════════════════
+DEBUG TASK 3: Check SUMMARY_HEADERS List
+═══════════════════════════════════════════════════════════════════════════════
+
+Show me the SUMMARY_HEADERS list in section_extractor.py.
+
+Does it include "about"?
+```python
+SUMMARY_HEADERS = [
+    # ... show all items
+]
+```
+
+David Cohen CV has this exact line:
+About
+
+Is "about" (lowercase) in the SUMMARY_HEADERS list?
+
+═══════════════════════════════════════════════════════════════════════════════
+DEBUG TASK 4: Trace "About" Line Detection
+═══════════════════════════════════════════════════════════════════════════════
+
+The CV has this structure:
+Line 1: David Cohen CV | Email: ...
+Line 2: Cybersecurity Innovation Leader | ...
+Line 3: (blank)
+Line 4: About
+Line 5: (blank)
+Line 6: I bridge the gap...
+
+ADD this debug at the START of extract_sections():
+```python
+def extract_sections(cv_text: str) -> CVStructure:
+    lines = cv_text.split('\n')
+    
+    print("=" * 60)
+    print("[DEBUG] First 20 lines of CV:")
+    for i, line in enumerate(lines[:20]):
+        print(f"  Line {i}: '{line[:60]}'" if len(line) > 60 else f"  Line {i}: '{line}'")
+    print("=" * 60)
+    
+    # Check specifically for "About"
+    for i, line in enumerate(lines):
+        if 'about' in line.lower():
+            print(f"[DEBUG] Found 'about' at line {i}: '{line}'")
+    
+    # ... rest of function
+```
+
+═══════════════════════════════════════════════════════════════════════════════
+DEBUG TASK 5: Check Why Summary = 0
+═══════════════════════════════════════════════════════════════════════════════
+
+Find where structure.summary is assigned.
+
+ADD debug logging:
+```python
+# Where summary is assigned
+if section_type == 'summary' and content:
+    print(f"[DEBUG SUMMARY] Assigning summary, content length: {len(content)}")
+    print(f"[DEBUG SUMMARY] Content preview: {content[:200]}")
+    structure.summary = content
+    structure.has_summary = True
+else:
+    print(f"[DEBUG SUMMARY] NOT assigning: section_type={section_type}, content_len={len(content) if content else 0}")
+```
+
+═══════════════════════════════════════════════════════════════════════════════
+DEBUG TASK 6: Check Experience Content Start
+═══════════════════════════════════════════════════════════════════════════════
+
+The experience section STARTS with:
+Specializing in cybersecurity innovation at Citi, Microsoft...
+
+This is SUMMARY text, NOT experience!
+
+ADD debug to see where experience content comes from:
+```python
+# Where experience is assigned
+if structure.experience:
+    print(f"[DEBUG EXPERIENCE] Experience content starts with: {structure.experience[:200]}")
+    print(f"[DEBUG EXPERIENCE] Total length: {len(structure.experience)}")
+```
+
+═══════════════════════════════════════════════════════════════════════════════
+DEBUG TASK 7: Check If Old Code Is Still Running
+═══════════════════════════════════════════════════════════════════════════════
+
+Search the codebase for OTHER places that might set cv_structure fields:
+```bash
+grep -rn "structure.summary" backend/
+grep -rn "structure.experience" backend/
+grep -rn "cv_structure.summary" backend/
+grep -rn "cv_structure.experience" backend/
+```
+
+Are there MULTIPLE places that set these fields?
+Is there old code that runs AFTER the new extract_sections()?
+
+═══════════════════════════════════════════════════════════════════════════════
+DEBUG TASK 8: Verify Function Is Called
+═══════════════════════════════════════════════════════════════════════════════
+
+Add at the VERY FIRST LINE of extract_sections():
+```python
+def extract_sections(cv_text: str) -> CVStructure:
+    print("=" * 60)
+    print("[DEBUG] extract_sections() CALLED - NEW VERSION")
+    print(f"[DEBUG] cv_text length: {len(cv_text)}")
+    print("=" * 60)
+    
+    # ... rest
+```
+
+If you DON'T see this in console → the new function is NOT being called!
+
+═══════════════════════════════════════════════════════════════════════════════
+REPORT FORMAT:
+═══════════════════════════════════════════════════════════════════════════════
+
+After adding debug logs and scanning CV, report:
+
+FINDING 1: Is new extract_sections() code present?
+- YES / NO
+- Evidence: [first lines of function]
+
+FINDING 2: Is "About" header being detected?
+- YES / NO
+- Console shows: [paste relevant debug output]
+
+FINDING 3: Why is summary = 0?
+- Reason: [explanation]
+- Console shows: [paste relevant debug output]
+
+FINDING 4: Why does experience include summary content?
+- Reason: [explanation]
+- Experience starts at line: [number]
+- Should start at line: [number]
+
+FINDING 5: Is there old code interfering?
+- YES / NO
+- Location: [file:line if yes]
+
+───────────────────────────────────────────────────────────────────────────────
+
+DO NOT FIX. Report findings only.
+
+Type "DEBUG COMPLETE" when done.
+
+═══════════════════════════════════════════════
