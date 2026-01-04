@@ -16,7 +16,6 @@ import { DocStyler } from '../../components/common/DocStyler';
 import { getAuthToken, isAuthenticated } from '../../lib/auth';
 import { BulkAutoFixSection } from '../../components/cv-optimizer/BulkAutoFixSection';
 import { BulkAutoFixModal } from '../../components/cv-optimizer/BulkAutoFixModal';
-import { ProgressSection } from '../../components/cv-optimizer/ProgressSection';
 import { ResultModal } from '../../components/cv-optimizer/ResultModal';
 
 interface CVIssue {
@@ -832,6 +831,10 @@ export default function ResultsPage() {
         onIssueClick={handleIssueClick}
         selectedIssueId={selectedIssueId || undefined}
         fixedIssues={fixedIssues}
+        pendingIssues={pendingIssues}
+        pendingChanges={pendingChanges}
+        onUpdateScore={handleRescan}
+        isLoading={isRescanning}
       />
 
       <div className="flex-1 px-4 py-8">

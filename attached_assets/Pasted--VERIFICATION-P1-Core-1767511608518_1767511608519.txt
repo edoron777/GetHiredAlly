@@ -1,0 +1,97 @@
+═══════════════════════════════════════════════════════════════════════════
+✅ VERIFICATION: P1 Core Functionality Complete
+═══════════════════════════════════════════════════════════════════════════
+
+TEST EACH FEATURE:
+
+───────────────────────────────────────────────────────────────────────────
+1. BULK AUTO FIX SECTION
+───────────────────────────────────────────────────────────────────────────
+
+[ ] Yellow section appears at top of results page
+[ ] Shows correct count of auto-fixable issues
+[ ] Clicking button opens confirmation modal
+[ ] After bulk fix, section disappears (bulkAutoFixUsed = true)
+
+───────────────────────────────────────────────────────────────────────────
+2. BULK AUTO FIX MODAL
+───────────────────────────────────────────────────────────────────────────
+
+[ ] Modal opens when clicking "Auto Fix X Issues"
+[ ] Shows correct count in message
+[ ] Cancel button closes modal without action
+[ ] "Yes, Fix All" button triggers bulk fix
+[ ] Modal shows loading state during processing
+
+───────────────────────────────────────────────────────────────────────────
+3. BULK AUTO FIX EXECUTION
+───────────────────────────────────────────────────────────────────────────
+
+[ ] All auto-fixable issues are fixed
+[ ] CV is rescanned automatically
+[ ] Result modal appears with score change
+[ ] Fixed issues count updates correctly
+
+───────────────────────────────────────────────────────────────────────────
+4. PROGRESS SECTION
+───────────────────────────────────────────────────────────────────────────
+
+[ ] Progress bar shows in left sidebar
+[ ] Percentage is weighted by severity
+[ ] "X of Y issues addressed" text is accurate
+[ ] Pending box appears when changes are pending
+[ ] "Update & See New Score" button appears when pending
+
+───────────────────────────────────────────────────────────────────────────
+5. RESULT MODAL
+───────────────────────────────────────────────────────────────────────────
+
+[ ] Modal appears after rescan completes
+[ ] Shows previous score → new score
+[ ] Correct variant shown (improved/unchanged/dropped)
+[ ] Buttons work: Save CV, Compare, Keep Editing
+
+───────────────────────────────────────────────────────────────────────────
+6. TIPBOX AUTO FIX BUTTON
+───────────────────────────────────────────────────────────────────────────
+
+[ ] Auto Fix button shows for auto-fixable issues
+[ ] Auto Fix button HIDDEN after bulk auto fix used
+[ ] Auto Fix button HIDDEN for non-auto-fixable issues
+[ ] Info text shows when Auto Fix not available
+[ ] Apply to CV button always visible
+
+───────────────────────────────────────────────────────────────────────────
+7. EXPORT AUTO-RESCAN
+───────────────────────────────────────────────────────────────────────────
+
+[ ] Export with pending changes → rescans first
+[ ] Export without pending changes → exports directly
+[ ] Export button shows loading during rescan
+[ ] Final export uses updated data
+
+───────────────────────────────────────────────────────────────────────────
+8. STATE TRACKING
+───────────────────────────────────────────────────────────────────────────
+
+[ ] pendingChanges increments when applying fix
+[ ] pendingIssues Set tracks pending issue IDs
+[ ] fixedIssues Set tracks fixed issue IDs
+[ ] bulkAutoFixUsed flag persists after use
+[ ] Score comparison works correctly
+
+───────────────────────────────────────────────────────────────────────────
+
+SUMMARY:
+
+Total tests: 32
+Passed: ___
+Failed: ___
+
+If any test fails, document:
+- Which test failed
+- Expected behavior
+- Actual behavior
+- Error messages (if any)
+
+═══════════════════════════════════════════════════════════════════════════

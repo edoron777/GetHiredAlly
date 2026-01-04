@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { MapPin, ClipboardList } from 'lucide-react';
 import ScoreWidget from './ScoreWidget';
 import IssueGroup from './IssueGroup';
+import { ProgressSection } from '../ProgressSection';
 import '../../../styles/cv-optimizer/sidebar.css';
 
 interface Issue {
@@ -18,6 +19,10 @@ interface IssueSidebarProps {
   onIssueClick: (issueId: string) => void;
   selectedIssueId?: string;
   fixedIssues?: Set<string>;
+  pendingIssues?: Set<string>;
+  pendingChanges?: number;
+  onUpdateScore?: () => void;
+  isLoading?: boolean;
 }
 
 export default function IssueSidebar({ 
@@ -26,7 +31,11 @@ export default function IssueSidebar({
   issues, 
   onIssueClick, 
   selectedIssueId,
-  fixedIssues = new Set()
+  fixedIssues = new Set(),
+  pendingIssues = new Set(),
+  pendingChanges = 0,
+  onUpdateScore,
+  isLoading = false
 }: IssueSidebarProps) {
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
     critical: true,
@@ -56,9 +65,7 @@ export default function IssueSidebar({
     }));
   };
 
-  const fixedCount = fixedIssues.size;
   const totalCount = issues.length;
-  const progressPercent = totalCount > 0 ? (fixedCount / totalCount) * 100 : 0;
   
   const highlightableCount = issues.filter(i => i.isHighlightable).length;
   const generalCount = issues.filter(i => !i.isHighlightable).length;
@@ -67,18 +74,15 @@ export default function IssueSidebar({
     <div className="issue-sidebar">
       <ScoreWidget score={score} originalScore={originalScore} issuesCounts={issuesCounts} />
 
-      {totalCount > 0 && (
-        <div className="progress-summary">
-          <div className="progress-text">
-            Progress: {fixedCount} / {totalCount} fixed
-          </div>
-          <div className="progress-bar-bg">
-            <div 
-              className="progress-bar-fill"
-              style={{ width: `${progressPercent}%` }}
-            />
-          </div>
-        </div>
+      {totalCount > 0 && onUpdateScore && (
+        <ProgressSection
+          issues={issues}
+          fixedIssues={fixedIssues}
+          pendingIssues={pendingIssues}
+          pendingChanges={pendingChanges}
+          onUpdateScore={onUpdateScore}
+          isLoading={isLoading}
+        />
       )}
 
       <div className="sidebar-divider" />
