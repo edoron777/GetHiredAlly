@@ -1,0 +1,91 @@
+═══════════════════════════════════════════════════════════════════════════════
+🔍 PROMPT 3#5: Compare DB Rules vs Actual Detection Behavior
+═══════════════════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL: This is INVESTIGATION only. DO NOT change any code.
+
+───────────────────────────────────────────────────────────────────────────────
+OBJECTIVE: Find the gap between what DB says and what code does
+───────────────────────────────────────────────────────────────────────────────
+
+STEP 1: Export ALL detection rules from DB
+───────────────────────────────────────────────────────────────────────────────
+
+Run this SQL in Supabase:
+
+SELECT 
+  issue_type,
+  detection_config->>'type' as handler_type,
+  detection_config->>'pattern' as pattern,
+  detection_config->>'patterns' as patterns,
+  detection_config->>'target_section' as target_section,
+  detection_config->>'min_matches' as min_matches,
+  severity
+FROM cv_issue_catalog
+WHERE detection_config IS NOT NULL
+ORDER BY issue_type;
+
+Share the FULL result (all rows).
+
+───────────────────────────────────────────────────────────────────────────────
+STEP 2: List all handler implementations
+───────────────────────────────────────────────────────────────────────────────
+
+For each handler type, show the core detection logic:
+
+# Regex Handler
+grep -n -A 20 "def detect\|def handle\|def execute" backend/common/detection/rule_engine/handlers/regex_handler.py
+
+# Presence Handler
+grep -n -A 20 "def detect\|def handle\|def execute" backend/common/detection/rule_engine/handlers/presence_handler.py
+
+# Word List Handler
+grep -n -A 20 "def detect\|def handle\|def execute" backend/common/detection/rule_engine/handlers/word_list_handler.py
+
+───────────────────────────────────────────────────────────────────────────────
+STEP 3: Identify mismatches
+───────────────────────────────────────────────────────────────────────────────
+
+For each handler type, answer:
+
+REGEX HANDLER:
+- Does it use the pattern from DB? YES/NO
+- Does it respect min_matches? YES/NO
+- Does it respect target_section? YES/NO
+- Evidence: __________
+
+PRESENCE HANDLER:
+- Does it use patterns from DB? YES/NO
+- Does it understand issue_when correctly? YES/NO
+- Does it respect target_section? YES/NO
+- Evidence: __________
+
+WORD_LIST HANDLER:
+- Does it use words from DB? YES/NO
+- Does it respect match_location? YES/NO
+- Evidence: __________
+
+───────────────────────────────────────────────────────────────────────────────
+
+REPORT FORMAT:
+
+GAP ANALYSIS:
+═══════════════════════════════════════════════════════════════════════════════
+
+DB SAYS:                          CODE DOES:
+─────────────────────────────────────────────────────────────────────────────
+Rule X pattern: /abc/             Handler uses: __________ ✓/✗
+Rule X target: experience         Handler searches: __________ ✓/✗
+Rule X min_matches: 3             Handler requires: __________ ✓/✗
+
+CRITICAL GAPS FOUND:
+1. __________
+2. __________
+3. __________
+
+═══════════════════════════════════════════════════════════════════════════════
+
+DO NOT FIX ANYTHING. Report findings only.
+
+Type "PROMPT 3#5 COMPLETE - READY FOR PROMPT 4" when done.
+═══════════════════════════════════════════════════════════════════════════════
