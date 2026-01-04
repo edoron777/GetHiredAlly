@@ -18,30 +18,30 @@ interface ListViewTabProps {
 const SEVERITY_CONFIG = {
   critical: { 
     icon: AlertCircle, 
-    color: '#dc2626', 
-    headerBg: '#EF4444',
-    cardBg: '#fef2f2', 
+    color: '#DC2626', 
+    headerBg: '#DC2626',
+    cardBg: '#FEE2E2', 
     label: 'Critical' 
   },
   important: { 
     icon: AlertTriangle, 
-    color: '#ea580c', 
-    headerBg: '#F97316',
-    cardBg: '#fff7ed', 
+    color: '#D97706', 
+    headerBg: '#F59E0B',
+    cardBg: '#FEF3C7', 
     label: 'Important' 
   },
   consider: { 
     icon: Info, 
-    color: '#ca8a04', 
-    headerBg: '#EAB308',
-    cardBg: '#fefce8', 
+    color: '#2563EB', 
+    headerBg: '#3B82F6',
+    cardBg: '#DBEAFE', 
     label: 'Consider' 
   },
   polish: { 
     icon: Sparkles, 
-    color: '#16a34a', 
-    headerBg: '#22C55E',
-    cardBg: '#f0fdf4', 
+    color: '#4B5563', 
+    headerBg: '#6B7280',
+    cardBg: '#F3F4F6', 
     label: 'Polish' 
   },
 };

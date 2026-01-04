@@ -1,0 +1,91 @@
+═══════════════════════════════════════════════════════════════════════════
+FIX: Color Consistency for Severity Levels (Critical, Important, Consider, Polish)
+═══════════════════════════════════════════════════════════════════════════
+
+PROBLEM:
+Colors are inconsistent across List View, Score Gauge, and Sidebar.
+All 3 areas must use the SAME color convention.
+
+───────────────────────────────────────────────────────────────────────────
+
+CORRECT COLOR CONVENTION (Use these EVERYWHERE):
+
+| Severity   | Background      | Text/Border   | Dot/Icon      |
+|------------|-----------------|---------------|---------------|
+| Critical   | #FEE2E2 (light) | #DC2626 (red) | #DC2626       |
+| Important  | #FEF3C7 (light) | #D97706 (amber)| #F59E0B      |
+| Consider   | #DBEAFE (light) | #2563EB (blue)| #3B82F6       |
+| Polish     | #F3F4F6 (light) | #4B5563 (gray)| #6B7280       |
+
+───────────────────────────────────────────────────────────────────────────
+
+AREA 1: LIST VIEW HEADERS
+File: client/src/components/cv-optimizer/ListViewTab/ListViewTab.tsx
+
+Find the severity group headers (Critical, Important, Consider, Polish).
+Update their colors:
+
+Critical header:
+- Background: #DC2626 (red)
+- Text: white
+
+Important header:
+- Background: #F59E0B (amber)
+- Text: white
+
+Consider header:
+- Background: #3B82F6 (blue)
+- Text: white
+
+Polish header:
+- Background: #6B7280 (gray)
+- Text: white
+
+───────────────────────────────────────────────────────────────────────────
+
+AREA 2: SCORE GAUGE DOTS
+File: client/src/pages/cv-optimizer/ResultsPage.tsx (or wherever ScoreGauge is)
+
+Find the colored dots next to the issue counts (● 7  ● 22  ● 11  ● 1).
+Update their colors:
+
+- Critical dot (7): #DC2626 (red)
+- Important dot (22): #F59E0B (amber)
+- Consider dot (11): #3B82F6 (blue)
+- Polish dot (1): #6B7280 (gray)
+
+───────────────────────────────────────────────────────────────────────────
+
+AREA 3: LEFT SIDEBAR
+File: client/src/components/cv-optimizer/IssueSidebar/ (or similar)
+
+Find the severity indicators in the sidebar (● Critical, ● Important, etc.).
+Update their colors:
+
+- Critical indicator: #DC2626 (red)
+- Important indicator: #F59E0B (amber)
+- Consider indicator: #3B82F6 (blue)
+- Polish indicator: #6B7280 (gray)
+
+───────────────────────────────────────────────────────────────────────────
+
+OPTIONAL: CREATE A SHARED CONSTANT
+
+If not already exists, create a shared color constant file:
+
+File: client/src/constants/severityColors.ts
+
+export const SEVERITY_COLORS = {
+  critical: {
+    bg: '#FEE2E2',
+    text: '#DC2626',
+    solid: '#DC2626',
+  },
+  important: {
+    bg: '#FEF3C7',
+    text: '#D97706',
+    solid: '#F59E0B',
+  },
+  consider: {
+    bg: '#DBEAFE',
+    text: '#2563EB',

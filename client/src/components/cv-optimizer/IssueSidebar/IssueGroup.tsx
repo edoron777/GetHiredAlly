@@ -25,10 +25,10 @@ const SEVERITY_LABELS = {
 };
 
 const SEVERITY_COLORS = {
-  critical: '#dc2626',
-  important: '#ea580c',
-  consider: '#ca8a04',
-  polish: '#16a34a',
+  critical: '#DC2626',
+  important: '#F59E0B',
+  consider: '#3B82F6',
+  polish: '#6B7280',
 };
 
 export default function IssueGroup({ 
