@@ -1,0 +1,128 @@
+═══════════════════════════════════════════════════════════════════════════════
+🔍 CRITICAL DEBUG: Marker Placement & TipBox Data
+═══════════════════════════════════════════════════════════════════════════════
+
+THREE PROBLEMS TO INVESTIGATE:
+
+1. MARKERS placed INSIDE words (wrong position)
+   - Example: "I●nnovation" - marker appears after "I" in "Innovation"
+   - Should highlight the word "I" when it's a pronoun, NOT inside other words
+
+2. ISSUE IN YOUR CV shows just "I" - no context
+   - Should show the sentence containing "I", not just the letter
+
+3. TipBox fields may not map correctly to database fields
+
+───────────────────────────────────────────────────────────────────────────────
+INVESTIGATION 1: How are markers positioned?
+───────────────────────────────────────────────────────────────────────────────
+
+Find the code that creates markers/highlights in Document View.
+
+Questions:
+1. What data does the marker receive? (start position, end position, text?)
+2. How does it calculate WHERE to place the marker?
+3. Show me the marker placement code
+
+The markers appear at WRONG positions. Why?
+
+Hypothesis: The `current_text` or `match_text` contains wrong character positions,
+OR the marker logic searches for text and finds wrong matches.
+
+For example:
+- Regex finds "I" (first person pronoun)
+- But marker searches for "I" in text and finds it inside "Innovation"
+- Should only match standalone "I", not "I" inside words
+
+───────────────────────────────────────────────────────────────────────────────
+INVESTIGATION 2: What does regex handler return for FIRST_PERSON_PRONOUNS?
+───────────────────────────────────────────────────────────────────────────────
+
+Find the regex_handler.py.
+
+The detection_config for CONTENT_FIRST_PERSON_PRONOUNS is:
+{
+  "type": "regex",
+  "pattern": "\\b(I|my|me|myself|I'm|I've|I'll)\\b",
+  "flags": "gi",
+  "target_section": "all",
+  "min_matches": 3
+}
+
+The pattern uses \\b (word boundary) - so it should ONLY match standalone "I",
+not "I" inside "Innovation".
+
+Add logging to regex_handler:
+```python
+def detect(self, cv_text, sections, rule):
+    # ADD THIS:
+    matches = re.finditer(pattern, text, flags)
+    for match in matches:
+        print(f"[REGEX_HANDLER] Found: '{match.group()}' at position {match.start()}-{match.end()}")
+        print(f"[REGEX_HANDLER] Context: ...{text[max(0,match.start()-10):match.end()+10]}...")
+```
+
+REPORT:
+- Does regex find correct matches (standalone "I")?
+- What positions does it return?
+- Does it incorrectly match "I" inside words?
+
+───────────────────────────────────────────────────────────────────────────────
+INVESTIGATION 3: How does DetectedIssue store match data?
+───────────────────────────────────────────────────────────────────────────────
+
+Show me the DetectedIssue class.
+
+For highlighting to work, it needs:
+- The EXACT matched text
+- The position in the document
+- OR enough context for frontend to find the text
+
+What does DetectedIssue currently store?
+- `current` or `current_text`: What value?
+- `match_positions`: Does this exist?
+- `line_number`: Does this exist?
+
+───────────────────────────────────────────────────────────────────────────────
+INVESTIGATION 4: Frontend marker logic
+───────────────────────────────────────────────────────────────────────────────
+
+Find the Document View component that renders markers.
+
+How does it decide WHERE to place a marker?
+1. Does it receive positions from backend?
+2. Or does it search for `current_text` in the document?
+
+If it searches for "I" in text, it will find EVERY "I" including inside words!
+
+Show me this logic.
+
+───────────────────────────────────────────────────────────────────────────────
+INVESTIGATION 5: TipBox field comparison
+───────────────────────────────────────────────────────────────────────────────
+
+The TipBox shows:
+- ISSUE IN YOUR CV: "I"
+- WHY THIS MATTERS: "8 found: I, my, My"
+- HOW TO FIX: "Remove I, me, my..."
+- GOOD EXAMPLE: "Managed team of 5 developers..."
+
+Database has:
+- description: ???
+- static_tip: ???
+- example_before: ???
+- example_after: ???
+
+Show me the ACTUAL database values for CONTENT_FIRST_PERSON_PRONOUNS
+and compare with what TipBox displays.
+
+═══════════════════════════════════════════════════════════════════════════════
+REPORT FORMAT:
+
+1. Marker positioning problem cause: ___
+2. Regex matches correct or wrong: ___
+3. Frontend marker logic: ___
+4. DB vs TipBox field mapping: ___
+
+DO NOT FIX - REPORT FINDINGS
+═══════════════════════════════════════════════════════════════════════════════

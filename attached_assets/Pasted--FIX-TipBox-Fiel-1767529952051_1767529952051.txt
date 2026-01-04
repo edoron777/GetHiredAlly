@@ -1,0 +1,94 @@
+═══════════════════════════════════════════════════════════════════════════════
+🔧 FIX: TipBox Field Mapping & Marker Placement
+═══════════════════════════════════════════════════════════════════════════════
+
+TWO BUGS IDENTIFIED:
+
+BUG 1: "WHY THIS MATTERS" shows wrong content
+- Shows: "8 found: I, my, My" (detection result)
+- Should show: Database `description` field ("CVs traditionally omit first-person pronouns...")
+
+BUG 2: Markers placed inside words
+- Shows marker inside "I●nnovation" 
+- Should only mark standalone "I" (the pronoun)
+
+───────────────────────────────────────────────────────────────────────────────
+FIX BUG 1: Field Mapping
+───────────────────────────────────────────────────────────────────────────────
+
+Find DetectedIssue class and the handlers.
+
+PROBLEM: The `description` field is being populated with detection results
+("8 found: I, my, My") instead of the database description.
+
+The database `description` field contains: 
+"CVs traditionally omit first-person pronouns. Starting bullets with 'I' is redundant..."
+
+FIX: 
+1. Add a NEW field `detection_summary` for "8 found: I, my, My"
+2. Keep `description` for the database description value
+3. Update to_dict() to return both:
+   - description: from database (cv_issue_types.description)
+   - detection_summary: the "8 found: I, my, My" result
+
+In DetectedIssue:
+```python
+@dataclass
+class DetectedIssue:
+    issue_code: str
+    display_name: str
+    description: str           # From database - "CVs traditionally omit..."
+    detection_summary: str     # From detection - "8 found: I, my, My"
+    current: str               # Matched text
+    suggestion: str            # static_tip from database
+    example_before: str
+    example_after: str
+    # ... other fields
+```
+
+Make sure handlers pass the CORRECT database description, not detection results.
+
+───────────────────────────────────────────────────────────────────────────────
+FIX BUG 2: Marker Placement
+───────────────────────────────────────────────────────────────────────────────
+
+Find the Document View marker/highlight code (frontend).
+
+PROBLEM: When searching for "I" in text, it finds EVERY occurrence including
+inside words like "Innovation", "Identity", "I'm".
+
+The marker code probably does something like:
+```javascript
+// WRONG - finds "I" everywhere
+const index = text.indexOf(matchText);
+```
+
+FIX: Use word boundary matching:
+```javascript
+// CORRECT - only finds standalone words
+const regex = new RegExp(`\\b${escapeRegex(matchText)}\\b`, 'g');
+const match = regex.exec(text);
+```
+
+OR: The backend should return EXACT character positions where the match occurred,
+so frontend doesn't need to search.
+
+Option A: Fix frontend to use word boundary
+Option B: Backend returns match positions, frontend uses them directly
+
+Which option is easier to implement in current architecture?
+
+───────────────────────────────────────────────────────────────────────────────
+VERIFICATION
+───────────────────────────────────────────────────────────────────────────────
+
+After fix:
+
+1. TipBox "WHY THIS MATTERS" shows:
+   "CVs traditionally omit first-person pronouns..."
+   NOT "8 found: I, my, My"
+
+2. Markers appear ONLY on standalone "I", "my", "me"
+   NOT inside words like "Innovation"
+
+═══════════════════════════════════════════════════════════════════════════════
