@@ -1,3 +1,5 @@
+import { SEVERITY_COLORS } from '@/constants/severityColors';
+
 interface ScoreWidgetProps {
   score: number;
   originalScore?: number;
@@ -36,19 +38,19 @@ export default function ScoreWidget({ score, originalScore, issuesCounts }: Scor
 
       <div className="issue-counts">
         <div className="issue-count-item">
-          <span style={{ color: '#990033' }}>●</span>
+          <span style={{ color: SEVERITY_COLORS.critical.primary }}>●</span>
           <span>{issuesCounts.critical}</span>
         </div>
         <div className="issue-count-item">
-          <span style={{ color: '#990099' }}>●</span>
+          <span style={{ color: SEVERITY_COLORS.important.primary }}>●</span>
           <span>{issuesCounts.important}</span>
         </div>
         <div className="issue-count-item">
-          <span style={{ color: '#1E5A85' }}>●</span>
+          <span style={{ color: SEVERITY_COLORS.consider.primary }}>●</span>
           <span>{issuesCounts.consider}</span>
         </div>
         <div className="issue-count-item">
-          <span style={{ color: '#008080' }}>●</span>
+          <span style={{ color: SEVERITY_COLORS.polish.primary }}>●</span>
           <span>{issuesCounts.polish}</span>
         </div>
       </div>
