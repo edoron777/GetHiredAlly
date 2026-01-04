@@ -76,6 +76,11 @@ class RuleEngine:
         
         cv_structure = extract_sections(cv_text)
         
+        logger.info(f"[RuleEngine] CV Structure: summary={len(cv_structure.summary or '')} chars, "
+                   f"experience={len(cv_structure.experience or '')} chars, "
+                   f"education={len(cv_structure.education or '')} chars, "
+                   f"skills={len(cv_structure.skills or '')} chars")
+        
         rules = self.loader.get_all_rules()
         
         if not rules:

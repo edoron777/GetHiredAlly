@@ -1,0 +1,306 @@
+# 🔧 COMPREHENSIVE FIX: All Detection & Display Issues
+
+```
+═══════════════════════════════════════════════════════════════════════════════
+🔧 COMPREHENSIVE FIX - ALL ISSUES IN ONE PROMPT
+═══════════════════════════════════════════════════════════════════════════════
+
+This prompt fixes THREE critical issues:
+1. Section Parser doesn't recognize "About" as summary
+2. TipBox markers appear in wrong positions
+3. Detection misses real issues
+
+═══════════════════════════════════════════════════════════════════════════════
+ISSUE 1: SECTION PARSER - "About" Not Recognized
+═══════════════════════════════════════════════════════════════════════════════
+
+SYMPTOM:
+Console shows: [SECTION PARSER] Complete: summary=0 chars
+CV clearly has "About" header but parser doesn't recognize it.
+
+ROOT CAUSE:
+The header detection function doesn't match "About" correctly.
+
+FIX LOCATION: backend/common/detection/section_extractor.py
+
+STEP 1: Find the header detection function
+
+Search for:
+- _is_section_header() OR _is_header_line()
+- SUMMARY_HEADERS list
+
+STEP 2: Add debug logging FIRST
+
+Add this at the start of extract_sections():
+
+```python
+def extract_sections(cv_text: str) -> CVStructure:
+    lines = cv_text.split('\n')
+    
+    # DEBUG: Print first 10 lines to see structure
+    print("=" * 60)
+    print("[DEBUG PARSER] First 10 lines of CV:")
+    for i, line in enumerate(lines[:10]):
+        print(f"  Line {i}: '{line}'")
+    print("=" * 60)
+    
+    # DEBUG: Check for "About" specifically
+    for i, line in enumerate(lines):
+        if line.strip().lower() == 'about':
+            print(f"[DEBUG PARSER] Found 'About' at line {i}: '{line}'")
+```
+
+STEP 3: Check SUMMARY_HEADERS list
+
+Make sure it includes these EXACT variations:
+```python
+SUMMARY_HEADERS = [
+    'about',           # Just "About"
+    'about me',
+    'summary',
+    'professional summary',
+    'executive summary',
+    'profile',
+    'professional profile',
+    'career profile',
+    'objective',
+    'career objective',
+    'introduction',
+    'overview',
+]
+```
+
+STEP 4: Fix header matching logic
+
+The problem is likely in the header matching. Replace the matching logic:
+
+```python
+def _is_section_header(line: str) -> Tuple[bool, Optional[str]]:
+    """Check if line is a section header."""
+    if not line or not line.strip():
+        return False, None
+    
+    # Normalize: lowercase, strip whitespace
+    normalized = line.strip().lower()
+    
+    # Remove common formatting
+    normalized = normalized.replace(':', '').replace('-', ' ').strip()
+    
+    # Debug
+    print(f"[DEBUG HEADER] Checking: '{line}' -> normalized: '{normalized}'")
+    
+    # Check SUMMARY headers
+    if normalized in ['about', 'about me', 'summary', 'professional summary', 
+                      'executive summary', 'profile', 'professional profile',
+                      'career profile', 'objective', 'career objective',
+                      'introduction', 'overview']:
+        print(f"[DEBUG HEADER] ✓ MATCHED as SUMMARY")
+        return True, 'summary'
+    
+    # Check EXPERIENCE headers
+    if normalized in ['experience', 'work experience', 'professional experience',
+                      'employment', 'employment history', 'work history',
+                      'career history', 'positions held', 'roles']:
+        print(f"[DEBUG HEADER] ✓ MATCHED as EXPERIENCE")
+        return True, 'experience'
+    
+    # Check EDUCATION headers
+    if normalized in ['education', 'academic background', 'educational background',
+                      'qualifications', 'academic qualifications', 'degrees']:
+        print(f"[DEBUG HEADER] ✓ MATCHED as EDUCATION")
+        return True, 'education'
+    
+    # Check SKILLS headers
+    if normalized in ['skills', 'technical skills', 'core competencies',
+                      'key skills', 'expertise', 'technologies', 'tools',
+                      'proficiencies', 'capabilities', 'competencies']:
+        print(f"[DEBUG HEADER] ✓ MATCHED as SKILLS")
+        return True, 'skills'
+    
+    # Check CERTIFICATIONS headers
+    if normalized in ['certifications', 'certificates', 'licenses',
+                      'professional certifications', 'credentials',
+                      'accreditations', 'training']:
+        print(f"[DEBUG HEADER] ✓ MATCHED as CERTIFICATIONS")
+        return True, 'certifications'
+    
+    return False, None
+```
+
+STEP 5: Fix section content assignment
+
+Make sure when "About" is detected, the content AFTER it goes into summary:
+
+```python
+# In extract_sections(), after finding headers:
+for i, line in enumerate(lines):
+    is_header, section_type = _is_section_header(line)
+    
+    if is_header:
+        print(f"[DEBUG] Header found at line {i}: type={section_type}")
+        
+        # Find content until next header
+        content_lines = []
+        for j in range(i + 1, len(lines)):
+            next_is_header, _ = _is_section_header(lines[j])
+            if next_is_header:
+                break
+            content_lines.append(lines[j])
+        
+        content = '\n'.join(content_lines).strip()
+        
+        if section_type == 'summary':
+            structure.summary = content
+            structure.has_summary = True
+            print(f"[DEBUG] Summary assigned: {len(content)} chars")
+```
+
+═══════════════════════════════════════════════════════════════════════════════
+ISSUE 2: TIPBOX MARKERS IN WRONG POSITIONS
+═══════════════════════════════════════════════════════════════════════════════
+
+SYMPTOM:
+Blue circles appear after "SanDisk," instead of on the actual "I" pronoun.
+
+ROOT CAUSE:
+The marker positioning uses simple string search without word boundaries.
+
+FIX LOCATION: client/src/components/cv-optimizer/DocumentView/CVDocument.tsx
+
+STEP 1: Find the marker rendering code
+
+Look for:
+- Where markers are positioned
+- How matched_text is used to find positions
+- The highlighting/marker logic
+
+STEP 2: Fix word boundary matching
+
+Replace the current matching with:
+
+```typescript
+// Find ALL occurrences of the matched text with word boundaries
+const findWordBoundaryMatches = (text: string, searchTerm: string): number[] => {
+  const positions: number[] = [];
+  
+  // Escape special regex characters
+  const escaped = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  
+  // Create word boundary regex
+  const regex = new RegExp(`\\b${escaped}\\b`, 'gi');
+  
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    positions.push(match.index);
+  }
+  
+  return positions;
+};
+```
+
+STEP 3: Update marker placement logic
+
+```typescript
+// When placing markers, use word boundary positions
+const placeMarkers = (cvText: string, issue: DetectedIssue) => {
+  const matchedText = issue.matched_text;
+  
+  if (!matchedText || matchedText === 'N/A') {
+    return []; // No marker for issues without specific matched text
+  }
+  
+  // Find all word-boundary matches
+  const positions = findWordBoundaryMatches(cvText, matchedText);
+  
+  return positions.map(pos => ({
+    start: pos,
+    end: pos + matchedText.length,
+    issueType: issue.issue_type
+  }));
+};
+```
+
+═══════════════════════════════════════════════════════════════════════════════
+ISSUE 3: DETECTION MISSES REAL ISSUES
+═══════════════════════════════════════════════════════════════════════════════
+
+SYMPTOM:
+- LinkedIn shows "LinkedIn" but no URL - should be detected
+- Many "I" and "my" pronouns but only shows a few
+
+ROOT CAUSE:
+1. CONTACT_MISSING_LINKEDIN IS detected (console shows "DETECTED 1 issue")
+   But markers don't appear in UI because matched_text is "Not found in: ..."
+   
+2. First person pronouns only returns first match, not all matches
+
+VERIFICATION:
+Look at console:
+```
+INFO:common.detection.rule_engine.engine:    -> DETECTED 1 issue(s)
+INFO:common.detection.rule_engine.engine:       match: Not found in: David Cohen CV | Email: dcohen.demo@...
+```
+
+The issue IS detected but matched_text is wrong for display.
+
+FIX for Presence Handler:
+File: backend/common/detection/rule_engine/handlers/presence_handler.py
+
+```python
+# When issue_when == 'missing', set a proper matched_text
+if not found:
+    # Create issue with clear matched_text
+    issue = DetectedIssue(
+        issue_type=rule.issue_type,
+        matched_text="Missing required element",  # NOT "Not found in: ..."
+        severity=rule.severity,
+        description=rule.description,  # Use DB description, NOT generated
+        section=target_section,
+        show_marker=False  # No marker for "missing" issues
+    )
+```
+
+═══════════════════════════════════════════════════════════════════════════════
+VERIFICATION STEPS:
+═══════════════════════════════════════════════════════════════════════════════
+
+After applying ALL fixes, scan David Cohen CV and verify:
+
+□ Console shows: [DEBUG HEADER] ✓ MATCHED as SUMMARY for "About" line
+□ Console shows: [DEBUG] Summary assigned: XXX chars (should be ~500-1000)
+□ Console shows: [SECTION PARSER] Complete: summary=XXX chars (NOT 0)
+□ UI shows markers on actual "I" words, not after other text
+□ 13+ issues detected and displayed correctly
+□ CONTACT_MISSING_LINKEDIN shows in sidebar
+
+═══════════════════════════════════════════════════════════════════════════════
+IMPLEMENTATION ORDER:
+═══════════════════════════════════════════════════════════════════════════════
+
+1. FIRST: Add debug logging to section parser
+2. SECOND: Fix header detection (_is_section_header)
+3. THIRD: Verify "About" is now recognized (scan CV, check console)
+4. FOURTH: Fix marker positioning in frontend
+5. FIFTH: Fix presence handler matched_text
+
+Apply one step at a time, verify each step works before moving to next.
+
+═══════════════════════════════════════════════════════════════════════════════
+EXPECTED RESULTS:
+═══════════════════════════════════════════════════════════════════════════════
+
+BEFORE:
+- summary=0 chars
+- Markers in wrong places
+- Same 13 issues
+
+AFTER:
+- summary=500+ chars
+- Markers on actual "I" words
+- More accurate issue detection
+- Correct marker positioning
+
+Type "FIX APPLIED - STEP X COMPLETE" after each step.
+
+═══════════════════════════════════════════════════════════════════════════════
+```
