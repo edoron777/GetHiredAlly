@@ -9,7 +9,7 @@ Same CV text → Same issues → Same results (ALWAYS)
 """
 
 import logging
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 from common.catalog import get_catalog_service
 from .contact_extractor import extract_contact_info, get_contact_issues
@@ -75,7 +75,7 @@ def enrich_issues_from_catalog(issues: List[Dict[str, Any]]) -> List[Dict[str, A
     return issues
 
 
-def detect_all_issues(cv_text: str, job_description: str = None) -> List[Dict[str, Any]]:
+def detect_all_issues(cv_text: str, job_description: Optional[str] = None) -> List[Dict[str, Any]]:
     """
     Run ALL static detectors on CV text.
     
