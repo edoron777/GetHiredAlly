@@ -23,6 +23,7 @@ from common.scoring import calculate_cv_score as calculate_cv_score_new, calcula
 from common.scoring.extractors import extract_patterns, analyze_text
 from common.scoring.severity import assign_severity_to_issues, count_issues_by_severity
 from common.detection import detect_all_issues
+from common.detection.changes_extractor import extract_changes_code_based
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/cv-optimizer", tags=["cv-optimizer"])
@@ -936,44 +937,9 @@ FIXED CV:
 """
 
 
-CV_CHANGES_PROMPT = """
-Compare these two CV versions and list the specific changes made.
-
-ORIGINAL CV:
----
-{original_cv}
----
-
-FIXED CV:
----
-{fixed_cv}
----
-
-List each change in this exact JSON format:
-
-{{
-  "changes": [
-    {{
-      "category": "quantification|language|grammar|formatting|other",
-      "before": "original text that was changed",
-      "after": "new improved text",
-      "explanation": "brief reason for change"
-    }}
-  ],
-  "summary": {{
-    "total_changes": number,
-    "by_category": {{
-      "quantification": number,
-      "language": number,
-      "grammar": number,
-      "formatting": number,
-      "other": number
-    }}
-  }}
-}}
-
-Return ONLY valid JSON, no explanations or markdown.
-"""
+# DEPRECATED: AI-based changes extraction replaced with code-based approach (Jan 2026)
+# Cost savings: ~$0.005-0.01 per Auto-Fix call
+# See: backend/common/detection/changes_extractor.py
 
 
 @router.post("/fix/{scan_id}")
@@ -1078,41 +1044,23 @@ async def generate_fixed_cv(request: Request, scan_id: str, token: str):
             fixed_content = restore_critical_elements(original_content, fixed_content)
             logger.info("[CV_FIX] Critical elements restored after AI broke them")
 
-        # Extract changes list with second AI call
-        logger.info("[CV_FIX] Extracting changes list...")
-        changes_data = {"changes": [], "summary": {"total_changes": 0, "by_category": {}}}
+        # Code-based changes extraction (no AI call - saves ~$0.005-0.01)
+        # Replaced AI call on Jan 2026 for cost optimization
+        logger.info("[CV_FIX] Extracting changes list (code-based)...")
         
-        try:
-            changes_prompt = CV_CHANGES_PROMPT.format(
-                original_cv=original_content,
-                fixed_cv=fixed_content
-            )
-            
-            changes_response = await generate_completion(
-                prompt=changes_prompt,
-                user_id=str(user["id"]),
-                service_name="cv_fix_changes",
-                provider="gemini",
-                max_tokens=2000
-            )
-            
-            if changes_response and changes_response.content:
-                # Parse the JSON response
-                changes_text = changes_response.content.strip()
-                # Remove markdown code fences if present
-                if changes_text.startswith("```json"):
-                    changes_text = changes_text[7:]
-                elif changes_text.startswith("```"):
-                    changes_text = changes_text[3:]
-                if changes_text.endswith("```"):
-                    changes_text = changes_text[:-3]
-                changes_text = changes_text.strip()
-                
-                changes_data = json.loads(changes_text)
-                logger.info(f"[CV_FIX] Extracted {len(changes_data.get('changes', []))} changes")
-        except Exception as changes_error:
-            logger.warning(f"[CV_FIX] Could not extract changes: {str(changes_error)}")
-            # Continue without changes - not critical
+        detected_issues = scan.get('issues_json', [])
+        if isinstance(detected_issues, str):
+            try:
+                detected_issues = json.loads(detected_issues)
+            except:
+                detected_issues = []
+        
+        changes_data = extract_changes_code_based(
+            original_cv=original_content,
+            fixed_cv=fixed_content,
+            detected_issues=detected_issues
+        )
+        logger.info(f"[CV_FIX] Extracted {len(changes_data.get('changes', []))} changes (code-based)")
 
         # STEP A: Get the ORIGINAL score (already calculated during scan)
         # DEBUG: Log content lengths and first/last 200 chars to verify they're different

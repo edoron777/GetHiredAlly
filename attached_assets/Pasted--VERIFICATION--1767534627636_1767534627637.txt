@@ -1,0 +1,156 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  ✅ VERIFICATION: CODE-BASED CHANGES EXTRACTION                               ║
+║  Target: Replit AI Agent                                                      ║
+║  Type: Verification & Testing                                                 ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+────────────────────────────────────────────────────────────────────────────────
+1. FILE VERIFICATION
+────────────────────────────────────────────────────────────────────────────────
+
+Check these files:
+
+[ ] backend/common/detection/changes_extractor.py EXISTS
+    - Contains extract_changes_code_based function
+    - Contains _extract_line_changes function
+    - Contains _build_summary function
+
+[ ] backend/app/cv_optimizer.py UPDATED
+    - Import statement added for changes_extractor
+    - AI call for "cv_fix_changes" REMOVED
+    - Uses extract_changes_code_based instead
+
+────────────────────────────────────────────────────────────────────────────────
+2. SYNTAX CHECK
+────────────────────────────────────────────────────────────────────────────────
+
+Run the app and verify no import/syntax errors:
+
+[ ] App starts without errors
+[ ] No "ModuleNotFoundError" for changes_extractor
+[ ] No "ImportError" messages
+
+────────────────────────────────────────────────────────────────────────────────
+3. FUNCTIONAL TEST
+────────────────────────────────────────────────────────────────────────────────
+
+Test the complete Auto-Fix flow:
+
+STEP 1: Upload a CV with known issues
+- Use a CV with spelling errors, weak verbs, missing metrics
+
+STEP 2: Run CV scan (detection)
+- Should work exactly as before (no changes to detection)
+
+STEP 3: Click "Fix CV" / Auto-Fix button
+
+STEP 4: Verify the results page shows:
+[ ] Fixed CV content is generated (AI still works)
+[ ] Changes list is displayed
+[ ] Changes have correct categories (quantification, language, etc.)
+[ ] Summary shows total_changes and by_category counts
+
+STEP 5: Check the changes format in browser console or API response:
+```json
+{
+  "changes": [
+    {
+      "category": "language",
+      "before": "Responsible for managing team",
+      "after": "Led and managed team of 5 engineers",
+      "explanation": "Replaced 'responsible for' with stronger action verb"
+    }
+  ],
+  "summary": {
+    "total_changes": 5,
+    "by_category": {
+      "quantification": 2,
+      "language": 2,
+      "grammar": 0,
+      "formatting": 1,
+      "other": 0
+    }
+  }
+}
+```
+
+────────────────────────────────────────────────────────────────────────────────
+4. COST VERIFICATION
+────────────────────────────────────────────────────────────────────────────────
+
+Check ai_usage_logs table after ONE Auto-Fix:
+
+SQL Query (run in Supabase):
+```sql
+SELECT service_name, provider, created_at 
+FROM ai_usage_logs 
+WHERE created_at > NOW() - INTERVAL '30 minutes'
+ORDER BY created_at DESC
+LIMIT 10;
+```
+
+EXPECTED RESULT:
+[ ] Only 1 row with service_name = "cv_fix" (the Auto-Fix call)
+[ ] NO row with service_name = "cv_fix_changes" (this was the removed AI call)
+
+BEFORE (2 AI calls per Auto-Fix):
+- cv_fix: ✓
+- cv_fix_changes: ✓
+
+AFTER (1 AI call per Auto-Fix):
+- cv_fix: ✓
+- cv_fix_changes: ❌ (removed - now code-based)
+
+────────────────────────────────────────────────────────────────────────────────
+5. FRONTEND COMPATIBILITY
+────────────────────────────────────────────────────────────────────────────────
+
+Verify frontend displays changes correctly:
+
+[ ] CVFixedPage.tsx shows changes list
+[ ] SideBySideView shows before/after comparison
+[ ] No console errors related to changes_json
+[ ] Category badges display correctly (if applicable)
+
+────────────────────────────────────────────────────────────────────────────────
+6. EDGE CASE TESTS
+────────────────────────────────────────────────────────────────────────────────
+
+Test these scenarios:
+
+[ ] CV with minimal changes → Small changes list, no errors
+[ ] CV with many changes (20+) → All changes displayed, performance OK
+[ ] CV that's already good → Empty or minimal changes list
+[ ] Very short CV (1 page) → Works correctly
+[ ] Very long CV (3+ pages) → Works correctly, no timeout
+
+────────────────────────────────────────────────────────────────────────────────
+7. ROLLBACK PLAN (if needed)
+────────────────────────────────────────────────────────────────────────────────
+
+If issues are found, revert by:
+1. Remove the import line from cv_optimizer.py
+2. Restore the original AI call code (lines 1085-1115)
+3. Restore CV_CHANGES_PROMPT if deleted
+
+The changes_extractor.py file can remain (unused) - it won't cause issues.
+
+────────────────────────────────────────────────────────────────────────────────
+
+EXPECTED OUTCOMES:
+✓ Auto-Fix produces same quality results from user perspective
+✓ Changes list is accurate and well-categorized
+✓ Only 1 AI call per Auto-Fix (was 2)
+✓ ~$0.005-0.01 saved per Auto-Fix (~30% reduction)
+✓ No frontend breaking changes
+
+────────────────────────────────────────────────────────────────────────────────
+
+Report results:
+- [ ] All tests PASSED - implementation complete
+- [ ] Issues found - describe below
+
+Issues (if any):
+[Space for notes]
+
+╚══════════════════════════════════════════════════════════════════════════════╝
