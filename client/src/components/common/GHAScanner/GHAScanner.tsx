@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { SCANNER_STYLES } from './scannerStyles';
+import { SEVERITY_COLORS } from '@/constants/severityColors';
 
 const { gridRows: GRID_ROWS, gridCols: GRID_COLS } = SCANNER_STYLES;
 
@@ -192,19 +193,19 @@ export function GHAScanner({ progress, showLegend = true, showProgress = true }:
         <div className="flex justify-between mt-3 text-xs">
           <div className="flex gap-3">
             <span className="flex items-center gap-1">
-              <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#DC2626' }}></span>
+              <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: SEVERITY_COLORS.critical.primary }}></span>
               <span className="text-gray-400">Critical</span>
             </span>
             <span className="flex items-center gap-1">
-              <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#F59E0B' }}></span>
+              <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: SEVERITY_COLORS.important.primary }}></span>
               <span className="text-gray-400">Important</span>
             </span>
             <span className="flex items-center gap-1">
-              <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#3B82F6' }}></span>
+              <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: SEVERITY_COLORS.consider.primary }}></span>
               <span className="text-gray-400">Consider</span>
             </span>
             <span className="flex items-center gap-1">
-              <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#6B7280' }}></span>
+              <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: SEVERITY_COLORS.polish.primary }}></span>
               <span className="text-gray-400">Polish</span>
             </span>
           </div>
