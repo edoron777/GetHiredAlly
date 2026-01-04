@@ -6,6 +6,14 @@ interface MarkerPosition {
   marker: MarkerItem
 }
 
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function needsWordBoundary(text: string): boolean {
+  return /^[a-zA-Z]/.test(text) && /[a-zA-Z]$/.test(text) && text.length <= 10
+}
+
 export function findMarkerPositions(
   content: string,
   markers: MarkerItem[]
@@ -15,12 +23,23 @@ export function findMarkerPositions(
   markers.forEach(marker => {
     if (!marker.matchText || marker.matchText.length === 0) return
     
-    const index = content.indexOf(marker.matchText)
+    const matchText = marker.matchText
+    let index = -1
+    
+    if (needsWordBoundary(matchText)) {
+      const pattern = new RegExp(`\\b${escapeRegex(matchText)}\\b`, 'i')
+      const match = pattern.exec(content)
+      if (match) {
+        index = match.index
+      }
+    } else {
+      index = content.indexOf(matchText)
+    }
     
     if (index !== -1) {
       positions.push({
         start: index,
-        end: index + marker.matchText.length,
+        end: index + matchText.length,
         marker
       })
     }
