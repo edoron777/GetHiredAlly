@@ -221,6 +221,52 @@ def check_inconsistent_separators(text: str) -> Optional[List[str]]:
     return None
 
 
+def detect_linkedin_no_url(text: str) -> List[Dict]:
+    """
+    Detect when LinkedIn is mentioned but no actual URL is provided.
+    
+    SCENARIO:
+    - "LinkedIn" or "linkedin" text appears
+    - BUT no linkedin.com/in/ URL is found
+    - This is different from MISSING LinkedIn (no mention at all)
+    """
+    issues = []
+    
+    text_lower = text.lower()
+    
+    linkedin_mentioned = 'linkedin' in text_lower
+    
+    if not linkedin_mentioned:
+        return issues
+    
+    linkedin_url_patterns = [
+        r'linkedin\.com/in/[\w\-]+',
+        r'linkedin\.com/pub/[\w\-]+',
+        r'www\.linkedin\.com/in/[\w\-]+',
+        r'https?://(?:www\.)?linkedin\.com/in/[\w\-]+',
+    ]
+    
+    has_url = False
+    for pattern in linkedin_url_patterns:
+        if re.search(pattern, text_lower):
+            has_url = True
+            break
+    
+    if not has_url:
+        linkedin_match = re.search(r'\blinkedin\b', text, re.IGNORECASE)
+        match_text = linkedin_match.group() if linkedin_match else 'LinkedIn'
+        
+        issues.append({
+            'issue_type': 'CONTACT_LINKEDIN_NO_URL',
+            'match_text': match_text,
+            'suggestion': 'You mention LinkedIn but did not include your profile URL. Add your full LinkedIn URL (e.g., linkedin.com/in/yourname) so recruiters can easily find you.',
+            'can_auto_fix': False,
+            'severity': 'important'
+        })
+    
+    return issues
+
+
 def extract_contact_info(text: str) -> ContactInfo:
     """
     Extract all contact information from CV text.
@@ -312,13 +358,17 @@ def get_contact_issues(contact: ContactInfo, full_text: str = "") -> List[Dict]:
         })
     
     if not contact.has_linkedin:
-        issues.append({
-            'issue_type': 'CONTACT_MISSING_LINKEDIN',
-            'location': 'Contact Information',
-            'description': 'No LinkedIn profile URL found',
-            'current': '',
-            'is_highlightable': False,
-        })
+        linkedin_no_url_issues = detect_linkedin_no_url(full_text) if full_text else []
+        if linkedin_no_url_issues:
+            issues.extend(linkedin_no_url_issues)
+        else:
+            issues.append({
+                'issue_type': 'CONTACT_MISSING_LINKEDIN',
+                'location': 'Contact Information',
+                'description': 'No LinkedIn profile URL found',
+                'current': '',
+                'is_highlightable': False,
+            })
     
     if full_text:
         location = extract_location(full_text)
