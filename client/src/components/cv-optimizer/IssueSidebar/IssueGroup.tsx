@@ -1,4 +1,5 @@
 import { ChevronDown, ChevronRight, MapPin, ClipboardList } from 'lucide-react';
+import { SEVERITY_COLORS } from '@/constants/severityColors';
 
 interface Issue {
   id: string;
@@ -24,12 +25,6 @@ const SEVERITY_LABELS = {
   polish: 'Polish',
 };
 
-const SEVERITY_COLORS = {
-  critical: '#DC2626',
-  important: '#F59E0B',
-  consider: '#3B82F6',
-  polish: '#6B7280',
-};
 
 export default function IssueGroup({ 
   severity, 
@@ -52,7 +47,7 @@ export default function IssueGroup({
             width: 8, 
             height: 8, 
             borderRadius: '50%', 
-            background: SEVERITY_COLORS[severity],
+            background: SEVERITY_COLORS[severity].primary,
             marginLeft: 6,
             marginRight: 8
           }}
