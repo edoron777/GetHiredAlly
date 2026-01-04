@@ -1,0 +1,790 @@
+# 🔧 COMPREHENSIVE FIX: Section Parser - Complete Overhaul
+
+```
+═══════════════════════════════════════════════════════════════════════════════
+🔧 FIX: Section Parser - Complete Overhaul
+═══════════════════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE ⚠️
+- Read this ENTIRE prompt before making ANY changes
+- Follow the architecture EXACTLY as specified
+- Test with David Cohen CV after implementation
+- DO NOT leave any edge cases unhandled
+
+───────────────────────────────────────────────────────────────────────────────
+THE PROBLEM:
+───────────────────────────────────────────────────────────────────────────────
+
+The current section parser FAILS when CVs don't have explicit headers.
+
+David Cohen CV structure:
+```
+David Cohen CV | Email... | LinkedIn    ← Contact (line 1)
+Cybersecurity Innovation Leader...      ← Tagline (line 2)
+About                                   ← Summary header
+I bridge the gap...                     ← Summary content
+My Professional Evolution...            ← Sub-header (NOT a section)
+Citi                                    ← Job 1 (NO "Experience" header!)
+VP, Cybersecurity Innovation            
+Jul 2020 - Present                      
+...bullets...
+Microsoft                               ← Job 2
+...
+Education                               ← Education header
+...
+```
+
+CURRENT BEHAVIOR:
+- summary → Returns 14201 chars (almost full CV)
+- experience → Returns summary text ("Passionate about...")
+- skills → Returns empty
+
+EXPECTED BEHAVIOR:
+- summary → Returns ~500 chars (just the About section)
+- experience → Returns job entries (Citi, Microsoft, etc.)
+- skills → Returns skills OR empty with clear reason
+
+───────────────────────────────────────────────────────────────────────────────
+THE SOLUTION: Multi-Pass Section Detection
+───────────────────────────────────────────────────────────────────────────────
+
+Instead of single-pass parsing, use MULTI-PASS approach:
+
+PASS 1: Identify ALL potential section boundaries
+PASS 2: Classify each section by content patterns
+PASS 3: Handle edge cases and validate
+PASS 4: Populate CVStructure with correct content
+
+═══════════════════════════════════════════════════════════════════════════════
+IMPLEMENTATION INSTRUCTIONS:
+═══════════════════════════════════════════════════════════════════════════════
+
+FILE: backend/common/detection/section_extractor.py
+
+───────────────────────────────────────────────────────────────────────────────
+STEP 1: Add Pattern Constants (add after imports)
+───────────────────────────────────────────────────────────────────────────────
+
+```python
+import re
+from typing import Optional, List, Tuple, Dict
+from dataclasses import dataclass, field
+import logging
+
+logger = logging.getLogger(__name__)
+
+# ═══════════════════════════════════════════════════════════════════════════
+# SECTION DETECTION PATTERNS
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Job entry detection patterns
+JOB_TITLE_PATTERNS = [
+    r'\b(VP|Vice President|Director|Manager|Lead|Head|Chief|Senior|Junior|'
+    r'Engineer|Developer|Architect|Analyst|Consultant|Specialist|Coordinator|'
+    r'Administrator|Executive|Officer|President|Founder|Co-Founder|Partner|'
+    r'Associate|Assistant|Intern|Trainee|Supervisor|Team Lead|Tech Lead|'
+    r'Principal|Staff|Distinguished|Fellow)\b',
+]
+
+# Date patterns for job entries
+DATE_PATTERNS = [
+    # "Jul 2020 - Present", "July 2020 - Present"
+    r'(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|'
+    r'Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|'
+    r'Dec(?:ember)?)\s*\.?\s*\d{4}\s*[-–—]\s*(?:Present|Current|Now|'
+    r'(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|'
+    r'Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|'
+    r'Dec(?:ember)?)\s*\.?\s*\d{4})',
+    # "2020 - Present", "2020 - 2023"
+    r'\b(19|20)\d{2}\s*[-–—]\s*(?:Present|Current|Now|(19|20)\d{2})\b',
+    # "01/2020 - Present", "1/2020 - 12/2023"
+    r'\b\d{1,2}/\d{4}\s*[-–—]\s*(?:Present|Current|Now|\d{1,2}/\d{4})\b',
+]
+
+# Company name patterns (capitalized words, known suffixes)
+COMPANY_PATTERNS = [
+    r'^[A-Z][A-Za-z\s&,\.]+(?:Inc\.?|LLC|Ltd\.?|Corp(?:oration)?\.?|'
+    r'Company|Co\.?|Group|Partners?|Solutions?|Technologies?|Systems?|'
+    r'Services?|Consulting|Labs?|Studios?)?$',
+]
+
+# Known major companies (for better detection)
+KNOWN_COMPANIES = [
+    'Google', 'Microsoft', 'Amazon', 'Apple', 'Meta', 'Facebook', 'Netflix',
+    'IBM', 'Oracle', 'Salesforce', 'Adobe', 'Intel', 'Cisco', 'SAP',
+    'Deloitte', 'McKinsey', 'BCG', 'Bain', 'Accenture', 'PwC', 'EY', 'KPMG',
+    'Goldman Sachs', 'Morgan Stanley', 'JPMorgan', 'Citi', 'Bank of America',
+    'Tesla', 'SpaceX', 'Uber', 'Airbnb', 'Twitter', 'LinkedIn', 'Stripe',
+    'Palantir', 'Snowflake', 'Databricks', 'Confluent', 'HashiCorp',
+    'SanDisk', 'Western Digital', 'Seagate', 'Dell', 'HP', 'Lenovo',
+]
+
+# Education indicators
+EDUCATION_PATTERNS = [
+    r'\b(University|College|Institute|School|Academy|Bachelor|Master|PhD|'
+    r'MBA|B\.?S\.?|M\.?S\.?|B\.?A\.?|M\.?A\.?|Ph\.?D\.?|Degree|Diploma|'
+    r'Certificate|Certification|Graduated|GPA|Major|Minor)\b',
+]
+
+# Skills indicators
+SKILLS_PATTERNS = [
+    r'\b(Python|Java|JavaScript|TypeScript|C\+\+|C#|Ruby|Go|Rust|Swift|'
+    r'Kotlin|PHP|SQL|NoSQL|MongoDB|PostgreSQL|MySQL|Redis|Elasticsearch|'
+    r'AWS|Azure|GCP|Docker|Kubernetes|Terraform|Jenkins|Git|CI/CD|'
+    r'React|Angular|Vue|Node\.js|Django|Flask|Spring|Rails|'
+    r'Machine Learning|Deep Learning|AI|NLP|Computer Vision|'
+    r'Agile|Scrum|Kanban|DevOps|SRE|Security|Cybersecurity|'
+    r'Leadership|Management|Strategy|Communication)\b',
+]
+
+# Contact patterns
+CONTACT_PATTERNS = {
+    'email': r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}',
+    'phone': r'(?:\+\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}',
+    'linkedin': r'linkedin\.com/in/[\w-]+',
+    'github': r'github\.com/[\w-]+',
+    'website': r'https?://[\w.-]+\.[a-z]{2,}(?:/[\w.-]*)*',
+}
+
+# Section header patterns (from word_lists.py - keep in sync)
+SUMMARY_HEADERS = [
+    'summary', 'professional summary', 'executive summary',
+    'profile', 'professional profile', 'career profile',
+    'objective', 'career objective', 'job objective',
+    'about', 'about me', 'introduction', 'overview',
+]
+
+EXPERIENCE_HEADERS = [
+    'experience', 'work experience', 'professional experience',
+    'employment', 'employment history', 'work history',
+    'career history', 'positions held', 'roles',
+]
+
+EDUCATION_HEADERS = [
+    'education', 'academic background', 'educational background',
+    'qualifications', 'academic qualifications', 'degrees',
+]
+
+SKILLS_HEADERS = [
+    'skills', 'technical skills', 'core competencies',
+    'key skills', 'expertise', 'technologies', 'tools',
+    'proficiencies', 'capabilities', 'competencies',
+]
+
+CERTIFICATIONS_HEADERS = [
+    'certifications', 'certificates', 'licenses',
+    'professional certifications', 'credentials',
+    'accreditations', 'training',
+]
+```
+
+───────────────────────────────────────────────────────────────────────────────
+STEP 2: Create Enhanced CVStructure (replace existing)
+───────────────────────────────────────────────────────────────────────────────
+
+```python
+@dataclass
+class CVStructure:
+    """
+    Holds parsed CV sections with metadata.
+    """
+    raw_text: str = ""
+    
+    # Main sections
+    contact: Optional[str] = None
+    summary: Optional[str] = None
+    experience: Optional[str] = None
+    education: Optional[str] = None
+    skills: Optional[str] = None
+    certifications: Optional[str] = None
+    other: Optional[str] = None
+    
+    # Section boundaries (line numbers)
+    section_boundaries: Dict[str, Tuple[int, int]] = field(default_factory=dict)
+    
+    # Detection metadata
+    has_contact: bool = False
+    has_summary: bool = False
+    has_experience: bool = False
+    has_education: bool = False
+    has_skills: bool = False
+    has_certifications: bool = False
+    
+    # Detection method used
+    detection_method: Dict[str, str] = field(default_factory=dict)
+    
+    # Job entries found (for experience section)
+    job_entries: List[Dict] = field(default_factory=list)
+    
+    def __post_init__(self):
+        if not self.section_boundaries:
+            self.section_boundaries = {}
+        if not self.detection_method:
+            self.detection_method = {}
+        if not self.job_entries:
+            self.job_entries = []
+```
+
+───────────────────────────────────────────────────────────────────────────────
+STEP 3: Create Section Boundary Detector
+───────────────────────────────────────────────────────────────────────────────
+
+```python
+def _normalize_header(text: str) -> str:
+    """Normalize header text for comparison."""
+    return re.sub(r'[^a-z\s]', '', text.lower()).strip()
+
+
+def _is_section_header(line: str) -> Tuple[bool, Optional[str]]:
+    """
+    Check if line is a section header.
+    Returns (is_header, section_type).
+    """
+    normalized = _normalize_header(line)
+    
+    # Skip empty or very long lines (not headers)
+    if not normalized or len(normalized) > 50:
+        return False, None
+    
+    # Check against known headers
+    for header in SUMMARY_HEADERS:
+        if normalized == header or normalized.startswith(header + ' '):
+            return True, 'summary'
+    
+    for header in EXPERIENCE_HEADERS:
+        if normalized == header or normalized.startswith(header + ' '):
+            return True, 'experience'
+    
+    for header in EDUCATION_HEADERS:
+        if normalized == header or normalized.startswith(header + ' '):
+            return True, 'education'
+    
+    for header in SKILLS_HEADERS:
+        if normalized == header or normalized.startswith(header + ' '):
+            return True, 'skills'
+    
+    for header in CERTIFICATIONS_HEADERS:
+        if normalized == header or normalized.startswith(header + ' '):
+            return True, 'certifications'
+    
+    return False, None
+
+
+def _detect_job_entry_start(line: str, next_lines: List[str]) -> bool:
+    """
+    Detect if this line starts a job entry.
+    
+    Job entries typically look like:
+    - Company Name
+    - Job Title
+    - Date Range
+    
+    OR:
+    - Company Name | Job Title | Date Range (single line)
+    """
+    # Check for known companies
+    for company in KNOWN_COMPANIES:
+        if company.lower() in line.lower():
+            return True
+    
+    # Check for job title + date pattern
+    has_title = any(re.search(p, line, re.IGNORECASE) for p in JOB_TITLE_PATTERNS)
+    has_date = any(re.search(p, line, re.IGNORECASE) for p in DATE_PATTERNS)
+    
+    if has_title and has_date:
+        return True
+    
+    # Check if this line is company name and next 1-3 lines have title/date
+    if len(line) < 50 and line[0].isupper() if line else False:
+        upcoming_text = ' '.join(next_lines[:3])
+        has_title_nearby = any(re.search(p, upcoming_text, re.IGNORECASE) for p in JOB_TITLE_PATTERNS)
+        has_date_nearby = any(re.search(p, upcoming_text, re.IGNORECASE) for p in DATE_PATTERNS)
+        
+        if has_title_nearby and has_date_nearby:
+            return True
+    
+    return False
+
+
+def _detect_education_entry(line: str, next_lines: List[str]) -> bool:
+    """Detect if this line starts an education entry."""
+    text = line + ' ' + ' '.join(next_lines[:2])
+    return any(re.search(p, text, re.IGNORECASE) for p in EDUCATION_PATTERNS)
+
+
+def _count_skills_in_text(text: str) -> int:
+    """Count how many skill keywords appear in text."""
+    count = 0
+    for pattern in SKILLS_PATTERNS:
+        matches = re.findall(pattern, text, re.IGNORECASE)
+        count += len(matches)
+    return count
+```
+
+───────────────────────────────────────────────────────────────────────────────
+STEP 4: Create Main Parser (replace extract_sections function)
+───────────────────────────────────────────────────────────────────────────────
+
+```python
+def extract_sections(cv_text: str) -> CVStructure:
+    """
+    Extract sections from CV text using multi-pass detection.
+    
+    PASS 1: Extract contact info from first few lines
+    PASS 2: Find explicit section headers
+    PASS 3: Detect implicit sections (jobs without Experience header)
+    PASS 4: Assign content to sections
+    PASS 5: Validate and log results
+    """
+    structure = CVStructure(raw_text=cv_text)
+    lines = cv_text.split('\n')
+    
+    logger.info(f"[SECTION PARSER] Starting extraction, {len(lines)} lines")
+    
+    # ═══════════════════════════════════════════════════════════════════════
+    # PASS 1: Extract contact info (first 5 lines typically)
+    # ═══════════════════════════════════════════════════════════════════════
+    contact_end = _extract_contact_section(structure, lines)
+    logger.info(f"[SECTION PARSER] Pass 1: Contact section ends at line {contact_end}")
+    
+    # ═══════════════════════════════════════════════════════════════════════
+    # PASS 2: Find all explicit section headers
+    # ═══════════════════════════════════════════════════════════════════════
+    headers_found = []  # List of (line_index, section_type, line_text)
+    
+    for i, line in enumerate(lines):
+        if i <= contact_end:
+            continue
+        
+        is_header, section_type = _is_section_header(line)
+        if is_header:
+            headers_found.append((i, section_type, line.strip()))
+            logger.info(f"[SECTION PARSER] Pass 2: Found '{section_type}' header at line {i}: '{line.strip()[:50]}'")
+    
+    # ═══════════════════════════════════════════════════════════════════════
+    # PASS 3: Detect implicit job entries (experience without header)
+    # ═══════════════════════════════════════════════════════════════════════
+    job_entries = []  # List of (start_line, end_line)
+    experience_header_found = any(h[1] == 'experience' for h in headers_found)
+    
+    if not experience_header_found:
+        logger.info("[SECTION PARSER] Pass 3: No Experience header, detecting job entries by pattern")
+        job_entries = _detect_job_entries(lines, contact_end, headers_found)
+        logger.info(f"[SECTION PARSER] Pass 3: Found {len(job_entries)} job entries")
+    
+    # ═══════════════════════════════════════════════════════════════════════
+    # PASS 4: Assign content to sections
+    # ═══════════════════════════════════════════════════════════════════════
+    _assign_sections(structure, lines, headers_found, job_entries, contact_end)
+    
+    # ═══════════════════════════════════════════════════════════════════════
+    # PASS 5: Validate and log results
+    # ═══════════════════════════════════════════════════════════════════════
+    _validate_and_log(structure)
+    
+    return structure
+
+
+def _extract_contact_section(structure: CVStructure, lines: List[str]) -> int:
+    """
+    Extract contact info from first few lines.
+    Returns the line index where contact section ends.
+    """
+    contact_lines = []
+    contact_end = 0
+    
+    for i, line in enumerate(lines[:10]):  # Check first 10 lines
+        line_stripped = line.strip()
+        if not line_stripped:
+            continue
+        
+        # Check if line contains contact info
+        has_email = re.search(CONTACT_PATTERNS['email'], line)
+        has_phone = re.search(CONTACT_PATTERNS['phone'], line)
+        has_linkedin = re.search(CONTACT_PATTERNS['linkedin'], line)
+        has_github = re.search(CONTACT_PATTERNS['github'], line)
+        
+        # First line is usually name
+        if i == 0:
+            contact_lines.append(line_stripped)
+            contact_end = i
+            continue
+        
+        # If line has contact info, add it
+        if has_email or has_phone or has_linkedin or has_github:
+            contact_lines.append(line_stripped)
+            contact_end = i
+            continue
+        
+        # Check if this is a tagline (short, no contact info, before headers)
+        is_header, _ = _is_section_header(line)
+        if is_header:
+            break
+        
+        # If line is short and looks like title/tagline, include it
+        if len(line_stripped) < 150 and '|' in line_stripped:
+            contact_lines.append(line_stripped)
+            contact_end = i
+            continue
+        
+        # If we hit a longer paragraph or header, stop
+        if len(line_stripped) > 200 or _detect_job_entry_start(line_stripped, lines[i+1:i+4]):
+            break
+    
+    if contact_lines:
+        structure.contact = '\n'.join(contact_lines)
+        structure.has_contact = True
+        structure.detection_method['contact'] = 'pattern_detection'
+    
+    return contact_end
+
+
+def _detect_job_entries(lines: List[str], start_from: int, headers: List[Tuple]) -> List[Tuple[int, int]]:
+    """
+    Detect job entries by pattern when no Experience header exists.
+    Returns list of (start_line, end_line) tuples.
+    """
+    job_entries = []
+    current_job_start = None
+    
+    # Get line numbers where other sections start (to know where experience ends)
+    header_lines = {h[0] for h in headers}
+    
+    for i in range(start_from + 1, len(lines)):
+        line = lines[i].strip()
+        
+        # Skip empty lines
+        if not line:
+            continue
+        
+        # If we hit another section header, end current job
+        if i in header_lines:
+            if current_job_start is not None:
+                job_entries.append((current_job_start, i - 1))
+                current_job_start = None
+            break
+        
+        # Check if this line starts a new job entry
+        remaining_lines = [l.strip() for l in lines[i+1:i+5]]
+        if _detect_job_entry_start(line, remaining_lines):
+            # End previous job if exists
+            if current_job_start is not None:
+                job_entries.append((current_job_start, i - 1))
+            current_job_start = i
+    
+    # Close last job entry
+    if current_job_start is not None:
+        # Find where it ends (next section or end of CV)
+        end_line = len(lines) - 1
+        for h in headers:
+            if h[0] > current_job_start:
+                end_line = h[0] - 1
+                break
+        job_entries.append((current_job_start, end_line))
+    
+    return job_entries
+
+
+def _assign_sections(
+    structure: CVStructure,
+    lines: List[str],
+    headers: List[Tuple[int, str, str]],
+    job_entries: List[Tuple[int, int]],
+    contact_end: int
+) -> None:
+    """
+    Assign content to CVStructure based on detected headers and job entries.
+    """
+    # Sort headers by line number
+    headers_sorted = sorted(headers, key=lambda x: x[0])
+    
+    # Create section ranges
+    section_ranges = []  # (start, end, section_type)
+    
+    for i, (line_idx, section_type, _) in enumerate(headers_sorted):
+        start = line_idx + 1  # Content starts after header
+        
+        # End is either next header or end of document
+        if i + 1 < len(headers_sorted):
+            end = headers_sorted[i + 1][0] - 1
+        else:
+            end = len(lines) - 1
+        
+        section_ranges.append((start, end, section_type))
+    
+    # Assign header-based sections
+    for start, end, section_type in section_ranges:
+        content = '\n'.join(lines[start:end + 1]).strip()
+        
+        if section_type == 'summary' and content:
+            # For summary, limit to reasonable length
+            # If content is too long, it might include experience
+            if len(content) > 2000:
+                # Find where experience-like content starts
+                summary_content = _extract_summary_only(content, lines[start:end + 1])
+                structure.summary = summary_content
+            else:
+                structure.summary = content
+            structure.has_summary = True
+            structure.section_boundaries['summary'] = (start, end)
+            structure.detection_method['summary'] = 'header_detected'
+            
+        elif section_type == 'experience' and content:
+            structure.experience = content
+            structure.has_experience = True
+            structure.section_boundaries['experience'] = (start, end)
+            structure.detection_method['experience'] = 'header_detected'
+            
+        elif section_type == 'education' and content:
+            structure.education = content
+            structure.has_education = True
+            structure.section_boundaries['education'] = (start, end)
+            structure.detection_method['education'] = 'header_detected'
+            
+        elif section_type == 'skills' and content:
+            structure.skills = content
+            structure.has_skills = True
+            structure.section_boundaries['skills'] = (start, end)
+            structure.detection_method['skills'] = 'header_detected'
+            
+        elif section_type == 'certifications' and content:
+            structure.certifications = content
+            structure.has_certifications = True
+            structure.section_boundaries['certifications'] = (start, end)
+            structure.detection_method['certifications'] = 'header_detected'
+    
+    # If experience not found by header, use job entries
+    if not structure.has_experience and job_entries:
+        experience_lines = []
+        for start, end in job_entries:
+            experience_lines.extend(lines[start:end + 1])
+        
+        structure.experience = '\n'.join(experience_lines).strip()
+        structure.has_experience = True
+        structure.section_boundaries['experience'] = (job_entries[0][0], job_entries[-1][1])
+        structure.detection_method['experience'] = 'pattern_detected'
+        structure.job_entries = job_entries
+        logger.info(f"[SECTION PARSER] Experience detected by pattern: {len(job_entries)} jobs, {len(structure.experience)} chars")
+    
+    # If summary includes job entries (too long), fix it
+    if structure.has_summary and structure.has_experience:
+        if structure.summary and structure.experience:
+            # Remove experience content from summary if it's included
+            if structure.experience[:100] in structure.summary:
+                structure.summary = structure.summary.replace(structure.experience, '').strip()
+                logger.info("[SECTION PARSER] Removed experience content from summary")
+    
+    # If skills not found, try to detect from experience or other sections
+    if not structure.has_skills:
+        _detect_skills_section(structure, lines, headers_sorted)
+
+
+def _extract_summary_only(content: str, content_lines: List[str]) -> str:
+    """
+    Extract just the summary portion when content is too long.
+    Stop at first job entry.
+    """
+    summary_lines = []
+    
+    for i, line in enumerate(content_lines):
+        remaining = content_lines[i+1:i+5] if i+1 < len(content_lines) else []
+        
+        # If we hit a job entry, stop
+        if _detect_job_entry_start(line.strip(), [l.strip() for l in remaining]):
+            break
+        
+        summary_lines.append(line)
+        
+        # Also stop if we have a reasonable summary length
+        if len('\n'.join(summary_lines)) > 1500:
+            break
+    
+    return '\n'.join(summary_lines).strip()
+
+
+def _detect_skills_section(structure: CVStructure, lines: List[str], headers: List[Tuple]) -> None:
+    """
+    Try to detect skills from the CV even without explicit header.
+    """
+    # Look for lines with high skill density
+    skill_rich_sections = []
+    
+    for i, line in enumerate(lines):
+        skills_count = _count_skills_in_text(line)
+        if skills_count >= 3:  # Line has 3+ skill keywords
+            skill_rich_sections.append((i, line, skills_count))
+    
+    if skill_rich_sections:
+        # Take the most skill-dense section
+        skill_rich_sections.sort(key=lambda x: x[2], reverse=True)
+        
+        # Expand around the skill-rich line
+        best_line_idx = skill_rich_sections[0][0]
+        start = best_line_idx
+        end = best_line_idx
+        
+        # Expand backward
+        while start > 0 and _count_skills_in_text(lines[start - 1]) >= 1:
+            start -= 1
+        
+        # Expand forward
+        while end < len(lines) - 1 and _count_skills_in_text(lines[end + 1]) >= 1:
+            end += 1
+        
+        skills_content = '\n'.join(lines[start:end + 1]).strip()
+        
+        if len(skills_content) > 50:  # Reasonable minimum
+            structure.skills = skills_content
+            structure.has_skills = True
+            structure.section_boundaries['skills'] = (start, end)
+            structure.detection_method['skills'] = 'pattern_detected'
+            logger.info(f"[SECTION PARSER] Skills detected by pattern: {len(skills_content)} chars")
+
+
+def _validate_and_log(structure: CVStructure) -> None:
+    """
+    Validate the parsed structure and log results.
+    """
+    logger.info("═" * 60)
+    logger.info("[SECTION PARSER] EXTRACTION RESULTS:")
+    logger.info("═" * 60)
+    
+    logger.info(f"  contact: {'✓' if structure.has_contact else '✗'} "
+                f"({len(structure.contact or '')} chars) "
+                f"[{structure.detection_method.get('contact', 'none')}]")
+    
+    logger.info(f"  summary: {'✓' if structure.has_summary else '✗'} "
+                f"({len(structure.summary or '')} chars) "
+                f"[{structure.detection_method.get('summary', 'none')}]")
+    
+    logger.info(f"  experience: {'✓' if structure.has_experience else '✗'} "
+                f"({len(structure.experience or '')} chars) "
+                f"[{structure.detection_method.get('experience', 'none')}]")
+    
+    logger.info(f"  education: {'✓' if structure.has_education else '✗'} "
+                f"({len(structure.education or '')} chars) "
+                f"[{structure.detection_method.get('education', 'none')}]")
+    
+    logger.info(f"  skills: {'✓' if structure.has_skills else '✗'} "
+                f"({len(structure.skills or '')} chars) "
+                f"[{structure.detection_method.get('skills', 'none')}]")
+    
+    logger.info(f"  certifications: {'✓' if structure.has_certifications else '✗'} "
+                f"({len(structure.certifications or '')} chars) "
+                f"[{structure.detection_method.get('certifications', 'none')}]")
+    
+    # Validation warnings
+    if structure.has_summary and len(structure.summary or '') > 2000:
+        logger.warning("[SECTION PARSER] ⚠️ Summary seems too long (>2000 chars)")
+    
+    if structure.has_experience and len(structure.experience or '') < 100:
+        logger.warning("[SECTION PARSER] ⚠️ Experience seems too short (<100 chars)")
+    
+    if not structure.has_experience:
+        logger.warning("[SECTION PARSER] ⚠️ No experience section detected!")
+    
+    logger.info("═" * 60)
+```
+
+───────────────────────────────────────────────────────────────────────────────
+STEP 5: Update get_target_text in base.py (add debug logging)
+───────────────────────────────────────────────────────────────────────────────
+
+File: backend/common/detection/rule_engine/handlers/base.py
+
+Add debug logging to get_target_text():
+
+```python
+def get_target_text(self, cv_structure: CVStructure, target_section: str) -> str:
+    """Get text for the target section."""
+    
+    if target_section == 'all':
+        logger.debug(f"[get_target_text] all: returning {len(cv_structure.raw_text)} chars")
+        return cv_structure.raw_text
+    
+    section_map = {
+        'summary': cv_structure.summary,
+        'experience': cv_structure.experience,
+        'education': cv_structure.education,
+        'skills': cv_structure.skills,
+        'contact': self._extract_contact(cv_structure),
+        'certifications': cv_structure.certifications,
+    }
+    
+    text = section_map.get(target_section)
+    
+    if not text:
+        logger.warning(f"[get_target_text] {target_section}: NOT FOUND (returning empty)")
+        return ''
+    
+    logger.debug(f"[get_target_text] {target_section}: returning {len(text)} chars, "
+                 f"preview: {text[:100]}...")
+    return text
+```
+
+═══════════════════════════════════════════════════════════════════════════════
+VERIFICATION CHECKLIST:
+═══════════════════════════════════════════════════════════════════════════════
+
+After implementation, scan David Cohen CV and verify:
+
+□ Console shows "[SECTION PARSER] EXTRACTION RESULTS:"
+□ summary: ✓ with ~500-1000 chars (NOT 14000+)
+□ experience: ✓ with ~5000-10000 chars (job entries)
+□ education: ✓ with reasonable chars
+□ skills: ✓ or ✗ with pattern_detected or none
+
+Check that rules now search correct text:
+□ CONTENT_PASSIVE_VOICE searches experience (job content, NOT "Passionate about...")
+□ CONTENT_FIRST_PERSON_PRONOUNS searches all text
+□ CONTENT_WEAK_ACTION_VERBS searches experience
+
+═══════════════════════════════════════════════════════════════════════════════
+EXPECTED CONSOLE OUTPUT:
+═══════════════════════════════════════════════════════════════════════════════
+
+```
+[SECTION PARSER] Starting extraction, 500 lines
+[SECTION PARSER] Pass 1: Contact section ends at line 2
+[SECTION PARSER] Pass 2: Found 'summary' header at line 5: 'About'
+[SECTION PARSER] Pass 2: Found 'education' header at line 250: 'Education'
+[SECTION PARSER] Pass 3: No Experience header, detecting job entries by pattern
+[SECTION PARSER] Pass 3: Found 4 job entries
+[SECTION PARSER] Experience detected by pattern: 4 jobs, 8500 chars
+════════════════════════════════════════════════════════════════
+[SECTION PARSER] EXTRACTION RESULTS:
+════════════════════════════════════════════════════════════════
+  contact: ✓ (250 chars) [pattern_detection]
+  summary: ✓ (650 chars) [header_detected]
+  experience: ✓ (8500 chars) [pattern_detected]
+  education: ✓ (400 chars) [header_detected]
+  skills: ✓ (300 chars) [pattern_detected]
+  certifications: ✗ (0 chars) [none]
+════════════════════════════════════════════════════════════════
+```
+
+═══════════════════════════════════════════════════════════════════════════════
+FILES TO MODIFY:
+═══════════════════════════════════════════════════════════════════════════════
+
+1. backend/common/detection/section_extractor.py - COMPLETE REWRITE
+2. backend/common/detection/rule_engine/handlers/base.py - Add debug logging
+
+DO NOT TOUCH:
+- Frontend files
+- Other detection files (unless imports break)
+- Database
+
+═══════════════════════════════════════════════════════════════════════════════
+
+WHEN COMPLETE:
+
+1. Restart backend
+2. Scan David Cohen CV
+3. Share console output showing EXTRACTION RESULTS
+4. Share screenshot of detected issues
+
+Type "SECTION PARSER FIX COMPLETE" when done.
+
+═══════════════════════════════════════════════════════════════════════════════
+```
