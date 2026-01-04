@@ -14,6 +14,10 @@ import SideBySideView from '../../components/cv-optimizer/SideBySideView';
 // @ts-ignore - DocStyler types not available
 import { DocStyler } from '../../components/common/DocStyler';
 import { getAuthToken, isAuthenticated } from '../../lib/auth';
+import { BulkAutoFixSection } from '../../components/cv-optimizer/BulkAutoFixSection';
+import { BulkAutoFixModal } from '../../components/cv-optimizer/BulkAutoFixModal';
+import { ProgressSection } from '../../components/cv-optimizer/ProgressSection';
+import { ResultModal } from '../../components/cv-optimizer/ResultModal';
 
 interface CVIssue {
   id: string;
@@ -904,6 +908,16 @@ export default function ResultsPage() {
             </div>
           </div>
 
+          {/* Bulk Auto Fix Section */}
+          {showBulkAutoFix && (
+            <BulkAutoFixSection
+              autoFixableCount={autoFixableCount}
+              totalIssues={reportData?.issues?.length || 0}
+              onAutoFixClick={handleOpenBulkAutoFixModal}
+              isLoading={isRescanning}
+            />
+          )}
+
           {/* Scan History */}
           {scanHistory.length > 0 && (
             <div className="mb-4 p-3 bg-white border border-gray-200 rounded-lg">
@@ -1009,8 +1023,29 @@ export default function ResultsPage() {
           sections={buildTipBoxSections(selectedIssue)}
           buttons={buildTipBoxButtons(selectedIssue)}
           onInputChange={handleTipBoxInputChange}
+          bulkAutoFixUsed={bulkAutoFixUsed}
+          isAutoFixable={selectedIssue.isAutoFixable || false}
+          isPending={pendingIssues.has(selectedIssue.id)}
+          isFixed={fixedIssues.has(selectedIssue.id)}
         />
       )}
+
+      {/* Bulk Auto Fix Confirmation Modal */}
+      <BulkAutoFixModal
+        isOpen={showBulkAutoFixModal}
+        onClose={() => setShowBulkAutoFixModal(false)}
+        onConfirm={handleBulkAutoFix}
+        count={autoFixableCount}
+        isLoading={isRescanning}
+      />
+
+      {/* Result Modal */}
+      <ResultModal
+        isOpen={showResultModal}
+        onClose={() => setShowResultModal(false)}
+        data={resultModalData}
+        onCompareVersions={() => setActiveTab('sidebyside')}
+      />
     </div>
   );
 }
