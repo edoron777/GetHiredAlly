@@ -3,6 +3,8 @@ Language Quality Detector
 
 Detects weak verbs, vague descriptions, and buzzword stuffing.
 100% CODE - No AI - Deterministic results.
+
+SECTION-AWARE: Weak verbs and buzzwords only checked in Experience section.
 """
 
 import re
@@ -14,8 +16,63 @@ from .word_lists import (
     BUZZWORD_THRESHOLD,
     VAGUE_THRESHOLD,
 )
+from .section_extractor import extract_sections
 
 FIRST_PERSON_PATTERN = re.compile(r"\b(I|my|me|myself|I'm|I've|I'll)\b")
+
+
+def get_experience_text_only(text: str) -> str:
+    """
+    Extract ONLY the Experience/Work section text.
+    This excludes: Summary, Education, Certifications, Skills
+    """
+    try:
+        structure = extract_sections(text)
+        if structure and structure.experience:
+            return structure.experience
+        else:
+            experience_markers = [
+                'work experience', 'professional experience', 
+                'employment history', 'career history',
+                'experience'
+            ]
+            text_lower = text.lower()
+            
+            for marker in experience_markers:
+                start_idx = text_lower.find(marker)
+                if start_idx != -1:
+                    section_headers = [
+                        'education', 'certifications', 'skills',
+                        'projects', 'awards', 'publications',
+                        'references', 'languages'
+                    ]
+                    end_idx = len(text)
+                    for header in section_headers:
+                        header_idx = text_lower.find(header, start_idx + len(marker))
+                        if header_idx != -1 and header_idx < end_idx:
+                            end_idx = header_idx
+                    
+                    return text[start_idx:end_idx]
+            
+            return text
+    except Exception:
+        return text
+
+
+def is_certification_line(line: str) -> bool:
+    """
+    Check if a line is likely a certification name.
+    Certification lines should NOT be checked for weak verbs.
+    """
+    cert_indicators = [
+        'certified', 'certificate', 'certification',
+        '(aws)', '(gcp)', '(azure)', '(ibm)', '(google)',
+        'professional', 'associate', 'specialist',
+        'coursera', 'udemy', 'linkedin learning',
+        'skillup', 'deeplearning.ai'
+    ]
+    line_lower = line.lower()
+    return any(indicator in line_lower for indicator in cert_indicators)
 
 PASSIVE_VOICE_PATTERNS = [
     re.compile(r'\b(was|were|been|being)\s+\w+ed\b', re.IGNORECASE),
@@ -43,6 +100,8 @@ def detect_weak_verbs(text: str) -> List[Dict]:
     """
     Detect weak action verbs in text.
     
+    SECTION-AWARE: Only checks Experience section, skips certifications.
+    
     Args:
         text: Text to analyze
         
@@ -50,27 +109,31 @@ def detect_weak_verbs(text: str) -> List[Dict]:
         List of WEAK_ACTION_VERBS issues
     """
     issues = []
-    text_lower = text.lower()
     found_verbs = []
     
-    for verb in WEAK_VERBS:
-        if verb.lower() in text_lower:
-            pattern = re.compile(
-                r'.{0,30}' + re.escape(verb) + r'.{0,30}',
-                re.IGNORECASE
-            )
-            matches = pattern.findall(text)
-            
-            for match in matches[:2]:
+    experience_text = get_experience_text_only(text)
+    
+    for line in experience_text.split('\n'):
+        line = line.strip()
+        
+        if not line:
+            continue
+        
+        if is_certification_line(line):
+            continue
+        
+        line_lower = line.lower()
+        
+        for verb in WEAK_VERBS:
+            if verb.lower() in line_lower:
                 if verb.lower() not in [v.lower() for v in found_verbs]:
-                    current_text = match.strip()
                     issues.append({
                         'issue_type': 'CONTENT_WEAK_ACTION_VERBS',
                         'title': f"Weak action verb: '{verb}'",
                         'location': 'Experience Section',
                         'description': f'Weak/passive phrase detected: "{verb}"',
-                        'current': current_text,
-                        'is_highlightable': bool(current_text and current_text in text),
+                        'current': line,
+                        'is_highlightable': bool(line and line in text),
                         'weak_verb': verb,
                         'suggestion': f"Replace '{verb}' with stronger verb: led, achieved, delivered, implemented",
                     })
@@ -136,6 +199,8 @@ def detect_buzzword_stuffing(text: str) -> List[Dict]:
     """
     Detect excessive buzzword usage.
     
+    SECTION-AWARE: Only checks Experience section bullets, not Summary.
+    
     Args:
         text: Text to analyze
         
@@ -144,12 +209,14 @@ def detect_buzzword_stuffing(text: str) -> List[Dict]:
     """
     issues = []
     
+    experience_text = get_experience_text_only(text)
+    
     buzzword_count = 0
     found_buzzwords = []
     
     for buzzword in BUZZWORDS:
         pattern = re.compile(r'\b' + re.escape(buzzword) + r'\b', re.IGNORECASE)
-        matches = pattern.findall(text)
+        matches = pattern.findall(experience_text)
         
         if matches:
             buzzword_count += len(matches)
@@ -161,21 +228,21 @@ def detect_buzzword_stuffing(text: str) -> List[Dict]:
         current_text = ''
         if first_buzzword:
             pattern = re.compile(r'\b' + re.escape(first_buzzword) + r'\b', re.IGNORECASE)
-            match = pattern.search(text)
+            match = pattern.search(experience_text)
             if match:
-                line_start = text.rfind('\n', 0, match.start()) + 1
-                line_end = text.find('\n', match.start())
+                line_start = experience_text.rfind('\n', 0, match.start()) + 1
+                line_end = experience_text.find('\n', match.start())
                 if line_end == -1:
-                    line_end = len(text)
-                current_text = text[line_start:line_end].strip()
+                    line_end = len(experience_text)
+                current_text = experience_text[line_start:line_end].strip()
         
         issues.append({
             'issue_type': 'CONTENT_BUZZWORD_STUFFING',
             'title': 'Excessive buzzwords',
-            'location': 'Throughout CV',
+            'location': 'Experience Section',
             'description': f'Too many buzzwords ({buzzword_count} found): {", ".join(found_buzzwords[:5])}',
             'current': current_text if current_text else first_buzzword,
-            'is_highlightable': bool(current_text),
+            'is_highlightable': bool(current_text and current_text in text),
             'count': buzzword_count,
             'all_instances': found_buzzwords[:10],
             'suggestion': 'Replace buzzwords with specific achievements and results',
