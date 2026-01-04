@@ -135,7 +135,7 @@ def detect_weak_verbs(text: str) -> List[Dict]:
                         'current': line,
                         'is_highlightable': bool(line and line in text),
                         'weak_verb': verb,
-                        'suggestion': f"Replace '{verb}' with stronger verb: led, achieved, delivered, implemented",
+                        'suggestion': f'This bullet starts with a weak verb ("{verb}"). Strong CVs use powerful action verbs. Try: Led, Developed, Achieved, Implemented, Increased, Reduced, Created, Built.',
                     })
                     found_verbs.append(verb)
     
@@ -245,7 +245,7 @@ def detect_buzzword_stuffing(text: str) -> List[Dict]:
             'is_highlightable': bool(current_text and current_text in text),
             'count': buzzword_count,
             'all_instances': found_buzzwords[:10],
-            'suggestion': 'Replace buzzwords with specific achievements and results',
+            'suggestion': f'This section has {buzzword_count} buzzwords (like "leveraging", "innovative", "cutting-edge"). Recruiters prefer specific achievements. Instead of "leveraged innovative solutions", try "Reduced costs by 30% using automated testing".',
         })
     
     return issues
@@ -294,7 +294,7 @@ def detect_first_person_pronouns(text: str) -> List[Dict]:
             'is_highlightable': bool(first_sentence and first_sentence in text),
             'count': len(matches),
             'all_instances': all_instances[:5],
-            'suggestion': 'CVs should be written without "I" statements (e.g., "Led team" not "I led team")',
+            'suggestion': f'Your CV uses first-person words ({len(matches)} found: I, my, me). Professional CVs are stronger without them. Instead of "I managed a team", write "Managed a team of 5 engineers".',
         })
     
     return issues
@@ -345,7 +345,7 @@ def detect_passive_voice(text: str) -> List[Dict]:
             'is_highlightable': bool(first_sentence and first_sentence in text),
             'count': len(passive_matches),
             'all_instances': all_instances[:5],
-            'suggestion': 'Use active voice: "Managed team" instead of "Was assigned to manage team"',
+            'suggestion': 'This sentence uses passive voice. Active voice is more powerful. Instead of "The project was completed by me", write "Completed the project ahead of schedule".',
         })
     
     return issues

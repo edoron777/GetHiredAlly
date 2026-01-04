@@ -1,0 +1,100 @@
+═══════════════════════════════════════════════════════════════════════════════
+💻 REPLIT-7#10: Register New Detectors in Master Detector
+═══════════════════════════════════════════════════════════════════════════════
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- Execute ONLY the instructions below
+- Add ONLY the specified imports and calls
+- Do NOT modify existing detector calls
+- If unclear → STOP and ask
+
+───────────────────────────────────────────────────────────────────────────────
+
+TASK:
+
+Register the new detectors in master_detector.py so they are called
+during CV analysis.
+
+───────────────────────────────────────────────────────────────────────────────
+
+FILE TO MODIFY:
+
+backend/common/detection/master_detector.py
+
+───────────────────────────────────────────────────────────────────────────────
+
+STEP 1: Add imports at top of file
+
+Add these imports (with existing imports):
+
+from .abbreviation_detector import detect_all_abbreviation_issues
+from .certification_detector import detect_all_certification_issues
+
+───────────────────────────────────────────────────────────────────────────────
+
+STEP 2: Add detector calls in detect_all_issues function
+
+Find the detect_all_issues function and add these calls:
+
+def detect_all_issues(cv_text: str, job_description: str = None) -> List[Dict]:
+    """
+    Run ALL static detectors on CV text.
+    
+    DETERMINISTIC: Same text → Same issues (ALWAYS)
+    """
+    all_issues = []
+    
+    # [existing detector calls - keep them all]
+    # ...
+    
+    # NEW: Abbreviation consistency
+    all_issues.extend(detect_all_abbreviation_issues(cv_text))
+    
+    # NEW: Certification count
+    all_issues.extend(detect_all_certification_issues(cv_text))
+    
+    # [rest of existing code]
+    
+    return all_issues
+
+───────────────────────────────────────────────────────────────────────────────
+
+IMPORTANT:
+
+- LinkedIn URL validator was added to contact_extractor.py
+- It should already be called via existing contact detection
+- If not, add: all_issues.extend(detect_linkedin_no_url(cv_text))
+
+───────────────────────────────────────────────────────────────────────────────
+
+DO NOT TOUCH:
+- Existing detector calls (keep all of them)
+- Order of existing detectors
+- Any other logic in master_detector.py
+
+───────────────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+
+After changes, run a test scan and verify:
+- Abbreviation issues appear in results
+- Certification count issues appear in results
+- LinkedIn URL issues appear in results
+- All existing detectors still work
+
+───────────────────────────────────────────────────────────────────────────────
+
+WHEN COMPLETE:
+
+Confirm:
+□ abbreviation_detector imported
+□ certification_detector imported
+□ detect_all_abbreviation_issues called in detect_all_issues
+□ detect_all_certification_issues called in detect_all_issues
+□ LinkedIn detection verified (either via contact_extractor or direct call)
+□ No Python syntax errors
+□ No import errors
+
+Type "REPLIT-7#10 COMPLETE - READY FOR NEXT" when done.
+
+═══════════════════════════════════════════════════════════════════════════════

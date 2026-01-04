@@ -1,0 +1,98 @@
+═══════════════════════════════════════════════════════════════════════════════
+💻 REPLIT-6#10: Improve User-Friendly Messages
+═══════════════════════════════════════════════════════════════════════════════
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- Execute ONLY the instructions below
+- Update ONLY the specified messages
+- Do NOT add new functionality
+- If unclear → STOP and ask
+
+───────────────────────────────────────────────────────────────────────────────
+
+PROBLEM:
+
+Error messages use technical jargon that confuses average users.
+
+Example:
+BAD: "Excessive first-person pronouns (6 found): I, my, me, etc."
+GOOD: "Your CV uses 'I', 'my', and 'me' 6 times. Professional CVs avoid first-person language."
+
+───────────────────────────────────────────────────────────────────────────────
+
+FILES TO MODIFY:
+
+backend/common/detection/language_detector.py
+
+───────────────────────────────────────────────────────────────────────────────
+
+MESSAGE UPDATES:
+
+Find and update these suggestion messages:
+
+1. FIRST PERSON PRONOUNS
+
+OLD:
+'suggestion': 'CVs should be written without "I" statements...'
+
+NEW:
+'suggestion': f'Your CV uses first-person words ({count} found: I, my, me). Professional CVs are stronger without them. Instead of "I managed a team", write "Managed a team of 5 engineers".'
+
+2. WEAK ACTION VERBS
+
+OLD:
+'suggestion': 'Bullet should start with a strong action verb'
+
+NEW:
+'suggestion': f'This bullet starts with a weak verb ("{matched_verb}"). Strong CVs use powerful action verbs. Try: Led, Developed, Achieved, Implemented, Increased, Reduced, Created, Built.'
+
+3. BUZZWORD STUFFING
+
+OLD:
+'suggestion': 'Replace buzzwords with specific achievements and results'
+
+NEW:
+'suggestion': f'This section has {count} buzzwords (like "leveraging", "innovative", "cutting-edge"). Recruiters prefer specific achievements. Instead of "leveraged innovative solutions", try "Reduced costs by 30% using automated testing".'
+
+4. PASSIVE VOICE
+
+OLD:
+'suggestion': 'Use active voice for stronger impact'
+
+NEW:
+'suggestion': 'This sentence uses passive voice. Active voice is more powerful. Instead of "The project was completed by me", write "Completed the project ahead of schedule".'
+
+───────────────────────────────────────────────────────────────────────────────
+
+TEMPLATE FOR GOOD ERROR MESSAGES:
+
+Every suggestion should follow this pattern:
+1. What's wrong (in plain language)
+2. Why it matters (brief)
+3. Specific example of how to fix it
+
+Example:
+"Your summary is [X] words. Professional summaries are 50-80 words. 
+Try removing [specific suggestion] to make it more concise."
+
+───────────────────────────────────────────────────────────────────────────────
+
+DO NOT TOUCH:
+- Detection logic (only update message strings)
+- Any other files
+
+───────────────────────────────────────────────────────────────────────────────
+
+WHEN COMPLETE:
+
+Confirm:
+□ First person pronouns message updated
+□ Weak verbs message updated
+□ Buzzwords message updated
+□ Passive voice message updated
+□ All messages follow: What's wrong → Why → How to fix
+□ No Python syntax errors
+
+Type "REPLIT-6#10 COMPLETE - READY FOR NEXT" when done.
+
+═══════════════════════════════════════════════════════════════════════════════
