@@ -1,0 +1,101 @@
+═══════════════════════════════════════════════════════════════════════════════
+💻 FIX-2#4: Regex Handler - Don't Override DB Description
+═══════════════════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE ⚠️
+- Execute ONLY instructions below
+- Do NOT add features not specified
+- Do NOT modify files not listed
+
+───────────────────────────────────────────────────────────────────────────────
+ROOT CAUSE:
+───────────────────────────────────────────────────────────────────────────────
+
+File: backend/common/detection/rule_engine/handlers/regex_handler.py
+Line ~101:
+```python
+description = f"{match_count} found: {', '.join(unique_matches[:5])}"
+```
+
+This OVERRIDES the description from database with match summary.
+
+Result: TipBox shows "8 found: My, my, I" instead of actual description like
+"First person pronouns make your CV sound unprofessional..."
+
+───────────────────────────────────────────────────────────────────────────────
+THE FIX:
+───────────────────────────────────────────────────────────────────────────────
+
+File: backend/common/detection/rule_engine/handlers/regex_handler.py
+
+FIND this code (around line 100-120):
+```python
+description = f"{match_count} found: {', '.join(unique_matches[:5])}"
+```
+
+CHANGE TO:
+```python
+# Keep match summary as supplementary info, but use DB description
+match_summary = f"{match_count} found: {', '.join(unique_matches[:5])}"
+
+# Use the rule's description from database, NOT the match summary
+# match_summary can be added to 'current' or a separate field if needed
+```
+
+ALSO FIND the create_issue call and ensure it uses rule.description:
+```python
+issue = self.create_issue(
+    rule=rule,
+    current=first_match,  # The actual matched text
+    # description should come from rule, not be overridden
+)
+```
+
+CHECK base.py create_issue method - ensure it uses rule.description from DB:
+```python
+def create_issue(self, rule, current, ...):
+    return DetectedIssue(
+        ...
+        description=rule.description,  # ← Must use DB description
+        ...
+    )
+```
+
+───────────────────────────────────────────────────────────────────────────────
+VERIFICATION:
+───────────────────────────────────────────────────────────────────────────────
+
+After fix, scan CV and open TipBox for "First Person Pronouns":
+
+BEFORE:
+- WHY THIS MATTERS: "8 found: My, my, I"
+
+AFTER:
+- WHY THIS MATTERS: "First person pronouns (I, me, my) make your CV sound 
+  subjective and unprofessional. Professional CVs focus on achievements 
+  using action verbs."
+
+───────────────────────────────────────────────────────────────────────────────
+FILES TO MODIFY:
+───────────────────────────────────────────────────────────────────────────────
+
+- backend/common/detection/rule_engine/handlers/regex_handler.py
+- backend/common/detection/rule_engine/handlers/base.py (verify create_issue)
+
+DO NOT TOUCH:
+- Frontend files
+- Other handlers (unless they have same bug)
+
+───────────────────────────────────────────────────────────────────────────────
+
+WHEN COMPLETE:
+
+Confirm:
+□ regex_handler.py no longer overrides description
+□ create_issue uses rule.description from database
+□ TipBox shows proper description, not match summary
+□ No Python syntax errors
+
+Type "FIX-2 COMPLETE" when done.
+
+═══════════════════════════════════════════════════════════════════════════════

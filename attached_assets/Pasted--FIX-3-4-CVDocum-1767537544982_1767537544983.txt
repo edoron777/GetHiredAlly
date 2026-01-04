@@ -1,0 +1,119 @@
+═══════════════════════════════════════════════════════════════════════════════
+💻 FIX-3#4: CVDocument - Word Boundary Matching for Markers
+═══════════════════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE ⚠️
+- Execute ONLY instructions below
+- Do NOT add features not specified
+- Do NOT modify files not listed
+
+───────────────────────────────────────────────────────────────────────────────
+ROOT CAUSE:
+───────────────────────────────────────────────────────────────────────────────
+
+File: client/src/components/cv-optimizer/CVDocument.tsx
+Line ~76:
+```typescript
+cvContent.includes(matchText)
+```
+
+This finds "I" anywhere, including inside "Innovation" → marker appears inside word.
+
+───────────────────────────────────────────────────────────────────────────────
+THE FIX:
+───────────────────────────────────────────────────────────────────────────────
+
+File: client/src/components/cv-optimizer/CVDocument.tsx
+
+FIND the marker positioning logic that uses includes() or indexOf().
+
+REPLACE with word-boundary aware search:
+```typescript
+/**
+ * Find the position of matchText in content using word boundaries.
+ * For single words like "I", ensures we find standalone "I" not "I" inside other words.
+ */
+function findWordBoundaryMatch(content: string, matchText: string): number {
+  if (!matchText || !content) return -1;
+  
+  const trimmedMatch = matchText.trim();
+  
+  // For very short matches (1-2 chars), use word boundary regex
+  if (trimmedMatch.length <= 2) {
+    // Escape special regex characters
+    const escaped = trimmedMatch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const wordBoundaryRegex = new RegExp(`\\b${escaped}\\b`, 'i');
+    const match = content.match(wordBoundaryRegex);
+    if (match && match.index !== undefined) {
+      return match.index;
+    }
+    return -1;
+  }
+  
+  // For longer matches, regular indexOf is fine
+  return content.indexOf(trimmedMatch);
+}
+
+/**
+ * Find ALL positions of matchText for multiple markers.
+ */
+function findAllWordBoundaryMatches(content: string, matchText: string): number[] {
+  if (!matchText || !content) return [];
+  
+  const positions: number[] = [];
+  const trimmedMatch = matchText.trim();
+  
+  // Escape special regex characters
+  const escaped = trimmedMatch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  
+  // Use word boundaries for short text, global search for all occurrences
+  const flags = trimmedMatch.length <= 2 ? 'gi' : 'g';
+  const pattern = trimmedMatch.length <= 2 ? `\\b${escaped}\\b` : escaped;
+  const regex = new RegExp(pattern, flags);
+  
+  let match;
+  while ((match = regex.exec(content)) !== null) {
+    positions.push(match.index);
+  }
+  
+  return positions;
+}
+```
+
+THEN update the marker creation code to use these functions instead of includes()/indexOf().
+
+───────────────────────────────────────────────────────────────────────────────
+VERIFICATION:
+───────────────────────────────────────────────────────────────────────────────
+
+After fix, scan CV with "First Person Pronouns" issue:
+
+BEFORE:
+- Marker appears inside "I●nnovation"
+
+AFTER:
+- Marker appears at standalone "I" like "I● bridge the gap..."
+
+───────────────────────────────────────────────────────────────────────────────
+FILES TO MODIFY:
+───────────────────────────────────────────────────────────────────────────────
+
+- client/src/components/cv-optimizer/CVDocument.tsx
+
+DO NOT TOUCH:
+- Backend files
+- Other frontend components
+
+───────────────────────────────────────────────────────────────────────────────
+
+WHEN COMPLETE:
+
+Confirm:
+□ Word boundary matching function added
+□ Marker positioning uses new function
+□ "I" markers appear at standalone "I" only
+□ No TypeScript errors
+
+Type "FIX-3 COMPLETE" when done.
+
+═══════════════════════════════════════════════════════════════════════════════

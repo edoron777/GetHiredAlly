@@ -98,10 +98,10 @@ class RegexHandler(BaseHandler):
             if return_matches and matches:
                 unique_matches = list(set(str(m) for m in matches[:10]))
                 first_match = str(matches[0]) if matches else ''
-                description = f"{match_count} found: {', '.join(unique_matches[:5])}"
+                match_summary = f"{match_count} found: {', '.join(unique_matches[:5])}"
             else:
                 first_match = ''
-                description = f"{match_count} matches found"
+                match_summary = f"{match_count} matches found"
             
             if first_match.strip() == '':
                 if '\n' in first_match or first_match == '':
@@ -116,11 +116,11 @@ class RegexHandler(BaseHandler):
             issue = self.create_issue(
                 rule=rule,
                 current=current_display,
-                description=description,
                 location=target_section,
                 is_highlightable=is_highlight,
                 details={
                     'match_count': match_count,
+                    'match_summary': match_summary,
                     'matches': [str(m)[:50] for m in matches[:20]] if return_matches else [],
                     'target_section': target_section
                 }
