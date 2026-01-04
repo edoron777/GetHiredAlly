@@ -108,7 +108,7 @@ def _extract_experience_by_pattern(text: str) -> Optional[str]:
     Used when no explicit "Experience" header is found.
     Looks for patterns like:
     - Company name + date range (e.g., "Citi ... Jul 2020 - Present")
-    - Job title patterns (e.g., "VP, Cybersecurity")
+    - Job title patterns (e.g., "VP, Cybersecurity", "**Manager**")
     - Employment duration (e.g., "5 years 4 months")
     """
     employment_date_pattern = re.compile(
@@ -118,31 +118,43 @@ def _extract_experience_by_pattern(text: str) -> Optional[str]:
     
     year_range_pattern = re.compile(r'\b(19|20)\d{2}\s*[-–]\s*(Present|(19|20)\d{2})\b', re.IGNORECASE)
     
+    job_title_pattern = re.compile(
+        r'\b(?:\*{0,2})(VP|Director|Manager|Engineer|Lead|Analyst|Specialist|'
+        r'Consultant|Developer|Architect|Officer|Head|Chief|Coordinator|'
+        r'Administrator|Executive|President|Advisor|Senior|Associate)(?:\*{0,2})\b',
+        re.IGNORECASE
+    )
+    
     lines = text.split('\n')
     experience_lines = []
     in_experience = False
     experience_start = None
     
-    stop_headers = ['education', 'certifications', 'skills', 'references', 'hobbies', 'interests', 'awards']
+    stop_headers = ['education', 'certifications', 'skills', 'references', 'hobbies', 'interests', 'awards', 'languages']
     
     for i, line in enumerate(lines):
         line_lower = line.lower().strip()
+        line_clean = re.sub(r'[#*_]', '', line_lower)
         
-        if any(header in line_lower for header in stop_headers) and len(line.strip()) < 40:
-            if in_experience:
+        if any(header in line_clean for header in stop_headers) and len(line.strip()) < 50:
+            if in_experience and len(experience_lines) > 5:
                 break
         
-        if employment_date_pattern.search(line) or year_range_pattern.search(line):
+        has_date = employment_date_pattern.search(line) or year_range_pattern.search(line)
+        has_title = job_title_pattern.search(line)
+        
+        if has_date or (has_title and not in_experience and i > 10):
             if not in_experience:
                 in_experience = True
-                experience_start = max(0, i - 2)
+                experience_start = max(0, i - 3)
                 for prev_line in lines[experience_start:i]:
-                    experience_lines.append(prev_line)
+                    if prev_line.strip():
+                        experience_lines.append(prev_line)
             experience_lines.append(line)
         elif in_experience:
             experience_lines.append(line)
     
-    if experience_lines:
+    if experience_lines and len('\n'.join(experience_lines)) > 200:
         return '\n'.join(experience_lines).strip()
     return None
 

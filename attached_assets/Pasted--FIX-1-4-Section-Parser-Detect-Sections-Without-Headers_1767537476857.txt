@@ -1,0 +1,161 @@
+ FIX-1#4: Section Parser - Detect Sections Without Headers
+═══════════════════════════════════════════════════════════════════════════════
+💻 FIX-1#4: Section Parser - Detect Sections Without Headers
+═══════════════════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE ⚠️
+- Execute ONLY instructions below
+- Do NOT add features not specified
+- Do NOT modify files not listed
+
+───────────────────────────────────────────────────────────────────────────────
+ROOT CAUSE:
+───────────────────────────────────────────────────────────────────────────────
+
+Section parser cannot find "experience" or "skills" sections when CV has no
+explicit headers. David Cohen CV has:
+
+    Citi
+    VP, Cybersecurity Innovation
+    Jul 2020 - Present
+
+But NO "Experience" or "Work History" header. Result:
+- get_target_text("experience") returns EMPTY
+- Rules targeting experience find NOTHING
+- Real issues NOT detected (false negatives)
+
+───────────────────────────────────────────────────────────────────────────────
+THE FIX:
+───────────────────────────────────────────────────────────────────────────────
+
+Add fallback detection when explicit headers not found.
+
+File: backend/common/detection/section_extractor.py (or wherever sections are extracted)
+
+FIND the code that extracts experience section.
+
+ADD fallback detection using employment patterns:
+```python
+def extract_experience_section(self, text: str) -> str:
+    """Extract experience section from CV text."""
+    
+    # First try: explicit headers
+    experience_headers = [
+        r'(?i)^#+?\s*(work\s+)?experience',
+        r'(?i)^#+?\s*employment(\s+history)?',
+        r'(?i)^#+?\s*work\s+history',
+        r'(?i)^#+?\s*professional\s+experience',
+    ]
+    
+    for pattern in experience_headers:
+        match = re.search(pattern, text, re.MULTILINE)
+        if match:
+            # Extract from header to next major section
+            return self._extract_until_next_section(text, match.start())
+    
+    # FALLBACK: No explicit header found
+    # Detect experience by employment patterns
+    experience_text = self._detect_experience_by_patterns(text)
+    if experience_text:
+        return experience_text
+    
+    return ''  # Only return empty if truly not found
+
+def _detect_experience_by_patterns(self, text: str) -> str:
+    """
+    Detect experience section by employment patterns when no header exists.
+    
+    Looks for:
+    - Company name + date pattern (e.g., "Citi" followed by "Jul 2020 - Present")
+    - Job title patterns (e.g., "VP,", "Manager", "Engineer", "Director")
+    - Duration patterns (e.g., "5 years 4 months", "3 yrs")
+    """
+    
+    # Pattern: Company/Title followed by date
+    employment_pattern = r'''
+        (?P<block>
+            (?:^|\n)                           # Start of line
+            (?P<company>[A-Z][A-Za-z\s&,\.]+)  # Company name (capitalized)
+            [\n\s]*
+            (?:\*{0,2})                        # Optional markdown bold
+            (?P<title>[A-Za-z\s,\-\|&]+        # Job title
+                (?:VP|Manager|Director|Engineer|Lead|Analyst|Specialist|
+                   Consultant|Developer|Architect|Officer|Head|Chief|
+                   Coordinator|Administrator|Executive|President)
+            [A-Za-z\s,\-\|&]*)
+            (?:\*{0,2})
+            [\n\s]*
+            (?P<dates>
+                (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|\d{1,2}[\/\-])
+                .*?
+                (?:Present|\d{4})
+            )
+        )
+    '''
+    
+    matches = list(re.finditer(employment_pattern, text, re.VERBOSE | re.IGNORECASE | re.MULTILINE))
+    
+    if len(matches) >= 1:
+        # Found employment pattern - extract from first match to education/certifications
+        first_match_start = matches[0].start()
+        
+        # Find where experience ends (education, certifications, skills, etc.)
+        end_patterns = [
+            r'(?i)^#+?\s*education',
+            r'(?i)^#+?\s*certifications?',
+            r'(?i)^#+?\s*skills',
+            r'(?i)^#+?\s*languages?',
+            r'(?i)^#+?\s*awards?',
+        ]
+        
+        end_pos = len(text)
+        for pattern in end_patterns:
+            match = re.search(pattern, text[first_match_start:], re.MULTILINE)
+            if match:
+                candidate_end = first_match_start + match.start()
+                if candidate_end < end_pos:
+                    end_pos = candidate_end
+        
+        experience_text = text[first_match_start:end_pos].strip()
+        
+        # Verify it looks like experience (has multiple job entries or bullets)
+        if len(experience_text) > 200:  # Reasonable minimum length
+            return experience_text
+    
+    return ''
+```
+
+───────────────────────────────────────────────────────────────────────────────
+VERIFICATION:
+───────────────────────────────────────────────────────────────────────────────
+
+After fix, scan David Cohen CV and check console:
+
+BEFORE:
+WARNING: [get_target_text] experience: NOT FOUND (returning empty)
+
+AFTER:
+INFO: [get_target_text] experience: Found 9867 chars (via pattern detection)
+
+───────────────────────────────────────────────────────────────────────────────
+FILES TO MODIFY:
+───────────────────────────────────────────────────────────────────────────────
+
+- backend/common/detection/section_extractor.py (or equivalent)
+
+DO NOT TOUCH:
+- regex_handler.py
+- CVDocument.tsx
+- Other files
+
+───────────────────────────────────────────────────────────────────────────────
+
+WHEN COMPLETE:
+
+Confirm:
+□ Fallback pattern detection added
+□ David Cohen CV now returns experience section
+□ Console shows experience found with character count
+□ No Python syntax errors
+
+Type "FIX-1 COMPLETE" when done.
