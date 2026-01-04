@@ -1,0 +1,190 @@
+═══════════════════════════════════════════════════════════════════════════════
+💻 REPLIT-2#10: Add Section-Aware Language Detection
+═══════════════════════════════════════════════════════════════════════════════
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- Execute ONLY the instructions below
+- Do NOT modify other detection functions
+- Do NOT add new features
+- If unclear → STOP and ask
+
+───────────────────────────────────────────────────────────────────────────────
+
+PROBLEM:
+
+Current language detectors (weak verbs, buzzwords) run on FULL CV text.
+This causes FALSE POSITIVES:
+- Certification names like "AWS Certified..." flagged for weak language
+- Summary section flagged for buzzwords (summaries ARE supposed to have them)
+
+EXPECTED BEHAVIOR:
+- Weak verbs check → ONLY on Experience section bullets
+- Buzzword check → ONLY on Experience section (not Summary/About)
+- Skip: Certifications, Education degree names, Skills section
+
+───────────────────────────────────────────────────────────────────────────────
+
+FILE TO MODIFY:
+
+backend/common/detection/language_detector.py
+
+───────────────────────────────────────────────────────────────────────────────
+
+CURRENT FLOW (problem):
+
+def detect_language_issues(text: str) -> List[Dict]:
+    issues = []
+    issues.extend(detect_weak_verbs(text))        # ← Full CV - WRONG
+    issues.extend(detect_buzzword_stuffing(text)) # ← Full CV - WRONG
+    issues.extend(detect_first_person_pronouns(text))
+    return issues
+
+───────────────────────────────────────────────────────────────────────────────
+
+NEW CODE TO IMPLEMENT:
+
+Step 1: Add import at top of file (if not already present):
+
+from ..detection.section_extractor import extract_sections
+
+Step 2: Create helper function to extract experience-only text:
+
+def get_experience_text_only(text: str) -> str:
+    """
+    Extract ONLY the Experience/Work section text.
+    This excludes: Summary, Education, Certifications, Skills
+    """
+    try:
+        structure = extract_sections(text)
+        if structure and structure.experience:
+            return structure.experience
+        else:
+            # Fallback: try to find Experience section manually
+            experience_markers = [
+                'work experience', 'professional experience', 
+                'employment history', 'career history',
+                'experience'
+            ]
+            text_lower = text.lower()
+            
+            for marker in experience_markers:
+                start_idx = text_lower.find(marker)
+                if start_idx != -1:
+                    # Find next section header
+                    section_headers = [
+                        'education', 'certifications', 'skills',
+                        'projects', 'awards', 'publications',
+                        'references', 'languages'
+                    ]
+                    end_idx = len(text)
+                    for header in section_headers:
+                        header_idx = text_lower.find(header, start_idx + len(marker))
+                        if header_idx != -1 and header_idx < end_idx:
+                            end_idx = header_idx
+                    
+                    return text[start_idx:end_idx]
+            
+            # If no experience section found, return original text
+            return text
+    except Exception:
+        return text
+
+
+def is_certification_line(line: str) -> bool:
+    """
+    Check if a line is likely a certification name.
+    Certification lines should NOT be checked for weak verbs.
+    """
+    cert_indicators = [
+        'certified', 'certificate', 'certification',
+        '(aws)', '(gcp)', '(azure)', '(ibm)', '(google)',
+        'professional', 'associate', 'specialist',
+        'coursera', 'udemy', 'linkedin learning',
+        'skillup', 'deeplearning.ai'
+    ]
+    line_lower = line.lower()
+    return any(indicator in line_lower for indicator in cert_indicators)
+
+Step 3: Modify detect_weak_verbs function:
+
+def detect_weak_verbs(text: str) -> List[Dict]:
+    """
+    Detect weak/passive action verbs.
+    
+    SECTION-AWARE: Only checks Experience section, skips certifications.
+    """
+    issues = []
+    
+    # Get ONLY experience text
+    experience_text = get_experience_text_only(text)
+    
+    # Check each line
+    for line in experience_text.split('\n'):
+        line = line.strip()
+        
+        # Skip empty lines
+        if not line:
+            continue
+            
+        # Skip certification lines
+        if is_certification_line(line):
+            continue
+        
+        # Skip lines that don't look like bullet points
+        if not (line.startswith('•') or line.startswith('-') or 
+                line.startswith('*') or line[0:1].isalpha()):
+            continue
+        
+        # Check for weak verbs at START of line
+        # [existing weak verb detection logic here]
+        # ... keep the existing pattern matching ...
+    
+    return issues
+
+Step 4: Modify detect_buzzword_stuffing function:
+
+def detect_buzzword_stuffing(text: str) -> List[Dict]:
+    """
+    Detect excessive buzzword usage.
+    
+    SECTION-AWARE: Only checks Experience section bullets, not Summary.
+    """
+    # Get ONLY experience text (excludes Summary/About)
+    experience_text = get_experience_text_only(text)
+    
+    # [existing buzzword detection logic - apply to experience_text]
+    # ... keep existing pattern matching but use experience_text ...
+    
+    return issues
+
+───────────────────────────────────────────────────────────────────────────────
+
+DO NOT TOUCH:
+- detect_first_person_pronouns (can check full text - OK)
+- Any other files
+
+───────────────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+
+Test case - This should NOT be flagged as weak verb:
+"IBM AI Product Manager (SkillUp)"  ← Certification name, not job bullet
+
+Test case - This SHOULD be flagged:
+"Assisted with project management tasks" ← Job bullet with weak verb
+
+───────────────────────────────────────────────────────────────────────────────
+
+WHEN COMPLETE:
+
+Confirm:
+□ get_experience_text_only function added
+□ is_certification_line function added
+□ detect_weak_verbs now section-aware
+□ detect_buzzword_stuffing now section-aware
+□ Certification names no longer flagged
+□ No Python syntax errors
+
+Type "REPLIT-2#10 COMPLETE - READY FOR NEXT" when done.
+
+═══════════════════════════════════════════════════════════════════════════════

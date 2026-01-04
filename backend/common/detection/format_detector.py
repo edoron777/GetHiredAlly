@@ -286,29 +286,65 @@ def detect_multiple_spaces(text: str) -> List[Dict]:
 
 def detect_tables(text: str) -> List[Dict]:
     """
-    Detect table structures that cause ATS issues.
+    Detect actual table structures in CV.
     
-    Args:
-        text: Text to analyze
-        
-    Returns:
-        List of FORMAT_TABLES_DETECTED issues
+    RULES:
+    - Single line with pipes = NOT a table (separator usage - OK)
+    - Multiple rows with pipes creating grid = IS a table (issue)
+    - Minimum 2 rows required to be considered a table
     """
     issues = []
+    lines = text.split('\n')
     
-    for pattern in TABLE_PATTERNS:
-        match = pattern.search(text)
-        if match:
-            table_text = match.group(0)[:50] if len(match.group(0)) > 50 else match.group(0)
-            issues.append({
-                'issue_type': 'FORMAT_TABLES_DETECTED',
-                'location': 'CV Layout',
-                'description': 'Table structure detected - many ATS systems cannot parse tables correctly',
-                'current': table_text.strip(),
-                'is_highlightable': True,
-                'suggestion': 'Convert table content to simple bullet points',
+    potential_table_rows = []
+    for i, line in enumerate(lines):
+        pipe_count = line.count('|')
+        if pipe_count >= 2:
+            potential_table_rows.append({
+                'line_number': i,
+                'line': line,
+                'pipe_count': pipe_count
             })
-            break
+    
+    consecutive_count = 0
+    table_start = None
+    
+    for i in range(len(potential_table_rows)):
+        if i == 0:
+            consecutive_count = 1
+            table_start = potential_table_rows[i]['line_number']
+        else:
+            prev_line = potential_table_rows[i-1]['line_number']
+            curr_line = potential_table_rows[i]['line_number']
+            
+            if curr_line - prev_line <= 2:
+                consecutive_count += 1
+            else:
+                if consecutive_count >= 2:
+                    issues.append({
+                        'issue_type': 'FORMAT_TABLES_DETECTED',
+                        'match_text': potential_table_rows[i-1]['line'],
+                        'suggestion': 'Convert table content to simple bullet points for better ATS compatibility',
+                        'location': f'Lines {table_start}-{prev_line}'
+                    })
+                consecutive_count = 1
+                table_start = curr_line
+    
+    if consecutive_count >= 2 and len(potential_table_rows) > 0:
+        issues.append({
+            'issue_type': 'FORMAT_TABLES_DETECTED',
+            'match_text': potential_table_rows[-1]['line'],
+            'suggestion': 'Convert table content to simple bullet points for better ATS compatibility',
+            'location': f'Lines {table_start}-{potential_table_rows[-1]["line_number"]}'
+        })
+    
+    tab_pattern = re.compile(r'\t.*\t.*\t')
+    for match in tab_pattern.finditer(text):
+        issues.append({
+            'issue_type': 'FORMAT_TABLES_DETECTED',
+            'match_text': match.group(),
+            'suggestion': 'Convert table content to simple bullet points for better ATS compatibility',
+        })
     
     return issues
 
