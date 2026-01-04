@@ -1,0 +1,96 @@
+
+יצירה של Prompt  עבור Replit AI agent 
+הקדמה
+
+אני מבקש שתייצר רשימת הנחיות בפורמט של Prompt  עבור Replit AI agent 
+לפי ההנחיות של 
+ReplitPromptProtocol.md
+
+עבור המשימה של 
+===================
+
+
+=========
+
+הנחיות חשובת, לקרוא וליישם!
+
+1. Reconnaissance / investigation Prompt
+לפני שאתה (Claude) משקיע משאבים ביצרה של Prompt serious חשוב שאתה (Claude) תבין את סביבת העבודה והמצב הקיים של ה code repository של Replit 
+לכן ה first Prompt (zero Prompt ) יהיה Prompt  של תשאול ותחקור של סביבת הקוד 
+רק לאחר שאתה (Claude) תבין מה הסביבה הקיימת ב Replit  אתה תוכל לתכנן בצורה נכונה את עדכוני הקוד והשינויים הנדרשים.
+2. הנחיה להימנעות מאלתור 
+יש להדגיש בפני Replit AI agent  את הצורך המנדטורי להימנע מאלתור ולהימנע מיצרה של שינוים שלא הוגדר באופן מפורש בהנחיות של ה Prompt
+זו הנחיה שנכונה ל 100% מה Prompts.
+3. Introduction Prompt 
+לא לשכוח ליצר Prompt  שמציג את כל ה Prompt serious ומאפשר ל Replit AI agent  להבין את הפרויקט. לדוגמא: להיות מודע למצב שבו אני שחכתי להזין את אחד מה Prompts בסדרה.
+4. Checkup / verification Prompt 
+לא לשכוח ליצר   Prompt מסכם - Checkup / verification Prompt בסוף הסדרה שהמטרה שלו היא "לסגור קצוות" לבדוק שכל השינויים התבצעו בהצלחה. 
+5. Mega Prompt – optional 
+במידה וניתן להשתמש ב Mega Prompt אחד (בתנאי שלא יפגע בביצוע התקין של ה Replit AI agent  ) תציג Mega Prompt . תפעיל שיקול דעת ותחליט אם Mega Prompt "נכון" או עדיף סדרה של single Prompts.
+6. הצגה של Prompts בעזרת artifact Markdown + copy buttons
+תייצר את כל סדרת ה Prompts  במסמך אחד, בפורמט של קובץ ארטיפקט Markdown 
+עם לחצן "העתק" שיאפשר להעתיק את כל אחד מה Prompt  בנפרד.
+7. שימוש באייקונים עבור סוגים שונים של Prompts
+לא לשכוח להציג אייקונים שונים עבור הסוגים השונים של ה Prompts כמו:
+1.	Reconnaissance / investigation Prompt
+2.	Introduction Prompt
+3.	Checkup / verification Prompt
+4.	Task Prompt for Replit AI agent
+5.	Task Prompt for Database (במידה ויש צורך) ואז הפורמט של ה Prompt  חייב להיות "נקי" כדי שאני אעתיק פקודות ואדביק  ב SQL editor. 
+8. Mobile users
+לא לשכוח שהקוד צריך להתאים גם למשתמשים שמשתמשים ב Mobile devices.
+9. Secure code Best Practices
+לא לשכוח ליישם קוד "מאובטח" , תכנון של code security  כדי למנוע בעתיד תרחיש של שימוש לרעה על ידי גורם עוין.
+
+
+לענות לי אך ורק בשפה האנגלית 
+
+Debug Replit code
+
+קוד2 
+
+הפעלה של תהליך Debug מול Replit AI agent 
+הקדמה
+אני מבקש שתבצע אתחול של תהליך Debug מול Replit AI agent  
+הנחיה מנדטורית 
+אתה (Claude) חייב לקרוא, להבין ולציית להנחיות של מסמך ההנחיות 
+ReplitCOdeDebugProtocol.md
+בתהליך של תיכנון תהליך ה Debug
+
+
+הנחיות חשובת, לקרוא וליישם!
+
+
+1. Reconnaissance / investigation Prompt
+לפני שאתה (Claude) משקיע משאבים ביצרה של Prompt serious חשוב שאתה (Claude) תבין את סביבת העבודה והמצב הקיים של ה code repository של Replit 
+לכן ה first Prompt (zero Prompt ) יהיה Prompt  של תשאול ותחקור של סביבת הקוד 
+רק לאחר שאתה (Claude) תבין מה הסביבה הקיימת ב Replit  אתה תוכל לתכנן בצורה נכונה את עדכוני הקוד והשינויים הנדרשים.
+2. הנחיה להימנעות מאלתור 
+יש להדגיש בפני Replit AI agent  את הצורך המנדטורי להימנע מאלתור ולהימנע מיצרה של שינוים שלא הוגדר באופן מפורש בהנחיות של ה Prompt
+זו הנחיה שנכונה ל 100% מה Prompts.
+3. Introduction Prompt 
+לא לשכוח ליצר Prompt  שמציג את כל ה Prompt serious ומאפשר ל Replit AI agent  להבין את הפרויקט. לדוגמא: להיות מודע למצב שבו אני שחכתי להזין את אחד מה Prompts בסדרה.
+4. Checkup / verification Prompt 
+לא לשכוח ליצר   Prompt מסכם - Checkup / verification Prompt בסוף הסדרה שהמטרה שלו היא "לסגור קצוות" לבדוק שכל השינויים התבצעו בהצלחה. 
+5. Mega Prompt – optional 
+במידה וניתן להשתמש ב Mega Prompt אחד (בתנאי שלא יפגע בביצוע התקין של ה Replit AI agent  ) תציג Mega Prompt . תפעיל שיקול דעת ותחליט אם Mega Prompt "נכון" או עדיף סדרה של single Prompts.
+6. הצגה של Prompts בעזרת artifact Markdown + copy buttons
+תייצר את כל סדרת ה Prompts  במסמך אחד, בפורמט של קובץ ארטיפקט Markdown 
+עם לחצן "העתק" שיאפשר להעתיק את כל אחד מה Prompt  בנפרד.
+7. שימוש באייקונים עבור סוגים שונים של Prompts
+לא לשכוח להציג אייקונים שונים עבור הסוגים השונים של ה Prompts כמו:
+1.	Reconnaissance / investigation Prompt
+2.	Introduction Prompt
+3.	Checkup / verification Prompt
+4.	Task Prompt for Replit AI agent
+5.	Task Prompt for Database (במידה ויש צורך) ואז הפורמט של ה Prompt  חייב להיות "נקי" כדי שאני אעתיק פקודות ואדביק  ב SQL editor. 
+8. Mobile users
+לא לשכוח שהקוד צריך להתאים גם למשתמשים שמשתמשים ב Mobile devices.
+9. Secure code Best Practices
+לא לשכוח ליישם קוד "מאובטח" , תכנון של code security  כדי למנוע בעתיד תרחיש של שימוש לרעה על ידי גורם עוין.
+
+
+לענות לי אך ורק בשפה האנגלית 
+
+
+

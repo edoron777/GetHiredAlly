@@ -77,4 +77,8 @@ export interface TipBoxProps {
   onInputChange?: (id: string, value: string) => void
   width?: string
   className?: string
+  bulkAutoFixUsed?: boolean
+  isAutoFixable?: boolean
+  isPending?: boolean
+  isFixed?: boolean
 }

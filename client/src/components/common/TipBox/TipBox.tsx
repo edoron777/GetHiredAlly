@@ -15,11 +15,28 @@ export const TipBox: React.FC<TipBoxProps> = ({
   buttons = [],
   onInputChange,
   width = '500px',
-  className = ''
+  className = '',
+  bulkAutoFixUsed = false,
+  isAutoFixable = false,
+  isPending = false,
+  isFixed = false
 }) => {
   const colorScheme: TipBoxColor = color || TIPBOX_COLORS[severity]
 
   if (!isOpen) return null
+
+  const showAutoFixButton = 
+    isAutoFixable && 
+    !bulkAutoFixUsed && 
+    !isFixed &&
+    !isPending
+
+  const filteredButtons = buttons.filter(button => {
+    if (button.id === 'auto-fix') {
+      return showAutoFixButton
+    }
+    return true
+  })
 
   const getButtonStyle = (variant: string) => {
     switch (variant) {
@@ -80,9 +97,15 @@ export const TipBox: React.FC<TipBoxProps> = ({
           ))}
         </div>
 
-        {buttons.length > 0 && (
+        {!showAutoFixButton && !isFixed && !isPending && isAutoFixable && (
+          <p className="tipbox-info">
+            ℹ️ This issue requires your personal input
+          </p>
+        )}
+
+        {filteredButtons.length > 0 && (
           <div className="tipbox-footer">
-            {buttons.map((button) => (
+            {filteredButtons.map((button) => (
               <button
                 key={button.id}
                 className={`tipbox-btn tipbox-btn-${button.variant}`}
