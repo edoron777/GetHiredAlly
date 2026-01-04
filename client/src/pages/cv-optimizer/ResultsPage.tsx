@@ -732,7 +732,6 @@ export default function ResultsPage() {
             <ListViewTab
               issues={listViewIssues}
               onIssueClick={handleIssueClick}
-              onApplyFix={handleApplyFix}
             />
           ) : (
             <SideBySideView

@@ -255,3 +255,58 @@
 .severity-group-content .issue-card:last-child {
     margin-bottom: 0;
 }
+
+.issue-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+    border: 1px solid #E5E7EB;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+    background: white;
+}
+
+.issue-row:last-child {
+    margin-bottom: 0;
+}
+
+.issue-row:hover {
+    background-color: #F9FAFB;
+    border-color: #D1D5DB;
+}
+
+.issue-row:focus {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+}
+
+.issue-status-icon {
+    font-size: 14px;
+    color: #9CA3AF;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.issue-row-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.issue-row-title {
+    display: block;
+    font-weight: 500;
+    color: #1E3A5F;
+    margin-bottom: 4px;
+}
+
+.issue-row-preview {
+    display: block;
+    font-size: 14px;
+    color: #6B7280;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

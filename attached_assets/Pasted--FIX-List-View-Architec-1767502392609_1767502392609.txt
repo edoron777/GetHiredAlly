@@ -1,0 +1,172 @@
+═══════════════════════════════════════════════════════════════════════════
+FIX: List View Architecture - Remove Quick Fix, Simplify to Clickable Rows
+═══════════════════════════════════════════════════════════════════════════
+
+FILE TO MODIFY:
+client/src/components/cv-optimizer/ListViewTab/ListViewTab.tsx
+
+───────────────────────────────────────────────────────────────────────────
+
+CHANGE 1: Remove onApplyFix from Props Interface (around line 7-11)
+
+BEFORE:
+interface ListViewTabProps {
+  issues: Issue[];
+  onIssueClick: (issueId: string) => void;
+  onApplyFix: (issueId: string, suggestedText: string) => void;
+}
+
+AFTER:
+interface ListViewTabProps {
+  issues: Issue[];
+  onIssueClick: (issueId: string) => void;
+}
+
+───────────────────────────────────────────────────────────────────────────
+
+CHANGE 2: Remove onApplyFix from Component Destructuring
+
+BEFORE:
+const ListViewTab: React.FC<ListViewTabProps> = ({ issues, onIssueClick, onApplyFix }) => {
+
+AFTER:
+const ListViewTab: React.FC<ListViewTabProps> = ({ issues, onIssueClick }) => {
+
+───────────────────────────────────────────────────────────────────────────
+
+CHANGE 3: Remove Quick Fix Button (lines 157-164)
+
+DELETE this entire block:
+{issue.suggestedText && (
+  <button 
+    className="quick-fix-btn"
+    onClick={() => onApplyFix(issue.id, issue.suggestedText!)}
+  >
+    Quick Fix
+  </button>
+)}
+
+───────────────────────────────────────────────────────────────────────────
+
+CHANGE 4: Replace Card with Clickable Row
+
+Replace the current issue card structure with a simpler clickable row.
+
+The entire card div should become a single clickable element:
+
+<div 
+  key={issue.id}
+  className="issue-row"
+  onClick={() => onIssueClick(issue.id)}
+  role="button"
+  tabIndex={0}
+  onKeyDown={(e) => e.key === 'Enter' && onIssueClick(issue.id)}
+>
+  <span className="issue-status-icon">○</span>
+  <div className="issue-row-content">
+    <span className="issue-row-title">{issue.title}</span>
+    <span className="issue-row-preview">
+      {issue.currentText 
+        ? `"${issue.currentText.substring(0, 60)}${issue.currentText.length > 60 ? '...' : ''}"` 
+        : issue.description?.substring(0, 80)}
+    </span>
+  </div>
+</div>
+
+Remove the "View Details" button - the whole row is now clickable.
+
+───────────────────────────────────────────────────────────────────────────
+
+CHANGE 5: Add/Update CSS Styles
+
+Add these styles (in the component's CSS or as inline Tailwind):
+
+.issue-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1px solid #E5E7EB;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+  background: white;
+}
+
+.issue-row:hover {
+  background-color: #F9FAFB;
+  border-color: #D1D5DB;
+}
+
+.issue-status-icon {
+  font-size: 14px;
+  color: #9CA3AF;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.issue-row-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.issue-row-title {
+  display: block;
+  font-weight: 500;
+  color: #1E3A5F;
+  margin-bottom: 4px;
+}
+
+.issue-row-preview {
+  display: block;
+  font-size: 14px;
+  color: #6B7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+───────────────────────────────────────────────────────────────────────────
+
+ALSO UPDATE ResultsPage.tsx (line 732-735):
+
+BEFORE:
+<ListViewTab
+  issues={listViewIssues}
+  onIssueClick={handleIssueClick}
+  onApplyFix={handleApplyFix}
+/>
+
+AFTER:
+<ListViewTab
+  issues={listViewIssues}
+  onIssueClick={handleIssueClick}
+/>
+
+───────────────────────────────────────────────────────────────────────────
+
+KEEP UNCHANGED:
+- Severity grouping (Critical, Important, Consider, Polish)
+- Collapse/Expand functionality
+- Issue counts per severity
+
+───────────────────────────────────────────────────────────────────────────
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- Do NOT keep Quick Fix button anywhere
+- Do NOT add new features
+- Do NOT modify TipBox component
+- If unclear, STOP and ask
+
+───────────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+After changes, test:
+[ ] List View shows simple clickable rows
+[ ] NO "Quick Fix" button anywhere
+[ ] Clicking a row opens TipBox
+[ ] TipBox shows correct issue
+[ ] Document View still works
+
+═══════════════════════════════════════════════════════════════════════════

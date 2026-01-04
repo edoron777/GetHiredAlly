@@ -8,13 +8,11 @@ interface Issue {
   title: string;
   description?: string;
   currentText?: string;
-  suggestedText?: string;
 }
 
 interface ListViewTabProps {
   issues: Issue[];
   onIssueClick: (issueId: string) => void;
-  onApplyFix: (issueId: string, suggestedText: string) => void;
 }
 
 const SEVERITY_CONFIG = {
@@ -50,7 +48,7 @@ const SEVERITY_CONFIG = {
 
 const SEVERITY_ORDER: Array<'critical' | 'important' | 'consider' | 'polish'> = ['critical', 'important', 'consider', 'polish'];
 
-export default function ListViewTab({ issues, onIssueClick, onApplyFix }: ListViewTabProps) {
+export default function ListViewTab({ issues, onIssueClick }: ListViewTabProps) {
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
     critical: true,
     important: true,
@@ -124,44 +122,22 @@ export default function ListViewTab({ issues, onIssueClick, onApplyFix }: ListVi
 
               <div className={`severity-group-content ${isExpanded ? 'expanded' : 'collapsed'}`}>
                 {severityIssues.map(issue => (
-                  <div key={issue.id} className="issue-card" style={{ borderLeftColor: config.color }}>
-                    <div className="issue-card-header">
-                      <span 
-                        className="issue-severity-badge"
-                        style={{ background: config.cardBg, color: config.color }}
-                      >
-                        <Icon size={14} />
-                        {config.label.toUpperCase()}
+                  <div 
+                    key={issue.id}
+                    className="issue-row"
+                    onClick={() => onIssueClick(issue.id)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => e.key === 'Enter' && onIssueClick(issue.id)}
+                  >
+                    <span className="issue-status-icon">○</span>
+                    <div className="issue-row-content">
+                      <span className="issue-row-title">{issue.title}</span>
+                      <span className="issue-row-preview">
+                        {issue.currentText 
+                          ? `"${issue.currentText.substring(0, 60)}${issue.currentText.length > 60 ? '...' : ''}"` 
+                          : issue.description?.substring(0, 80)}
                       </span>
-                      <span className="issue-card-title">{issue.title}</span>
-                    </div>
-
-                    {issue.description && (
-                      <p className="issue-card-description">{issue.description}</p>
-                    )}
-
-                    {issue.currentText && (
-                      <div className="issue-card-context">
-                        <span className="context-label">Current:</span>
-                        <span className="context-text">"{issue.currentText}"</span>
-                      </div>
-                    )}
-
-                    <div className="issue-card-actions">
-                      <button 
-                        className="view-details-btn"
-                        onClick={() => onIssueClick(issue.id)}
-                      >
-                        View Details
-                      </button>
-                      {issue.suggestedText && (
-                        <button 
-                          className="quick-fix-btn"
-                          onClick={() => onApplyFix(issue.id, issue.suggestedText!)}
-                        >
-                          Quick Fix
-                        </button>
-                      )}
                     </div>
                   </div>
                 ))}
