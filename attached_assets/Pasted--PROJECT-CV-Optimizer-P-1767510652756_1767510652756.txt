@@ -1,0 +1,223 @@
+═══════════════════════════════════════════════════════════════════════════
+PROJECT: CV Optimizer P1 - PROMPT 5#9: Create Progress Section
+═══════════════════════════════════════════════════════════════════════════
+
+TASK:
+Create the Progress Section component with weighted progress calculation.
+
+───────────────────────────────────────────────────────────────────────────
+
+CREATE NEW FILE:
+client/src/components/cv-optimizer/ProgressSection.tsx
+
+───────────────────────────────────────────────────────────────────────────
+
+COMPONENT CODE:
+
+import React, { useMemo } from 'react';
+import { Clock, RefreshCw } from 'lucide-react';
+
+interface Issue {
+  id?: string;
+  issue_code?: string;
+  severity: 'critical' | 'important' | 'consider' | 'polish';
+}
+
+interface ProgressSectionProps {
+  issues: Issue[];
+  fixedIssues: Set<string>;
+  pendingIssues: Set<string>;
+  pendingChanges: number;
+  onUpdateScore: () => void;
+  isLoading?: boolean;
+}
+
+const SEVERITY_WEIGHTS = {
+  critical: 9,
+  important: 6,
+  consider: 4,
+  polish: 2
+};
+
+export const ProgressSection: React.FC<ProgressSectionProps> = ({
+  issues,
+  fixedIssues,
+  pendingIssues,
+  pendingChanges,
+  onUpdateScore,
+  isLoading = false
+}) => {
+  const { progress, addressedCount, totalCount } = useMemo(() => {
+    if (!issues || issues.length === 0) {
+      return { progress: 0, addressedCount: 0, totalCount: 0 };
+    }
+    
+    const totalWeight = issues.reduce((sum, issue) => 
+      sum + (SEVERITY_WEIGHTS[issue.severity] || 2), 0);
+    
+    const addressedWeight = issues.reduce((sum, issue) => {
+      const issueId = issue.id || issue.issue_code || '';
+      if (fixedIssues.has(issueId) || pendingIssues.has(issueId)) {
+        return sum + (SEVERITY_WEIGHTS[issue.severity] || 2);
+      }
+      return sum;
+    }, 0);
+    
+    const addressedCount = fixedIssues.size + pendingIssues.size;
+    const progress = totalWeight > 0 
+      ? Math.round((addressedWeight / totalWeight) * 100) 
+      : 0;
+    
+    return { progress, addressedCount, totalCount: issues.length };
+  }, [issues, fixedIssues, pendingIssues]);
+
+  return (
+    <div className="progress-section">
+      <h3 className="progress-title">Progress</h3>
+      
+      <div className="progress-bar-container">
+        <div 
+          className="progress-bar-fill"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+      
+      <p className="progress-text">
+        {addressedCount} of {totalCount} issues addressed ({progress}%)
+      </p>
+      
+      {pendingChanges > 0 && (
+        <div className="pending-changes-box">
+          <div className="pending-header">
+            <Clock size={16} />
+            <span>{pendingChanges} changes pending</span>
+          </div>
+          
+          <button
+            className="update-score-button"
+            onClick={onUpdateScore}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <RefreshCw size={16} className="animate-spin" />
+                Updating...
+              </>
+            ) : (
+              <>
+                <RefreshCw size={16} />
+                Update &amp; See New Score
+              </>
+            )}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default ProgressSection;
+
+───────────────────────────────────────────────────────────────────────────
+
+ADD CSS STYLES:
+
+.progress-section {
+  margin-top: 16px;
+}
+
+.progress-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1E3A5F;
+  margin-bottom: 8px;
+}
+
+.progress-bar-container {
+  height: 8px;
+  background: #E5E7EB;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #22C55E, #16A34A);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  font-size: 13px;
+  color: #6B7280;
+  margin-top: 6px;
+}
+
+.pending-changes-box {
+  background: #FEF3C7;
+  border: 1px solid #F59E0B;
+  border-radius: 6px;
+  padding: 12px;
+  margin-top: 12px;
+}
+
+.pending-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #92400E;
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+
+.update-score-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 16px;
+  background: #1E3A5F;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.update-score-button:hover:not(:disabled) {
+  background: #2D4A6F;
+}
+
+.update-score-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+───────────────────────────────────────────────────────────────────────────
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- Create the file EXACTLY as shown
+- Use the SEVERITY_WEIGHTS exactly as defined
+- Do NOT change the calculation formula
+
+───────────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+[ ] File created at correct path
+[ ] Progress bar shows correct percentage
+[ ] Pending box appears only when pendingChanges > 0
+[ ] Weighted calculation uses severity weights
+
+═══════════════════════════════════════════════════════════════════════════

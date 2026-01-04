@@ -356,6 +356,123 @@ export default function ResultsPage() {
     setIsTipBoxOpen(false);
   };
 
+  // ═══════════════════════════════════════════════════════════════════════
+  // BULK AUTO FIX HANDLER
+  // ═══════════════════════════════════════════════════════════════════════
+
+  const handleOpenBulkAutoFixModal = () => {
+    setShowBulkAutoFixModal(true);
+  };
+
+  const handleBulkAutoFix = async () => {
+    if (!reportData?.issues) return;
+    
+    setIsRescanning(true);
+    
+    try {
+      // Get all auto-fixable issues that haven't been fixed yet
+      const autoFixableIssues = reportData.issues.filter(issue => {
+        const normalized = normalizeIssue(issue, 0);
+        const issueId = issue.id || issue.issue_type || '';
+        return normalized.isAutoFixable && 
+               !fixedIssues.has(issueId) &&
+               !pendingIssues.has(issueId);
+      });
+      
+      // Get current CV content
+      let updatedCV = fixedCV || reportData.cv_content;
+      const newFixedIssueIds: string[] = [];
+      
+      // Apply all auto-fixes
+      for (const issue of autoFixableIssues) {
+        const normalized = normalizeIssue(issue, 0);
+        const issueId = issue.id || issue.issue_type || '';
+        const suggestedText = normalized.suggestedText;
+        const matchText = normalized.matchText;
+        
+        if (suggestedText && matchText && updatedCV.includes(matchText)) {
+          updatedCV = updatedCV.replace(matchText, suggestedText);
+          newFixedIssueIds.push(issueId);
+        }
+      }
+      
+      // Update CV content
+      setFixedCV(updatedCV);
+      
+      // Track all as fixed
+      setFixedIssues(prev => {
+        const newSet = new Set(prev);
+        newFixedIssueIds.forEach(id => newSet.add(id));
+        return newSet;
+      });
+      
+      // Mark bulk auto fix as used
+      setBulkAutoFixUsed(true);
+      
+      // Close the confirmation modal
+      setShowBulkAutoFixModal(false);
+      
+      // Save previous score before rescan
+      const prevScore = currentScore;
+      setPreviousScore(prevScore);
+      
+      // Trigger rescan with updated CV
+      const token = getAuthToken();
+      const response = await fetch('/api/cv-optimizer/scan', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ 
+          cv_content: updatedCV,
+          job_description: null
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Rescan failed');
+      }
+      
+      const newReport = await response.json();
+      const newScore = newReport.cv_score || newReport.score || 0;
+      
+      // Update report data
+      setReportData(newReport);
+      setCurrentScore(newScore);
+      
+      // Clear fixed state (everything is fresh from new scan)
+      setFixedCV(null);
+      setFixedIssues(new Set());
+      
+      // Clear pending
+      setPendingChanges(0);
+      setPendingIssues(new Set());
+      
+      // Calculate score change
+      const scoreChange = newScore > prevScore ? 'improved' 
+                        : newScore < prevScore ? 'dropped' 
+                        : 'unchanged';
+      
+      // Show result modal
+      setResultModalData({
+        previousScore: prevScore,
+        newScore: newScore,
+        fixedCount: newFixedIssueIds.length,
+        remainingCount: newReport.issues?.length || 0,
+        scoreChange
+      });
+      setShowResultModal(true);
+      
+      console.log('Bulk auto fix complete:', { fixed: newFixedIssueIds.length, newScore });
+      
+    } catch (error) {
+      console.error('Bulk auto fix failed:', error);
+    } finally {
+      setIsRescanning(false);
+    }
+  };
+
   const handleTipBoxInputChange = (id: string, value: string) => {
     if (id === 'user-edit') {
       setUserEditText(value);
