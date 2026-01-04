@@ -1,0 +1,117 @@
+═══════════════════════════════════════════════════════════════════════════════
+🔍 DEBUG: TipBox Data Mapping Problem
+═══════════════════════════════════════════════════════════════════════════════
+
+List View and Left Sidebar work correctly.
+TipBox content is COMPLETELY WRONG - showing wrong data in each field.
+Document View markers are not appearing.
+
+I need to find WHERE the data mapping breaks.
+
+───────────────────────────────────────────────────────────────────────────────
+STEP 1: Find what Backend API Returns
+───────────────────────────────────────────────────────────────────────────────
+
+Find the API endpoint that returns CV issues (likely in cv_optimizer routes).
+
+Add logging to show EXACTLY what it returns for each issue:
+```python
+# In the endpoint that returns issues:
+print(f"[API RESPONSE] Returning {len(issues)} issues")
+for issue in issues[:3]:  # Show first 3
+    print(f"[API RESPONSE] Issue keys: {issue.keys()}")
+    print(f"[API RESPONSE] Full issue: {json.dumps(issue, indent=2)[:500]}")
+```
+
+REPORT: What field names does the API return?
+- issue_code: ___
+- display_name or name: ___
+- current_text or current or match_text: ___
+- static_tip or tip or how_to_fix: ___
+- example_before: ___
+- example_after: ___
+- description or why_this_matters: ___
+
+───────────────────────────────────────────────────────────────────────────────
+STEP 2: Find what TipBox Component Expects
+───────────────────────────────────────────────────────────────────────────────
+
+Find the TipBox component (likely in client/src/components/cv-optimizer/).
+
+Show me:
+1. The props interface/type definition
+2. How it uses each prop to display:
+   - ISSUE IN YOUR CV section
+   - WHY THIS MATTERS section
+   - HOW TO FIX section
+   - GOOD EXAMPLE section
+
+REPORT: What prop names does TipBox expect?
+- For issue title: ___
+- For "ISSUE IN YOUR CV": ___
+- For "WHY THIS MATTERS": ___
+- For "HOW TO FIX": ___
+- For "GOOD EXAMPLE": ___
+
+───────────────────────────────────────────────────────────────────────────────
+STEP 3: Find the Data Transformation Layer
+───────────────────────────────────────────────────────────────────────────────
+
+There must be code that transforms backend data to frontend props.
+
+Search for:
+- Where issues from API are passed to TipBox
+- Any mapping/transformation of field names
+- Look in ResultsPage.tsx or similar
+
+Show me the code that passes data to TipBox:
+```jsx
+<TipBox
+  issueCode={???}
+  currentText={???}
+  whyThisMatters={???}
+  howToFix={???}
+  ...
+/>
+```
+
+REPORT: How is data mapped from API response to TipBox props?
+
+───────────────────────────────────────────────────────────────────────────────
+STEP 4: Identify the Mismatch
+───────────────────────────────────────────────────────────────────────────────
+
+Compare:
+- Backend returns: { field_name_A: "value" }
+- TipBox expects: { field_name_B: "value" }
+
+Where field_name_A ≠ field_name_B = BUG
+
+Create a mapping table:
+
+| TipBox Expects | Backend Returns | Match? |
+|----------------|-----------------|--------|
+| currentText    | ???             | ???    |
+| whyThisMatters | ???             | ???    |
+| howToFix       | ???             | ???    |
+| goodExample    | ???             | ???    |
+
+───────────────────────────────────────────────────────────────────────────────
+STEP 5: Check Document View Marker Logic
+───────────────────────────────────────────────────────────────────────────────
+
+Find how Document View creates markers/highlights.
+
+It probably:
+1. Gets `current_text` from issue
+2. Searches for that text in the CV
+3. Highlights matching text
+
+If `current_text` is wrong (too long, truncated, or wrong content),
+markers won't work.
+
+Show me the marker/highlight logic.
+
+═══════════════════════════════════════════════════════════════════════════════
+DO NOT FIX YET - REPORT THE MAPPING MISMATCH
+═══════════════════════════════════════════════════════════════════════════════

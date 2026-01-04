@@ -41,6 +41,8 @@ class DetectedIssue:
     title: Optional[str] = None
     line_number: Optional[int] = None
     details: Optional[Dict[str, Any]] = None
+    example_before: Optional[str] = None
+    example_after: Optional[str] = None
     
     @property
     def match_text(self) -> str:
@@ -58,10 +60,14 @@ class DetectedIssue:
             'current': self.current,
             'current_text': self.current,
             'suggestion': self.suggestion,
+            'static_tip': self.suggestion,
             'severity': self.severity,
             'weight': self.weight,
             'can_auto_fix': self.can_auto_fix,
+            'is_auto_fixable': self.can_auto_fix,
             'is_highlightable': self.is_highlightable,
+            'example_before': self.example_before or '',
+            'example_after': self.example_after or '',
         }
         if self.location:
             result['location'] = self.location
@@ -203,7 +209,9 @@ class BaseHandler(ABC):
             location=location,
             title=title or rule.display_name,
             line_number=line_number,
-            details=details
+            details=details,
+            example_before=rule.example_before,
+            example_after=rule.example_after
         )
     
     def get_config_value(
