@@ -1,0 +1,202 @@
+═══════════════════════════════════════════════════════════════════════════
+PROJECT: CV Optimizer P1 - PROMPT 3#9: Create Bulk Auto Fix Modal
+═══════════════════════════════════════════════════════════════════════════
+
+TASK:
+Create the confirmation modal that appears before bulk auto fix.
+
+───────────────────────────────────────────────────────────────────────────
+
+CREATE NEW FILE:
+client/src/components/cv-optimizer/BulkAutoFixModal.tsx
+
+───────────────────────────────────────────────────────────────────────────
+
+COMPONENT CODE:
+
+import React from 'react';
+import { Zap, X } from 'lucide-react';
+
+interface BulkAutoFixModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  count: number;
+  isLoading?: boolean;
+}
+
+export const BulkAutoFixModal: React.FC<BulkAutoFixModalProps> = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  count,
+  isLoading = false
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content bulk-fix-modal" onClick={e => e.stopPropagation()}>
+        <button className="modal-close" onClick={onClose}>
+          <X size={20} />
+        </button>
+        
+        <div className="modal-header">
+          <Zap className="modal-icon" size={32} />
+          <h2>Auto Fix {count} Issues?</h2>
+        </div>
+        
+        <div className="modal-body">
+          <p>
+            This will automatically apply suggested fixes to <strong>{count}</strong> issues.
+          </p>
+          <p>
+            Your CV will be rescanned to show your new score.
+          </p>
+        </div>
+        
+        <div className="modal-actions">
+          <button 
+            className="modal-button secondary"
+            onClick={onClose}
+            disabled={isLoading}
+          >
+            Cancel
+          </button>
+          <button 
+            className="modal-button primary"
+            onClick={onConfirm}
+            disabled={isLoading}
+          >
+            {isLoading ? 'Processing...' : 'Yes, Fix All'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default BulkAutoFixModal;
+
+───────────────────────────────────────────────────────────────────────────
+
+ADD CSS STYLES:
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 400px;
+  width: 90%;
+  position: relative;
+}
+
+.modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #6B7280;
+}
+
+.modal-close:hover {
+  color: #1E3A5F;
+}
+
+.modal-header {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.modal-header .modal-icon {
+  color: #F59E0B;
+  margin-bottom: 8px;
+}
+
+.modal-header h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1E3A5F;
+  margin: 0;
+}
+
+.modal-body {
+  text-align: center;
+  color: #4B5563;
+  margin-bottom: 24px;
+}
+
+.modal-body p {
+  margin: 8px 0;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.modal-button {
+  padding: 10px 24px;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.modal-button.secondary {
+  background: #F3F4F6;
+  border: 1px solid #D1D5DB;
+  color: #4B5563;
+}
+
+.modal-button.secondary:hover:not(:disabled) {
+  background: #E5E7EB;
+}
+
+.modal-button.primary {
+  background: #1E3A5F;
+  border: none;
+  color: white;
+}
+
+.modal-button.primary:hover:not(:disabled) {
+  background: #2D4A6F;
+}
+
+.modal-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+───────────────────────────────────────────────────────────────────────────
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- Create the file EXACTLY as shown
+- Do NOT add extra features
+- Do NOT integrate into ResultsPage yet
+
+───────────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+[ ] File created at correct path
+[ ] Modal renders correctly when isOpen=true
+[ ] Modal hidden when isOpen=false
+[ ] Styles applied correctly
+
+═══════════════════════════════════════════════════════════════════════════
