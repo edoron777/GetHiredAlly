@@ -1,0 +1,67 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  🔍 RFI: INVESTIGATE CHANGES EXTRACTION IMPLEMENTATION                        ║
+║  Target: Replit AI Agent                                                      ║
+║  Type: Investigation Only - NO CODE CHANGES                                   ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+Do NOT make any code changes. Only report findings.
+
+────────────────────────────────────────────────────────────────────────────────
+
+CONTEXT:
+I need to understand the current AI-based Changes Extraction feature 
+in the CV Optimizer Auto-Fix flow before replacing it with a code-based approach.
+
+Based on the audit, Changes Extraction is at cv_optimizer.py:1091
+
+────────────────────────────────────────────────────────────────────────────────
+
+QUESTIONS:
+
+1. CURRENT IMPLEMENTATION:
+   - Show the complete function/code block that calls AI for Changes Extraction
+   - What is the exact function name?
+   - What line numbers does it span?
+   - What AI model is being called (Gemini/Claude)?
+
+2. INPUT/OUTPUT:
+   - What parameters does the Changes Extraction function receive?
+   - What is the exact format of the output? (List? Dict? String?)
+   - Show an example of the expected output format
+
+3. CALLER CONTEXT:
+   - What function calls the Changes Extraction?
+   - How is the result used after extraction?
+   - Where is the changes list displayed to the user?
+
+4. DATA AVAILABLE AT CALL TIME:
+   - At the point of Changes Extraction, what data is already available?
+   - Is the original CV text available?
+   - Is the fixed CV text available?
+   - Is the list of detected issues available?
+   - Is the list of issues that were fixed available?
+
+5. RELATED CODE:
+   - Show the Auto-Fix function that generates the fixed CV (cv_optimizer.py:1050)
+   - How does Auto-Fix know which issues to fix?
+   - Is there an "issues_fixed" list or similar data structure?
+
+6. AI PROMPT:
+   - Show the exact prompt being sent to AI for Changes Extraction
+   - What instructions does the AI receive?
+
+────────────────────────────────────────────────────────────────────────────────
+
+RESPONSE FORMAT:
+
+For each question, provide:
+- Answer with specific details
+- Code snippets where relevant
+- File paths (exact)
+- Line numbers
+- "NOT FOUND" or "DOES NOT EXIST" if applicable
+
+────────────────────────────────────────────────────────────────────────────────
+
+DO NOT MODIFY ANY CODE.
+REPORT ONLY.
