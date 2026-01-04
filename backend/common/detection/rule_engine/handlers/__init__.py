@@ -9,6 +9,7 @@ from .presence_handler import PresenceHandler
 from .absence_handler import AbsenceHandler
 from .count_handler import CountHandler
 from .length_handler import LengthHandler
+from .consistency_handler import ConsistencyHandler
 
 __all__ = [
     'BaseHandler', 
@@ -18,5 +19,6 @@ __all__ = [
     'PresenceHandler',
     'AbsenceHandler',
     'CountHandler',
-    'LengthHandler'
+    'LengthHandler',
+    'ConsistencyHandler'
 ]
