@@ -1,4 +1,5 @@
 import React from 'react'
+import { SEVERITY_COLORS } from '@/constants/severityColors'
 
 export type SectionType = 
   | 'header'
@@ -38,23 +39,23 @@ export interface TipBoxColor {
 
 export const TIPBOX_COLORS: Record<string, TipBoxColor> = {
   critical: {
-    primary: '#990033',
-    light: '#fff0f5',
+    primary: SEVERITY_COLORS.critical.primary,
+    light: SEVERITY_COLORS.critical.background,
     text: '#ffffff'
   },
   important: {
-    primary: '#990099',
-    light: '#fdf0fd',
+    primary: SEVERITY_COLORS.important.primary,
+    light: SEVERITY_COLORS.important.background,
     text: '#ffffff'
   },
   consider: {
-    primary: '#008080',
-    light: '#f0ffff',
+    primary: SEVERITY_COLORS.consider.primary,
+    light: SEVERITY_COLORS.consider.background,
     text: '#ffffff'
   },
   polish: {
-    primary: '#1E5A85',
-    light: '#f0f7ff',
+    primary: SEVERITY_COLORS.polish.primary,
+    light: SEVERITY_COLORS.polish.background,
     text: '#ffffff'
   },
   info: {
