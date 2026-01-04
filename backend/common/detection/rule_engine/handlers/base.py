@@ -123,7 +123,7 @@ class BaseHandler(ABC):
             target_section: Section name from detection_config
             
         Returns:
-            Text for that section (or full CV if 'all' or not found)
+            Text for that section (empty string if not found - NO FALLBACK)
         """
         if target_section == 'all':
             return cv_structure.raw_text
@@ -138,7 +138,13 @@ class BaseHandler(ABC):
         }
         
         text = section_map.get(target_section)
-        return text if text else cv_structure.raw_text
+        
+        if text:
+            logger.debug(f"[get_target_text] {target_section}: {len(text)} chars")
+        else:
+            logger.warning(f"[get_target_text] {target_section}: NOT FOUND (returning empty, NOT falling back to full CV)")
+        
+        return text if text else ''
     
     def _extract_contact(self, cv_structure: CVStructure) -> str:
         """

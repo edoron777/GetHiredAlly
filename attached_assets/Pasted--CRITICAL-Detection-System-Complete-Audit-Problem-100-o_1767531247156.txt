@@ -1,0 +1,162 @@
+# CRITICAL: Detection System Complete Audit
+
+**Problem:** 100% of detection is broken - wrong detections, wrong markers, wrong TipBox content  
+**Date:** January 4, 2026
+
+---
+
+## Send This to Replit:
+
+```
+═══════════════════════════════════════════════════════════════════════════════
+🚨 CRITICAL AUDIT: Detection System is 100% Broken
+═══════════════════════════════════════════════════════════════════════════════
+
+STOP. The entire detection system is broken:
+
+1. "Bullet Point Too Short" detects CERTIFICATIONS, not bullets
+2. Markers appear INSIDE words (wrong position)  
+3. 16 issues in sidebar, but not all show in Document View
+4. TipBox shows wrong/irrelevant content
+
+I need a COMPLETE audit of the detection flow.
+
+───────────────────────────────────────────────────────────────────────────────
+AUDIT STEP 1: Which detection engine is running?
+───────────────────────────────────────────────────────────────────────────────
+
+Check Secrets:
+- What is CV_USE_NEW_DETECTION_ENGINE value?
+- What is CV_DETECTION_PARALLEL_MODE value?
+
+If NEW engine (database-driven) is running:
+- Show me the code path from API call to detection
+
+If OLD engine (hardcoded) is running:
+- Why? The new engine should be active
+
+REPORT: Which engine is actually being used? ___
+
+───────────────────────────────────────────────────────────────────────────────
+AUDIT STEP 2: Trace "Bullet Point Too Short" detection
+───────────────────────────────────────────────────────────────────────────────
+
+The system detects "• Google AI Essentials (Google)" as "Bullet Point Too Short".
+
+This is a CERTIFICATION LINE, not a bullet point in Experience section!
+
+1. Show me the detection_config for LENGTH_BULLET_TOO_SHORT:
+```sql
+SELECT issue_code, detection_config 
+FROM cv_issue_types 
+WHERE issue_code LIKE '%BULLET%SHORT%';
+```
+
+2. Show me which handler processes this issue type
+
+3. Add logging to that handler:
+```python
+print(f"[BULLET_HANDLER] Checking text: {text[:100]}")
+print(f"[BULLET_HANDLER] target_section from config: {config.get('target_section')}")
+print(f"[BULLET_HANDLER] Actual section being checked: {section_name}")
+```
+
+4. WHY is it finding certifications?
+   - Is target_section wrong?
+   - Is section extraction wrong?
+   - Is the handler ignoring target_section?
+
+───────────────────────────────────────────────────────────────────────────────
+AUDIT STEP 3: Why are markers in wrong positions?
+───────────────────────────────────────────────────────────────────────────────
+
+Example: Marker appears INSIDE "I●nnovation" instead of on standalone "I"
+
+The word boundary fix was supposedly applied. But markers still wrong.
+
+1. Show me the CURRENT MarkerService.ts code
+2. Is the word boundary fix actually in the deployed code?
+3. Add console.log to marker placement:
+```javascript
+console.log('[MARKER] matchText:', marker.matchText);
+console.log('[MARKER] found at index:', index);
+console.log('[MARKER] context:', content.substring(index-10, index+20));
+```
+
+───────────────────────────────────────────────────────────────────────────────
+AUDIT STEP 4: Why don't all issues appear in Document View?
+───────────────────────────────────────────────────────────────────────────────
+
+Sidebar shows 16 issues. Document View shows fewer.
+
+1. Show me how Document View filters issues
+2. What property determines if issue appears in Document View?
+3. Is there an `is_highlightable` or similar flag?
+4. Which issues have this flag = false?
+
+REPORT: 
+- How many issues have is_highlightable = true? ___
+- How many have is_highlightable = false? ___
+- What determines this flag? ___
+
+───────────────────────────────────────────────────────────────────────────────
+AUDIT STEP 5: Full detection trace with logging
+───────────────────────────────────────────────────────────────────────────────
+
+Add comprehensive logging to trace ENTIRE detection flow:
+
+1. In master_detector.py (or wherever detection starts):
+```python
+print(f"[DETECTION] Starting detection")
+print(f"[DETECTION] Using engine: {'NEW' if USE_NEW_ENGINE else 'OLD'}")
+```
+
+2. In RuleLoader:
+```python
+print(f"[LOADER] Loaded {len(rules)} rules from database")
+print(f"[LOADER] Rules: {[r.issue_code for r in rules]}")
+```
+
+3. In RuleEngine.detect_all_issues():
+```python
+print(f"[ENGINE] Processing {len(rules)} rules")
+for rule in rules:
+    print(f"[ENGINE] Applying rule: {rule.issue_code}, type: {rule.detection_config.get('type')}")
+```
+
+4. In each handler:
+```python
+print(f"[HANDLER] {self.__class__.__name__} for {rule.issue_code}")
+print(f"[HANDLER] target_section: {config.get('target_section')}")
+print(f"[HANDLER] text length: {len(target_text)}")
+print(f"[HANDLER] found issues: {len(issues)}")
+```
+
+5. After all detection:
+```python
+print(f"[DETECTION] Total issues found: {len(all_issues)}")
+for issue in all_issues:
+    print(f"[DETECTION] - {issue.get('issue_code')}: {issue.get('current', '')[:50]}")
+```
+
+───────────────────────────────────────────────────────────────────────────────
+AUDIT STEP 6: Analyze a real CV and show full log
+───────────────────────────────────────────────────────────────────────────────
+
+After adding all logging:
+1. Restart backend
+2. Analyze the David Cohen CV
+3. Copy the COMPLETE console output
+4. Share with me
+
+I need to see:
+- Which engine ran
+- How many rules loaded
+- Which rules triggered
+- What text each rule matched
+- Why "Bullet Point Too Short" matched certifications
+
+═══════════════════════════════════════════════════════════════════════════════
+DO NOT ATTEMPT TO FIX - JUST ADD LOGGING AND REPORT FINDINGS
+═══════════════════════════════════════════════════════════════════════════════
+```
