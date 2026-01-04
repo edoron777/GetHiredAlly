@@ -44,6 +44,7 @@ class DetectedIssue:
             'issue_code': self.issue_code,
             'issue_type': self.issue_type,
             'match_text': self.match_text,
+            'current_text': self.match_text,
             'suggestion': self.suggestion,
             'severity': self.severity,
             'weight': self.weight,
