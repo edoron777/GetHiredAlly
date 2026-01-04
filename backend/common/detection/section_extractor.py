@@ -101,6 +101,52 @@ def _identify_section_type(header: str) -> Optional[str]:
     return None
 
 
+def _extract_experience_by_pattern(text: str) -> Optional[str]:
+    """
+    Fallback: Extract experience content by detecting employment patterns.
+    
+    Used when no explicit "Experience" header is found.
+    Looks for patterns like:
+    - Company name + date range (e.g., "Citi ... Jul 2020 - Present")
+    - Job title patterns (e.g., "VP, Cybersecurity")
+    - Employment duration (e.g., "5 years 4 months")
+    """
+    employment_date_pattern = re.compile(
+        r'(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4}\s*[-–]\s*(?:Present|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4})',
+        re.IGNORECASE
+    )
+    
+    year_range_pattern = re.compile(r'\b(19|20)\d{2}\s*[-–]\s*(Present|(19|20)\d{2})\b', re.IGNORECASE)
+    
+    lines = text.split('\n')
+    experience_lines = []
+    in_experience = False
+    experience_start = None
+    
+    stop_headers = ['education', 'certifications', 'skills', 'references', 'hobbies', 'interests', 'awards']
+    
+    for i, line in enumerate(lines):
+        line_lower = line.lower().strip()
+        
+        if any(header in line_lower for header in stop_headers) and len(line.strip()) < 40:
+            if in_experience:
+                break
+        
+        if employment_date_pattern.search(line) or year_range_pattern.search(line):
+            if not in_experience:
+                in_experience = True
+                experience_start = max(0, i - 2)
+                for prev_line in lines[experience_start:i]:
+                    experience_lines.append(prev_line)
+            experience_lines.append(line)
+        elif in_experience:
+            experience_lines.append(line)
+    
+    if experience_lines:
+        return '\n'.join(experience_lines).strip()
+    return None
+
+
 def extract_sections(text: str) -> CVStructure:
     """
     Extract all sections from CV text.
@@ -192,6 +238,13 @@ def extract_sections(text: str) -> CVStructure:
             structure.skills = content
             structure.has_skills = True
             structure.section_order.append('skills')
+    
+    if not structure.has_experience:
+        fallback_experience = _extract_experience_by_pattern(text)
+        if fallback_experience:
+            structure.experience = fallback_experience
+            structure.has_experience = True
+            structure.section_order.append('experience')
     
     return structure
 

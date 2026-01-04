@@ -1,0 +1,46 @@
+═══════════════════════════════════════════════════════════════════════════════
+🔧 FIX: Section Parser Cannot Find Experience/Skills Sections
+═══════════════════════════════════════════════════════════════════════════════
+
+ROOT CAUSE:
+The logs show:
+  [get_target_text] experience: NOT FOUND
+  [get_target_text] skills: NOT FOUND
+
+The CV clearly HAS experience (Citi, Microsoft, Deloitte) but section parser
+doesn't recognize it.
+
+───────────────────────────────────────────────────────────────────────────────
+STEP 1: Show me the section parser/extractor code
+───────────────────────────────────────────────────────────────────────────────
+
+Find the code that extracts sections. Show me:
+1. How does it identify the "experience" section?
+2. What headers does it look for?
+3. Why doesn't it find experience in this CV?
+
+The CV has companies like "Citi", "Microsoft" with dates like "Jul 2020 - Present"
+but no explicit "Experience" header.
+
+───────────────────────────────────────────────────────────────────────────────
+STEP 2: Improve section detection
+───────────────────────────────────────────────────────────────────────────────
+
+The section parser needs to recognize experience by:
+1. Company names + date patterns (e.g., "Citi" ... "Jul 2020 - Present")
+2. Job title patterns (e.g., "VP, Cybersecurity Innovation")
+3. Employment duration patterns (e.g., "5 years 4 months")
+
+If no explicit "Experience" header exists, use these patterns to identify
+where experience content starts and ends.
+
+───────────────────────────────────────────────────────────────────────────────
+STEP 3: Test after fix
+───────────────────────────────────────────────────────────────────────────────
+
+After improving section detection:
+1. experience section should return the job descriptions
+2. skills section should return the technology lists
+3. Rules targeting these sections should work correctly
+
+═══════════════════════════════════════════════════════════════════════════════
