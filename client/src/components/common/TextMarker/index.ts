@@ -10,10 +10,10 @@ export type {
 } from './types'
 
 export const CV_OPTIMIZER_COLORS = {
-  critical: { color: '#990033' },
-  important: { color: '#990099' },
-  consider: { color: '#008080' },
-  polish: { color: '#1E5A85' }
+  critical: { color: '#DC2626' },
+  important: { color: '#F59E0B' },
+  consider: { color: '#3B82F6' },
+  polish: { color: '#6B7280' }
 }
 
 export const NOTION_COLORS = {
