@@ -1,0 +1,111 @@
+═══════════════════════════════════════════════════════════════════════════════
+💻 REPLIT-14#23: Integrate with Master Detector (Parallel Mode)
+═══════════════════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL: This modifies existing code. Make MINIMAL changes.
+
+───────────────────────────────────────────────────────────────────────────────
+
+TASK: Add parallel detection mode to master_detector.py
+
+This allows running BOTH old (hardcoded) and new (database) detection
+simultaneously for comparison. NO BREAKING CHANGES.
+
+───────────────────────────────────────────────────────────────────────────────
+
+FILE: backend/common/detection/master_detector.py
+
+ADD at top (after existing imports):
+```python
+# ═══════════════════════════════════════════════════════════════════════════
+# DATABASE-DRIVEN DETECTION (New Architecture)
+# ═══════════════════════════════════════════════════════════════════════════
+import os
+
+# Feature flags
+USE_NEW_ENGINE = os.environ.get('CV_USE_NEW_DETECTION_ENGINE', 'false').lower() == 'true'
+PARALLEL_MODE = os.environ.get('CV_DETECTION_PARALLEL_MODE', 'false').lower() == 'true'
+
+# Lazy import to avoid circular dependencies
+_rule_engine = None
+
+def _get_rule_engine():
+    """Lazy initialization of RuleEngine."""
+    global _rule_engine
+    if _rule_engine is None:
+        try:
+            from .rule_engine import get_rule_engine
+            _rule_engine = get_rule_engine()
+        except Exception as e:
+            logger.error(f"Failed to initialize RuleEngine: {e}")
+    return _rule_engine
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+FIND the detect_all_issues function.
+
+ADD at the END of detect_all_issues, BEFORE the final return statement:
+```python
+    # ═══════════════════════════════════════════════════════════════════════
+    # DATABASE-DRIVEN DETECTION (Parallel Mode)
+    # ═══════════════════════════════════════════════════════════════════════
+    
+    if PARALLEL_MODE or USE_NEW_ENGINE:
+        try:
+            rule_engine = _get_rule_engine()
+            if rule_engine:
+                new_issues = rule_engine.detect_all_issues(cv_text)
+                
+                if PARALLEL_MODE and not USE_NEW_ENGINE:
+                    # Log comparison for debugging
+                    old_codes = set(i.get('issue_type') or i.get('issue_code') for i in all_issues)
+                    new_codes = set(i.get('issue_type') or i.get('issue_code') for i in new_issues)
+                    
+                    only_old = old_codes - new_codes
+                    only_new = new_codes - old_codes
+                    common = old_codes & new_codes
+                    
+                    logger.info(f"[PARALLEL MODE] Detection comparison:")
+                    logger.info(f"  - Old engine: {len(old_codes)} issues")
+                    logger.info(f"  - New engine: {len(new_codes)} issues")
+                    logger.info(f"  - Common: {len(common)}")
+                    logger.info(f"  - Only in old: {only_old}")
+                    logger.info(f"  - Only in new: {only_new}")
+                
+                if USE_NEW_ENGINE:
+                    # Use new engine results instead of old
+                    logger.info(f"[NEW ENGINE] Using database-driven detection: {len(new_issues)} issues")
+                    return new_issues
+                    
+        except Exception as e:
+            logger.error(f"New detection engine error: {e}", exc_info=True)
+            # Fall back to old detection on error
+    
+    # Return original results (old engine) - this is the existing return
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+DO NOT modify any other part of master_detector.py.
+
+───────────────────────────────────────────────────────────────────────────────
+
+ENVIRONMENT VARIABLES (add to .env or Replit Secrets):
+
+CV_USE_NEW_DETECTION_ENGINE=false
+CV_DETECTION_PARALLEL_MODE=true
+
+───────────────────────────────────────────────────────────────────────────────
+
+WHEN COMPLETE:
+□ Imports added at top
+□ Feature flags added
+□ _get_rule_engine helper added
+□ Parallel mode code added before return
+□ Old detection still works (no breaking changes)
+□ No syntax errors
+
+Type "REPLIT-14#23 COMPLETE" when done.
+
+═══════════════════════════════════════════════════════════════════════════════
