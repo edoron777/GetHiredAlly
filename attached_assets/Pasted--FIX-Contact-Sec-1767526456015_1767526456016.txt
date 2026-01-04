@@ -1,0 +1,115 @@
+═══════════════════════════════════════════════════════════════════════════════
+🔧 FIX: Contact Section Extraction Bug
+═══════════════════════════════════════════════════════════════════════════════
+
+ROOT CAUSE:
+The `_extract_contact()` method fails when CV starts with a section header at position 0.
+
+Current logic:
+```python
+first_section_start = cv_structure.sections[0].start_pos
+if first_section_start > 0:
+    return cv_structure.raw_text[:first_section_start]
+return cv_structure.raw_text[:500]  # fallback that may not work
+```
+
+Problem: If first_section_start = 0, it returns first 500 chars BUT contact info
+might be in HEADER area (name, email, phone at top of CV).
+
+───────────────────────────────────────────────────────────────────────────────
+FIX: Smarter Contact Extraction
+───────────────────────────────────────────────────────────────────────────────
+
+Find the `_extract_contact()` method and REPLACE with this improved logic:
+```python
+def _extract_contact(self, cv_structure) -> str:
+    """
+    Extract contact information from CV.
+    
+    Contact info is typically at the TOP of the CV, before any section headers.
+    We look for:
+    1. Text before first section (if any)
+    2. First 500 characters as fallback
+    3. Also search specifically for email/phone patterns in full text
+    """
+    raw_text = cv_structure.raw_text
+    
+    # Strategy 1: Get text before first section
+    contact_text = ""
+    if cv_structure.sections and len(cv_structure.sections) > 0:
+        first_section_start = cv_structure.sections[0].start_pos
+        if first_section_start > 50:  # At least 50 chars before first section
+            contact_text = raw_text[:first_section_start]
+    
+    # Strategy 2: If no text before sections, use first 500 chars
+    if len(contact_text.strip()) < 50:
+        contact_text = raw_text[:500]
+    
+    # Strategy 3: Also check for contact patterns in first 1000 chars
+    # (sometimes contact is spread across multiple lines after name)
+    extended_search = raw_text[:1000]
+    
+    # Combine: use extended_search if it contains more contact patterns
+    import re
+    email_pattern = r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'
+    phone_pattern = r'[\+]?[0-9][\d\s\-\(\)]{8,}'
+    linkedin_pattern = r'linkedin\.com/in/[a-zA-Z0-9_-]+'
+    
+    contact_emails = len(re.findall(email_pattern, contact_text))
+    extended_emails = len(re.findall(email_pattern, extended_search))
+    
+    # If extended search has more contact info, use it
+    if extended_emails > contact_emails:
+        contact_text = extended_search
+    
+    print(f"[CONTACT_EXTRACT] Final contact text length: {len(contact_text)}")
+    print(f"[CONTACT_EXTRACT] Preview: {contact_text[:200] if contact_text else 'EMPTY'}")
+    
+    return contact_text
+```
+
+───────────────────────────────────────────────────────────────────────────────
+ALTERNATIVE: Simpler Fix (if above is too complex)
+───────────────────────────────────────────────────────────────────────────────
+
+If you prefer a simpler fix:
+```python
+def _extract_contact(self, cv_structure) -> str:
+    """Extract contact info - always use first 800 chars."""
+    raw_text = cv_structure.raw_text
+    
+    # Contact info is typically in first 800 characters
+    contact_text = raw_text[:800]
+    
+    print(f"[CONTACT_EXTRACT] Contact text length: {len(contact_text)}")
+    
+    return contact_text
+```
+
+This simpler version:
+- Always returns first 800 chars (contact info is almost always there)
+- Avoids complex section-based logic
+- Works for all CV formats
+
+───────────────────────────────────────────────────────────────────────────────
+VERIFICATION
+───────────────────────────────────────────────────────────────────────────────
+
+After applying the fix:
+
+1. Restart backend
+2. Set CV_USE_NEW_DETECTION_ENGINE=true
+3. Analyze a CV with email: dcohen.demo@gmail.com
+4. Check Console logs for:
+   - [CONTACT_EXTRACT] showing 800 chars
+   - Email should be found in contact_text
+5. Verify NO false positive for "Missing Email"
+
+───────────────────────────────────────────────────────────────────────────────
+
+EXPECTED RESULT:
+- CONTACT_MISSING_EMAIL should NOT trigger if email exists
+- CONTACT_MISSING_PHONE should NOT trigger if phone exists
+- No more false positives for contact rules
+
+═══════════════════════════════════════════════════════════════════════════════

@@ -136,17 +136,17 @@ class BaseHandler(ABC):
     
     def _extract_contact(self, cv_structure: CVStructure) -> str:
         """
-        Extract contact section (typically first part of CV).
+        Extract contact information from CV.
         
-        CVStructure doesn't have explicit contact field, so we extract
-        from the beginning of raw_text before first section.
+        Contact info is typically at the TOP of the CV (name, email, phone, LinkedIn).
+        We use first 800 characters which reliably captures all contact details.
         """
-        if cv_structure.sections and len(cv_structure.sections) > 0:
-            first_section_start = cv_structure.sections[0].start_pos if hasattr(cv_structure.sections[0], 'start_pos') else 0
-            if first_section_start > 0:
-                return cv_structure.raw_text[:first_section_start]
+        raw_text = cv_structure.raw_text
+        if not raw_text:
+            return ''
         
-        return cv_structure.raw_text[:500] if cv_structure.raw_text else ''
+        contact_text = raw_text[:800]
+        return contact_text
     
     def _extract_certifications(self, cv_structure: CVStructure) -> str:
         """
