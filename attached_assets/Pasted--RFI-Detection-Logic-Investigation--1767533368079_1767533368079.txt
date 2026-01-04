@@ -1,0 +1,116 @@
+# 🔍 RFI: Detection Logic Investigation
+
+```
+═══════════════════════════════════════════════════════════════════════════════
+🔍 RFI: Why Detection Returns Wrong Data
+═══════════════════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL: INVESTIGATION ONLY - DO NOT FIX ANYTHING YET
+
+───────────────────────────────────────────────────────────────────────────────
+THE PROBLEM:
+───────────────────────────────────────────────────────────────────────────────
+
+When analyzing David Cohen's CV, the issues show WRONG content:
+
+EXAMPLE FROM SCREENSHOT:
+- Issue: "No LinkedIn Profile URL"
+- Shows: "Alex Johnson alex@email.com | (555) 123-4567"
+- Should show: David Cohen's actual contact info
+
+"Alex Johnson" and "Sarah Chen" are EXAMPLE DATA from the database,
+NOT actual content from David Cohen's CV.
+
+This means: The code returns example_before/example_after from DB
+instead of the actual matched text from the CV.
+
+───────────────────────────────────────────────────────────────────────────────
+INVESTIGATION TASK 1: Trace DetectedIssue Creation
+───────────────────────────────────────────────────────────────────────────────
+
+Find WHERE DetectedIssue objects are created.
+
+For each handler (regex_handler, presence_handler, etc.):
+1. Show me the code that creates DetectedIssue
+2. What value is assigned to `current_text` (or `current` or `match_text`)?
+3. Is it using:
+   - Actual matched text from CV? ✓ CORRECT
+   - rule.example_before from DB? ✗ WRONG
+   - Something else?
+
+Show me the EXACT code.
+
+───────────────────────────────────────────────────────────────────────────────
+INVESTIGATION TASK 2: Check PresenceHandler Specifically
+───────────────────────────────────────────────────────────────────────────────
+
+The "Missing LinkedIn URL" issue uses PresenceHandler.
+
+1. Show the full detect() method of PresenceHandler
+2. When issue_when="missing" (pattern NOT found), what text is returned?
+3. Is it returning:
+   - The contact section text where LinkedIn SHOULD be? ✓ CORRECT
+   - The example_before from database? ✗ WRONG
+
+───────────────────────────────────────────────────────────────────────────────
+INVESTIGATION TASK 3: Check Database example_before Values
+───────────────────────────────────────────────────────────────────────────────
+
+Run this SQL:
+
+```sql
+SELECT issue_code, example_before, example_after
+FROM cv_issue_types
+WHERE issue_code IN ('CONTACT_MISSING_LINKEDIN', 'CONTACT_MISSING_GITHUB')
+LIMIT 5;
+```
+
+Does example_before contain "Alex Johnson" or "Sarah Chen"?
+If YES → confirms the code is returning DB examples instead of CV content.
+
+───────────────────────────────────────────────────────────────────────────────
+INVESTIGATION TASK 4: Add Debug Logging
+───────────────────────────────────────────────────────────────────────────────
+
+In the handler that creates DetectedIssue, add:
+
+```python
+print(f"[ISSUE CREATE] issue_code: {rule.issue_code}")
+print(f"[ISSUE CREATE] current_text being set to: {current_text[:100]}")
+print(f"[ISSUE CREATE] Source of current_text: {'CV' if from_cv else 'DB EXAMPLE'}")
+```
+
+Then analyze CV and check Console.
+
+───────────────────────────────────────────────────────────────────────────────
+REPORT FORMAT:
+───────────────────────────────────────────────────────────────────────────────
+
+FINDING 1 - DetectedIssue Creation:
+- File: [path]
+- Line: [number]
+- current_text is set from: [CV text / DB example / other]
+
+FINDING 2 - PresenceHandler:
+- When pattern NOT found, returns: [what]
+- BUG: [describe if found]
+
+FINDING 3 - Database Check:
+- example_before for CONTACT_MISSING_LINKEDIN: [value]
+- Confirms DB example leak: YES/NO
+
+FINDING 4 - Debug Output:
+[paste console output]
+
+ROOT CAUSE:
+The code returns __________ instead of __________.
+Location: [file:line]
+
+───────────────────────────────────────────────────────────────────────────────
+
+DO NOT FIX. Report findings first.
+
+Type "RFI COMPLETE - ROOT CAUSE FOUND" when done.
+
+═══════════════════════════════════════════════════════════════════════════════
+```
