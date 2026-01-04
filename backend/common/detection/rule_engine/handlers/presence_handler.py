@@ -55,7 +55,15 @@ class PresenceHandler(BaseHandler):
             return issues
         
         text = self.get_target_text(cv_structure, target_section)
+        
+        print(f"[PresenceHandler] {rule.issue_code}")
+        print(f"  target_section: {target_section}")
+        print(f"  text length: {len(text) if text else 0}")
+        print(f"  text preview: {text[:200] if text else 'EMPTY'}...")
+        print(f"  patterns: {patterns}")
+        
         if not text:
+            print(f"  ERROR: Section '{target_section}' is EMPTY!")
             if issue_when == 'missing':
                 issue = self.create_issue(
                     rule=rule,
@@ -71,9 +79,13 @@ class PresenceHandler(BaseHandler):
                 pattern = re.compile(pattern_str, re.IGNORECASE)
                 match = pattern.search(text)
                 pattern_results[pattern_str] = match is not None
+                print(f"  pattern '{pattern_str[:30]}...': {'FOUND' if match else 'NOT FOUND'}")
+                if match:
+                    print(f"    matched: '{match.group()}'")
             except re.error as e:
                 logger.warning(f"Invalid pattern in {rule.issue_code}: {e}")
                 pattern_results[pattern_str] = False
+                print(f"  pattern ERROR: {e}")
         
         if require_any:
             patterns_found = any(pattern_results.values())
