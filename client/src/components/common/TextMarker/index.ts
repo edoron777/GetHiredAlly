@@ -1,3 +1,5 @@
+import { SEVERITY_COLORS } from '../../../constants/severityColors';
+
 export { TextMarker, default } from './TextMarker'
 export { findMarkerPositions, getMarkerStyleClass, getMarkerColorStyle } from './MarkerService'
 export type { 
@@ -10,10 +12,10 @@ export type {
 } from './types'
 
 export const CV_OPTIMIZER_COLORS = {
-  critical: { color: '#990033' },
-  important: { color: '#990099' },
-  consider: { color: '#1E5A85' },
-  polish: { color: '#008080' }
+  critical: { color: SEVERITY_COLORS.critical.primary },
+  important: { color: SEVERITY_COLORS.important.primary },
+  consider: { color: SEVERITY_COLORS.consider.primary },
+  polish: { color: SEVERITY_COLORS.polish.primary }
 }
 
 export const NOTION_COLORS = {
