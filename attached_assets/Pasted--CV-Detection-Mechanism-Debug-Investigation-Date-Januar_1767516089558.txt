@@ -1,0 +1,269 @@
+# CV Detection Mechanism - Debug Investigation
+
+**Date:** January 4, 2026  
+**Time:** 10:45 (Israel Time)  
+**Type:** RFI / Reconnaissance Prompt  
+**Purpose:** Understand how CV issue detection actually works before fixing
+
+---
+
+## 🔍 RFI-1: CV Detection Mechanism Investigation
+
+```
+═══════════════════════════════════════════════════════════════════════════════
+🔍 RFI: CV ISSUE DETECTION MECHANISM - FULL INVESTIGATION
+═══════════════════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL: This is INVESTIGATION ONLY - Do NOT change any code.
+Report findings first. No fixes until root cause is confirmed.
+
+───────────────────────────────────────────────────────────────────────────────
+
+CONTEXT:
+
+The CV Optimizer service detects issues in user CVs and suggests fixes.
+Currently, the detection mechanism is NOT working correctly:
+- False positives (detecting issues that aren't issues)
+- Missing detections (not finding real issues)
+- Wrong fix suggestions
+- No awareness of CV sections
+
+I need to understand HOW the detection actually works before fixing it.
+
+───────────────────────────────────────────────────────────────────────────────
+
+INVESTIGATION QUESTIONS:
+
+═══════════════════════════════════════════════════════════════════════════════
+SECTION A: CODE ARCHITECTURE
+═══════════════════════════════════════════════════════════════════════════════
+
+A1. FILE LOCATIONS:
+    - Where is the CV analysis/detection code located?
+    - List ALL files involved in issue detection
+    - File paths: __________
+
+A2. ENTRY POINT:
+    - What function is called when a CV is scanned?
+    - Function name: __________
+    - File path: __________
+    - Show the function signature and first 50 lines
+
+A3. DATA FLOW:
+    - Trace the complete flow:
+      User uploads CV → ??? → Issues returned
+    - Show each step in the process
+
+═══════════════════════════════════════════════════════════════════════════════
+SECTION B: AI vs CODE - CRITICAL QUESTION
+═══════════════════════════════════════════════════════════════════════════════
+
+B1. DETECTION METHOD:
+    - Is issue detection done by STATIC CODE (regex, rules, patterns)?
+    - Or is it done by AI SERVICE (Claude, Gemini, etc.)?
+    - Or is it a MIX of both?
+    
+    Answer: [ ] 100% Static Code
+            [ ] 100% AI Service
+            [ ] Mix: ___% Code, ___% AI
+
+B2. IF AI IS USED:
+    - Show the COMPLETE prompt sent to AI for detection
+    - Which AI service? (Claude/Gemini/Other)
+    - Where is this prompt defined? File path: __________
+
+B3. IF STATIC CODE IS USED:
+    - Show the detection functions
+    - What patterns/regex are used?
+    - Where are the rules defined?
+
+═══════════════════════════════════════════════════════════════════════════════
+SECTION C: DATABASE CONNECTION
+═══════════════════════════════════════════════════════════════════════════════
+
+C1. ISSUE TYPES TABLE:
+    - Does the code read from `cv_issue_types` database table?
+    - YES/NO: __________
+    - If YES: Show the query that reads issue types
+    - If NO: Where are issue types defined?
+
+C2. ISSUE TYPE USAGE:
+    - How many issue types exist in the database? __________
+    - How many does the detection code actually USE? __________
+    - Are they the same? YES/NO
+
+C3. FIELDS USED:
+    - Does detection code read these fields from database?
+      [ ] issue_code
+      [ ] category
+      [ ] severity
+      [ ] can_auto_fix
+      [ ] auto_fix_type
+      [ ] detection_pattern
+      [ ] static_tip
+      [ ] dynamic_tip_prompt
+    - Show which fields are actually used
+
+═══════════════════════════════════════════════════════════════════════════════
+SECTION D: SECTION AWARENESS
+═══════════════════════════════════════════════════════════════════════════════
+
+D1. CV PARSING:
+    - Does the code parse the CV into sections?
+    - YES/NO: __________
+    - If YES: What sections does it identify?
+      [ ] Contact Information
+      [ ] Summary/About
+      [ ] Work Experience
+      [ ] Education
+      [ ] Certifications
+      [ ] Skills
+      [ ] Other: __________
+
+D2. SECTION-SPECIFIC RULES:
+    - Are different detection rules applied to different sections?
+    - Example: Does it SKIP "weak verb" detection in Certifications?
+    - YES/NO: __________
+    - Show the section-aware logic if it exists
+
+D3. IF NO SECTION AWARENESS:
+    - Confirm: The same rules are applied to ALL CV text?
+    - This would explain false positives in certification names
+
+═══════════════════════════════════════════════════════════════════════════════
+SECTION E: SPECIFIC DETECTION LOGIC
+═══════════════════════════════════════════════════════════════════════════════
+
+E1. TABLE DETECTION:
+    - How does code detect "tables"?
+    - Show the exact logic/regex
+    - Does it distinguish single-line pipes from multi-row tables?
+
+E2. ABBREVIATION DETECTION:
+    - How does code detect "inconsistent abbreviations"?
+    - Show the logic
+    - Does it count occurrences of each form?
+    - Does it recommend fixing the MINORITY form?
+
+E3. DATE FORMAT DETECTION:
+    - How does code detect "inconsistent dates"?
+    - Show the logic
+    - Does it offer format choice to user?
+
+E4. CERTIFICATION COUNT:
+    - Does code count certifications?
+    - Is there a threshold for "too many"? What is it?
+
+E5. FIRST PERSON PRONOUNS:
+    - How does code detect these?
+    - What message is shown to user?
+
+═══════════════════════════════════════════════════════════════════════════════
+SECTION F: FIX GENERATION
+═══════════════════════════════════════════════════════════════════════════════
+
+F1. FIX SUGGESTIONS:
+    - How are fix suggestions generated?
+    - [ ] From database (static_tip field)
+    - [ ] From AI (dynamic_tip_prompt)
+    - [ ] Hardcoded in code
+    - [ ] Other: __________
+
+F2. AUTO-FIX LOGIC:
+    - How does code determine if an issue can be auto-fixed?
+    - Does it read `can_auto_fix` from database?
+    - Show the auto-fix application logic
+
+───────────────────────────────────────────────────────────────────────────────
+
+REPORT FORMAT:
+
+Please provide findings in this structure:
+
+FINDING A - Code Architecture:
+- Main detection file: __________
+- Entry function: __________
+- Data flow: __________
+
+FINDING B - AI vs Code:
+- Detection method: __________
+- If AI: Prompt location: __________
+- If Code: Rules location: __________
+
+FINDING C - Database:
+- Reads cv_issue_types: YES/NO
+- Issue types in DB: ___
+- Issue types used: ___
+
+FINDING D - Section Awareness:
+- Parses CV sections: YES/NO
+- Section-specific rules: YES/NO
+
+FINDING E - Detection Logic:
+- Table detection: __________
+- Abbreviation logic: __________
+- Date format logic: __________
+
+FINDING F - Fix Generation:
+- Source of suggestions: __________
+- Auto-fix logic: __________
+
+───────────────────────────────────────────────────────────────────────────────
+
+SUSPECTED ROOT CAUSE (Select after investigation):
+
+[ ] RC-1: Imprecise Prompt (Claude's instructions were unclear)
+[ ] RC-2: Partial Implementation (Replit implemented partially)
+[ ] RC-3: Ignored Instructions (Replit ignored specific rules)
+[ ] RC-4: Wrong AI/Code Mix (AI improvising instead of following rules)
+[ ] RC-5: No Database Connection (Code doesn't read issue types)
+[ ] RC-6: No Section Awareness (All CV text treated the same)
+[ ] RC-7: Other: __________
+
+───────────────────────────────────────────────────────────────────────────────
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- Do NOT fix anything
+- Do NOT refactor anything
+- Do NOT "improve" anything
+- ONLY investigate and report
+- Show actual code snippets as evidence
+
+───────────────────────────────────────────────────────────────────────────────
+
+WHEN COMPLETE:
+
+Provide a summary with:
+1. How detection currently works (actual, not intended)
+2. What's missing from intended design
+3. Suspected root cause(s)
+
+Type "RFI COMPLETE - FINDINGS READY" when done.
+
+═══════════════════════════════════════════════════════════════════════════════
+```
+
+---
+
+## How to Use
+
+1. **Copy** the prompt above
+2. **Paste** into Replit AI Agent
+3. **Wait** for complete findings
+4. **Share** the findings with me
+5. **Then** we create fix prompts based on actual root cause
+
+---
+
+## What This Will Tell Us
+
+| Question | Why It Matters |
+|----------|----------------|
+| AI vs Code? | If AI improvises, results will always vary |
+| Database connected? | If not, all your rules are ignored |
+| Section awareness? | If not, certification names get analyzed wrongly |
+| Detection logic? | Understanding current logic reveals why it fails |
+
+---
+
+**Copy the prompt and run it in Replit. Share the findings.**
