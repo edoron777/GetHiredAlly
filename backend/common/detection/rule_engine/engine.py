@@ -83,17 +83,30 @@ class RuleEngine:
             return []
         
         logger.info(f"Applying {len(rules)} detection rules from database")
+        logger.info("=" * 60)
+        logger.info("[RULE ENGINE] APPLYING RULES:")
+        logger.info("=" * 60)
         
         all_issues: List[DetectedIssue] = []
         
         for rule in rules:
             try:
+                config_type = rule.detection_config.get('type', 'NO_TYPE')
+                logger.info(f"  Evaluating [{rule.issue_code}] handler={config_type}")
                 issues = self._apply_rule(cv_text, cv_structure, rule)
+                if issues:
+                    logger.info(f"    -> DETECTED {len(issues)} issue(s)")
+                    for issue in issues:
+                        logger.info(f"       match: {issue.match_text[:50] if issue.match_text else 'N/A'}...")
+                else:
+                    logger.info(f"    -> no issues found")
                 all_issues.extend(issues)
             except Exception as e:
                 logger.error(f"Error applying rule {rule.issue_code}: {e}", exc_info=True)
         
-        logger.info(f"RuleEngine detected {len(all_issues)} issues")
+        logger.info("=" * 60)
+        logger.info(f"[RULE ENGINE] TOTAL: {len(all_issues)} issues detected")
+        logger.info("=" * 60)
         
         return [issue.to_dict() for issue in all_issues]
     

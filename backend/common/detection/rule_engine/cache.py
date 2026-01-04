@@ -110,6 +110,15 @@ class RuleCache:
         self._is_loaded = True
         
         logger.info(f"Loaded {len(self._rules)} detection rules into cache (version {cache_version})")
+        
+        logger.info("=" * 60)
+        logger.info("[RULE LOADER] DATABASE RULES LOADED:")
+        logger.info("=" * 60)
+        for rule in self._rules:
+            config_type = rule.detection_config.get('type', 'NO_TYPE')
+            logger.info(f"  [{rule.issue_code}] type={config_type}")
+            logger.info(f"    detection_config: {rule.detection_config}")
+        logger.info("=" * 60)
     
     def get_all_rules(self) -> List[DetectionRule]:
         """Get all cached rules."""
