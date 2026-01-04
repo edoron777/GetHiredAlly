@@ -11,16 +11,11 @@ from .count_handler import CountHandler
 from .length_handler import LengthHandler
 from .consistency_handler import ConsistencyHandler
 from .section_required_handler import SectionRequiredHandler
+from .composite_handler import CompositeHandler
 
 __all__ = [
-    'BaseHandler', 
-    'DetectedIssue', 
-    'RegexHandler', 
-    'WordListHandler', 
-    'PresenceHandler',
-    'AbsenceHandler',
-    'CountHandler',
-    'LengthHandler',
-    'ConsistencyHandler',
-    'SectionRequiredHandler'
+    'BaseHandler', 'DetectedIssue',
+    'RegexHandler', 'WordListHandler', 'PresenceHandler',
+    'AbsenceHandler', 'CountHandler', 'LengthHandler',
+    'ConsistencyHandler', 'SectionRequiredHandler', 'CompositeHandler'
 ]
