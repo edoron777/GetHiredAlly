@@ -75,13 +75,20 @@ class PresenceHandler(BaseHandler):
                 issues.append(issue)
             return issues
         
+        flags_str = config.get('flags', 'i')
+        flags = 0
+        if 'i' in flags_str.lower():
+            flags |= re.IGNORECASE
+        if 'm' in flags_str.lower():
+            flags |= re.MULTILINE
+        
         pattern_results = {}
         for pattern_str in patterns:
             try:
-                pattern = re.compile(pattern_str, re.IGNORECASE)
+                pattern = re.compile(pattern_str, flags)
                 match = pattern.search(text)
                 pattern_results[pattern_str] = match is not None
-                print(f"  pattern '{pattern_str[:30]}...': {'FOUND' if match else 'NOT FOUND'}")
+                print(f"  pattern '{pattern_str[:50]}': {'FOUND' if match else 'NOT FOUND'}")
                 if match:
                     print(f"    matched: '{match.group()}'")
             except re.error as e:
