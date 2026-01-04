@@ -1,0 +1,136 @@
+═══════════════════════════════════════════════════════════════════════════
+PROJECT: CV Optimizer P1 - PROMPT 4#9: Implement Bulk Auto Fix Handler
+═══════════════════════════════════════════════════════════════════════════
+
+TASK:
+Implement the handler function that performs bulk auto fix.
+
+───────────────────────────────────────────────────────────────────────────
+
+FILE TO MODIFY:
+client/src/pages/cv-optimizer/ResultsPage.tsx
+
+───────────────────────────────────────────────────────────────────────────
+
+STEP 1: Add Handler Function
+
+Add this function near other handlers (handleRescan, handleApplyFix):
+
+// ═══════════════════════════════════════════════════════════════════════
+// BULK AUTO FIX HANDLER
+// ═══════════════════════════════════════════════════════════════════════
+
+const handleBulkAutoFix = async () => {
+  if (!reportData?.issues_json) return;
+  
+  setIsRescanning(true);
+  
+  try {
+    // Get all auto-fixable issues that haven't been fixed yet
+    const autoFixableIssues = reportData.issues_json.filter(issue => {
+      const normalized = normalizeIssue(issue, 0);
+      const issueId = issue.id || issue.issue_code;
+      return normalized.isAutoFixable && 
+             !fixedIssues.has(issueId) &&
+             !pendingIssues.has(issueId);
+    });
+    
+    // Get current CV content
+    let updatedCV = fixedCV || reportData.cv_content;
+    
+    // Apply all auto-fixes
+    for (const issue of autoFixableIssues) {
+      const issueId = issue.id || issue.issue_code;
+      const suggestedText = issue.suggested_text || issue.suggestedText;
+      const matchText = issue.match_text || issue.matchText;
+      
+      if (suggestedText && matchText) {
+        // Replace the problematic text with the suggestion
+        updatedCV = updatedCV.replace(matchText, suggestedText);
+        
+        // Track as fixed
+        setFixedIssues(prev => new Set(prev).add(issueId));
+      }
+    }
+    
+    // Update CV content
+    setFixedCV(updatedCV);
+    
+    // Mark bulk auto fix as used
+    setBulkAutoFixUsed(true);
+    
+    // Close the confirmation modal
+    setShowBulkAutoFixModal(false);
+    
+    // Save previous score before rescan
+    const prevScore = currentScore;
+    setPreviousScore(prevScore);
+    
+    // Trigger rescan with updated CV
+    const response = await fetch('/api/cv-optimizer/scan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cv_content: updatedCV })
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      // Update report data
+      setReportData(result.data);
+      setCurrentScore(result.data.score);
+      
+      // Clear pending (everything is now fixed)
+      setPendingChanges(0);
+      setPendingIssues(new Set());
+      
+      // Calculate score change
+      const newScore = result.data.score;
+      const scoreChange = newScore > prevScore ? 'improved' 
+                        : newScore < prevScore ? 'dropped' 
+                        : 'unchanged';
+      
+      // Show result modal
+      setResultModalData({
+        previousScore: prevScore,
+        newScore: newScore,
+        fixedCount: autoFixableIssues.length,
+        remainingCount: result.data.issues_json?.length || 0,
+        scoreChange
+      });
+      setShowResultModal(true);
+    }
+    
+  } catch (error) {
+    console.error('Bulk auto fix failed:', error);
+    // TODO: Show error toast
+  } finally {
+    setIsRescanning(false);
+  }
+};
+
+───────────────────────────────────────────────────────────────────────────
+
+STEP 2: Add Modal Open Handler
+
+const handleOpenBulkAutoFixModal = () => {
+  setShowBulkAutoFixModal(true);
+};
+
+───────────────────────────────────────────────────────────────────────────
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- Add ONLY the handler functions shown
+- Use existing fetch patterns from the codebase
+- If the API endpoint or data structure differs, adapt accordingly but report changes
+- Do NOT modify the UI render yet
+
+───────────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+[ ] handleBulkAutoFix function added
+[ ] handleOpenBulkAutoFixModal function added
+[ ] No TypeScript errors
+[ ] Function uses correct API endpoint
+
+═══════════════════════════════════════════════════════════════════════════
