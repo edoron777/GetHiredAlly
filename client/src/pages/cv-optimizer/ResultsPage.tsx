@@ -584,32 +584,100 @@ export default function ResultsPage() {
     return `${cvMarkdown}\n\n---\n\n# Recommendations\n\n${recommendationsMarkdown}`;
   };
 
+  // ═══════════════════════════════════════════════════════════════════════
+  // EXPORT WITH AUTO-RESCAN
+  // ═══════════════════════════════════════════════════════════════════════
+
+  const performExport = async (format: 'copy' | 'pdf' | 'word' | 'md', data?: typeof reportData) => {
+    const content = getExportContent();
+    
+    switch (format) {
+      case 'copy':
+        await navigator.clipboard.writeText(content);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+        break;
+      case 'pdf':
+        await DocStyler.pdf(content, {
+          title: 'CV Analysis Report',
+          service: 'CV Optimizer',
+          fileName: 'cv-analysis-report',
+        });
+        break;
+      case 'word':
+        await DocStyler.word(content, {
+          title: 'CV Analysis Report',
+          service: 'CV Optimizer',
+          fileName: 'cv-analysis-report',
+        });
+        break;
+      case 'md':
+        await DocStyler.md(content, {
+          fileName: 'cv-analysis-report',
+        });
+        break;
+    }
+  };
+
+  const handleExportWithRescan = async (format: 'copy' | 'pdf' | 'word' | 'md') => {
+    if (pendingChanges > 0) {
+      setIsRescanning(true);
+      
+      try {
+        const cvContent = fixedCV || reportData?.cv_content;
+        const token = getAuthToken();
+        const response = await fetch('/api/cv-optimizer/scan', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ 
+            cv_content: cvContent,
+            job_description: null
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error('Auto-rescan before export failed');
+        }
+        
+        const newReport = await response.json();
+        
+        setReportData(newReport);
+        setCurrentScore(newReport.cv_score || newReport.score || 0);
+        
+        setFixedCV(null);
+        setFixedIssues(new Set());
+        setPendingChanges(0);
+        setPendingIssues(new Set());
+        
+        await performExport(format, newReport);
+        
+      } catch (error) {
+        console.error('Auto-rescan before export failed:', error);
+      } finally {
+        setIsRescanning(false);
+      }
+    } else {
+      await performExport(format, reportData);
+    }
+  };
+
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(getExportContent());
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    await handleExportWithRescan('copy');
   };
 
   const handleExportPDF = async () => {
-    await DocStyler.pdf(getExportContent(), {
-      title: 'CV Analysis Report',
-      service: 'CV Optimizer',
-      fileName: 'cv-analysis-report',
-    });
+    await handleExportWithRescan('pdf');
   };
 
   const handleExportWord = async () => {
-    await DocStyler.word(getExportContent(), {
-      title: 'CV Analysis Report',
-      service: 'CV Optimizer',
-      fileName: 'cv-analysis-report',
-    });
+    await handleExportWithRescan('word');
   };
 
   const handleExportMarkdown = async () => {
-    await DocStyler.md(getExportContent(), {
-      fileName: 'cv-analysis-report',
-    });
+    await handleExportWithRescan('md');
   };
 
   const handleRescan = async () => {
@@ -781,29 +849,33 @@ export default function ResultsPage() {
               <div className="flex items-center gap-2">
                 <button 
                   onClick={handleCopy}
-                  className="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium text-gray-700 flex items-center gap-1"
+                  disabled={isRescanning}
+                  className={`px-3 py-2 bg-white border border-gray-300 rounded-lg transition-colors text-sm font-medium text-gray-700 flex items-center gap-1 ${isRescanning ? 'opacity-60 cursor-not-allowed' : 'hover:bg-gray-50'}`}
                   title="Copy to clipboard"
                 >
                   {copied ? <Check size={16} className="text-green-600" /> : <Copy size={16} />}
-                  {copied ? 'Copied!' : 'Copy'}
+                  {isRescanning ? 'Updating...' : (copied ? 'Copied!' : 'Copy')}
                 </button>
                 <button 
                   onClick={handleExportPDF}
-                  className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                  disabled={isRescanning}
+                  className={`px-3 py-2 bg-blue-600 text-white rounded-lg transition-colors text-sm font-medium ${isRescanning ? 'opacity-60 cursor-not-allowed' : 'hover:bg-blue-700'}`}
                 >
-                  PDF
+                  {isRescanning ? 'Updating...' : 'PDF'}
                 </button>
                 <button 
                   onClick={handleExportWord}
-                  className="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium text-gray-700"
+                  disabled={isRescanning}
+                  className={`px-3 py-2 bg-white border border-gray-300 rounded-lg transition-colors text-sm font-medium text-gray-700 ${isRescanning ? 'opacity-60 cursor-not-allowed' : 'hover:bg-gray-50'}`}
                 >
-                  Word
+                  {isRescanning ? 'Updating...' : 'Word'}
                 </button>
                 <button 
                   onClick={handleExportMarkdown}
-                  className="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium text-gray-700"
+                  disabled={isRescanning}
+                  className={`px-3 py-2 bg-white border border-gray-300 rounded-lg transition-colors text-sm font-medium text-gray-700 ${isRescanning ? 'opacity-60 cursor-not-allowed' : 'hover:bg-gray-50'}`}
                 >
-                  MD
+                  {isRescanning ? 'Updating...' : 'MD'}
                 </button>
                 
                 {/* Rescan Button */}

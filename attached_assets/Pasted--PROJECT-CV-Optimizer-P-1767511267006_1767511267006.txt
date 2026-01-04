@@ -1,0 +1,103 @@
+═══════════════════════════════════════════════════════════════════════════
+PROJECT: CV Optimizer P1 - PROMPT 8#9: Auto-Rescan Before Export
+═══════════════════════════════════════════════════════════════════════════
+
+TASK:
+Modify export functionality to auto-rescan if pending changes exist.
+
+───────────────────────────────────────────────────────────────────────────
+
+FILE TO MODIFY:
+client/src/pages/cv-optimizer/ResultsPage.tsx
+
+───────────────────────────────────────────────────────────────────────────
+
+STEP 1: Find Export Handler
+
+Look for the function that handles export (PDF, Word, Copy, etc.).
+It might be named handleExport, exportCV, or similar.
+
+───────────────────────────────────────────────────────────────────────────
+
+STEP 2: Add Auto-Rescan Logic
+
+Modify the export handler to check for pending changes:
+
+const handleExport = async (format: string) => {
+  // If there are pending changes, rescan first
+  if (pendingChanges > 0) {
+    // Show loading state
+    setIsRescanning(true);
+    
+    try {
+      // Perform rescan
+      const cvContent = fixedCV || reportData?.cv_content;
+      const response = await fetch('/api/cv-optimizer/scan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cv_content: cvContent })
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        // Update data
+        setReportData(result.data);
+        setCurrentScore(result.data.score);
+        
+        // Move pending to fixed
+        pendingIssues.forEach(id => {
+          setFixedIssues(prev => new Set(prev).add(id));
+        });
+        setPendingChanges(0);
+        setPendingIssues(new Set());
+        
+        // Now proceed with export using new data
+        await performExport(format, result.data);
+      }
+    } catch (error) {
+      console.error('Auto-rescan before export failed:', error);
+    } finally {
+      setIsRescanning(false);
+    }
+  } else {
+    // No pending changes, export directly
+    await performExport(format, reportData);
+  }
+};
+
+// Actual export logic (extracted)
+const performExport = async (format: string, data: any) => {
+  // ... existing export logic ...
+};
+
+───────────────────────────────────────────────────────────────────────────
+
+STEP 3: Update Export Button State
+
+If currently rescanning, disable export buttons:
+
+<button 
+  onClick={() => handleExport('pdf')}
+  disabled={isRescanning}
+>
+  {isRescanning ? 'Updating...' : 'PDF'}
+</button>
+
+───────────────────────────────────────────────────────────────────────────
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- ONLY add the auto-rescan check
+- Keep existing export functionality intact
+- If export logic is complex, extract to separate function
+- If you can't find the export handler, STOP and report
+
+───────────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+[ ] Export with pending changes triggers rescan first
+[ ] Export without pending changes works normally
+[ ] Export buttons disabled during rescan
+[ ] Final export uses updated data after rescan
+
+═══════════════════════════════════════════════════════════════════════════

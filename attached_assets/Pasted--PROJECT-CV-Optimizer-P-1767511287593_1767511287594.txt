@@ -1,0 +1,114 @@
+═══════════════════════════════════════════════════════════════════════════
+PROJECT: CV Optimizer P1 - PROMPT 9#9: Integrate All Components
+═══════════════════════════════════════════════════════════════════════════
+
+TASK:
+Integrate all new P1 components into ResultsPage.tsx
+
+───────────────────────────────────────────────────────────────────────────
+
+FILE TO MODIFY:
+client/src/pages/cv-optimizer/ResultsPage.tsx
+
+───────────────────────────────────────────────────────────────────────────
+
+STEP 1: Add Imports
+
+At the top of the file, add:
+
+import { BulkAutoFixSection } from '@/components/cv-optimizer/BulkAutoFixSection';
+import { BulkAutoFixModal } from '@/components/cv-optimizer/BulkAutoFixModal';
+import { ProgressSection } from '@/components/cv-optimizer/ProgressSection';
+import { ResultModal } from '@/components/cv-optimizer/ResultModal';
+
+(Adjust import paths as needed for project structure)
+
+───────────────────────────────────────────────────────────────────────────
+
+STEP 2: Add Bulk Auto Fix Section to UI
+
+Find the main content area (after page title, before view tabs).
+ADD:
+
+{showBulkAutoFix && (
+  <BulkAutoFixSection
+    autoFixableCount={autoFixableCount}
+    totalIssues={reportData?.issues_json?.length || 0}
+    onAutoFixClick={handleOpenBulkAutoFixModal}
+    isLoading={isRescanning}
+  />
+)}
+
+───────────────────────────────────────────────────────────────────────────
+
+STEP 3: Replace Existing Progress with ProgressSection
+
+Find where current progress is displayed in the left sidebar.
+REPLACE with:
+
+<ProgressSection
+  issues={reportData?.issues_json || []}
+  fixedIssues={fixedIssues}
+  pendingIssues={pendingIssues}
+  pendingChanges={pendingChanges}
+  onUpdateScore={handleRescan}
+  isLoading={isRescanning}
+/>
+
+───────────────────────────────────────────────────────────────────────────
+
+STEP 4: Add Modals at End of Component
+
+At the end of the component (before final closing tags), ADD:
+
+{/* Bulk Auto Fix Confirmation Modal */}
+<BulkAutoFixModal
+  isOpen={showBulkAutoFixModal}
+  onClose={() => setShowBulkAutoFixModal(false)}
+  onConfirm={handleBulkAutoFix}
+  count={autoFixableCount}
+  isLoading={isRescanning}
+/>
+
+{/* Result Modal */}
+<ResultModal
+  isOpen={showResultModal}
+  onClose={() => setShowResultModal(false)}
+  data={resultModalData}
+  onSaveCV={() => { /* TODO: implement */ }}
+  onCompareVersions={() => setActiveTab('sideBySide')}
+/>
+
+───────────────────────────────────────────────────────────────────────────
+
+STEP 5: Update TipBox Props
+
+Find where TipBox is rendered and add the new props:
+
+<TipBox
+  // ... existing props ...
+  bulkAutoFixUsed={bulkAutoFixUsed}
+  isAutoFixable={selectedIssue?.isAutoFixable || false}
+  isPending={selectedIssue ? pendingIssues.has(selectedIssue.id) : false}
+  isFixed={selectedIssue ? fixedIssues.has(selectedIssue.id) : false}
+/>
+
+───────────────────────────────────────────────────────────────────────────
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- Integrate components EXACTLY as shown
+- Do NOT modify component internals
+- If placement location differs, adapt but keep logic same
+- If existing code structure is very different, STOP and report
+
+───────────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+[ ] BulkAutoFixSection appears at top when applicable
+[ ] ProgressSection shows in left sidebar
+[ ] BulkAutoFixModal opens when button clicked
+[ ] ResultModal appears after rescan
+[ ] TipBox receives new props correctly
+[ ] No console errors
+
+═══════════════════════════════════════════════════════════════════════════
