@@ -1,0 +1,131 @@
+═══════════════════════════════════════════════════════════════════════════════
+💻 REPLIT-5#10: Add LinkedIn URL Validator
+═══════════════════════════════════════════════════════════════════════════════
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- Execute ONLY the instructions below
+- Modify ONLY the specified function
+- Do NOT add extra features
+- If unclear → STOP and ask
+
+───────────────────────────────────────────────────────────────────────────────
+
+PROBLEM:
+
+CV mentions "LinkedIn" text but doesn't include actual URL.
+Current detection only checks if "LinkedIn" is completely absent.
+
+EXPECTED BEHAVIOR:
+- If "LinkedIn" text found WITHOUT linkedin.com/in/ URL → FLAG as issue
+- If "LinkedIn" text found WITH valid URL → OK (no issue)
+- If "LinkedIn" not mentioned at all → existing CONTACT_MISSING_LINKEDIN handles this
+
+───────────────────────────────────────────────────────────────────────────────
+
+FILE TO MODIFY:
+
+backend/common/detection/contact_extractor.py
+
+───────────────────────────────────────────────────────────────────────────────
+
+NEW FUNCTION TO ADD:
+
+Add this function to the file:
+
+def detect_linkedin_no_url(text: str) -> List[Dict]:
+    """
+    Detect when LinkedIn is mentioned but no actual URL is provided.
+    
+    SCENARIO:
+    - "LinkedIn" or "linkedin" text appears
+    - BUT no linkedin.com/in/ URL is found
+    - This is different from MISSING LinkedIn (no mention at all)
+    """
+    issues = []
+    
+    text_lower = text.lower()
+    
+    # Check if LinkedIn is mentioned
+    linkedin_mentioned = 'linkedin' in text_lower
+    
+    if not linkedin_mentioned:
+        # LinkedIn not mentioned at all - handled by CONTACT_MISSING_LINKEDIN
+        return issues
+    
+    # LinkedIn IS mentioned - check for actual URL
+    linkedin_url_patterns = [
+        r'linkedin\.com/in/[\w\-]+',
+        r'linkedin\.com/pub/[\w\-]+',
+        r'www\.linkedin\.com/in/[\w\-]+',
+        r'https?://(?:www\.)?linkedin\.com/in/[\w\-]+',
+    ]
+    
+    has_url = False
+    for pattern in linkedin_url_patterns:
+        if re.search(pattern, text_lower):
+            has_url = True
+            break
+    
+    if not has_url:
+        # LinkedIn mentioned but no URL found
+        # Find the LinkedIn mention for match_text
+        linkedin_match = re.search(r'\blinkedin\b', text, re.IGNORECASE)
+        match_text = linkedin_match.group() if linkedin_match else 'LinkedIn'
+        
+        issues.append({
+            'issue_type': 'CONTACT_LINKEDIN_NO_URL',
+            'match_text': match_text,
+            'suggestion': 'You mention LinkedIn but did not include your profile URL. Add your full LinkedIn URL (e.g., linkedin.com/in/yourname) so recruiters can easily find you.',
+            'can_auto_fix': False,  # User needs to provide URL
+            'severity': 'important'
+        })
+    
+    return issues
+
+───────────────────────────────────────────────────────────────────────────────
+
+ALSO: Update the main detection function to call this:
+
+Find the main function that collects contact issues (likely detect_contact_issues 
+or similar) and add:
+
+    # Check LinkedIn URL
+    issues.extend(detect_linkedin_no_url(text))
+
+───────────────────────────────────────────────────────────────────────────────
+
+DO NOT TOUCH:
+- Existing CONTACT_MISSING_LINKEDIN detection
+- Any other functions not related to this task
+
+───────────────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+
+Test input 1 (SHOULD flag):
+"Contact me via LinkedIn or email at test@test.com"
+→ Should return: CONTACT_LINKEDIN_NO_URL
+
+Test input 2 (should NOT flag):
+"LinkedIn: linkedin.com/in/johndoe | Email: test@test.com"
+→ Should return: No issues
+
+Test input 3 (should NOT flag - handled elsewhere):
+"Email: test@test.com | Phone: 123-456"
+→ Should return: No issues (CONTACT_MISSING_LINKEDIN handles this case)
+
+───────────────────────────────────────────────────────────────────────────────
+
+WHEN COMPLETE:
+
+Confirm:
+□ detect_linkedin_no_url function added
+□ Function called from main contact detection
+□ Only flags when LinkedIn mentioned WITHOUT URL
+□ Does NOT conflict with CONTACT_MISSING_LINKEDIN
+□ can_auto_fix is FALSE
+□ No Python syntax errors
+
+Type "REPLIT-5#10 COMPLETE - READY FOR NEXT" when done.
+
+═══════════════════════════════════════════════════════════════════════════════

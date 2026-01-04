@@ -1,0 +1,149 @@
+"""
+Certification Detector
+
+Detects issues related to certifications section.
+- Too many certifications (dilutes impact)
+- Missing certification details (optional)
+
+DETERMINISTIC: Same text → Same issues (always)
+"""
+
+import re
+from typing import List, Dict
+
+CERT_THRESHOLD_WARNING = 9
+CERT_THRESHOLD_CRITICAL = 13
+CERT_IDEAL_MAX = 5
+
+CERT_LINE_PATTERNS = [
+    r'^\s*[•\-\*]\s*.*(?:certified|certificate|certification)',
+    r'^\s*[•\-\*]\s*.*\((?:aws|gcp|azure|ibm|google|microsoft|oracle|cisco)\)',
+    r'^\s*[•\-\*]\s*(?:aws|gcp|azure|ibm|google|microsoft)\s+\w+',
+    r'^\s*[•\-\*]\s*.*(?:professional|associate|specialist|expert|master)\s+(?:level|cert)',
+    r'^\s*[•\-\*]\s*.*(?:coursera|udemy|linkedin learning|skillup|pluralsight)',
+]
+
+CERT_SECTION_HEADERS = [
+    'certifications', 'certificates', 'professional certifications',
+    'licenses & certifications', 'credentials', 'professional development'
+]
+
+
+def find_certification_section(text: str) -> str:
+    """Extract the certifications section from CV."""
+    text_lower = text.lower()
+    
+    for header in CERT_SECTION_HEADERS:
+        start_idx = text_lower.find(header)
+        if start_idx != -1:
+            next_section_headers = [
+                'experience', 'education', 'skills', 'projects',
+                'awards', 'publications', 'references', 'languages',
+                'summary', 'about', 'work history'
+            ]
+            
+            end_idx = len(text)
+            search_start = start_idx + len(header)
+            
+            for next_header in next_section_headers:
+                next_idx = text_lower.find(next_header, search_start)
+                if next_idx != -1 and next_idx < end_idx:
+                    end_idx = next_idx
+            
+            return text[start_idx:end_idx]
+    
+    return ""
+
+
+def count_certifications(text: str) -> int:
+    """
+    Count the number of certifications in CV.
+    Uses multiple heuristics to identify certification lines.
+    """
+    cert_section = find_certification_section(text)
+    
+    if not cert_section:
+        count = 0
+        for line in text.split('\n'):
+            line_lower = line.lower()
+            if any(indicator in line_lower for indicator in [
+                'certified', 'certificate', 'certification',
+                'coursera', 'udemy', 'linkedin learning'
+            ]):
+                count += 1
+        return count
+    
+    lines = cert_section.split('\n')
+    cert_count = 0
+    
+    for line in lines:
+        line = line.strip()
+        
+        if not line or any(h in line.lower() for h in CERT_SECTION_HEADERS):
+            continue
+        
+        if (line.startswith('•') or line.startswith('-') or 
+            line.startswith('*') or line.startswith('·')):
+            cert_count += 1
+        elif re.match(r'^\d+\.', line):
+            cert_count += 1
+        elif any(indicator in line.lower() for indicator in [
+            'certified', 'certificate', 'certification', '(ibm)', '(google)',
+            '(aws)', '(microsoft)', '(azure)'
+        ]):
+            cert_count += 1
+    
+    return cert_count
+
+
+def detect_certification_count_issues(text: str) -> List[Dict]:
+    """
+    Detect if CV has too many certifications.
+    
+    Thresholds:
+    - 1-5: Ideal (no issue)
+    - 6-8: Acceptable (no issue)
+    - 9-12: Warning (consider severity)
+    - 13+: Critical (definitely flag)
+    """
+    issues = []
+    
+    cert_count = count_certifications(text)
+    
+    if cert_count >= CERT_THRESHOLD_CRITICAL:
+        issues.append({
+            'issue_type': 'CONTENT_TOO_MANY_CERTIFICATIONS',
+            'match_text': f'{cert_count} certifications listed',
+            'suggestion': f'You have {cert_count} certifications listed. Consider featuring only the top {CERT_IDEAL_MAX} most relevant ones. Too many certifications can dilute impact and suggest lack of focus.',
+            'severity': 'important',
+            'can_auto_fix': False,
+            'details': {
+                'certification_count': cert_count,
+                'threshold': CERT_THRESHOLD_CRITICAL,
+                'recommended_max': CERT_IDEAL_MAX
+            }
+        })
+    elif cert_count >= CERT_THRESHOLD_WARNING:
+        issues.append({
+            'issue_type': 'CONTENT_TOO_MANY_CERTIFICATIONS',
+            'match_text': f'{cert_count} certifications listed',
+            'suggestion': f'You have {cert_count} certifications. Consider focusing on the {CERT_IDEAL_MAX} most relevant to your target role for maximum impact.',
+            'severity': 'consider',
+            'can_auto_fix': False,
+            'details': {
+                'certification_count': cert_count,
+                'threshold': CERT_THRESHOLD_WARNING,
+                'recommended_max': CERT_IDEAL_MAX
+            }
+        })
+    
+    return issues
+
+
+def detect_all_certification_issues(text: str) -> List[Dict]:
+    """
+    Main entry point for certification detection.
+    
+    DETERMINISTIC: Same text → Same issues (always)
+    """
+    return detect_certification_count_issues(text)
