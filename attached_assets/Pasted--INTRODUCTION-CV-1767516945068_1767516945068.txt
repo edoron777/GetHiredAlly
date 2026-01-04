@@ -1,0 +1,78 @@
+═══════════════════════════════════════════════════════════════════════════════
+📋 INTRODUCTION: CV Detection Mechanism Fix - Project Context
+═══════════════════════════════════════════════════════════════════════════════
+
+PROJECT OVERVIEW:
+
+The CV Optimizer detection mechanism has multiple issues that need fixing.
+This is a series of 10 prompts that will fix these problems systematically.
+
+───────────────────────────────────────────────────────────────────────────────
+
+PROMPT SERIES:
+
+| # | Type | Prompt | Purpose |
+|---|------|--------|---------|
+| 1 | INTRO | This prompt | Project overview |
+| 2 | REPLIT | Table Detection | Fix false positives on single pipes |
+| 3 | REPLIT | Section-Aware Language | Skip certifications for weak verbs |
+| 4 | REPLIT | Abbreviation Detector | NEW - detect inconsistent abbreviations |
+| 5 | REPLIT | Certification Count | NEW - detect too many certifications |
+| 6 | REPLIT | LinkedIn URL Validator | NEW - detect LinkedIn without URL |
+| 7 | REPLIT | User-Friendly Messages | Improve error messages |
+| 8 | REPLIT | Register Detectors | Connect new modules to master |
+| 9 | DB | Add Issue Types | Add new issue types to database |
+| 10 | VERIFY | Test Everything | Verify all fixes work |
+
+───────────────────────────────────────────────────────────────────────────────
+
+ROOT CAUSES BEING FIXED:
+
+1. RC-6: No Section Awareness
+   - Language detectors run on FULL CV text
+   - Certification names get flagged for "weak verbs"
+   
+2. RC-3: Wrong Detection Logic  
+   - Table detection triggers on single-line pipes
+   - No multi-row validation
+   
+3. RC-2: Missing Detectors
+   - No abbreviation consistency detector
+   - No certification count detector
+   - No LinkedIn URL validator
+
+───────────────────────────────────────────────────────────────────────────────
+
+FILES TO MODIFY:
+
+| File | Change |
+|------|--------|
+| backend/common/detection/format_detector.py | Fix table detection |
+| backend/common/detection/language_detector.py | Add section awareness |
+| backend/common/detection/abbreviation_detector.py | NEW FILE |
+| backend/common/detection/certification_detector.py | NEW FILE |
+| backend/common/detection/contact_extractor.py | Add LinkedIn URL check |
+| backend/common/detection/master_detector.py | Register new detectors |
+
+───────────────────────────────────────────────────────────────────────────────
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+
+For ALL prompts in this series:
+- Execute ONLY the specific instructions provided
+- Do NOT add features not explicitly requested
+- Do NOT refactor code outside the specified scope
+- Do NOT "improve" other parts of the codebase
+- If instructions are unclear → STOP and ask for clarification
+- If you see potential improvements → REPORT them, don't implement
+
+───────────────────────────────────────────────────────────────────────────────
+
+EXECUTION ORDER:
+
+Execute prompts in order: 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10
+If any prompt fails, STOP and report before continuing.
+
+Type "INTRO UNDERSTOOD - READY FOR PROMPT 2" when ready.
+
+═══════════════════════════════════════════════════════════════════════════════

@@ -1,0 +1,154 @@
+═══════════════════════════════════════════════════════════════════════════════
+💻 REPLIT-1#10: Fix Table Detection - Require Multi-Row Validation
+═══════════════════════════════════════════════════════════════════════════════
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- Execute ONLY the instructions below
+- Do NOT modify other detection functions
+- Do NOT add new features
+- If unclear → STOP and ask
+
+───────────────────────────────────────────────────────────────────────────────
+
+PROBLEM:
+
+Current table detection triggers on SINGLE-LINE pipes:
+  "Email: a@b.com | Phone: 123 | LinkedIn"  → WRONGLY flagged as table
+
+This is a FALSE POSITIVE. Single-line pipes are SEPARATORS, not tables.
+
+EXPECTED BEHAVIOR:
+- Single line with pipes = NOT a table (contact separators - OK)
+- Multiple rows with aligned pipes = IS a table (flag as issue)
+
+───────────────────────────────────────────────────────────────────────────────
+
+FILE TO MODIFY:
+
+backend/common/detection/format_detector.py
+
+───────────────────────────────────────────────────────────────────────────────
+
+CURRENT CODE (around lines 46-49, 287-313):
+
+TABLE_PATTERNS = [
+    re.compile(r'\t.*\t.*\t'),      # Tab-separated
+    re.compile(r'\|.*\|.*\|'),       # Pipe-separated ← PROBLEM
+]
+
+def detect_tables(text: str) -> List[Dict]:
+    for pattern in TABLE_PATTERNS:
+        match = pattern.search(text)
+        if match:
+            # Returns issue immediately on FIRST match ← WRONG
+            break
+
+───────────────────────────────────────────────────────────────────────────────
+
+NEW CODE TO IMPLEMENT:
+
+Replace the table detection logic with this:
+
+def detect_tables(text: str) -> List[Dict]:
+    """
+    Detect actual table structures in CV.
+    
+    RULES:
+    - Single line with pipes = NOT a table (separator usage - OK)
+    - Multiple rows with pipes creating grid = IS a table (issue)
+    - Minimum 2 rows required to be considered a table
+    """
+    issues = []
+    lines = text.split('\n')
+    
+    # Find lines that look like table rows (contain 2+ pipe characters)
+    potential_table_rows = []
+    for i, line in enumerate(lines):
+        pipe_count = line.count('|')
+        if pipe_count >= 2:
+            potential_table_rows.append({
+                'line_number': i,
+                'line': line,
+                'pipe_count': pipe_count
+            })
+    
+    # Check for CONSECUTIVE table-like rows (actual table structure)
+    consecutive_count = 0
+    table_start = None
+    
+    for i in range(len(potential_table_rows)):
+        if i == 0:
+            consecutive_count = 1
+            table_start = potential_table_rows[i]['line_number']
+        else:
+            # Check if this row is consecutive to previous
+            prev_line = potential_table_rows[i-1]['line_number']
+            curr_line = potential_table_rows[i]['line_number']
+            
+            if curr_line - prev_line <= 2:  # Allow 1 blank line between
+                consecutive_count += 1
+            else:
+                # Reset - not consecutive
+                if consecutive_count >= 2:
+                    # Found a table!
+                    issues.append({
+                        'issue_type': 'FORMAT_TABLES_DETECTED',
+                        'match_text': potential_table_rows[i-1]['line'],
+                        'suggestion': 'Convert table content to simple bullet points for better ATS compatibility',
+                        'location': f'Lines {table_start}-{prev_line}'
+                    })
+                consecutive_count = 1
+                table_start = curr_line
+    
+    # Check last group
+    if consecutive_count >= 2 and len(potential_table_rows) > 0:
+        issues.append({
+            'issue_type': 'FORMAT_TABLES_DETECTED',
+            'match_text': potential_table_rows[-1]['line'],
+            'suggestion': 'Convert table content to simple bullet points for better ATS compatibility',
+            'location': f'Lines {table_start}-{potential_table_rows[-1]["line_number"]}'
+        })
+    
+    # Also check for tab-separated tables (original logic - keep)
+    tab_pattern = re.compile(r'\t.*\t.*\t')
+    for match in tab_pattern.finditer(text):
+        issues.append({
+            'issue_type': 'FORMAT_TABLES_DETECTED',
+            'match_text': match.group(),
+            'suggestion': 'Convert table content to simple bullet points for better ATS compatibility',
+        })
+    
+    return issues
+
+───────────────────────────────────────────────────────────────────────────────
+
+DO NOT TOUCH:
+- Any other functions in format_detector.py
+- Any other files
+
+───────────────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+
+Test with this input:
+INPUT 1 (should NOT be flagged):
+"Email: test@email.com | Phone: 123-456 | LinkedIn"
+
+INPUT 2 (SHOULD be flagged):
+"Name | Role | Years
+John | Dev | 5
+Jane | PM | 3"
+
+───────────────────────────────────────────────────────────────────────────────
+
+WHEN COMPLETE:
+
+Confirm:
+□ detect_tables function updated
+□ Single-line pipes no longer trigger false positive
+□ Multi-row tables still detected correctly
+□ No Python syntax errors
+
+Type "REPLIT-1#10 COMPLETE - READY FOR NEXT" when done.
+
+═══════════════════════════════════════════════════════════════════════════════
