@@ -1,0 +1,193 @@
+═══════════════════════════════════════════════════════════════════════════════
+🔍 DEBUG: CV Detection Architecture - Find Root Cause
+═══════════════════════════════════════════════════════════════════════════════
+
+⚠️ THIS IS INVESTIGATION ONLY - DO NOT FIX UNTIL ROOT CAUSE IS CONFIRMED
+
+The new database-driven detection system has 4 bugs:
+1. FALSE POSITIVES - detecting "missing email" when email EXISTS
+2. WRONG display_name - shows "Issue" instead of actual issue name
+3. WRONG current_text - shows entire CV instead of matched text
+4. NO MARKERS - Document View doesn't highlight problems
+
+───────────────────────────────────────────────────────────────────────────────
+INVESTIGATION 1: Check Section Extraction (CVStructure)
+───────────────────────────────────────────────────────────────────────────────
+
+The architecture reuses section_extractor.py and CVStructure.
+
+1. Find backend/common/detection/section_extractor.py
+2. Show me the CVStructure class definition
+3. Show me how extract_sections() or parse() works
+
+THEN add debug logging:
+```python
+# In the function that creates CVStructure, ADD:
+print(f"[SECTION_EXTRACTOR] Raw text length: {len(raw_text)}")
+print(f"[SECTION_EXTRACTOR] Contact section: {len(cv_structure.contact) if hasattr(cv_structure, 'contact') else 'NO FIELD'} chars")
+print(f"[SECTION_EXTRACTOR] Summary section: {len(cv_structure.summary) if hasattr(cv_structure, 'summary') else 'NO FIELD'} chars")
+print(f"[SECTION_EXTRACTOR] Experience section: {len(cv_structure.experience) if hasattr(cv_structure, 'experience') else 'NO FIELD'} chars")
+print(f"[SECTION_EXTRACTOR] Skills section: {len(cv_structure.skills) if hasattr(cv_structure, 'skills') else 'NO FIELD'} chars")
+
+# Also print first 200 chars of contact to verify it has content:
+if hasattr(cv_structure, 'contact') and cv_structure.contact:
+    print(f"[SECTION_EXTRACTOR] Contact preview: {cv_structure.contact[:200]}")
+else:
+    print(f"[SECTION_EXTRACTOR] Contact: EMPTY OR MISSING")
+```
+
+REPORT:
+- Does CVStructure have 'contact', 'summary', 'experience', 'skills' fields? YES/NO
+- What are the field names in CVStructure? ___
+
+───────────────────────────────────────────────────────────────────────────────
+INVESTIGATION 2: Check How Handlers Get Section Text
+───────────────────────────────────────────────────────────────────────────────
+
+Find backend/common/detection/rule_engine/handlers/base.py
+
+Show me the get_target_text() method.
+
+CRITICAL QUESTION: Does it map 'contact' to the correct CVStructure field?
+
+Look for code like:
+```python
+def get_target_text(self, sections, target: str) -> str:
+    section_map = {
+        'all': sections.raw_text,
+        'contact': sections.contact,  # <-- Does CVStructure have .contact?
+        'summary': sections.summary,
+        ...
+    }
+```
+
+⚠️ PROBLEM HYPOTHESIS:
+If CVStructure uses different field names (like 'contact_info' instead of 'contact'),
+then get_target_text('contact') returns EMPTY, causing false positives!
+
+REPORT:
+- What field names does section_map use? ___
+- What field names does CVStructure actually have? ___
+- Do they MATCH? YES/NO
+
+───────────────────────────────────────────────────────────────────────────────
+INVESTIGATION 3: Check Presence Handler Logic
+───────────────────────────────────────────────────────────────────────────────
+
+Find backend/common/detection/rule_engine/handlers/presence_handler.py
+
+Show me the detect() method.
+
+Add logging:
+```python
+def detect(self, cv_text, sections, rule):
+    config = rule.detection_config
+    target_section = config.get('target_section', 'all')
+    
+    # ADD THIS:
+    target_text = self.get_target_text(sections, target_section)
+    print(f"[PRESENCE_HANDLER] issue_code: {rule.issue_code}")
+    print(f"[PRESENCE_HANDLER] target_section: {target_section}")
+    print(f"[PRESENCE_HANDLER] target_text length: {len(target_text) if target_text else 0}")
+    print(f"[PRESENCE_HANDLER] target_text empty? {not target_text or len(target_text) == 0}")
+    
+    # If checking for email, show what we're searching:
+    if 'EMAIL' in rule.issue_code:
+        print(f"[PRESENCE_HANDLER] Searching for email in: {target_text[:300] if target_text else 'EMPTY'}")
+```
+
+REPORT:
+- For CONTACT_MISSING_EMAIL, what is target_text length? ___
+- Is target_text EMPTY when it should have content? YES/NO
+
+───────────────────────────────────────────────────────────────────────────────
+INVESTIGATION 4: Check DetectedIssue Output Format
+───────────────────────────────────────────────────────────────────────────────
+
+Find where DetectedIssue class is defined (likely in handlers/base.py or __init__.py)
+
+Show me:
+1. The DetectedIssue class definition (all fields)
+2. The to_dict() method
+
+CRITICAL: The frontend expects these EXACT field names:
+- issue_code
+- display_name (NOT "name", NOT "title")
+- current_text (NOT "match_text", NOT "matched_text")
+- severity
+- description
+
+REPORT:
+- What fields does DetectedIssue have? ___
+- Does to_dict() return 'display_name'? YES/NO
+- Does to_dict() return 'current_text'? YES/NO
+- If not, what field names are used? ___
+
+───────────────────────────────────────────────────────────────────────────────
+INVESTIGATION 5: Check What RuleLoader Provides
+───────────────────────────────────────────────────────────────────────────────
+
+Find backend/common/detection/rule_engine/loader.py
+
+Show me:
+1. The DetectionRule class (what fields it has)
+2. Does it include display_name from database?
+
+When RuleLoader loads from database, does it get display_name column?
+
+Add logging:
+```python
+# In get_all_active_rules() or similar:
+rules = ... # however rules are loaded
+print(f"[RULE_LOADER] Loaded {len(rules)} rules")
+if rules:
+    sample = rules[0]
+    print(f"[RULE_LOADER] Sample rule: {sample.issue_code}")
+    print(f"[RULE_LOADER] Has display_name? {hasattr(sample, 'display_name')}")
+    if hasattr(sample, 'display_name'):
+        print(f"[RULE_LOADER] display_name value: {sample.display_name}")
+```
+
+REPORT:
+- Does DetectionRule class have display_name field? YES/NO
+- Does the SQL query SELECT display_name from database? YES/NO
+
+───────────────────────────────────────────────────────────────────────────────
+INVESTIGATION 6: Run a Test and Check Console
+───────────────────────────────────────────────────────────────────────────────
+
+After adding all the logging above:
+
+1. Restart the backend
+2. Set in Secrets: CV_USE_NEW_DETECTION_ENGINE=true
+3. Analyze a CV that has an email address (like dcohen.demo@gmail.com)
+4. Check Console for all the [SECTION_EXTRACTOR], [PRESENCE_HANDLER], [RULE_LOADER] logs
+
+REPORT WHAT YOU SEE:
+- [SECTION_EXTRACTOR] Contact section length: ___
+- [SECTION_EXTRACTOR] Contact preview shows: ___
+- [PRESENCE_HANDLER] target_text length: ___
+- [PRESENCE_HANDLER] target_text empty? ___
+- Did it correctly find the email or incorrectly report "missing"? ___
+
+───────────────────────────────────────────────────────────────────────────────
+SUMMARY: IDENTIFY ROOT CAUSE
+───────────────────────────────────────────────────────────────────────────────
+
+Based on your investigation, the ROOT CAUSE is likely ONE of these:
+
+□ A) CVStructure field names don't match what handlers expect
+   (e.g., CVStructure has 'contact_info', handlers expect 'contact')
+
+□ B) Section extraction returns empty strings
+   (parsing logic doesn't work)
+
+□ C) DetectedIssue to_dict() uses wrong field names
+   (uses 'match_text' instead of 'current_text')
+
+□ D) RuleLoader doesn't include display_name
+   (SQL query missing display_name column)
+
+□ E) Multiple issues from above
+
+REPORT FORMAT:
