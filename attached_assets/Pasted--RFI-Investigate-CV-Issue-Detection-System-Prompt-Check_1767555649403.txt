@@ -1,0 +1,110 @@
+# RFI: Investigate CV Issue Detection System
+
+## Prompt Checklist
+
+- [ ] 🔍 RFI-1#1 Investigate Issue Detection Architecture
+
+---
+
+## 🔍 RFI-1#1 Investigate Issue Detection Architecture
+
+```
+╔══════════════════════════════════════════════════════════════════════════╗
+║  RFI: Investigate CV Issue Detection System                              ║
+║  Type: INVESTIGATION - DO NOT MODIFY CODE                                ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+CONTEXT:
+The CV Optimizer is detecting wrong/trivial issues and missing real issues.
+I need to understand the current detection architecture before fixing it.
+
+Examples of problems:
+- Detects "Inconsistent Bullet Point Styles" for "X •" (trivial/wrong)
+- Detects "Weak Action Verbs" for finding 1 word "supported" (too aggressive)
+- Only shows 2 markers in Document View (missing many real issues)
+- Missing detection of important CV problems
+
+───────────────────────────────────────────────────────────────────────────
+QUESTIONS - PLEASE ANSWER ALL
+───────────────────────────────────────────────────────────────────────────
+
+1. DETECTION FILE STRUCTURE
+   - List ALL files in: backend/common/detection/
+   - Show the directory tree
+   - Which file is the "master" orchestrator?
+
+2. MASTER DETECTOR
+   - Show the FULL content of master_detector.py
+   - What detectors does it call?
+   - In what order are detectors executed?
+
+3. SPECIFIC DETECTOR FILES
+   For EACH detector file found, show:
+   - File name
+   - Main function name
+   - What issue_types it returns
+   - The detection logic (regex patterns, word lists, conditions)
+
+4. BULLET POINT DETECTION
+   - Which file detects "Inconsistent Bullet Point Styles"?
+   - Show the EXACT code that detects this
+   - What pattern/regex is used?
+   - Why would "X •" trigger this?
+
+5. ACTION VERB DETECTION
+   - Which file detects "Weak or Passive Action Verbs"?
+   - Show the EXACT code
+   - What word list is used?
+   - What is the threshold (how many weak verbs trigger an issue)?
+
+6. WORD LISTS
+   - Show content of word_lists.py (or wherever word lists are stored)
+   - List all word lists: weak verbs, strong verbs, buzzwords, etc.
+
+7. ISSUE TYPE MAPPING
+   - How does detector output map to database cv_issue_types?
+   - Show any config/mapping files
+   - Are all issue_types in code also in database?
+
+8. DOCUMENT VIEW MARKERS
+   - How are markers placed in Document View?
+   - What determines if an issue gets a marker?
+   - Why might only 2 markers appear when 12 issues are found?
+
+9. API FLOW
+   - What API endpoint triggers detection?
+   - Trace the flow: API → Detection → Response
+   - Show the route/controller code
+
+10. CURRENT ISSUES COUNT
+    - How many total issue_types are defined in code?
+    - How many are in cv_issue_types database table?
+    - Any mismatch?
+
+───────────────────────────────────────────────────────────────────────────
+RESPONSE FORMAT
+───────────────────────────────────────────────────────────────────────────
+
+For each question:
+- Answer with SPECIFIC FILE PATHS
+- Include CODE SNIPPETS where requested
+- Say "NOT FOUND" if something doesn't exist
+- Say "UNCLEAR" if logic is confusing
+
+───────────────────────────────────────────────────────────────────────────
+
+⚠️ DO NOT MODIFY ANY CODE
+⚠️ REPORT ONLY - INVESTIGATION MODE
+⚠️ I need to understand before we fix
+
+╚══════════════════════════════════════════════════════════════════════════╝
+```
+
+---
+
+**After receiving the RFI response, we will:**
+1. Identify root causes
+2. Create fix prompts
+3. Test fixes
+
+**END OF RFI**
