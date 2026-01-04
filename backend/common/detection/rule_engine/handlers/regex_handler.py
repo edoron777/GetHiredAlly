@@ -89,20 +89,30 @@ class RegexHandler(BaseHandler):
             if return_matches and matches:
                 unique_matches = list(set(str(m) for m in matches[:10]))
                 first_match = str(matches[0]) if matches else ''
-                description = f"{match_count} found: {', '.join(unique_matches)}"
+                description = f"{match_count} found: {', '.join(unique_matches[:5])}"
             else:
                 first_match = ''
                 description = f"{match_count} matches found"
             
+            if first_match.strip() == '':
+                if '\n' in first_match or first_match == '':
+                    current_display = '[blank line]'
+                else:
+                    current_display = '[whitespace]'
+                is_highlight = False
+            else:
+                current_display = first_match[:47] + '...' if len(first_match) > 50 else first_match
+                is_highlight = bool(current_display and current_display in text)
+            
             issue = self.create_issue(
                 rule=rule,
-                current=first_match,
+                current=current_display,
                 description=description,
                 location=target_section,
-                is_highlightable=bool(first_match and first_match in text),
+                is_highlightable=is_highlight,
                 details={
                     'match_count': match_count,
-                    'matches': [str(m) for m in matches[:20]] if return_matches else [],
+                    'matches': [str(m)[:50] for m in matches[:20]] if return_matches else [],
                     'target_section': target_section
                 }
             )
