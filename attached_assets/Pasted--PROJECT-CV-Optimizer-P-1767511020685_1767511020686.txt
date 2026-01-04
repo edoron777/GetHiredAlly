@@ -1,0 +1,88 @@
+═══════════════════════════════════════════════════════════════════════════
+PROJECT: CV Optimizer P1 - PROMPT 7#9: Update TipBox Auto Fix Button
+═══════════════════════════════════════════════════════════════════════════
+
+TASK:
+Update TipBox to conditionally show Auto Fix button.
+
+───────────────────────────────────────────────────────────────────────────
+
+FILE TO MODIFY:
+client/src/components/common/TipBox/ (find the main TipBox component)
+
+───────────────────────────────────────────────────────────────────────────
+
+STEP 1: Add New Props
+
+Add these props to the TipBox interface:
+
+interface TipBoxProps {
+  // ... existing props ...
+  bulkAutoFixUsed?: boolean;
+  isAutoFixable?: boolean;
+  isPending?: boolean;
+  isFixed?: boolean;
+}
+
+───────────────────────────────────────────────────────────────────────────
+
+STEP 2: Update Auto Fix Button Visibility
+
+Find where the Auto Fix button is rendered.
+Wrap it with this condition:
+
+const showAutoFixButton = 
+  isAutoFixable && 
+  !bulkAutoFixUsed && 
+  !isFixed &&
+  !isPending;
+
+Then use:
+
+{showAutoFixButton && (
+  <button className="tipbox-button auto-fix" onClick={onAutoFix}>
+    <Lightbulb size={16} />
+    Auto Fix
+  </button>
+)}
+
+───────────────────────────────────────────────────────────────────────────
+
+STEP 3: Add Info Text When No Auto Fix
+
+When Auto Fix is not available, show info text:
+
+{!showAutoFixButton && !isFixed && !isPending && (
+  <p className="tipbox-info">
+    ℹ️ This issue requires your personal input
+  </p>
+)}
+
+───────────────────────────────────────────────────────────────────────────
+
+ADD CSS:
+
+.tipbox-info {
+  font-size: 13px;
+  color: #6B7280;
+  font-style: italic;
+  margin-top: 8px;
+}
+
+───────────────────────────────────────────────────────────────────────────
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- ONLY update the Auto Fix button visibility logic
+- Do NOT change other TipBox functionality
+- Do NOT change button styling (only visibility)
+
+───────────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+[ ] Auto Fix button hidden when bulkAutoFixUsed = true
+[ ] Auto Fix button hidden when isAutoFixable = false
+[ ] Auto Fix button hidden when issue is pending or fixed
+[ ] Info text shows when Auto Fix not available
+[ ] Apply to CV button still always visible
+
+═══════════════════════════════════════════════════════════════════════════

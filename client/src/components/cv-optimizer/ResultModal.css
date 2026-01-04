@@ -1,0 +1,72 @@
+.result-modal {
+  max-width: 450px;
+  text-align: center;
+}
+
+.result-modal-header {
+  margin-bottom: 20px;
+}
+
+.result-modal-header h2 {
+  font-size: 22px;
+  font-weight: 600;
+  color: #1E3A5F;
+  margin-top: 12px;
+}
+
+.result-icon {
+  margin-bottom: 8px;
+}
+
+.score-comparison {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.score-old {
+  font-size: 36px;
+  font-weight: 300;
+  color: #9CA3AF;
+}
+
+.score-arrow {
+  font-size: 24px;
+  color: #6B7280;
+}
+
+.score-new {
+  font-size: 48px;
+  font-weight: 700;
+  color: #1E3A5F;
+}
+
+.score-diff {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.result-stats {
+  margin-bottom: 24px;
+}
+
+.result-stats p {
+  margin: 6px 0;
+  color: #4B5563;
+}
+
+.result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+.result-actions .modal-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
