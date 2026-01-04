@@ -82,6 +82,7 @@ class RuleEngine:
             logger.warning("No detection rules loaded from database")
             return []
         
+        print(f"[RuleEngine] Starting detection with {len(rules)} rules")
         logger.info(f"Applying {len(rules)} detection rules from database")
         logger.info("=" * 60)
         logger.info("[RULE ENGINE] APPLYING RULES:")

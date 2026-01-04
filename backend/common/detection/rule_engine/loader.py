@@ -84,8 +84,13 @@ class RuleLoader:
         Returns:
             List of DetectionRule objects
         """
+        print(f"[RuleLoader] Loading rules from database...")
         self._refresh_cache_if_needed()
-        return self.cache.get_all_rules()
+        rules = self.cache.get_all_rules()
+        print(f"[RuleLoader] Loaded {len(rules)} rules")
+        for rule in rules:
+            print(f"  - {rule.issue_code}: {rule.detection_config.get('type')}")
+        return rules
     
     def get_rule_by_code(self, issue_code: str) -> Optional[DetectionRule]:
         """Get a specific rule by issue code."""
