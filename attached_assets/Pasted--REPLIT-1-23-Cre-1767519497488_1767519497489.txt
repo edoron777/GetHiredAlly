@@ -1,0 +1,188 @@
+═══════════════════════════════════════════════════════════════════════════════
+💻 REPLIT-1#23: Create Rule Engine Module Structure
+═══════════════════════════════════════════════════════════════════════════════
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- Create ONLY the files specified
+- Create ONLY placeholder content where indicated
+- Do NOT implement actual logic yet
+- If unclear → STOP and ask
+
+───────────────────────────────────────────────────────────────────────────────
+
+TASK: Create the folder structure and placeholder files for the rule engine.
+
+───────────────────────────────────────────────────────────────────────────────
+
+FILES TO CREATE:
+
+1. backend/common/detection/rule_engine/__init__.py
+```python
+"""
+Rule Engine Module
+
+Database-driven detection system for CV analysis.
+Reads detection rules from cv_issue_types.detection_config
+and applies them to CV text.
+
+REUSES:
+- CVStructure from section_extractor.py (DO NOT recreate)
+- CatalogService pattern from common/catalog/ (follow same structure)
+
+Author: GetHiredAlly
+Version: 1.0
+Date: January 2026
+"""
+
+from .engine import RuleEngine
+from .loader import RuleLoader, DetectionRule
+
+__all__ = ['RuleEngine', 'RuleLoader', 'DetectionRule']
+```
+
+2. backend/common/detection/rule_engine/engine.py
+```python
+"""
+Main Rule Engine class.
+Orchestrates detection by loading rules and applying handlers.
+
+IMPORTANT: Uses CVStructure from section_extractor.py - DO NOT recreate.
+"""
+
+# Placeholder - will be implemented in REPLIT-13
+class RuleEngine:
+    """Database-driven detection engine."""
+    pass
+```
+
+3. backend/common/detection/rule_engine/loader.py
+```python
+"""
+Rule Loader - reads detection rules from database.
+
+FOLLOWS: CatalogService pattern from common/catalog/
+- Singleton pattern
+- Repository for DB access
+- Cache for performance
+"""
+
+# Placeholder - will be implemented in REPLIT-2
+class RuleLoader:
+    """Loads detection rules from cv_issue_types table."""
+    _instance = None  # Singleton pattern
+    pass
+```
+
+4. backend/common/detection/rule_engine/repository.py
+```python
+"""
+Rule Repository - database queries for detection rules.
+
+FOLLOWS: CatalogRepository pattern from common/catalog/repository.py
+"""
+
+# Placeholder - will be implemented in REPLIT-2
+class RuleRepository:
+    """Database access for detection rules."""
+    pass
+```
+
+5. backend/common/detection/rule_engine/cache.py
+```python
+"""
+Rule Cache - in-memory cache for detection rules.
+
+FOLLOWS: CatalogCache pattern from common/catalog/cache.py
+Uses system_cache_control table for invalidation.
+"""
+
+# Placeholder - will be implemented in REPLIT-2
+class RuleCache:
+    """In-memory cache for detection rules."""
+    pass
+```
+
+6. backend/common/detection/rule_engine/handlers/__init__.py
+```python
+"""
+Detection Handlers
+
+Each handler implements one detection type:
+- regex: Pattern matching
+- word_list: Check words from list
+- presence: Must contain pattern
+- absence: Must NOT contain pattern
+- count: Count items
+- length: Min/max length
+- consistency: Same format
+- section_required: Section must exist
+- composite: Multiple checks combined
+
+All handlers use CVStructure from section_extractor.py
+"""
+
+from .base import BaseHandler, DetectedIssue
+
+__all__ = ['BaseHandler', 'DetectedIssue']
+```
+
+7. backend/common/detection/rule_engine/handlers/base.py
+```python
+"""
+Base Handler - abstract class for all detection handlers.
+
+IMPORTANT: Uses CVStructure from section_extractor.py
+"""
+
+from abc import ABC, abstractmethod
+
+# Placeholder - will be implemented in REPLIT-3
+class BaseHandler(ABC):
+    """Abstract base class for detection handlers."""
+    pass
+
+class DetectedIssue:
+    """Represents a detected issue."""
+    pass
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+FOLDER STRUCTURE AFTER COMPLETION:
+
+backend/common/detection/
+├── rule_engine/
+│   ├── __init__.py
+│   ├── engine.py
+│   ├── loader.py
+│   ├── repository.py
+│   ├── cache.py
+│   └── handlers/
+│       ├── __init__.py
+│       └── base.py
+├── section_extractor.py (EXISTING - do not modify)
+├── master_detector.py (EXISTING - do not modify yet)
+└── [other existing files]
+
+───────────────────────────────────────────────────────────────────────────────
+
+DO NOT:
+- Modify any existing files
+- Add logic to placeholder classes
+- Create handlers other than base.py
+- Recreate section parsing (use existing section_extractor.py)
+
+───────────────────────────────────────────────────────────────────────────────
+
+WHEN COMPLETE:
+
+Confirm:
+□ rule_engine/ folder created
+□ All 7 files created
+□ handlers/ subfolder created
+□ No syntax errors in any file
+□ No existing files modified
+
+Type "REPLIT-1#23 COMPLETE" when done.
+
+═══════════════════════════════════════════════════════════════════════════════
