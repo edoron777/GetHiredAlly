@@ -1,0 +1,144 @@
+═══════════════════════════════════════════════════════════════════════════════
+📋 INTRO-1#23: CV Detection Architecture - Database-Driven Design
+═══════════════════════════════════════════════════════════════════════════════
+
+PROJECT OVERVIEW:
+
+We are rebuilding the CV detection system to be DATABASE-DRIVEN instead of
+using hardcoded rules in Python code.
+
+───────────────────────────────────────────────────────────────────────────────
+
+WHY THIS CHANGE:
+
+CURRENT PROBLEM:
+- Database has cv_issue_types table with 61+ issue definitions
+- Code IGNORES database and uses HARDCODED patterns in detector files
+- Rules in database and rules in code DRIFT apart
+- Changing detection requires code deployment
+
+TARGET STATE:
+- Database is SINGLE SOURCE OF TRUTH
+- Code READS detection rules from database
+- New column: detection_config (JSONB) stores HOW to detect
+- Code only knows HOW to apply rules, not WHAT rules exist
+- Rule changes = database update + cache invalidation (no deployment)
+
+───────────────────────────────────────────────────────────────────────────────
+
+EXISTING CODE TO REUSE (from RFI-1):
+
+1. CVStructure dataclass from section_extractor.py
+   - Already parses CV into: summary, experience, education, skills
+   - DO NOT recreate - import and use it
+
+2. CatalogService pattern from common/catalog/
+   - Singleton pattern with repository + cache
+   - RuleLoader will follow SAME pattern
+
+3. enrich_issues_from_catalog() in master_detector.py
+   - Existing enrichment pattern
+   - New engine integrates with this
+
+───────────────────────────────────────────────────────────────────────────────
+
+ARCHITECTURE OVERVIEW:
+
+DATABASE:
+┌─────────────────────────────────────────────────────────────┐
+│ cv_issue_types                                              │
+│ ├── issue_code: 'CONTENT_FIRST_PERSON_PRONOUNS'            │
+│ ├── detection_method: 'regex'                               │
+│ └── detection_config: {                    ← NEW COLUMN     │
+│       "type": "regex",                                      │
+│       "pattern": "\\b(I|my|me)\\b",                        │
+│       "target_section": "all",                              │
+│       "min_matches": 3                                      │
+│     }                                                       │
+└─────────────────────────────────────────────────────────────┘
+         │
+         ▼
+┌─────────────────────────────────────────────────────────────┐
+│ v_cv_detection_rules (NEW VIEW)                             │
+│ - Joins issue_types + subcategories + categories           │
+│ - Filters: is_active=true AND detection_config IS NOT NULL │
+└─────────────────────────────────────────────────────────────┘
+
+CODE:
+┌─────────────────────────────────────────────────────────────┐
+│ backend/common/detection/rule_engine/                       │
+│ ├── engine.py        ← Main RuleEngine class               │
+│ ├── loader.py        ← RuleLoader (CatalogService pattern) │
+│ ├── cache.py         ← RuleCache (like CatalogCache)       │
+│ └── handlers/                                               │
+│     ├── regex_handler.py                                    │
+│     ├── word_list_handler.py                               │
+│     └── ... (9 handler types total)                        │
+│                                                             │
+│ REUSES:                                                     │
+│ ├── section_extractor.py → CVStructure (existing)          │
+│ └── common/catalog/ → Pattern reference                    │
+└─────────────────────────────────────────────────────────────┘
+
+───────────────────────────────────────────────────────────────────────────────
+
+DETECTION TYPES (9 total):
+
+| Type | Purpose | Example |
+|------|---------|---------|
+| regex | Pattern matching | First person pronouns |
+| word_list | Check words from list | Weak action verbs |
+| presence | Must contain | Email required |
+| absence | Must NOT contain | Tables not allowed |
+| count | Count items | Too many certifications |
+| length | Min/max length | Summary too long |
+| consistency | Same format | Date format consistent |
+| section_required | Section exists | Skills section |
+| composite | Multiple checks | LinkedIn without URL |
+
+───────────────────────────────────────────────────────────────────────────────
+
+PROMPT SERIES (23 PROMPTS):
+
+PHASE A: Foundation (4 prompts)
+- INTRO-1, DB-1, REPLIT-1, REPLIT-2
+
+PHASE B: Handlers (10 prompts)
+- REPLIT-3 to REPLIT-12
+
+PHASE C: Integration (3 prompts)
+- REPLIT-13, REPLIT-14, REPLIT-15
+
+PHASE D: Data Migration (4 prompts)
+- DB-2, DB-3, DB-4, DB-5
+
+PHASE E: Verification (2 prompts)
+- VERIFY-1, VERIFY-2
+
+───────────────────────────────────────────────────────────────────────────────
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE (APPLIES TO ALL PROMPTS):
+
+For ALL prompts in this series:
+- Execute ONLY the specific instructions provided
+- Do NOT add features not explicitly requested
+- Do NOT refactor code outside the specified scope
+- Do NOT "improve" other parts of the codebase
+- If instructions are unclear → STOP and ask for clarification
+- If you see potential improvements → REPORT them, don't implement
+- REUSE existing code where specified (section_extractor, CatalogService pattern)
+
+───────────────────────────────────────────────────────────────────────────────
+
+EXECUTION ORDER:
+
+Execute prompts in order. If any prompt fails, STOP and report.
+
+Phase A MUST complete before Phase B.
+Phase B MUST complete before Phase C.
+Phase C and Phase D can run in parallel.
+Phase E runs after all others complete.
+
+Type "ARCHITECTURE UNDERSTOOD - READY FOR DB-1" when ready.
+
+═══════════════════════════════════════════════════════════════════════════════
