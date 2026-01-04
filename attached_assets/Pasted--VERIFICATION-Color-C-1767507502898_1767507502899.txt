@@ -1,0 +1,83 @@
+═══════════════════════════════════════════════════════════════════════════
+✅ VERIFICATION: Color Convention Implementation
+═══════════════════════════════════════════════════════════════════════════
+
+PURPOSE:
+Verify that ALL 6 locations now use the correct severity colors.
+
+───────────────────────────────────────────────────────────────────────────
+
+CORRECT COLORS (verify these are used everywhere):
+
+| Severity   | Hex Code  | Color Name  |
+|------------|-----------|-------------|
+| Critical   | #990033   | Maroon      |
+| Important  | #990099   | Purple      |
+| Consider   | #1E5A85   | Navy Blue   |
+| Polish     | #008080   | Teal        |
+
+───────────────────────────────────────────────────────────────────────────
+
+CHECK EACH LOCATION:
+
+1. CENTRAL CONSTANTS FILE
+   File: client/src/constants/severityColors.ts
+   [ ] File exists
+   [ ] Critical = #990033
+   [ ] Important = #990099
+   [ ] Consider = #1E5A85
+   [ ] Polish = #008080
+
+2. TEXTMARKER (Document View highlights)
+   File: client/src/components/common/TextMarker/index.ts
+   [ ] Imports from severityColors.ts
+   [ ] Uses correct colors
+
+3. SCORE CIRCLE DOTS (Left sidebar)
+   File: client/src/components/cv-optimizer/IssueSidebar/ScoreWidget.tsx
+   [ ] Imports from severityColors.ts
+   [ ] Uses correct colors
+
+4. SIDEBAR NAVIGATION
+   File: client/src/components/cv-optimizer/IssueSidebar/
+   [ ] Imports from severityColors.ts
+   [ ] Uses correct colors
+
+5. TIPBOX BADGES
+   File: client/src/components/common/TipBox/
+   [ ] Imports from severityColors.ts
+   [ ] Uses correct colors
+
+6. LIST VIEW HEADERS
+   File: client/src/components/cv-optimizer/ListViewTab/ListViewTab.tsx
+   [ ] Imports from severityColors.ts
+   [ ] Uses correct colors
+
+7. SCANNER PAGE
+   File: client/src/components/cv-optimizer/GHAScanner.tsx
+   [ ] Imports from severityColors.ts
+   [ ] Uses correct colors
+   [ ] Order is: Critical → Important → Consider → Polish
+
+───────────────────────────────────────────────────────────────────────────
+
+REPORT FORMAT:
+
+Please report status for each location:
+
+Location 1 - Constants File: ✅ CORRECT / ❌ NEEDS FIX
+Location 2 - TextMarker: ✅ CORRECT / ❌ NEEDS FIX
+Location 3 - Score Dots: ✅ CORRECT / ❌ NEEDS FIX
+Location 4 - Sidebar Nav: ✅ CORRECT / ❌ NEEDS FIX
+Location 5 - TipBox: ✅ CORRECT / ❌ NEEDS FIX
+Location 6 - List View: ✅ CORRECT / ❌ NEEDS FIX
+Location 7 - Scanner: ✅ CORRECT / ❌ NEEDS FIX
+
+If any location shows ❌ NEEDS FIX, explain what is wrong.
+
+───────────────────────────────────────────────────────────────────────────
+
+DO NOT MAKE ANY CHANGES.
+Just report the current status.
+
+═══════════════════════════════════════════════════════════════════════════
