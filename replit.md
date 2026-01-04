@@ -266,6 +266,7 @@ The application features a modern web architecture with a React 19 frontend util
 - **AI Integration:** A unified AI service routes requests to Claude or Gemini models via LiteLLM, allowing users to select their preferred provider. All AI interactions are logged for usage tracking, cost analysis, and auditing.
 - **Interview Questions:** A comprehensive database of 54 static interview questions categorized into Universal, Behavioral, Situational, Self-Assessment, and Cultural Fit, each with detailed preparation guidance. Dynamic, AI-generated questions are personalized based on user input.
 - **CV Optimization:** An AI-powered CV optimizer scans resumes (PDF, DOCX, TXT), identifies issues, suggests improvements, and can even generate a fixed version with side-by-side comparison. CV content is encrypted at rest using Fernet.
+- **Enhanced CV Parser (Static/Free):** A non-AI CV parser using spaCy NLP + regex for freemium users. Located at `backend/utils/cv_parser/`. Extracts: contact info (name, email, phone, LinkedIn, GitHub), sections (summary, experience, education, skills), skills (matched against 500+ skill database), education degrees, and estimated years of experience. 100% deterministic - no AI costs.
 
 **Feature Specifications:**
 - **Job Description X-Ray:** Analyzes job descriptions using AI to extract key requirements and suggest relevant interview preparation.
