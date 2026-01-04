@@ -59,6 +59,10 @@ class RegexHandler(BaseHandler):
         max_matches = config.get('max_matches')
         return_matches = config.get('return_matches', True)
         
+        logger.info(f"[DEBUG REGEX] Rule: {rule.issue_code}")
+        logger.info(f"[DEBUG REGEX] target_section from config: {target_section}")
+        logger.info(f"[DEBUG REGEX] pattern: {pattern_str}")
+        
         flags = 0
         if 'i' in flags_str.lower():
             flags |= re.IGNORECASE
@@ -66,7 +70,12 @@ class RegexHandler(BaseHandler):
             flags |= re.MULTILINE
         
         text = self.get_target_text(cv_structure, target_section)
+        logger.info(f"[DEBUG REGEX] text length from get_target_text: {len(text) if text else 0}")
+        if text:
+            logger.info(f"[DEBUG REGEX] text first 300 chars: {text[:300]}")
+        
         if not text:
+            logger.info(f"[DEBUG REGEX] NO TEXT - returning empty (target_section '{target_section}' not found)")
             return issues
         
         try:
