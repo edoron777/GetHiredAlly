@@ -14,16 +14,41 @@ interface SideBySideViewProps {
   fixedIssues: Set<string>;
 }
 
+function stripMarkdown(text: string): string {
+  if (!text) return '';
+  return text
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/\*([^*]+)\*/g, '$1')
+    .replace(/__([^_]+)__/g, '$1')
+    .replace(/_([^_]+)_/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/\n{3,}/g, '\n\n');
+}
+
+function stripMarkdownFromMarker(text: string): string {
+  if (!text) return '';
+  return text
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/\*([^*]+)\*/g, '$1')
+    .replace(/__([^_]+)__/g, '$1')
+    .replace(/_([^_]+)_/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+}
+
 const SideBySideView: React.FC<SideBySideViewProps> = ({
   originalCV,
   fixedCV,
   issues,
   fixedIssues
 }) => {
+  const strippedOriginal = stripMarkdown(originalCV);
+  const strippedFixed = stripMarkdown(fixedCV);
+
   const originalMarkers = issues
     .map(issue => ({
       id: issue.id,
-      matchText: issue.matchText || issue.current_text || issue.problematic_text || '',
+      matchText: stripMarkdownFromMarker(issue.matchText || issue.current_text || issue.problematic_text || ''),
       tag: issue.severity as 'critical' | 'important' | 'consider' | 'polish'
     }))
     .filter(m => m.matchText && m.matchText.length >= 3);
@@ -32,7 +57,7 @@ const SideBySideView: React.FC<SideBySideViewProps> = ({
     .filter(issue => !fixedIssues.has(issue.id))
     .map(issue => ({
       id: issue.id,
-      matchText: issue.matchText || issue.current_text || issue.problematic_text || '',
+      matchText: stripMarkdownFromMarker(issue.matchText || issue.current_text || issue.problematic_text || ''),
       tag: issue.severity as 'critical' | 'important' | 'consider' | 'polish'
     }))
     .filter(m => m.matchText && m.matchText.length >= 3);
@@ -51,7 +76,7 @@ const SideBySideView: React.FC<SideBySideViewProps> = ({
         </div>
         <div className="p-4 max-h-[600px] overflow-y-auto bg-red-50/30 whitespace-pre-wrap font-mono text-sm">
           <TextMarker
-            content={originalCV}
+            content={strippedOriginal}
             markers={originalMarkers}
             config={{
               style: 'rectangle',
@@ -73,7 +98,7 @@ const SideBySideView: React.FC<SideBySideViewProps> = ({
         </div>
         <div className="p-4 max-h-[600px] overflow-y-auto bg-green-50/30 whitespace-pre-wrap font-mono text-sm">
           <TextMarker
-            content={fixedCV}
+            content={strippedFixed}
             markers={fixedMarkers}
             config={{
               style: 'rectangle',

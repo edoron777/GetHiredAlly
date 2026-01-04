@@ -1,0 +1,83 @@
+═══════════════════════════════════════════════════════════════════════════
+✅ VERIFICATION: Side by Side View Fixes
+═══════════════════════════════════════════════════════════════════════════
+
+TEST MARKDOWN RENDERING:
+
+───────────────────────────────────────────────────────────────────────────
+
+1. ORIGINAL CV PANEL
+[ ] No raw ** characters visible
+[ ] No raw __ characters visible
+[ ] No raw [text](url) link syntax visible
+[ ] Bold text appears bold (or as plain text, no asterisks)
+[ ] Content is readable and clean
+
+2. FIXED CV PANEL
+[ ] No raw ** characters visible
+[ ] No raw __ characters visible
+[ ] No raw [text](url) link syntax visible
+[ ] Bold text appears bold (or as plain text, no asterisks)
+[ ] Content is readable and clean
+
+3. CONSISTENCY
+[ ] Both panels render text the same way
+[ ] No visual discrepancies between panels
+
+───────────────────────────────────────────────────────────────────────────
+
+TEST CHANGE MARKERS:
+
+───────────────────────────────────────────────────────────────────────────
+
+4. VISIBILITY
+[ ] Changed sections have blue border (#3B82F6)
+[ ] Changed sections have light blue background
+[ ] Unchanged sections have NO highlighting
+
+5. ACCURACY
+[ ] Only actually changed text is highlighted
+[ ] All changes are highlighted (none missed)
+
+6. LAYOUT
+[ ] Highlighting doesn't break text flow
+[ ] Highlighting doesn't cause overflow
+[ ] Scrolling works correctly in both panels
+
+───────────────────────────────────────────────────────────────────────────
+
+TEST SCENARIOS:
+
+───────────────────────────────────────────────────────────────────────────
+
+Scenario A: Fresh CV with no fixes
+[ ] Original CV displays correctly
+[ ] Fixed CV shows same content (no changes yet)
+[ ] No change markers visible
+
+Scenario B: Apply one fix
+[ ] Fixed CV updates with change
+[ ] Change is highlighted with blue marker
+[ ] Original CV unchanged
+
+Scenario C: Apply multiple fixes
+[ ] All changes highlighted
+[ ] Multiple markers visible
+[ ] Markers don't overlap incorrectly
+
+Scenario D: After Bulk Auto Fix
+[ ] All auto-fixed sections highlighted
+[ ] Many markers visible
+[ ] Performance is acceptable (no lag)
+
+───────────────────────────────────────────────────────────────────────────
+
+REPORT:
+
+Total tests: 18
+Passed: ___
+Failed: ___
+
+List any failures with details.
+
+═══════════════════════════════════════════════════════════════════════════
