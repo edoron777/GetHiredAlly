@@ -1,0 +1,11 @@
+.change-marker {
+  background-color: rgba(59, 130, 246, 0.1);
+  border: 2px solid #3B82F6;
+  border-radius: 4px;
+  padding: 1px 3px;
+  display: inline;
+}
+
+.change-highlighted-content {
+  line-height: 1.6;
+}

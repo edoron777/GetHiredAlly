@@ -1,5 +1,12 @@
 import React from 'react';
 import { TextMarker, CV_OPTIMIZER_COLORS } from '../../common/TextMarker';
+import './SideBySideView.css';
+
+interface AppliedChange {
+  originalText: string;
+  newText: string;
+  issueId: string;
+}
 
 interface SideBySideViewProps {
   originalCV: string;
@@ -12,6 +19,7 @@ interface SideBySideViewProps {
     problematic_text?: string;
   }>;
   fixedIssues: Set<string>;
+  appliedChanges?: AppliedChange[];
 }
 
 function stripMarkdown(text: string): string {
@@ -36,11 +44,64 @@ function stripMarkdownFromMarker(text: string): string {
     .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
 }
 
+function highlightChangedText(
+  content: string, 
+  changes: AppliedChange[]
+): React.ReactNode[] {
+  if (!changes || changes.length === 0 || !content) {
+    return [<span key="full">{content}</span>];
+  }
+
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let workingContent = content;
+
+  const sortedChanges = [...changes].sort((a, b) => {
+    const indexA = workingContent.indexOf(stripMarkdown(a.newText));
+    const indexB = workingContent.indexOf(stripMarkdown(b.newText));
+    return indexA - indexB;
+  });
+
+  sortedChanges.forEach((change, i) => {
+    const strippedNewText = stripMarkdown(change.newText);
+    const index = workingContent.indexOf(strippedNewText, lastIndex);
+    
+    if (index !== -1) {
+      if (index > lastIndex) {
+        parts.push(
+          <span key={`text-${i}`}>
+            {workingContent.substring(lastIndex, index)}
+          </span>
+        );
+      }
+      
+      parts.push(
+        <span key={`change-${i}`} className="change-marker">
+          {strippedNewText}
+        </span>
+      );
+      
+      lastIndex = index + strippedNewText.length;
+    }
+  });
+
+  if (lastIndex < workingContent.length) {
+    parts.push(
+      <span key="remaining">
+        {workingContent.substring(lastIndex)}
+      </span>
+    );
+  }
+
+  return parts.length > 0 ? parts : [<span key="full">{content}</span>];
+}
+
 const SideBySideView: React.FC<SideBySideViewProps> = ({
   originalCV,
   fixedCV,
   issues,
-  fixedIssues
+  fixedIssues,
+  appliedChanges = []
 }) => {
   const strippedOriginal = stripMarkdown(originalCV);
   const strippedFixed = stripMarkdown(fixedCV);
@@ -61,6 +122,8 @@ const SideBySideView: React.FC<SideBySideViewProps> = ({
       tag: issue.severity as 'critical' | 'important' | 'consider' | 'polish'
     }))
     .filter(m => m.matchText && m.matchText.length >= 3);
+
+  const hasChanges = appliedChanges.length > 0;
 
   return (
     <div className="grid grid-cols-2 gap-4">
@@ -97,14 +160,20 @@ const SideBySideView: React.FC<SideBySideViewProps> = ({
           </span>
         </div>
         <div className="p-4 max-h-[600px] overflow-y-auto bg-green-50/30 whitespace-pre-wrap font-mono text-sm">
-          <TextMarker
-            content={strippedFixed}
-            markers={fixedMarkers}
-            config={{
-              style: 'rectangle',
-              tagColors: CV_OPTIMIZER_COLORS
-            }}
-          />
+          {hasChanges ? (
+            <div className="change-highlighted-content">
+              {highlightChangedText(strippedFixed, appliedChanges)}
+            </div>
+          ) : (
+            <TextMarker
+              content={strippedFixed}
+              markers={fixedMarkers}
+              config={{
+                style: 'rectangle',
+                tagColors: CV_OPTIMIZER_COLORS
+              }}
+            />
+          )}
         </div>
       </div>
     </div>

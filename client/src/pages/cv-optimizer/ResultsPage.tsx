@@ -111,6 +111,13 @@ export default function ResultsPage() {
     scoreChange: 'improved' | 'unchanged' | 'dropped';
   } | null>(null);
 
+  // Applied Changes tracking for Side by Side view
+  const [appliedChanges, setAppliedChanges] = useState<Array<{
+    originalText: string;
+    newText: string;
+    issueId: string;
+  }>>([]);
+
   const normalizeIssue = (issue: CVIssue, index: number) => ({
     id: issue.id || String(index + 1),
     severity: issue.severity || 'consider',
@@ -333,6 +340,13 @@ export default function ResultsPage() {
     const updatedCV = currentCV.replace(originalText, replacementText);
     setFixedCV(updatedCV);
     
+    // Track the applied change for Side by Side view
+    setAppliedChanges(prev => [...prev, {
+      originalText: originalText,
+      newText: replacementText,
+      issueId: issueId
+    }]);
+    
     // Mark issue as fixed and recalculate score
     const newFixedIssues = new Set([...fixedIssues, issueId]);
     setFixedIssues(newFixedIssues);
@@ -396,6 +410,13 @@ export default function ResultsPage() {
         if (suggestedText && matchText && updatedCV.includes(matchText)) {
           updatedCV = updatedCV.replace(matchText, suggestedText);
           newFixedIssueIds.push(issueId);
+          
+          // Track applied change for Side by Side view
+          setAppliedChanges(prev => [...prev, {
+            originalText: matchText,
+            newText: suggestedText,
+            issueId: issueId
+          }]);
         }
       }
       
@@ -447,6 +468,7 @@ export default function ResultsPage() {
       // Clear fixed state (everything is fresh from new scan)
       setFixedCV(null);
       setFixedIssues(new Set());
+      setAppliedChanges([]);
       
       // Clear pending
       setPendingChanges(0);
@@ -652,6 +674,7 @@ export default function ResultsPage() {
         
         setFixedCV(null);
         setFixedIssues(new Set());
+        setAppliedChanges([]);
         setPendingChanges(0);
         setPendingIssues(new Set());
         
@@ -725,6 +748,7 @@ export default function ResultsPage() {
       
       setFixedCV(null);
       setFixedIssues(new Set());
+      setAppliedChanges([]);
       
       // Clear pending tracking
       setPendingChanges(0);
@@ -1011,6 +1035,7 @@ export default function ResultsPage() {
               fixedCV={fixedCV || reportData?.cv_content || ''}
               issues={normalizedIssues}
               fixedIssues={fixedIssues}
+              appliedChanges={appliedChanges}
             />
           )}
         </div>
