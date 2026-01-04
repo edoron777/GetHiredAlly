@@ -65,14 +65,16 @@ class CountHandler(BaseHandler):
         
         if should_trigger:
             if below_min:
-                match_text = f"Only {count} {count_what} found (minimum: {min_count})"
+                description = f"Only {count} {count_what} found (minimum: {min_count})"
             else:
-                match_text = f"{count} {count_what} found (maximum: {max_count})"
+                description = f"{count} {count_what} found (maximum: {max_count})"
             
             issue = self.create_issue(
                 rule=rule,
-                match_text=match_text,
+                current='',
+                description=description,
                 location=target_section,
+                is_highlightable=False,
                 details={
                     'count': count,
                     'count_what': count_what,

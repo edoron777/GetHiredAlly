@@ -88,14 +88,18 @@ class RegexHandler(BaseHandler):
         if should_trigger:
             if return_matches and matches:
                 unique_matches = list(set(str(m) for m in matches[:10]))
-                match_text = f"{match_count} found: {', '.join(unique_matches)}"
+                first_match = str(matches[0]) if matches else ''
+                description = f"{match_count} found: {', '.join(unique_matches)}"
             else:
-                match_text = f"{match_count} matches found"
+                first_match = ''
+                description = f"{match_count} matches found"
             
             issue = self.create_issue(
                 rule=rule,
-                match_text=match_text,
+                current=first_match,
+                description=description,
                 location=target_section,
+                is_highlightable=bool(first_match and first_match in text),
                 details={
                     'match_count': match_count,
                     'matches': [str(m) for m in matches[:20]] if return_matches else [],

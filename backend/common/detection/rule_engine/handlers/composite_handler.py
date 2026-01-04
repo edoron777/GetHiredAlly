@@ -119,11 +119,13 @@ class CompositeHandler(BaseHandler):
             should_trigger = any(condition_results)
         
         if should_trigger:
-            match_text = f"Composite condition met ({len([r for r in condition_results if r])}/{len(condition_results)} conditions)"
+            description = f"Composite condition met ({len([r for r in condition_results if r])}/{len(condition_results)} conditions)"
             
             issue = self.create_issue(
                 rule=rule,
-                match_text=match_text,
+                current='',
+                description=description,
+                is_highlightable=False,
                 details={
                     'logic': logic,
                     'condition_count': len(conditions),

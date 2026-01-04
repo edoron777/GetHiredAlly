@@ -52,8 +52,10 @@ class LengthHandler(BaseHandler):
         if not text and min_length:
             issue = self.create_issue(
                 rule=rule,
-                match_text=f"{target} section is empty",
+                current='',
+                description=f"{target} section is empty",
                 location=target,
+                is_highlightable=False,
                 details={'length': 0, 'unit': unit}
             )
             issues.append(issue)
@@ -72,14 +74,16 @@ class LengthHandler(BaseHandler):
         
         if should_trigger:
             if below_min:
-                match_text = f"{target} has {length} {unit} (minimum: {min_length})"
+                description = f"{target} has {length} {unit} (minimum: {min_length})"
             else:
-                match_text = f"{target} has {length} {unit} (maximum: {max_length})"
+                description = f"{target} has {length} {unit} (maximum: {max_length})"
             
             issue = self.create_issue(
                 rule=rule,
-                match_text=match_text,
+                current='',
+                description=description,
                 location=target,
+                is_highlightable=False,
                 details={
                     'length': length,
                     'unit': unit,

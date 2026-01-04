@@ -67,8 +67,10 @@ class PresenceHandler(BaseHandler):
             if issue_when == 'missing':
                 issue = self.create_issue(
                     rule=rule,
-                    match_text=f"Section '{target_section}' is empty or not found",
-                    location=target_section
+                    current='',
+                    description=f"Section '{target_section}' is empty or not found",
+                    location=target_section,
+                    is_highlightable=False
                 )
                 issues.append(issue)
             return issues
@@ -98,15 +100,11 @@ class PresenceHandler(BaseHandler):
         )
         
         if should_trigger:
-            if issue_when == 'missing':
-                match_text = "Required pattern not found"
-            else:
-                match_text = "Unwanted pattern found"
-            
             issue = self.create_issue(
                 rule=rule,
-                match_text=match_text,
+                current='',
                 location=target_section,
+                is_highlightable=False,
                 details={
                     'pattern_results': pattern_results,
                     'issue_when': issue_when,

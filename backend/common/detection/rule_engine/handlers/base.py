@@ -25,37 +25,50 @@ class DetectedIssue:
     Represents a detected issue.
     
     This is the output format for all handlers.
-    Compatible with existing master_detector format.
+    MUST match format from old detectors exactly for frontend compatibility.
     """
     issue_code: str
     issue_type: str
-    match_text: str
+    display_name: str
+    description: str
+    current: str
     suggestion: str
     severity: str
     weight: int
     can_auto_fix: bool
+    is_highlightable: bool = False
     location: Optional[str] = None
+    title: Optional[str] = None
     line_number: Optional[int] = None
     details: Optional[Dict[str, Any]] = None
+    
+    @property
+    def match_text(self) -> str:
+        """Alias for current (for logging compatibility)."""
+        return self.current
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         result = {
             'issue_code': self.issue_code,
             'issue_type': self.issue_type,
-            'match_text': self.match_text,
-            'current_text': self.match_text,
+            'display_name': self.display_name,
+            'title': self.title or self.display_name,
+            'description': self.description,
+            'current': self.current,
+            'current_text': self.current,
             'suggestion': self.suggestion,
             'severity': self.severity,
             'weight': self.weight,
             'can_auto_fix': self.can_auto_fix,
+            'is_highlightable': self.is_highlightable,
         }
         if self.location:
             result['location'] = self.location
         if self.line_number is not None:
             result['line_number'] = self.line_number
         if self.details:
-            result['details'] = self.details
+            result.update(self.details)
         return result
 
 
@@ -150,10 +163,13 @@ class BaseHandler(ABC):
     def create_issue(
         self,
         rule: DetectionRule,
-        match_text: str,
+        current: str,
+        description: Optional[str] = None,
         suggestion: Optional[str] = None,
         location: Optional[str] = None,
+        title: Optional[str] = None,
         line_number: Optional[int] = None,
+        is_highlightable: bool = False,
         details: Optional[Dict[str, Any]] = None
     ) -> DetectedIssue:
         """
@@ -161,11 +177,14 @@ class BaseHandler(ABC):
         
         Args:
             rule: The detection rule that triggered
-            match_text: Text that matched/triggered the issue
+            current: SHORT text that matched (for highlighting)
+            description: Description of issue (uses rule.description if not provided)
             suggestion: Override for static_tip (optional)
             location: Where in CV the issue was found
+            title: Short title for the issue
             line_number: Line number of issue
-            details: Additional details
+            is_highlightable: Whether this text can be highlighted in document
+            details: Additional details to include in output
             
         Returns:
             DetectedIssue instance
@@ -173,12 +192,16 @@ class BaseHandler(ABC):
         return DetectedIssue(
             issue_code=rule.issue_code,
             issue_type=rule.issue_code,
-            match_text=match_text,
+            display_name=rule.display_name,
+            description=description or rule.description,
+            current=current,
             suggestion=suggestion or rule.static_tip,
             severity=rule.severity,
             weight=rule.weight,
             can_auto_fix=rule.can_auto_fix,
+            is_highlightable=is_highlightable,
             location=location,
+            title=title or rule.display_name,
             line_number=line_number,
             details=details
         )

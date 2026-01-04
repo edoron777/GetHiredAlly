@@ -82,12 +82,15 @@ class WordListHandler(BaseHandler):
         
         if len(found_words) >= min_matches:
             unique_found = list(set(w.strip().lower() for w in found_words))
-            match_text = f"{len(found_words)} found: {', '.join(unique_found[:10])}"
+            first_match = found_words[0].strip() if found_words else ''
+            description = f"{len(found_words)} found: {', '.join(unique_found[:10])}"
             
             issue = self.create_issue(
                 rule=rule,
-                match_text=match_text,
+                current=first_match,
+                description=description,
                 location=target_section,
+                is_highlightable=bool(first_match and first_match in text),
                 details={
                     'found_words': unique_found,
                     'total_matches': len(found_words),

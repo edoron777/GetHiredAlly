@@ -71,12 +71,19 @@ class ConsistencyHandler(BaseHandler):
         formats_used = list(formats_found.keys())
         
         if issue_when == 'multiple_formats' and len(formats_used) > 1:
-            match_text = f"Multiple {check_what} formats: {', '.join(formats_used)}"
+            first_example = ''
+            for fmt, matches in formats_found.items():
+                if matches:
+                    first_example = matches[0]
+                    break
+            description = f"Multiple {check_what} formats: {', '.join(formats_used)}"
             
             issue = self.create_issue(
                 rule=rule,
-                match_text=match_text,
+                current=first_example,
+                description=description,
                 location=target_section,
+                is_highlightable=bool(first_example),
                 details={
                     'check_what': check_what,
                     'formats_found': {k: v[:5] for k, v in formats_found.items()},

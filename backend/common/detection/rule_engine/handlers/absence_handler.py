@@ -91,15 +91,19 @@ class AbsenceHandler(BaseHandler):
         )
         
         if should_trigger:
-            if issue_when == 'found':
-                match_text = f"Detected: {', '.join(str(m) for m in found_matches[:5])}"
+            if issue_when == 'found' and found_matches:
+                first_match = str(found_matches[0])
+                description = f"Detected: {', '.join(str(m) for m in found_matches[:5])}"
             else:
-                match_text = "Expected patterns not found"
+                first_match = ''
+                description = "Expected patterns not found"
             
             issue = self.create_issue(
                 rule=rule,
-                match_text=match_text,
+                current=first_match,
+                description=description,
                 location=target_section,
+                is_highlightable=bool(first_match),
                 details={
                     'found_matches': found_matches[:10],
                     'target_section': target_section

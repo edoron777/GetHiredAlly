@@ -59,13 +59,15 @@ class SectionRequiredHandler(BaseHandler):
         
         if should_trigger:
             if issue_when == 'missing':
-                match_text = f"No '{section_name}' section found"
+                description = f"No '{section_name}' section found"
             else:
-                match_text = f"'{section_name}' section found"
+                description = f"'{section_name}' section found"
             
             issue = self.create_issue(
                 rule=rule,
-                match_text=match_text,
+                current='',
+                description=description,
+                is_highlightable=False,
                 details={
                     'section_name': section_name,
                     'section_exists': section_exists
