@@ -1,0 +1,87 @@
+═══════════════════════════════════════════════════════════════════════════════
+🔍 PROMPT 2#5: Trace a Specific Issue - Prove Detection is Wrong
+═══════════════════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL: This is INVESTIGATION only. DO NOT change any code.
+
+───────────────────────────────────────────────────────────────────────────────
+OBJECTIVE: Trace ONE specific issue to prove detection is wrong
+───────────────────────────────────────────────────────────────────────────────
+
+We will trace: CONTACT_MISSING_LOCATION
+
+Console shows this rule finds "David Cohen" and "Cohen CV" as locations.
+This is WRONG - these are NOT locations. The CV actually IS missing a location.
+But the rule returns "no issues found" because it matched wrong patterns.
+
+───────────────────────────────────────────────────────────────────────────────
+STEP 1: Show the DB rule configuration
+───────────────────────────────────────────────────────────────────────────────
+
+Connect to Supabase and run:
+
+SELECT 
+  issue_type,
+  detection_config,
+  description
+FROM cv_issue_catalog
+WHERE issue_type = 'CONTACT_MISSING_LOCATION';
+
+Share the result.
+
+───────────────────────────────────────────────────────────────────────────────
+STEP 2: Show how this rule is executed
+───────────────────────────────────────────────────────────────────────────────
+
+The rule uses handler type: presence
+
+Show the presence handler code:
+
+cat backend/common/detection/rule_engine/handlers/presence_handler.py
+
+───────────────────────────────────────────────────────────────────────────────
+STEP 3: Trace the detection logic
+───────────────────────────────────────────────────────────────────────────────
+
+Add this debug logging and scan the CV:
+
+In the presence handler, add:
+```python
+print(f"[DEBUG PRESENCE] Rule: {rule.issue_type}")
+print(f"[DEBUG PRESENCE] Patterns: {detection_config.get('patterns')}")
+print(f"[DEBUG PRESENCE] Text being searched: {text[:200]}")
+print(f"[DEBUG PRESENCE] issue_when: {detection_config.get('issue_when')}")
+for pattern in patterns:
+    match = re.search(pattern, text)
+    print(f"[DEBUG PRESENCE] Pattern '{pattern}': {'FOUND' if match else 'NOT FOUND'}")
+    if match:
+        print(f"[DEBUG PRESENCE] Matched: '{match.group()}'")
+```
+
+Then scan the CV and share the debug output.
+
+───────────────────────────────────────────────────────────────────────────────
+
+ANALYSIS QUESTIONS:
+
+1. What patterns does DB say to use?
+   Patterns: __________
+
+2. What does presence handler actually check?
+   Logic: __________
+
+3. Why does it match "David Cohen" instead of a real location?
+   Reason: __________
+
+4. What is the ROOT CAUSE?
+   [ ] DB pattern is wrong
+   [ ] Handler logic is wrong
+   [ ] Both are wrong
+   [ ] Something else: __________
+
+───────────────────────────────────────────────────────────────────────────────
+
+DO NOT FIX ANYTHING. Report findings only.
+
+Type "PROMPT 2#5 COMPLETE - READY FOR PROMPT 3" when done.
+═══════════════════════════════════════════════════════════════════════════════
