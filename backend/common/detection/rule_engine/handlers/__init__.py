@@ -8,6 +8,7 @@ from .word_list_handler import WordListHandler
 from .presence_handler import PresenceHandler
 from .absence_handler import AbsenceHandler
 from .count_handler import CountHandler
+from .length_handler import LengthHandler
 
 __all__ = [
     'BaseHandler', 
@@ -16,5 +17,6 @@ __all__ = [
     'WordListHandler', 
     'PresenceHandler',
     'AbsenceHandler',
-    'CountHandler'
+    'CountHandler',
+    'LengthHandler'
 ]
