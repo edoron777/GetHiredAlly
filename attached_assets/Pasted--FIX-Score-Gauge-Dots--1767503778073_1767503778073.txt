@@ -1,0 +1,74 @@
+═══════════════════════════════════════════════════════════════════════════
+FIX: Score Gauge Dots - Colors Not Changed
+═══════════════════════════════════════════════════════════════════════════
+
+PROBLEM:
+The 4 dots next to the score gauge (● 7  ● 22  ● 11  ● 1) are all the 
+same teal/green color. They should each have different colors.
+
+───────────────────────────────────────────────────────────────────────────
+
+STEP 1: FIND THE FILE
+
+Search for the Score Gauge component. Look in:
+- client/src/components/cv-optimizer/ScoreGauge/
+- client/src/pages/cv-optimizer/ResultsPage.tsx
+- Search for text "CV Score" or the numbers display
+
+The component shows:
+    64
+  CV Score
+  
+  ● 7   ● 22
+  ● 11  ● 1
+
+───────────────────────────────────────────────────────────────────────────
+
+STEP 2: FIND THE DOTS CODE
+
+Look for code that renders the 4 severity counts with dots.
+It might look like:
+- <span className="dot critical">● {criticalCount}</span>
+- Or inline styles with colors
+- Or a map over severity types
+
+───────────────────────────────────────────────────────────────────────────
+
+STEP 3: APPLY THESE COLORS
+
+Each dot MUST have a DIFFERENT color:
+
+| Position | Severity   | Count | Color Code | Color Name |
+|----------|------------|-------|------------|------------|
+| Top-left | Critical   | 7     | #DC2626    | Red        |
+| Top-right| Important  | 22    | #F59E0B    | Amber      |
+| Bot-left | Consider   | 11    | #3B82F6    | Blue       |
+| Bot-right| Polish     | 1     | #6B7280    | Gray       |
+
+CSS example:
+.dot-critical { color: #DC2626; }
+.dot-important { color: #F59E0B; }
+.dot-consider { color: #3B82F6; }
+.dot-polish { color: #6B7280; }
+
+Or inline:
+<span style={{ color: '#DC2626' }}>● {criticalCount}</span>
+<span style={{ color: '#F59E0B' }}>● {importantCount}</span>
+<span style={{ color: '#3B82F6' }}>● {considerCount}</span>
+<span style={{ color: '#6B7280' }}>● {polishCount}</span>
+
+───────────────────────────────────────────────────────────────────────────
+
+REPORT BACK:
+1. Which file did you find the dots in?
+2. What was the current color code?
+3. Confirm the fix was applied
+
+───────────────────────────────────────────────────────────────────────────
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- Find the EXACT file with the dots
+- Change ONLY the colors
+- Do NOT change layout or functionality
+
+═══════════════════════════════════════════════════════════════════════════
