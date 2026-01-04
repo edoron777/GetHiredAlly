@@ -1,0 +1,77 @@
+═══════════════════════════════════════════════════════════════════════════
+🔍 RFI: List View Current Implementation
+═══════════════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL: This is an INVESTIGATION, not a fix.
+Do NOT change any code until findings are reported.
+
+───────────────────────────────────────────────────────────────────────────
+
+PURPOSE:
+
+Before fixing the List View architecture, I need to understand:
+1. Where the List View component is located
+2. What the current card structure looks like
+3. How the "Quick Fix" button is currently implemented
+4. How handleIssueClick is passed/called
+
+───────────────────────────────────────────────────────────────────────────
+
+INVESTIGATION QUESTIONS:
+
+1. FILE LOCATIONS:
+   - Where is the List View component located?
+   - File path: __________
+   - Is it in: client/src/components/cv-optimizer/ListView/ ?
+   - Or somewhere else?
+
+2. COMPONENT STRUCTURE:
+   - Show me the current List View component code
+   - What props does it receive?
+   - Does it receive handleIssueClick as a prop?
+
+3. CARD/ROW IMPLEMENTATION:
+   - Show the current card/issue rendering code
+   - What buttons exist on each card?
+   - Is there a "Quick Fix" button? Show the code.
+   - Is there a "View Details" button? Show the code.
+
+4. TIPBOX CONNECTION:
+   - How does clicking "View Details" open TipBox?
+   - Is TipBox rendered in ResultsPage.tsx?
+   - Show how selectedIssueId and isTipBoxOpen are managed
+
+5. CURRENT PROPS FLOW:
+   ResultsPage.tsx → ListView → Card/Row
+   - What props are passed at each level?
+   - Show the prop drilling chain
+
+───────────────────────────────────────────────────────────────────────────
+
+REPORT FORMAT:
+
+Please report findings as:
+
+FINDING 1 - List View Location:
+- File path: [exact path]
+- Component name: [name]
+
+FINDING 2 - Current Buttons:
+- Buttons present: [list]
+- Quick Fix exists: YES/NO
+- Quick Fix code: [show code]
+
+FINDING 3 - TipBox Connection:
+- handleIssueClick passed: YES/NO
+- How it's called: [description]
+
+FINDING 4 - Props Chain:
+- ResultsPage passes: [list props]
+- ListView receives: [list props]
+
+───────────────────────────────────────────────────────────────────────────
+
+DO NOT FIX ANYTHING YET.
+Report findings first so I can create the correct fix prompt.
+
+═══════════════════════════════════════════════════════════════════════════
