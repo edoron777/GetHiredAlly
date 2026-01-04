@@ -1,0 +1,736 @@
+╔══════════════════════════════════════════════════════════════════════════╗
+║  MEGA-PROMPT: Enhanced CV Parser with Section Detection                  ║
+║  Type: NEW FEATURE                                                       ║
+║  Files: 3 files + 1 data file                                           ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+CONTEXT:
+We are building a FREE static CV parser (no AI/LLM) for the freemium tier.
+This parser uses spaCy NLP + regex patterns + predefined keyword lists.
+It must identify CV sections and extract structured data.
+
+GOAL:
+Parse a CV file (PDF/DOCX) and return structured JSON with:
+- Contact info (name, email, phone, LinkedIn)
+- Sections detected (which sections exist)
+- Section content (text of each section)
+- Skills found (matched against skills database)
+- Education degrees found
+- Years of experience estimate
+
+───────────────────────────────────────────────────────────────────────────
+FILE 1: server/utils/cv_parser/__init__.py
+───────────────────────────────────────────────────────────────────────────
+
+CURRENT STATE: File does not exist (new feature)
+
+CREATE THIS FILE:
+```python
+"""
+CV Parser Package - Static (Non-AI) Resume Parser
+Version: 1.0
+"""
+
+from .enhanced_parser import EnhancedCVParser
+from .section_detector import detect_sections
+from .skills_extractor import extract_skills
+
+__all__ = ['EnhancedCVParser', 'detect_sections', 'extract_skills']
+```
+
+───────────────────────────────────────────────────────────────────────────
+FILE 2: server/utils/cv_parser/enhanced_parser.py
+───────────────────────────────────────────────────────────────────────────
+
+CURRENT STATE: File does not exist (new feature)
+
+CREATE THIS FILE:
+```python
+"""
+Enhanced CV Parser - Main Module
+Static parser using spaCy + regex + keyword matching
+No AI/LLM dependencies - 100% deterministic
+"""
+
+import re
+import os
+import json
+import spacy
+import docx2txt
+from pdfminer.high_level import extract_text as extract_pdf_text
+from typing import Dict, List, Optional, Any
+from .section_detector import detect_sections, SECTION_HEADERS
+from .skills_extractor import extract_skills, load_skills_database
+
+# Load spaCy model
+try:
+    nlp = spacy.load('en_core_web_sm')
+except OSError:
+    # If model not found, download it
+    import subprocess
+    subprocess.run(['python', '-m', 'spacy', 'download', 'en_core_web_sm'])
+    nlp = spacy.load('en_core_web_sm')
+
+
+class EnhancedCVParser:
+    """
+    Enhanced CV Parser with section detection and skills extraction.
+    100% static - no AI/LLM calls.
+    """
+    
+    # Contact info patterns
+    EMAIL_PATTERN = r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'
+    PHONE_PATTERN = r'[\+]?[(]?[0-9]{1,3}[)]?[-\s\.]?[(]?[0-9]{1,4}[)]?[-\s\.]?[0-9]{1,4}[-\s\.]?[0-9]{1,9}'
+    LINKEDIN_PATTERN = r'linkedin\.com/in/[\w-]+'
+    GITHUB_PATTERN = r'github\.com/[\w-]+'
+    URL_PATTERN = r'https?://[^\s<>"\']+'
+    
+    # Education degrees
+    EDUCATION_DEGREES = [
+        'PhD', 'Ph.D.', 'Doctorate', 'Dr.',
+        'MBA', 'M.B.A.', 'MA', 'M.A.', 'MS', 'M.S.', 'MSc', 'M.Sc.',
+        'ME', 'M.E.', 'MTech', 'M.Tech', 'MCA', 'M.C.A.',
+        'BA', 'B.A.', 'BS', 'B.S.', 'BSc', 'B.Sc.', 'BE', 'B.E.',
+        'BTech', 'B.Tech', 'BBA', 'B.B.A.', 'BCA', 'B.C.A.',
+        'Bachelor', 'Master', 'Associate', 'Diploma',
+        'High School', 'GED', 'HSC', 'SSC', 'CBSE', 'ICSE'
+    ]
+    
+    # Date patterns for experience calculation
+    YEAR_PATTERN = r'(19|20)\d{2}'
+    DATE_RANGE_PATTERN = r'(19|20)\d{2}\s*[-–—to]+\s*((19|20)\d{2}|present|current|now)'
+    
+    def __init__(self, skills_file_path: Optional[str] = None):
+        """
+        Initialize parser with optional custom skills file.
+        
+        Args:
+            skills_file_path: Path to custom skills CSV file (optional)
+        """
+        self.skills_db = load_skills_database(skills_file_path)
+    
+    def parse(self, file_path: str) -> Dict[str, Any]:
+        """
+        Parse a CV file and extract structured data.
+        
+        Args:
+            file_path: Path to CV file (PDF or DOCX)
+            
+        Returns:
+            Dictionary with extracted CV data
+        """
+        # Extract text from file
+        raw_text = self._extract_text(file_path)
+        
+        if not raw_text or len(raw_text.strip()) < 50:
+            return {
+                'success': False,
+                'error': 'Could not extract text from file or file is too short',
+                'raw_text_length': len(raw_text) if raw_text else 0
+            }
+        
+        # Process with spaCy
+        doc = nlp(raw_text[:100000])  # Limit to 100k chars for performance
+        
+        # Extract all components
+        contact_info = self._extract_contact_info(raw_text, doc)
+        sections = detect_sections(raw_text)
+        skills = extract_skills(raw_text, self.skills_db)
+        education = self._extract_education(raw_text)
+        experience_years = self._estimate_experience(raw_text)
+        
+        return {
+            'success': True,
+            'contact': contact_info,
+            'sections': sections,
+            'skills': skills,
+            'education': education,
+            'experience_years': experience_years,
+            'raw_text_length': len(raw_text),
+            'parser_version': '1.0-static'
+        }
+    
+    def _extract_text(self, file_path: str) -> str:
+        """Extract text from PDF or DOCX file."""
+        file_path_lower = file_path.lower()
+        
+        try:
+            if file_path_lower.endswith('.pdf'):
+                return extract_pdf_text(file_path)
+            elif file_path_lower.endswith(('.docx', '.doc')):
+                return docx2txt.process(file_path)
+            else:
+                # Try to read as plain text
+                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    return f.read()
+        except Exception as e:
+            print(f"Error extracting text: {e}")
+            return ""
+    
+    def _extract_contact_info(self, text: str, doc) -> Dict[str, Any]:
+        """Extract contact information from CV."""
+        # Find emails
+        emails = re.findall(self.EMAIL_PATTERN, text)
+        
+        # Find phones
+        phones = re.findall(self.PHONE_PATTERN, text)
+        # Clean phone numbers
+        phones = [p.strip() for p in phones if len(re.sub(r'\D', '', p)) >= 7]
+        
+        # Find LinkedIn
+        linkedin_matches = re.findall(self.LINKEDIN_PATTERN, text, re.IGNORECASE)
+        linkedin = linkedin_matches[0] if linkedin_matches else None
+        
+        # Find GitHub
+        github_matches = re.findall(self.GITHUB_PATTERN, text, re.IGNORECASE)
+        github = github_matches[0] if github_matches else None
+        
+        # Extract name using spaCy NER
+        name = self._extract_name(text, doc)
+        
+        return {
+            'name': name,
+            'email': emails[0] if emails else None,
+            'phone': phones[0] if phones else None,
+            'linkedin': linkedin,
+            'github': github,
+            'all_emails': emails[:3],  # Max 3 emails
+            'all_phones': phones[:3]   # Max 3 phones
+        }
+    
+    def _extract_name(self, text: str, doc) -> Optional[str]:
+        """Extract person name from CV."""
+        # Method 1: Use spaCy NER
+        persons = [ent.text for ent in doc.ents if ent.label_ == 'PERSON']
+        
+        if persons:
+            # Take the first PERSON entity that appears in first 500 chars
+            # (name is usually at the top)
+            first_500 = text[:500]
+            for person in persons:
+                if person in first_500:
+                    # Clean up the name
+                    name = person.strip()
+                    # Remove common suffixes
+                    name = re.sub(r'\s*(CV|Resume|Curriculum Vitae).*$', '', name, flags=re.IGNORECASE)
+                    if len(name) > 2 and len(name) < 50:
+                        return name
+        
+        # Method 2: First line heuristic (often the name)
+        lines = text.strip().split('\n')
+        for line in lines[:5]:  # Check first 5 lines
+            line = line.strip()
+            # Skip if it looks like a header/title
+            if any(h in line.lower() for h in ['resume', 'cv', 'curriculum']):
+                continue
+            # Skip if it contains email or phone
+            if '@' in line or re.search(r'\d{3}', line):
+                continue
+            # Check if it looks like a name (2-4 words, alphabetic)
+            words = line.split()
+            if 2 <= len(words) <= 4 and all(w.replace('-', '').replace("'", '').isalpha() for w in words):
+                return line
+        
+        # Fallback: first PERSON entity
+        return persons[0] if persons else None
+    
+    def _extract_education(self, text: str) -> Dict[str, Any]:
+        """Extract education information."""
+        found_degrees = []
+        
+        # Search for degree patterns
+        text_upper = text.upper()
+        for degree in self.EDUCATION_DEGREES:
+            # Use word boundary to avoid partial matches
+            pattern = r'\b' + re.escape(degree.upper()) + r'\b'
+            if re.search(pattern, text_upper):
+                found_degrees.append(degree)
+        
+        # Determine highest degree
+        highest = None
+        degree_rank = {
+            'PhD': 5, 'Ph.D.': 5, 'Doctorate': 5, 'Dr.': 5,
+            'MBA': 4, 'M.B.A.': 4, 'MA': 4, 'M.A.': 4, 'MS': 4, 'M.S.': 4,
+            'MSc': 4, 'M.Sc.': 4, 'ME': 4, 'M.E.': 4, 'MTech': 4, 'M.Tech': 4,
+            'Master': 4, 'MCA': 4, 'M.C.A.': 4,
+            'BA': 3, 'B.A.': 3, 'BS': 3, 'B.S.': 3, 'BSc': 3, 'B.Sc.': 3,
+            'BE': 3, 'B.E.': 3, 'BTech': 3, 'B.Tech': 3, 'Bachelor': 3,
+            'BBA': 3, 'B.B.A.': 3, 'BCA': 3, 'B.C.A.': 3,
+            'Associate': 2, 'Diploma': 2,
+            'High School': 1, 'GED': 1, 'HSC': 1, 'SSC': 1
+        }
+        
+        max_rank = 0
+        for degree in found_degrees:
+            rank = degree_rank.get(degree, 0)
+            if rank > max_rank:
+                max_rank = rank
+                highest = degree
+        
+        return {
+            'degrees_found': list(set(found_degrees)),
+            'highest_degree': highest,
+            'has_bachelors': max_rank >= 3,
+            'has_masters': max_rank >= 4,
+            'has_phd': max_rank >= 5
+        }
+    
+    def _estimate_experience(self, text: str) -> Dict[str, Any]:
+        """Estimate years of experience from date ranges."""
+        # Find all years mentioned
+        years = [int(y) for y in re.findall(self.YEAR_PATTERN, text)]
+        
+        # Find date ranges
+        date_ranges = re.findall(self.DATE_RANGE_PATTERN, text, re.IGNORECASE)
+        
+        total_years = 0
+        current_year = 2026
+        
+        for match in date_ranges:
+            start_year = int(match[0])
+            end_str = match[1].lower()
+            
+            if end_str in ['present', 'current', 'now']:
+                end_year = current_year
+            else:
+                try:
+                    end_year = int(re.search(r'(19|20)\d{2}', end_str).group())
+                except:
+                    end_year = current_year
+            
+            if 1970 <= start_year <= current_year and start_year <= end_year:
+                total_years += (end_year - start_year)
+        
+        # If no date ranges found, estimate from year spread
+        if total_years == 0 and years:
+            valid_years = [y for y in years if 1970 <= y <= current_year]
+            if len(valid_years) >= 2:
+                total_years = max(valid_years) - min(valid_years)
+        
+        return {
+            'estimated_years': min(total_years, 50),  # Cap at 50 years
+            'years_mentioned': sorted(set(years)) if years else [],
+            'date_ranges_found': len(date_ranges)
+        }
+
+
+# Convenience function for quick parsing
+def parse_cv(file_path: str, skills_file: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Quick function to parse a CV file.
+    
+    Args:
+        file_path: Path to CV file
+        skills_file: Optional path to custom skills CSV
+        
+    Returns:
+        Parsed CV data as dictionary
+    """
+    parser = EnhancedCVParser(skills_file)
+    return parser.parse(file_path)
+```
+
+───────────────────────────────────────────────────────────────────────────
+FILE 3: server/utils/cv_parser/section_detector.py
+───────────────────────────────────────────────────────────────────────────
+
+CURRENT STATE: File does not exist (new feature)
+
+CREATE THIS FILE:
+```python
+"""
+Section Detector Module
+Identifies CV sections using keyword matching
+"""
+
+import re
+from typing import Dict, List, Tuple, Optional
+
+# Section header keywords (comprehensive list)
+SECTION_HEADERS = {
+    'summary': [
+        'summary', 'professional summary', 'executive summary',
+        'objective', 'career objective', 'profile', 'about', 'about me',
+        'personal statement', 'overview', 'introduction'
+    ],
+    'experience': [
+        'experience', 'work experience', 'professional experience',
+        'employment history', 'employment', 'work history', 
+        'career history', 'professional background', 'positions held'
+    ],
+    'education': [
+        'education', 'academic background', 'qualifications',
+        'education and training', 'academic qualifications',
+        'educational background', 'academic history', 'degrees',
+        'educational qualifications', 'academic credentials'
+    ],
+    'skills': [
+        'skills', 'technical skills', 'core competencies',
+        'key skills', 'professional skills', 'expertise',
+        'competencies', 'areas of expertise', 'technical competencies',
+        'skills and abilities', 'core skills', 'key competencies'
+    ],
+    'certifications': [
+        'certifications', 'certificates', 'licenses',
+        'professional certifications', 'credentials',
+        'accreditations', 'professional licenses',
+        'certifications and licenses', 'professional credentials'
+    ],
+    'projects': [
+        'projects', 'key projects', 'selected projects',
+        'project experience', 'notable projects', 'personal projects',
+        'professional projects', 'project highlights'
+    ],
+    'achievements': [
+        'achievements', 'accomplishments', 'awards', 'honors',
+        'recognition', 'key achievements', 'awards and honors',
+        'achievements and awards', 'notable achievements'
+    ],
+    'publications': [
+        'publications', 'papers', 'research', 'published works',
+        'academic publications', 'articles', 'research papers'
+    ],
+    'languages': [
+        'languages', 'language skills', 'language proficiency',
+        'foreign languages', 'linguistic skills'
+    ],
+    'interests': [
+        'interests', 'hobbies', 'personal interests',
+        'hobbies and interests', 'extracurricular activities'
+    ],
+    'volunteer': [
+        'volunteer', 'volunteer experience', 'volunteering',
+        'community service', 'volunteer work', 'civic activities'
+    ],
+    'references': [
+        'references', 'professional references', 'referees'
+    ]
+}
+
+# Hebrew section headers
+HEBREW_SECTION_HEADERS = {
+    'summary': ['תקציר', 'אודות', 'אודותיי', 'פרופיל'],
+    'experience': ['ניסיון תעסוקתי', 'ניסיון מקצועי', 'ניסיון', 'היסטוריה תעסוקתית'],
+    'education': ['השכלה', 'לימודים', 'רקע אקדמי'],
+    'skills': ['כישורים', 'מיומנויות', 'יכולות', 'מומחיות'],
+    'certifications': ['הסמכות', 'תעודות', 'רישיונות'],
+    'projects': ['פרויקטים', 'פרוייקטים'],
+    'languages': ['שפות'],
+    'military': ['שירות צבאי', 'צבא', 'שירות לאומי']
+}
+
+
+def detect_sections(text: str) -> Dict[str, any]:
+    """
+    Detect sections in CV text.
+    
+    Args:
+        text: Raw CV text
+        
+    Returns:
+        Dictionary with detected sections and their content
+    """
+    lines = text.split('\n')
+    
+    # Find section boundaries
+    section_positions = []  # [(line_index, section_name, header_text), ...]
+    
+    for i, line in enumerate(lines):
+        line_clean = line.strip().lower()
+        line_clean_no_punct = re.sub(r'[^\w\s]', '', line_clean)
+        
+        # Check each section type
+        for section_name, keywords in SECTION_HEADERS.items():
+            for keyword in keywords:
+                # Exact match or line starts with keyword
+                if line_clean_no_punct == keyword or line_clean_no_punct.startswith(keyword + ' '):
+                    section_positions.append((i, section_name, line.strip()))
+                    break
+            else:
+                continue
+            break
+        
+        # Check Hebrew sections
+        for section_name, keywords in HEBREW_SECTION_HEADERS.items():
+            for keyword in keywords:
+                if keyword in line_clean:
+                    section_positions.append((i, section_name, line.strip()))
+                    break
+    
+    # Extract section content
+    sections_found = {}
+    section_content = {}
+    
+    for idx, (line_idx, section_name, header_text) in enumerate(section_positions):
+        # Find end of section (next section start or end of document)
+        if idx + 1 < len(section_positions):
+            end_idx = section_positions[idx + 1][0]
+        else:
+            end_idx = len(lines)
+        
+        # Extract content (skip header line)
+        content_lines = lines[line_idx + 1:end_idx]
+        content = '\n'.join(content_lines).strip()
+        
+        sections_found[section_name] = True
+        section_content[section_name] = {
+            'header': header_text,
+            'content': content[:2000],  # Limit to 2000 chars
+            'line_count': len([l for l in content_lines if l.strip()]),
+            'start_line': line_idx
+        }
+    
+    # Determine what's missing
+    all_sections = list(SECTION_HEADERS.keys())
+    missing_sections = [s for s in all_sections if s not in sections_found]
+    
+    return {
+        'sections_found': list(sections_found.keys()),
+        'sections_missing': missing_sections,
+        'section_count': len(sections_found),
+        'content': section_content,
+        'has_summary': 'summary' in sections_found,
+        'has_experience': 'experience' in sections_found,
+        'has_education': 'education' in sections_found,
+        'has_skills': 'skills' in sections_found
+    }
+
+
+def get_section_content(text: str, section_name: str) -> Optional[str]:
+    """
+    Get content of a specific section.
+    
+    Args:
+        text: Raw CV text
+        section_name: Name of section to extract
+        
+    Returns:
+        Section content or None if not found
+    """
+    sections = detect_sections(text)
+    if section_name in sections['content']:
+        return sections['content'][section_name]['content']
+    return None
+```
+
+───────────────────────────────────────────────────────────────────────────
+FILE 4: server/utils/cv_parser/skills_extractor.py
+───────────────────────────────────────────────────────────────────────────
+
+CURRENT STATE: File does not exist (new feature)
+
+CREATE THIS FILE:
+```python
+"""
+Skills Extractor Module
+Extracts skills from CV using predefined skills database
+"""
+
+import os
+import re
+from typing import List, Set, Dict, Optional
+
+# Default skills database (top 200 most common)
+# Full database loaded from CSV file
+DEFAULT_SKILLS = {
+    # Programming Languages
+    'python', 'java', 'javascript', 'c++', 'c#', 'ruby', 'php', 'sql', 
+    'typescript', 'go', 'rust', 'swift', 'kotlin', 'scala', 'r',
+    
+    # Web Technologies
+    'html', 'css', 'react', 'angular', 'vue', 'node.js', 'express',
+    'django', 'flask', 'spring', 'asp.net', 'jquery', 'bootstrap',
+    
+    # Databases
+    'mysql', 'postgresql', 'mongodb', 'redis', 'elasticsearch',
+    'oracle', 'sql server', 'sqlite', 'dynamodb', 'cassandra',
+    
+    # Cloud & DevOps
+    'aws', 'azure', 'gcp', 'docker', 'kubernetes', 'jenkins',
+    'terraform', 'ansible', 'git', 'github', 'gitlab', 'ci/cd',
+    
+    # Data Science & ML
+    'machine learning', 'deep learning', 'tensorflow', 'pytorch',
+    'pandas', 'numpy', 'scikit-learn', 'keras', 'nlp', 'computer vision',
+    
+    # Tools & Platforms
+    'jira', 'confluence', 'slack', 'trello', 'figma', 'sketch',
+    'photoshop', 'excel', 'powerpoint', 'word', 'salesforce',
+    
+    # Methodologies
+    'agile', 'scrum', 'kanban', 'waterfall', 'devops', 'ci/cd',
+    
+    # Soft Skills
+    'leadership', 'communication', 'teamwork', 'problem solving',
+    'project management', 'time management', 'analytical skills',
+    'presentation', 'negotiation', 'customer service'
+}
+
+
+def load_skills_database(file_path: Optional[str] = None) -> Set[str]:
+    """
+    Load skills database from CSV file or use default.
+    
+    Args:
+        file_path: Path to custom skills CSV file
+        
+    Returns:
+        Set of skills (lowercase)
+    """
+    skills = set()
+    
+    # Try to load from file
+    if file_path and os.path.exists(file_path):
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+                # Skills are comma-separated, possibly on one line
+                raw_skills = content.replace('\n', ',').split(',')
+                skills = {s.strip().lower() for s in raw_skills if s.strip()}
+        except Exception as e:
+            print(f"Error loading skills file: {e}")
+    
+    # Try default location
+    if not skills:
+        default_path = os.path.join(os.path.dirname(__file__), 'data', 'skills.csv')
+        if os.path.exists(default_path):
+            try:
+                with open(default_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                    raw_skills = content.replace('\n', ',').split(',')
+                    skills = {s.strip().lower() for s in raw_skills if s.strip()}
+            except Exception as e:
+                print(f"Error loading default skills file: {e}")
+    
+    # Fallback to hardcoded defaults
+    if not skills:
+        skills = DEFAULT_SKILLS.copy()
+    
+    return skills
+
+
+def extract_skills(text: str, skills_db: Optional[Set[str]] = None) -> Dict[str, any]:
+    """
+    Extract skills from CV text.
+    
+    Args:
+        text: Raw CV text
+        skills_db: Set of known skills (lowercase)
+        
+    Returns:
+        Dictionary with found skills and metadata
+    """
+    if skills_db is None:
+        skills_db = load_skills_database()
+    
+    text_lower = text.lower()
+    found_skills = []
+    skill_positions = {}
+    
+    # Sort skills by length (longer first) to match multi-word skills first
+    sorted_skills = sorted(skills_db, key=len, reverse=True)
+    
+    for skill in sorted_skills:
+        # Use word boundary matching for accurate detection
+        # Handle special characters in skill names
+        skill_pattern = r'\b' + re.escape(skill) + r'\b'
+        
+        matches = list(re.finditer(skill_pattern, text_lower))
+        if matches:
+            # Avoid duplicates and sub-matches
+            if skill not in found_skills:
+                # Check if this is not a substring of already found skill
+                is_substring = False
+                for found in found_skills:
+                    if skill in found:
+                        is_substring = True
+                        break
+                
+                if not is_substring:
+                    found_skills.append(skill)
+                    skill_positions[skill] = matches[0].start()
+    
+    # Categorize skills
+    categories = categorize_skills(found_skills)
+    
+    return {
+        'skills_found': found_skills,
+        'skill_count': len(found_skills),
+        'categories': categories,
+        'top_skills': found_skills[:20],  # Top 20 skills
+        'has_programming': bool(categories.get('programming', [])),
+        'has_cloud': bool(categories.get('cloud', [])),
+        'has_data': bool(categories.get('data_science', []))
+    }
+
+
+def categorize_skills(skills: List[str]) -> Dict[str, List[str]]:
+    """Categorize skills into groups."""
+    
+    categories = {
+        'programming': [],
+        'web': [],
+        'database': [],
+        'cloud': [],
+        'data_science': [],
+        'tools': [],
+        'soft_skills': [],
+        'other': []
+    }
+    
+    # Category keywords
+    programming_keywords = {'python', 'java', 'javascript', 'c++', 'c#', 'ruby', 
+                           'php', 'typescript', 'go', 'rust', 'swift', 'kotlin',
+                           'scala', 'r', 'perl', 'matlab', 'sql'}
+    
+    web_keywords = {'html', 'css', 'react', 'angular', 'vue', 'node', 'express',
+                   'django', 'flask', 'spring', 'asp', 'jquery', 'bootstrap',
+                   'webpack', 'rest', 'api', 'graphql'}
+    
+    database_keywords = {'mysql', 'postgresql', 'mongodb', 'redis', 'oracle',
+                        'sql server', 'sqlite', 'dynamodb', 'cassandra', 'nosql',
+                        'elasticsearch', 'database'}
+    
+    cloud_keywords = {'aws', 'azure', 'gcp', 'docker', 'kubernetes', 'jenkins',
+                     'terraform', 'ansible', 'devops', 'ci/cd', 'cloud'}
+    
+    data_keywords = {'machine learning', 'deep learning', 'tensorflow', 'pytorch',
+                    'pandas', 'numpy', 'scikit', 'keras', 'nlp', 'data science',
+                    'analytics', 'big data', 'spark', 'hadoop'}
+    
+    soft_keywords = {'leadership', 'communication', 'teamwork', 'management',
+                    'problem solving', 'analytical', 'presentation', 'negotiation'}
+    
+    for skill in skills:
+        skill_lower = skill.lower()
+        
+        if any(kw in skill_lower for kw in programming_keywords):
+            categories['programming'].append(skill)
+        elif any(kw in skill_lower for kw in web_keywords):
+            categories['web'].append(skill)
+        elif any(kw in skill_lower for kw in database_keywords):
+            categories['database'].append(skill)
+        elif any(kw in skill_lower for kw in cloud_keywords):
+            categories['cloud'].append(skill)
+        elif any(kw in skill_lower for kw in data_keywords):
+            categories['data_science'].append(skill)
+        elif any(kw in skill_lower for kw in soft_keywords):
+            categories['soft_skills'].append(skill)
+        else:
+            categories['other'].append(skill)
+    
+    # Remove empty categories
+    return {k: v for k, v in categories.items() if v}
+```
+
+───────────────────────────────────────────────────────────────────────────
+DATA FILE: server/utils/cv_parser/data/skills.csv
+───────────────────────────────────────────────────────────────────────────
+
+CURRENT STATE: File does not exist (new feature)
+
+CREATE THIS DIRECTORY AND FILE:
+- Create directory: server/utils/cv_parser/data/
+- Create file: server/utils/cv_parser/data/skills.csv
+
+FILE CONTENT (copy the entire skills list - 1249 skills):
