@@ -36,19 +36,19 @@ export default function ScoreWidget({ score, originalScore, issuesCounts }: Scor
 
       <div className="issue-counts">
         <div className="issue-count-item">
-          <span style={{ color: '#DC2626' }}>●</span>
+          <span style={{ color: '#990033' }}>●</span>
           <span>{issuesCounts.critical}</span>
         </div>
         <div className="issue-count-item">
-          <span style={{ color: '#F59E0B' }}>●</span>
+          <span style={{ color: '#990099' }}>●</span>
           <span>{issuesCounts.important}</span>
         </div>
         <div className="issue-count-item">
-          <span style={{ color: '#3B82F6' }}>●</span>
+          <span style={{ color: '#1E5A85' }}>●</span>
           <span>{issuesCounts.consider}</span>
         </div>
         <div className="issue-count-item">
-          <span style={{ color: '#6B7280' }}>●</span>
+          <span style={{ color: '#008080' }}>●</span>
           <span>{issuesCounts.polish}</span>
         </div>
       </div>

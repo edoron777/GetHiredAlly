@@ -1,0 +1,61 @@
+═══════════════════════════════════════════════════════════════════════════
+PROJECT: CV Optimizer - PROMPT 2#7: Fix TextMarker Colors
+═══════════════════════════════════════════════════════════════════════════
+
+TASK:
+Update TextMarker to use the central color constants file.
+
+───────────────────────────────────────────────────────────────────────────
+
+FILE TO MODIFY:
+client/src/components/common/TextMarker/index.ts
+
+───────────────────────────────────────────────────────────────────────────
+
+STEP 1: Add Import
+
+Add at the top of the file:
+
+import { SEVERITY_COLORS } from '@/constants/severityColors';
+
+(Or use relative path if @ alias doesn't work:
+import { SEVERITY_COLORS } from '../../../constants/severityColors';)
+
+───────────────────────────────────────────────────────────────────────────
+
+STEP 2: Update CV_OPTIMIZER_COLORS
+
+Find and REPLACE the CV_OPTIMIZER_COLORS constant:
+
+BEFORE (current - WRONG colors):
+export const CV_OPTIMIZER_COLORS = {
+  critical: { color: '#DC2626' },
+  important: { color: '#F59E0B' },
+  consider: { color: '#3B82F6' },
+  polish: { color: '#6B7280' }
+}
+
+AFTER (correct colors from central file):
+export const CV_OPTIMIZER_COLORS = {
+  critical: { color: SEVERITY_COLORS.critical.primary },
+  important: { color: SEVERITY_COLORS.important.primary },
+  consider: { color: SEVERITY_COLORS.consider.primary },
+  polish: { color: SEVERITY_COLORS.polish.primary }
+}
+
+───────────────────────────────────────────────────────────────────────────
+
+EXPECTED RESULT:
+- Critical highlights = #990033 (Maroon)
+- Important highlights = #990099 (Purple)
+- Consider highlights = #1E5A85 (Navy Blue)
+- Polish highlights = #008080 (Teal)
+
+───────────────────────────────────────────────────────────────────────────
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- ONLY change the CV_OPTIMIZER_COLORS values
+- Do NOT modify any other code in this file
+- Use the import from severityColors.ts
+
+═══════════════════════════════════════════════════════════════════════════
