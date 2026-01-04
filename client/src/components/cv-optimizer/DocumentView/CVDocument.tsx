@@ -18,12 +18,28 @@ interface CVDocumentProps {
   onIssueClick?: (issueId: string) => void;
 }
 
+const findWordBoundaryMatch = (content: string, matchText: string): boolean => {
+  if (!matchText || !content) return false;
+  
+  const trimmedMatch = matchText.trim();
+  
+  if (trimmedMatch.length <= 2) {
+    const escaped = trimmedMatch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const wordBoundaryRegex = new RegExp(`\\b${escaped}\\b`, 'i');
+    return wordBoundaryRegex.test(content);
+  }
+  
+  return content.includes(trimmedMatch);
+};
+
 const isValidMarker = (matchText: string | undefined | null, cvContent: string): boolean => {
   if (!matchText || matchText.trim() === '') {
     return false;
   }
   
-  if (matchText.trim().length < 3) {
+  const trimmed = matchText.trim();
+  
+  if (trimmed.length < 2) {
     return false;
   }
   
@@ -34,6 +50,8 @@ const isValidMarker = (matchText: string | undefined | null, cvContent: string):
     /^both\s*['"]/i,
     /^(I,\s*)+I/i,
     /\.\.\./,
+    /^\d+\s*found:/i,
+    /^Not found in:/i,
   ];
   
   for (const pattern of invalidPatterns) {
@@ -42,7 +60,7 @@ const isValidMarker = (matchText: string | undefined | null, cvContent: string):
     }
   }
   
-  return cvContent.includes(matchText);
+  return findWordBoundaryMatch(cvContent, matchText);
 };
 
 export const classifyIssues = (issues: CVIssue[], cvContent: string) => {

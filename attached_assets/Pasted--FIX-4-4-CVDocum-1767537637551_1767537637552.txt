@@ -1,0 +1,132 @@
+═══════════════════════════════════════════════════════════════════════════════
+💻 FIX-4#4: CVDocument - Fix Marker Filter Logic
+═══════════════════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE ⚠️
+- Execute ONLY instructions below
+- Do NOT add features not specified
+- Do NOT modify files not listed
+
+───────────────────────────────────────────────────────────────────────────────
+ROOT CAUSE:
+───────────────────────────────────────────────────────────────────────────────
+
+File: client/src/components/cv-optimizer/CVDocument.tsx
+Lines 21-46:
+```typescript
+const isValidMarker = (matchText: string | undefined | null, cvContent: string): boolean => {
+  if (!matchText || matchText.trim() === '') return false;
+  if (matchText.trim().length < 3) return false;  // ← "I" rejected!
+  ...
+  return cvContent.includes(matchText);  // ← "Not found in:..." rejected
+};
+```
+
+Problems:
+1. Rejects matchText < 3 chars → "I" cannot have marker
+2. Rejects matchText not literally in CV → "Not found in:..." messages rejected
+3. 15 issues → only 4-5 get markers
+
+───────────────────────────────────────────────────────────────────────────────
+THE FIX:
+───────────────────────────────────────────────────────────────────────────────
+
+File: client/src/components/cv-optimizer/CVDocument.tsx
+
+FIND the isValidMarker function.
+
+REPLACE WITH smarter logic:
+```typescript
+/**
+ * Determine if an issue should have a marker in the document.
+ * 
+ * Some issues can have markers (specific text found in CV).
+ * Some issues cannot have markers (general issues like "CV too long").
+ */
+const isValidMarker = (
+  issue: Issue,
+  cvContent: string
+): { valid: boolean; matchText: string; position: number } => {
+  
+  // Get the text to mark
+  const matchText = issue.current || issue.matchText || '';
+  
+  // Issues that should NOT have markers (general/structural issues)
+  const noMarkerIssues = [
+    'LENGTH_CV_TOO_LONG',
+    'LENGTH_CV_TOO_SHORT',
+    'LENGTH_SUMMARY_TOO_LONG',
+    'LENGTH_EXPERIENCE_TOO_DETAILED',
+    'LENGTH_EDUCATION_TOO_DETAILED',
+    'CONTENT_SUMMARY_TOO_LONG',
+    'CONTENT_JOB_DESCRIPTION_TOO_LONG',
+    'CONTENT_EDUCATION_DESCRIPTION_TOO_SHORT',
+    'CONTENT_JOB_DESCRIPTION_TOO_SHORT',
+  ];
+  
+  if (noMarkerIssues.includes(issue.issue_code)) {
+    return { valid: false, matchText: '', position: -1 };
+  }
+  
+  // "Missing" issues - mark the section where item should be
+  if (matchText.startsWith('Not found in:')) {
+    // For missing items, we could mark the contact section header
+    // Or just don't show marker for missing items
+    return { valid: false, matchText: '', position: -1 };
+  }
+  
+  // Empty matchText - no marker
+  if (!matchText || matchText.trim() === '') {
+    return { valid: false, matchText: '', position: -1 };
+  }
+  
+  // For very short matches (1-2 chars like "I"), use word boundary search
+  const position = findWordBoundaryMatch(cvContent, matchText);
+  
+  if (position === -1) {
+    return { valid: false, matchText: '', position: -1 };
+  }
+  
+  return { valid: true, matchText: matchText.trim(), position };
+};
+```
+
+───────────────────────────────────────────────────────────────────────────────
+VERIFICATION:
+───────────────────────────────────────────────────────────────────────────────
+
+After fix:
+
+| Issue | Before | After |
+|-------|--------|-------|
+| First Person Pronouns ("I") | ❌ No marker | ✅ Marker at standalone "I" |
+| CV Too Long | ❌ No marker | ❌ No marker (correct - general issue) |
+| Weak Action Verbs | ❌ No marker | ✅ Marker at "Supported" |
+| Missing LinkedIn | ❌ No marker | ❌ No marker (correct - missing item) |
+
+More issues should now have markers, but general/structural issues correctly have none.
+
+───────────────────────────────────────────────────────────────────────────────
+FILES TO MODIFY:
+───────────────────────────────────────────────────────────────────────────────
+
+- client/src/components/cv-optimizer/CVDocument.tsx
+
+DO NOT TOUCH:
+- Backend files
+- Other frontend components
+
+───────────────────────────────────────────────────────────────────────────────
+
+WHEN COMPLETE:
+
+Confirm:
+□ isValidMarker function updated with smarter logic
+□ Short matches like "I" now get markers (with word boundary)
+□ General issues correctly have no markers
+□ More issues have visible markers than before
+□ No TypeScript errors
+
+Type "FIX-4 COMPLETE" when done.
+
+═══════════════════════════════════════════════════════════════════════════════
