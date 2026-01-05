@@ -11,12 +11,16 @@ import re
 from typing import List, Dict
 from .word_lists import (
     WEAK_VERBS,
+    STRONG_VERBS,
     BUZZWORDS,
     VAGUE_WORDS,
     BUZZWORD_THRESHOLD,
     VAGUE_THRESHOLD,
 )
 from .section_extractor import extract_sections
+
+MIN_WEAK_VERBS_FOR_ISSUE = 3  # Need 3+ different weak verbs to trigger
+WEAK_VERB_RATIO_THRESHOLD = 0.30  # 30% - if weak verbs are 30%+ of total action verbs
 
 FIRST_PERSON_PATTERN = re.compile(r"\b(I|my|me|myself|I'm|I've|I'll)\b")
 
@@ -98,7 +102,8 @@ IRRELEVANT_INFO_PATTERNS = {
 
 def detect_weak_verbs(text: str) -> List[Dict]:
     """
-    Detect weak action verbs in text.
+    Detect weak action verbs in experience section.
+    Only triggers if weak verbs are a significant pattern, not isolated cases.
     
     SECTION-AWARE: Only checks Experience section, skips certifications.
     
@@ -106,12 +111,14 @@ def detect_weak_verbs(text: str) -> List[Dict]:
         text: Text to analyze
         
     Returns:
-        List of WEAK_ACTION_VERBS issues
+        List of WEAK_ACTION_VERBS issues (max 1 consolidated issue)
     """
     issues = []
-    found_verbs = []
     
     experience_text = get_experience_text_only(text)
+    
+    weak_verbs_found = set()
+    weak_verb_examples = []
     
     for line in experience_text.split('\n'):
         line = line.strip()
@@ -126,18 +133,44 @@ def detect_weak_verbs(text: str) -> List[Dict]:
         
         for verb in WEAK_VERBS:
             if verb.lower() in line_lower:
-                if verb.lower() not in [v.lower() for v in found_verbs]:
-                    issues.append({
-                        'issue_type': 'CONTENT_WEAK_ACTION_VERBS',
-                        'title': f"Weak action verb: '{verb}'",
-                        'location': 'Experience Section',
-                        'description': f'Weak/passive phrase detected: "{verb}"',
-                        'current': line,
-                        'is_highlightable': bool(line and line in text),
-                        'weak_verb': verb,
-                        'suggestion': f'This bullet starts with a weak verb ("{verb}"). Strong CVs use powerful action verbs. Try: Led, Developed, Achieved, Implemented, Increased, Reduced, Created, Built.',
+                if verb not in weak_verbs_found:
+                    weak_verbs_found.add(verb)
+                    weak_verb_examples.append({
+                        'verb': verb,
+                        'line': line[:100]
                     })
-                    found_verbs.append(verb)
+    
+    strong_verbs_count = 0
+    for line in experience_text.split('\n'):
+        line_lower = line.lower().strip()
+        for verb in STRONG_VERBS:
+            if line_lower.startswith(verb.lower()):
+                strong_verbs_count += 1
+                break
+    
+    total_verbs = len(weak_verbs_found) + strong_verbs_count
+    weak_ratio = len(weak_verbs_found) / total_verbs if total_verbs > 0 else 0
+    
+    should_trigger = (
+        len(weak_verbs_found) >= MIN_WEAK_VERBS_FOR_ISSUE or
+        (weak_ratio >= WEAK_VERB_RATIO_THRESHOLD and len(weak_verbs_found) >= 2)
+    )
+    
+    if should_trigger:
+        weak_list = sorted(list(weak_verbs_found))[:5]
+        
+        issues.append({
+            'issue_type': 'CONTENT_WEAK_ACTION_VERBS',
+            'title': 'Multiple weak action verbs found',
+            'location': 'Experience Section',
+            'description': f'Found {len(weak_verbs_found)} weak/passive verbs: {", ".join(weak_list)}. Replace with strong action verbs.',
+            'current': ', '.join(weak_list),
+            'is_highlightable': False,
+            'weak_verbs': list(weak_verbs_found),
+            'weak_verb_count': len(weak_verbs_found),
+            'examples': weak_verb_examples[:3],
+            'suggestion': 'Replace weak verbs with powerful action verbs: Led, Developed, Achieved, Implemented, Increased, Reduced, Created, Built.',
+        })
     
     return issues
 
