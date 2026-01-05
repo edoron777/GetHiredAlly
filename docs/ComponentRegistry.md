@@ -2,8 +2,8 @@
 
 **Document Type:** Registry / Index  
 **Purpose:** Catalog of all reusable functions and components  
-**Version:** 1.0  
-**Date:** December 30, 2025
+**Version:** 1.1  
+**Date:** January 05, 2026
 
 ---
 
@@ -52,6 +52,10 @@ to see if it already exists.
 | GHATooltip | UI Component | ✅ | `client/src/components/common/Tooltip/` |
 | TOOLTIP_TEXTS | Utility | ✅ | `client/src/components/common/Tooltip/` |
 | TOOLTIP_STYLES | Utility | ✅ | `client/src/components/common/Tooltip/` |
+| detect_cv_blocks | Backend | ✅ | `backend/common/detection/` |
+| detect_cv_issues | Backend | ✅ | `backend/common/detection/` |
+| CVBlockStructure | Data Class | ✅ | `backend/common/detection/` |
+| CVIssueReport | Data Class | ✅ | `backend/common/detection/` |
 
 ---
 
@@ -343,6 +347,133 @@ import { GHATooltip, TOOLTIP_TEXTS } from '@/components/common/Tooltip';
 
 ---
 
+## CATEGORY: CV DETECTION
+
+### detect_cv_blocks
+
+| Field | Value |
+|-------|-------|
+| **Name** | detect_cv_blocks |
+| **Purpose** | Identify CV structure (sections, jobs, bullets with line numbers) |
+| **Category** | Backend Function |
+| **Location** | `backend/common/detection/block_detector.py` |
+| **Import** | `from backend.common.detection import detect_cv_blocks, CVBlockStructure` |
+| **Parameters** | `cv_text` (str) |
+| **Returns** | `CVBlockStructure` with blocks, jobs, bullets, line numbers |
+| **Dependencies** | section_extractor, bullet_extractor |
+| **Status** | ✅ Complete |
+| **Used By** | detect_cv_issues(), CV Optimizer |
+| **Added** | January 05, 2026 |
+
+**Example:**
+```python
+from backend.common.detection import detect_cv_blocks, CVBlockStructure
+
+structure = detect_cv_blocks(cv_text)
+
+print(f"Blocks found: {len(structure.blocks)}")
+print(f"Jobs found: {len(structure.all_jobs)}")
+
+for block in structure.blocks:
+    print(f"  {block.block_type.value}: lines {block.start_line}-{block.end_line}")
+```
+
+**Output Structure:**
+```python
+CVBlockStructure:
+  - blocks: List[CVBlock]           # All sections with line numbers
+  - all_jobs: List[JobEntry]        # Experience entries
+  - all_bullets: List[EnhancedBullet] # All bullet points
+  - summary: StructureSummary       # Statistics
+  - errors: List[str]               # Any parsing errors
+```
+
+---
+
+### detect_cv_issues
+
+| Field | Value |
+|-------|-------|
+| **Name** | detect_cv_issues |
+| **Purpose** | Detect all CV issues and return structured report with score |
+| **Category** | Backend Function |
+| **Location** | `backend/common/detection/master_detector.py` |
+| **Import** | `from backend.common.detection import detect_cv_issues, CVIssueReport` |
+| **Parameters** | `cv_text` (str), `job_description` (str, optional), `cv_block_structure` (CVBlockStructure, optional) |
+| **Returns** | `CVIssueReport` with issues, categories, severity, score |
+| **Dependencies** | detect_cv_blocks, 17 detector modules |
+| **Status** | ✅ Complete |
+| **Used By** | CV Optimizer, cv_optimizer.py |
+| **Added** | January 05, 2026 |
+
+**Example:**
+```python
+from backend.common.detection import detect_cv_issues, CVIssueReport
+
+# Simple usage
+report = detect_cv_issues(cv_text)
+
+print(f"Score: {report.summary.overall_score}/100")
+print(f"Total issues: {report.summary.total_issues}")
+print(f"Critical: {report.summary.critical_count}")
+
+# With job description
+report = detect_cv_issues(cv_text, job_description=job_desc)
+
+# With pre-computed structure (efficient)
+structure = detect_cv_blocks(cv_text)
+report = detect_cv_issues(cv_text, cv_block_structure=structure)
+```
+
+**Output Structure:**
+```python
+CVIssueReport:
+  - issues: List[Dict]                    # All detected issues
+  - issues_by_category: Dict[str, List]   # Grouped by category
+  - issues_by_severity: Dict[str, List]   # Grouped by severity
+  - summary: IssueReportSummary           # Score, counts
+  - cv_structure: CVBlockStructure        # The structure used
+  - processing_time_ms: float             # Performance metric
+```
+
+---
+
+### CVBlockStructure
+
+| Field | Value |
+|-------|-------|
+| **Name** | CVBlockStructure |
+| **Purpose** | Data class representing parsed CV structure |
+| **Category** | Data Class |
+| **Location** | `backend/common/detection/block_detector.py` |
+| **Import** | `from backend.common.detection import CVBlockStructure` |
+| **Parameters** | N/A (data class) |
+| **Returns** | N/A |
+| **Dependencies** | None |
+| **Status** | ✅ Complete |
+| **Used By** | detect_cv_blocks, detect_cv_issues |
+| **Added** | January 05, 2026 |
+
+---
+
+### CVIssueReport
+
+| Field | Value |
+|-------|-------|
+| **Name** | CVIssueReport |
+| **Purpose** | Data class representing complete issue detection report |
+| **Category** | Data Class |
+| **Location** | `backend/common/detection/master_detector.py` |
+| **Import** | `from backend.common.detection import CVIssueReport` |
+| **Parameters** | N/A (data class) |
+| **Returns** | N/A |
+| **Dependencies** | CVBlockStructure |
+| **Status** | ✅ Complete |
+| **Used By** | detect_cv_issues, CV Optimizer |
+| **Added** | January 05, 2026 |
+
+---
+
 ## CATEGORY: DOCUMENT GENERATION
 
 ### DocStyler
@@ -537,5 +668,5 @@ import { GHATooltip, TOOLTIP_TEXTS } from '@/components/common/Tooltip';
 
 ---
 
-**TOTAL COMPONENTS:** 20  
-**Last Updated:** December 30, 2025
+**TOTAL COMPONENTS:** 24  
+**Last Updated:** January 05, 2026

@@ -1,0 +1,197 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  🔍 INVESTIGATION: Function Integration & Awareness                          ║
+║  Purpose: Verify detect_cv_blocks() and detect_cv_issues() work together     ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+CONTEXT:
+We have two main functions that should "talk" to each other:
+
+┌─────────────────────────────────────────────────────────────────┐
+│  detect_cv_blocks(cv_text)  →  CVBlockStructure                │
+│  Purpose: Identify CV STRUCTURE (sections, jobs, line numbers) │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  detect_cv_issues(cv_text, cv_block_structure?)                │
+│  Purpose: Identify CV ISSUES using the structure               │
+│  Output: CVIssueReport                                         │
+└─────────────────────────────────────────────────────────────────┘
+
+───────────────────────────────────────────────────────────────────────────────
+TEST 1: Verify Imports Work
+───────────────────────────────────────────────────────────────────────────────
+```python
+# Test all imports
+from backend.common.detection import (
+    # Function 1: Structure detection
+    detect_cv_blocks,
+    CVBlockStructure,
+    CVBlock,
+    BlockType,
+    JobEntry,
+    EnhancedBullet,
+    
+    # Function 2: Issue detection
+    detect_cv_issues,
+    CVIssueReport,
+    IssueReportSummary,
+)
+
+print("✅ TEST 1 PASSED: All imports successful")
+```
+
+───────────────────────────────────────────────────────────────────────────────
+TEST 2: Verify detect_cv_issues() Calls detect_cv_blocks() Internally
+───────────────────────────────────────────────────────────────────────────────
+```python
+test_cv = """John Smith
+john@email.com
+
+EXPERIENCE
+Software Engineer at TechCorp
+- Led team of 5 developers
+- Managed project deliverables
+
+EDUCATION
+BS Computer Science, 2020
+"""
+
+# Call detect_cv_issues WITHOUT providing structure
+report = detect_cv_issues(test_cv)
+
+# Check if structure was created internally
+if report.cv_structure is not None:
+    print(f"✅ TEST 2 PASSED: Structure created internally")
+    print(f"   Blocks: {len(report.cv_structure.blocks)}")
+    print(f"   Jobs: {len(report.cv_structure.jobs)}")
+else:
+    print("❌ TEST 2 FAILED: No structure created")
+```
+
+───────────────────────────────────────────────────────────────────────────────
+TEST 3: Verify Pre-computed Structure is Accepted
+───────────────────────────────────────────────────────────────────────────────
+```python
+# Create structure separately
+structure = detect_cv_blocks(test_cv)
+print(f"Structure created: {len(structure.blocks)} blocks")
+
+# Pass it to detect_cv_issues
+report = detect_cv_issues(test_cv, cv_block_structure=structure)
+
+# Verify same structure is used (not recreated)
+if report.cv_structure is structure:
+    print("✅ TEST 3 PASSED: Pre-computed structure accepted (same object)")
+else:
+    print("⚠️ TEST 3 WARNING: Structure was not reused")
+```
+
+───────────────────────────────────────────────────────────────────────────────
+TEST 4: Verify Structure is Used for Line Numbers
+───────────────────────────────────────────────────────────────────────────────
+```python
+report = detect_cv_issues(test_cv)
+
+# Check for issues with line numbers
+issues_with_lines = [i for i in report.issues if i.get('line_number')]
+
+print(f"Total issues: {len(report.issues)}")
+print(f"Issues with line_number: {len(issues_with_lines)}")
+
+if issues_with_lines:
+    print("✅ TEST 4 PASSED: Line numbers populated from structure")
+    for issue in issues_with_lines[:3]:
+        print(f"   Line {issue['line_number']}: {issue['issue_type']}")
+else:
+    print("⚠️ TEST 4 WARNING: No issues have line numbers")
+```
+
+───────────────────────────────────────────────────────────────────────────────
+TEST 5: Verify Consistency Between Both Approaches
+───────────────────────────────────────────────────────────────────────────────
+```python
+# Approach A: Let detect_cv_issues create structure internally
+report_a = detect_cv_issues(test_cv)
+
+# Approach B: Create structure first, then pass it
+structure = detect_cv_blocks(test_cv)
+report_b = detect_cv_issues(test_cv, cv_block_structure=structure)
+
+# Compare results
+same_issue_count = report_a.summary.total_issues == report_b.summary.total_issues
+same_score = report_a.summary.overall_score == report_b.summary.overall_score
+
+if same_issue_count and same_score:
+    print("✅ TEST 5 PASSED: Both approaches produce identical results")
+    print(f"   Issues: {report_a.summary.total_issues}")
+    print(f"   Score: {report_a.summary.overall_score}/100")
+else:
+    print("❌ TEST 5 FAILED: Results differ!")
+    print(f"   Approach A: {report_a.summary.total_issues} issues, score {report_a.summary.overall_score}")
+    print(f"   Approach B: {report_b.summary.total_issues} issues, score {report_b.summary.overall_score}")
+```
+
+───────────────────────────────────────────────────────────────────────────────
+TEST 6: Full Integration Flow
+───────────────────────────────────────────────────────────────────────────────
+```python
+print("\n" + "="*60)
+print("FULL INTEGRATION TEST")
+print("="*60)
+
+# Step 1: Detect structure
+structure = detect_cv_blocks(test_cv)
+print(f"\n1. Structure Detection:")
+print(f"   ✓ Blocks: {len(structure.blocks)}")
+print(f"   ✓ Jobs: {len(structure.jobs)}")
+print(f"   ✓ Bullets: {len(structure.bullets)}")
+
+# Step 2: Detect issues (using structure)
+report = detect_cv_issues(test_cv, cv_block_structure=structure)
+print(f"\n2. Issue Detection:")
+print(f"   ✓ Total issues: {report.summary.total_issues}")
+print(f"   ✓ Score: {report.summary.overall_score}/100")
+print(f"   ✓ Critical: {report.summary.critical_count}")
+
+# Step 3: Verify structure is in report
+print(f"\n3. Integration Check:")
+print(f"   ✓ Structure in report: {report.cv_structure is not None}")
+print(f"   ✓ Same structure object: {report.cv_structure is structure}")
+
+# Step 4: Verify line numbers
+issues_with_lines = [i for i in report.issues if i.get('line_number')]
+print(f"   ✓ Issues with line numbers: {len(issues_with_lines)}")
+
+print("\n" + "="*60)
+print("✅ INTEGRATION TEST COMPLETE")
+print("="*60)
+```
+
+───────────────────────────────────────────────────────────────────────────────
+EXPECTED RESULTS
+───────────────────────────────────────────────────────────────────────────────
+
+| Test | Expected Result |
+|------|-----------------|
+| TEST 1 | All imports work |
+| TEST 2 | Structure created internally when not provided |
+| TEST 3 | Pre-computed structure accepted and reused |
+| TEST 4 | Some issues have line_number field |
+| TEST 5 | Both approaches produce same results |
+| TEST 6 | Full flow works end-to-end |
+
+───────────────────────────────────────────────────────────────────────────────
+SUMMARY TABLE (Fill after running)
+───────────────────────────────────────────────────────────────────────────────
+
+| Integration Point | Status |
+|-------------------|--------|
+| All imports work | ✓/✗ |
+| Internal structure creation | ✓/✗ |
+| Pre-computed structure accepted | ✓/✗ |
+| Line numbers from structure | ✓/✗ |
+| Consistent results | ✓/✗ |
+| Full integration works | ✓/✗ |
+
+╚══════════════════════════════════════════════════════════════════════════════╝
