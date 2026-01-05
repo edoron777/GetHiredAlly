@@ -1,349 +1,73 @@
-# ComponentRegistry
+# Component Registry - Single Source of Truth
 
-**Document Type:** Registry / Index  
-**Purpose:** Catalog of all reusable functions and components  
-**Version:** 1.1  
-**Date:** January 05, 2026
+**Document Type:** Master Index  
+**Purpose:** Central catalog of ALL reusable functions and components  
+**Version:** 2.0  
+**Last Updated:** January 05, 2026
 
 ---
 
 ## PURPOSE
 
-This document serves as a **central registry** for all reusable code in GetHiredAlly.
+This is the **Single Source of Truth** for all reusable code in GetHiredAlly.
 
-**IMPORTANT FOR REPLIT AI AGENT:**
-Before creating any new component or utility function, CHECK THIS FILE FIRST
-to see if it already exists.
+### Who Uses This
 
----
+| Audience | Use Case |
+|----------|----------|
+| **Claude** | Look up existing functions before creating new ones |
+| **Replit Agent** | Understand available components |
+| **Developers** | Find import paths and usage |
+| **Code** | Discover available functions programmatically |
 
-## STATUS LEGEND
+### Rules
 
-| Status | Meaning |
-|--------|---------|
-| ✅ Complete | Fully implemented and tested |
-| ⏳ Placeholder | Interface exists, functionality pending |
-| 🚧 In Progress | Currently being developed |
-| ❌ Deprecated | Should not be used |
+1. **Every function/component MUST be registered here**
+2. **Check here BEFORE creating new functionality**
+3. **Update when adding/modifying/deprecating components**
+4. **Link to detailed docs, don't duplicate content**
 
 ---
 
 ## QUICK LOOKUP TABLE
 
-| Name | Category | Status | Location |
-|------|----------|--------|----------|
-| ActionBar | UI Component | ✅ | `client/src/components/common/ActionBar/` |
-| ActionBarButton | UI Component | ✅ | `client/src/components/common/ActionBar/` |
-| GHAScanner | UI Component | ✅ | `client/src/components/common/GHAScanner/` |
-| scannerSounds | Utility | ✅ | `client/src/components/common/GHAScanner/` |
-| ScoreDashboard | UI Component | ✅ | `client/src/components/cv-optimizer/` |
-| ScoreComparison | UI Component | ✅ | `client/src/components/cv-optimizer/` |
-| copyToClipboard | Utility | ✅ | `client/src/components/common/ActionBar/utils/` |
-| sendEmail | Utility | ✅ | `client/src/components/common/ActionBar/utils/` |
-| shareToWhatsApp | Utility | ✅ | `client/src/components/common/ActionBar/utils/` |
-| stripMarkdown | Utility | ✅ | `client/src/components/common/ActionBar/utils/` |
-| formatContent | Utility | ✅ | `client/src/components/common/ActionBar/utils/` |
-| calculate_cv_score | Backend | ✅ | `backend/common/scoring/` |
-| calculate_after_fix_score | Backend | ✅ | `backend/common/scoring/` |
-| DocStyler | Utility | ✅ | `client/src/components/common/DocStyler/` |
-| generatePDF | Utility | ✅ | `client/src/components/common/DocStyler/generators/` |
-| generateWord | Utility | ✅ | `client/src/components/common/DocStyler/generators/` |
-| generateMD | Utility | ✅ | `client/src/components/common/DocStyler/generators/` |
-| GHATooltip | UI Component | ✅ | `client/src/components/common/Tooltip/` |
-| TOOLTIP_TEXTS | Utility | ✅ | `client/src/components/common/Tooltip/` |
-| TOOLTIP_STYLES | Utility | ✅ | `client/src/components/common/Tooltip/` |
-| detect_cv_blocks | Backend | ✅ | `backend/common/detection/` |
-| detect_cv_issues | Backend | ✅ | `backend/common/detection/` |
-| CVBlockStructure | Data Class | ✅ | `backend/common/detection/` |
-| CVIssueReport | Data Class | ✅ | `backend/common/detection/` |
+| Name | Type | Category | Status | Location |
+|------|------|----------|--------|----------|
+| detect_cv_blocks | Function | CV Detection | ✅ | `backend/common/detection/` |
+| detect_cv_issues | Function | CV Detection | ✅ | `backend/common/detection/` |
+| CVBlockStructure | Data Class | CV Detection | ✅ | `backend/common/detection/` |
+| CVIssueReport | Data Class | CV Detection | ✅ | `backend/common/detection/` |
+| calculate_cv_score | Function | Scoring | ✅ | `backend/common/scoring/` |
+| calculate_after_fix_score | Function | Scoring | ✅ | `backend/common/scoring/` |
+| ActionBar | Component | UI | ✅ | `client/src/components/common/ActionBar/` |
+| ActionBarButton | Component | UI | ✅ | `client/src/components/common/ActionBar/` |
+| GHAScanner | Component | UI | ✅ | `client/src/components/common/GHAScanner/` |
+| GHATooltip | Component | UI | ✅ | `client/src/components/common/Tooltip/` |
+| DocStyler | Component | UI | ✅ | `client/src/components/common/DocStyler/` |
+| TextMarker | Function | UI Utility | ✅ | `client/src/components/common/TextMarker/` |
+| TipBox | Component | UI | ✅ | `client/src/components/common/TipBox/` |
+| UserSessionKeep | Component | Session | ✅ | `client/src/components/common/UserSessionKeep/` |
+| useServiceSession | Hook | Session | ✅ | `client/src/components/common/UserSessionKeep/` |
+| ScoreDashboard | Component | CV Optimizer | ✅ | `client/src/components/cv-optimizer/` |
+| ScoreComparison | Component | CV Optimizer | ✅ | `client/src/components/cv-optimizer/` |
+| copyToClipboard | Function | Utility | ✅ | `client/src/components/common/ActionBar/utils/` |
+| sendEmail | Function | Utility | ✅ | `client/src/components/common/ActionBar/utils/` |
+| shareToWhatsApp | Function | Utility | ✅ | `client/src/components/common/ActionBar/utils/` |
+| stripMarkdown | Function | Utility | ✅ | `client/src/components/common/ActionBar/utils/` |
+| formatContent | Function | Utility | ✅ | `client/src/components/common/ActionBar/utils/` |
+
+**TOTAL: 21 components/functions**
 
 ---
 
-## CATEGORY: UI COMPONENTS
+## STATUS LEGEND
 
-### ActionBar
-
-| Field | Value |
-|-------|-------|
-| **Name** | ActionBar |
-| **Purpose** | Reusable toolbar for share/export actions |
-| **Category** | UI Component |
-| **Location** | `client/src/components/common/ActionBar/` |
-| **Import** | `import { ActionBar } from '@/components/common/ActionBar'` |
-| **Status** | ✅ Complete |
-| **Used By** | CV Optimizer, X-Ray Analyzer, Interview Questions |
-| **Added** | December 30, 2025 |
-
-**Props:**
-
-| Prop | Type | Description |
-|------|------|-------------|
-| `content` | string | Text/markdown content to act on |
-| `fileName` | string | Default filename for downloads |
-| `emailSubject` | string | Email subject line |
-| `contentType` | string | Service identifier (for DocStyler) |
-| `contentMetadata` | object | Additional metadata (score, grade) |
-| `hiddenButtons` | array | Buttons to hide |
-| `disabledButtons` | array | Buttons to disable |
-
-**Buttons:**
-
-| Button | Function | Calls |
-|--------|----------|-------|
-| Copy | Copy to clipboard | Internal clipboard.js |
-| Email | Open email client | Internal email.js |
-| WhatsApp | Share via WhatsApp | Internal whatsapp.js |
-| PDF | Download styled PDF | **DocStyler.pdf()** |
-| WORD | Download styled DOCX | **DocStyler.word()** |
-| MD | Download Markdown | **DocStyler.md()** |
-
-**Example:**
-```jsx
-<ActionBar
-  content={reportContent}
-  fileName="CV_Analysis_Report"
-  emailSubject="My CV Analysis - GetHiredAlly"
-  contentType="cv-optimizer"
-  contentMetadata={{ score: 72, grade: 'Good' }}
-/>
-```
-
----
-
-### ActionBarButton
-
-| Field | Value |
-|-------|-------|
-| **Purpose** | Individual button with tooltip for ActionBar |
-| **Location** | `client/src/components/common/ActionBar/ActionBarButton.jsx` |
-| **Import** | `import { ActionBarButton } from '@/components/common/ActionBar'` |
-| **Status** | ✅ Complete |
-
-**Props:** `label`, `icon`, `tooltip`, `color`, `hoverBg`, `onClick`, `disabled`, `successLabel`
-
----
-
-### ScoreDashboard
-
-| Field | Value |
-|-------|-------|
-| **Purpose** | Display CV score breakdown with progress bars |
-| **Location** | `client/src/components/cv-optimizer/ScoreDashboard.jsx` |
-| **Import** | `import ScoreDashboard from './ScoreDashboard'` |
-| **Status** | ✅ Complete |
-
-**Props:** `breakdown`, `totalScore`, `grade`, `message`
-
----
-
-### ScoreComparison
-
-| Field | Value |
-|-------|-------|
-| **Purpose** | Display before/after score comparison |
-| **Location** | `client/src/components/cv-optimizer/ScoreComparison.jsx` |
-| **Import** | `import ScoreComparison from './ScoreComparison'` |
-| **Status** | ✅ Complete |
-
-**Props:** `beforeScore`, `afterScore`, `improvement`, `categoryImprovements`
-
----
-
-### GHAScanner
-
-| Field | Value |
-|-------|-------|
-| **Name** | GHAScanner |
-| **Purpose** | Visual progress indicator with animated grid (Defrag-style) |
-| **Category** | UI Component |
-| **Location** | `client/src/components/common/GHAScanner/` |
-| **Import** | `import { GHAScanner } from '@/components/common/GHAScanner'` |
-| **Status** | ✅ Complete |
-| **Used By** | CVScanningPage, future services |
-| **Added** | December 30, 2025 |
-
-**Props:**
-
-| Prop | Type | Required | Description |
-|------|------|----------|-------------|
-| `isScanning` | boolean | Yes | Controls animation state |
-| `progress` | number | Yes | Progress 0-100 |
-| `statusMessages` | string[] | No | Rotating status texts |
-| `showProgress` | boolean | No | Show progress bar |
-| `showLegend` | boolean | No | Show color legend |
-| `onComplete` | function | No | Callback at 100% |
-
-**Features:**
-- Windows 95 Defrag-style grid animation
-- Color-coded blocks (OK, Minor, Medium, Critical)
-- Rotating status messages
-- Progress bar
-- Pleasant sound effects (Web Audio API)
-
-**Related Files:**
-- `scannerStyles.ts` - Style constants and colors
-- `scannerSounds.ts` - Web Audio API sound effects
-
-**Sound Effects:**
-
-| Sound | Trigger | Character |
-|-------|---------|-----------|
-| Start | Scan begins | Ascending chime |
-| Complete | Scan finishes | 3-note success chord |
-| Error | Problem | Gentle descending tone |
-
-**Example:**
-```tsx
-import { GHAScanner, STATUS_MESSAGES } from '@/components/common/GHAScanner';
-
-<GHAScanner
-  isScanning={true}
-  progress={45}
-  statusMessages={STATUS_MESSAGES.cvOptimizer}
-  onComplete={() => navigate('/results')}
-/>
-```
-
----
-
-## CATEGORY: UTILITIES
-
-### copyToClipboard
-
-| Field | Value |
-|-------|-------|
-| **Purpose** | Copy text to clipboard with fallback |
-| **Location** | `client/src/components/common/ActionBar/utils/clipboard.js` |
-| **Import** | `import { copyToClipboard } from '@/components/common/ActionBar/utils'` |
-| **Parameters** | `text` (string) |
-| **Returns** | `Promise<boolean>` |
-| **Status** | ✅ Complete |
-
----
-
-### sendEmail
-
-| Field | Value |
-|-------|-------|
-| **Purpose** | Open email client with pre-filled content |
-| **Location** | `client/src/components/common/ActionBar/utils/email.js` |
-| **Import** | `import { sendEmail } from '@/components/common/ActionBar/utils'` |
-| **Parameters** | `{ subject, body, to }` |
-| **Returns** | `void` |
-| **Status** | ✅ Complete |
-
----
-
-### shareToWhatsApp
-
-| Field | Value |
-|-------|-------|
-| **Purpose** | Share content via WhatsApp |
-| **Location** | `client/src/components/common/ActionBar/utils/whatsapp.js` |
-| **Import** | `import { shareToWhatsApp } from '@/components/common/ActionBar/utils'` |
-| **Parameters** | `text` (string, max 4096 chars) |
-| **Returns** | `void` |
-| **Status** | ✅ Complete |
-
----
-
-### stripMarkdown
-
-| Field | Value |
-|-------|-------|
-| **Purpose** | Remove markdown formatting from text |
-| **Location** | `client/src/components/common/ActionBar/utils/formatters.js` |
-| **Import** | `import { stripMarkdown } from '@/components/common/ActionBar/utils'` |
-| **Parameters** | `content` (string) |
-| **Returns** | `string` (plain text) |
-| **Status** | ✅ Complete |
-
----
-
-### formatContent
-
-| Field | Value |
-|-------|-------|
-| **Purpose** | Format content for specific output type |
-| **Location** | `client/src/components/common/ActionBar/utils/formatters.js` |
-| **Import** | `import { formatContent } from '@/components/common/ActionBar/utils'` |
-| **Parameters** | `content`, `format` ('plain' / 'html' / 'markdown') |
-| **Returns** | `string` |
-| **Status** | ✅ Complete |
-
----
-
-## CATEGORY: BACKEND SCORING
-
-### calculate_cv_score
-
-| Field | Value |
-|-------|-------|
-| **Purpose** | Calculate deterministic CV score |
-| **Location** | `backend/common/scoring/calculator.py` |
-| **Import** | `from backend.common.scoring import calculate_cv_score` |
-| **Parameters** | `data` (dict) |
-| **Returns** | `dict` with `total_score`, `breakdown`, `grade`, `message` |
-| **Status** | ✅ Complete |
-
----
-
-### calculate_after_fix_score
-
-| Field | Value |
-|-------|-------|
-| **Purpose** | Project score improvement after fixes |
-| **Location** | `backend/common/scoring/after_fix.py` |
-| **Import** | `from backend.common.scoring import calculate_after_fix_score` |
-| **Parameters** | `before_score`, `issues`, `breakdown` |
-| **Returns** | `dict` with `before_score`, `after_score`, `improvement` |
-| **Status** | ✅ Complete |
-
----
-
-### GHATooltip
-
-| Field | Value |
-|-------|-------|
-| **Name** | GHATooltip |
-| **Purpose** | Reusable tooltip with consistent styling for contextual help |
-| **Category** | UI Component |
-| **Location** | `client/src/components/common/Tooltip/` |
-| **Import** | `import { GHATooltip } from '@/components/common/Tooltip'` |
-| **Status** | ✅ Complete |
-| **Used By** | ActionBar, All Service Pages |
-| **Added** | December 30, 2025 |
-
-**Props:**
-
-| Prop | Type | Required | Description |
-|------|------|----------|-------------|
-| `children` | ReactNode | Yes | Trigger element |
-| `text` | string | Yes | Tooltip description |
-| `title` | string | No | Optional bold title |
-| `variant` | 'default' \| 'warning' \| 'info' | No | Color variant |
-| `side` | 'top' \| 'bottom' \| 'left' \| 'right' | No | Position |
-| `icon` | 'info' \| 'warning' \| 'tip' | No | Optional icon |
-| `learnMoreUrl` | string | No | Optional help link |
-
-**Related Files:**
-- `tooltipTexts.ts` - Central text storage for all tooltips
-- `tooltipStyles.ts` - Style constants and variants
-
-**Example:**
-```tsx
-import { GHATooltip, TOOLTIP_TEXTS } from '@/components/common/Tooltip';
-
-// Basic usage
-<GHATooltip text="Copy to clipboard">
-  <Button>Copy</Button>
-</GHATooltip>
-
-// Using central texts
-<GHATooltip {...TOOLTIP_TEXTS.actionBar.pdf}>
-  <Button>PDF</Button>
-</GHATooltip>
-```
+| Status | Icon | Meaning |
+|--------|------|---------|
+| Complete | ✅ | Fully implemented and tested |
+| In Progress | 🚧 | Currently being developed |
+| Placeholder | ⏳ | Interface exists, functionality pending |
+| Deprecated | ❌ | Should not be used |
 
 ---
 
@@ -353,40 +77,16 @@ import { GHATooltip, TOOLTIP_TEXTS } from '@/components/common/Tooltip';
 
 | Field | Value |
 |-------|-------|
-| **Name** | detect_cv_blocks |
-| **Purpose** | Identify CV structure (sections, jobs, bullets with line numbers) |
-| **Category** | Backend Function |
+| **Type** | Backend Function |
+| **Purpose** | Parse CV text into structured blocks with line numbers |
 | **Location** | `backend/common/detection/block_detector.py` |
-| **Import** | `from backend.common.detection import detect_cv_blocks, CVBlockStructure` |
-| **Parameters** | `cv_text` (str) |
-| **Returns** | `CVBlockStructure` with blocks, jobs, bullets, line numbers |
-| **Dependencies** | section_extractor, bullet_extractor |
+| **Import** | `from backend.common.detection import detect_cv_blocks` |
+| **Input** | `cv_text: str` |
+| **Output** | `CVBlockStructure` |
 | **Status** | ✅ Complete |
-| **Used By** | detect_cv_issues(), CV Optimizer |
+| **Used By** | detect_cv_issues, CV Optimizer |
+| **Docs** | `CV_Blocks_Structure_Function.md` |
 | **Added** | January 05, 2026 |
-
-**Example:**
-```python
-from backend.common.detection import detect_cv_blocks, CVBlockStructure
-
-structure = detect_cv_blocks(cv_text)
-
-print(f"Blocks found: {len(structure.blocks)}")
-print(f"Jobs found: {len(structure.all_jobs)}")
-
-for block in structure.blocks:
-    print(f"  {block.block_type.value}: lines {block.start_line}-{block.end_line}")
-```
-
-**Output Structure:**
-```python
-CVBlockStructure:
-  - blocks: List[CVBlock]           # All sections with line numbers
-  - all_jobs: List[JobEntry]        # Experience entries
-  - all_bullets: List[EnhancedBullet] # All bullet points
-  - summary: StructureSummary       # Statistics
-  - errors: List[str]               # Any parsing errors
-```
 
 ---
 
@@ -394,47 +94,16 @@ CVBlockStructure:
 
 | Field | Value |
 |-------|-------|
-| **Name** | detect_cv_issues |
+| **Type** | Backend Function |
 | **Purpose** | Detect all CV issues and return structured report with score |
-| **Category** | Backend Function |
 | **Location** | `backend/common/detection/master_detector.py` |
-| **Import** | `from backend.common.detection import detect_cv_issues, CVIssueReport` |
-| **Parameters** | `cv_text` (str), `job_description` (str, optional), `cv_block_structure` (CVBlockStructure, optional) |
-| **Returns** | `CVIssueReport` with issues, categories, severity, score |
-| **Dependencies** | detect_cv_blocks, 17 detector modules |
+| **Import** | `from backend.common.detection import detect_cv_issues` |
+| **Input** | `cv_text: str`, `job_description?: str`, `cv_block_structure?: CVBlockStructure` |
+| **Output** | `CVIssueReport` |
 | **Status** | ✅ Complete |
 | **Used By** | CV Optimizer, cv_optimizer.py |
+| **Docs** | `CV_Issue_Detection_Function_Description.md` |
 | **Added** | January 05, 2026 |
-
-**Example:**
-```python
-from backend.common.detection import detect_cv_issues, CVIssueReport
-
-# Simple usage
-report = detect_cv_issues(cv_text)
-
-print(f"Score: {report.summary.overall_score}/100")
-print(f"Total issues: {report.summary.total_issues}")
-print(f"Critical: {report.summary.critical_count}")
-
-# With job description
-report = detect_cv_issues(cv_text, job_description=job_desc)
-
-# With pre-computed structure (efficient)
-structure = detect_cv_blocks(cv_text)
-report = detect_cv_issues(cv_text, cv_block_structure=structure)
-```
-
-**Output Structure:**
-```python
-CVIssueReport:
-  - issues: List[Dict]                    # All detected issues
-  - issues_by_category: Dict[str, List]   # Grouped by category
-  - issues_by_severity: Dict[str, List]   # Grouped by severity
-  - summary: IssueReportSummary           # Score, counts
-  - cv_structure: CVBlockStructure        # The structure used
-  - processing_time_ms: float             # Performance metric
-```
 
 ---
 
@@ -442,16 +111,13 @@ CVIssueReport:
 
 | Field | Value |
 |-------|-------|
-| **Name** | CVBlockStructure |
-| **Purpose** | Data class representing parsed CV structure |
-| **Category** | Data Class |
+| **Type** | Data Class |
+| **Purpose** | Represents parsed CV structure (blocks, jobs, bullets) |
 | **Location** | `backend/common/detection/block_detector.py` |
 | **Import** | `from backend.common.detection import CVBlockStructure` |
-| **Parameters** | N/A (data class) |
-| **Returns** | N/A |
-| **Dependencies** | None |
 | **Status** | ✅ Complete |
 | **Used By** | detect_cv_blocks, detect_cv_issues |
+| **Docs** | `CV_Blocks_Structure_Function.md` |
 | **Added** | January 05, 2026 |
 
 ---
@@ -460,213 +126,345 @@ CVIssueReport:
 
 | Field | Value |
 |-------|-------|
-| **Name** | CVIssueReport |
-| **Purpose** | Data class representing complete issue detection report |
-| **Category** | Data Class |
+| **Type** | Data Class |
+| **Purpose** | Represents complete issue detection report with score |
 | **Location** | `backend/common/detection/master_detector.py` |
 | **Import** | `from backend.common.detection import CVIssueReport` |
-| **Parameters** | N/A (data class) |
-| **Returns** | N/A |
-| **Dependencies** | CVBlockStructure |
 | **Status** | ✅ Complete |
 | **Used By** | detect_cv_issues, CV Optimizer |
+| **Docs** | `CV_Issue_Detection_Function_Description.md` |
 | **Added** | January 05, 2026 |
 
 ---
 
-## CATEGORY: DOCUMENT GENERATION
+## CATEGORY: SCORING
+
+### calculate_cv_score
+
+| Field | Value |
+|-------|-------|
+| **Type** | Backend Function |
+| **Purpose** | Calculate deterministic CV score from extracted data |
+| **Location** | `backend/common/scoring/calculator.py` |
+| **Import** | `from backend.common.scoring import calculate_cv_score` |
+| **Input** | `data: dict` (extracted CV fields) |
+| **Output** | `dict` with `total_score`, `breakdown`, `grade`, `message` |
+| **Status** | ✅ Complete |
+| **Used By** | CV Optimizer API |
+| **Added** | December 30, 2025 |
+
+---
+
+### calculate_after_fix_score
+
+| Field | Value |
+|-------|-------|
+| **Type** | Backend Function |
+| **Purpose** | Project score improvement after fixes |
+| **Location** | `backend/common/scoring/after_fix.py` |
+| **Import** | `from backend.common.scoring import calculate_after_fix_score` |
+| **Input** | `before_score: int`, `issues: list`, `breakdown: dict` |
+| **Output** | `dict` with `before_score`, `after_score`, `improvement` |
+| **Status** | ✅ Complete |
+| **Used By** | CV Optimizer API (/fixed endpoint) |
+| **Added** | December 30, 2025 |
+
+---
+
+## CATEGORY: SESSION MANAGEMENT
+
+### UserSessionKeep
+
+| Field | Value |
+|-------|-------|
+| **Type** | React Component |
+| **Purpose** | Banner UI showing user has work in progress, with Continue/Start New options |
+| **Location** | `client/src/components/common/UserSessionKeep/UserSessionKeep.tsx` |
+| **Import** | `import { UserSessionKeep } from '@/components/common/UserSessionKeep'` |
+| **Props** | `serviceName: string`, `onStartNew?: function` |
+| **Status** | ✅ Complete |
+| **Used By** | CV Optimizer, X-Ray Analyzer, Predict Questions |
+| **Docs** | `UserSessionKeep/README.md` |
+| **Added** | January 05, 2026 |
+
+---
+
+### useServiceSession
+
+| Field | Value |
+|-------|-------|
+| **Type** | React Hook |
+| **Purpose** | Fetches and manages session state via backend API |
+| **Location** | `client/src/components/common/UserSessionKeep/useServiceSession.ts` |
+| **Import** | `import { useServiceSession } from '@/components/common/UserSessionKeep'` |
+| **Input** | `serviceName: string` |
+| **Output** | `{ session, loading, error, archiveSession }` |
+| **Status** | ✅ Complete |
+| **Used By** | UserSessionKeep component |
+| **Docs** | `UserSessionKeep/README.md` |
+| **Added** | January 05, 2026 |
+
+---
+
+## CATEGORY: UI COMPONENTS
+
+### ActionBar
+
+| Field | Value |
+|-------|-------|
+| **Type** | React Component |
+| **Purpose** | Reusable toolbar for share/export actions (Copy, Email, WhatsApp, PDF, Word, MD) |
+| **Location** | `client/src/components/common/ActionBar/ActionBar.jsx` |
+| **Import** | `import { ActionBar } from '@/components/common/ActionBar'` |
+| **Props** | `content`, `fileName`, `emailSubject`, `hiddenButtons`, `disabledButtons` |
+| **Status** | ✅ Complete (PDF/Word ⏳ Placeholder) |
+| **Used By** | CV Optimizer Report Page |
+| **Docs** | `ActionBar_Knowledge_Document.md` |
+| **Added** | December 30, 2025 |
+
+---
+
+### GHAScanner
+
+| Field | Value |
+|-------|-------|
+| **Type** | React Component |
+| **Purpose** | Visual progress indicator with animated graphics during processing |
+| **Location** | `client/src/components/common/GHAScanner/GHAScanner.tsx` |
+| **Import** | `import { GHAScanner } from '@/components/common/GHAScanner'` |
+| **Props** | `isScanning`, `progress`, `style`, `statusMessages`, `onComplete` |
+| **Status** | ✅ Complete |
+| **Used By** | CV Scanning Page |
+| **Docs** | `GHAScanner_Knowledge_Document.md` |
+| **Added** | December 30, 2025 |
+
+---
+
+### GHATooltip
+
+| Field | Value |
+|-------|-------|
+| **Type** | React Component |
+| **Purpose** | Reusable tooltip with consistent styling, icons, and learn more links |
+| **Location** | `client/src/components/common/Tooltip/GHATooltip.tsx` |
+| **Import** | `import { GHATooltip } from '@/components/common/Tooltip'` |
+| **Props** | `text`, `title?`, `variant?`, `side?`, `icon?`, `learnMoreUrl?` |
+| **Status** | ✅ Complete |
+| **Used By** | All services |
+| **Docs** | `GHATooltip_Knowledge_Document.md` |
+| **Added** | December 30, 2025 |
+
+---
 
 ### DocStyler
 
 | Field | Value |
 |-------|-------|
-| **Name** | DocStyler |
-| **Purpose** | Centralized document formatting for PDF, Word, Markdown exports |
-| **Category** | Utility |
+| **Type** | React Component |
+| **Purpose** | Consistent document styling for reports and analysis outputs |
 | **Location** | `client/src/components/common/DocStyler/` |
 | **Import** | `import { DocStyler } from '@/components/common/DocStyler'` |
+| **Status** | ✅ Complete |
+| **Docs** | `DocStyler_Knowledge_Document.md` |
+| **Added** | December 30, 2025 |
+
+---
+
+### TextMarker
+
+| Field | Value |
+|-------|-------|
+| **Type** | UI Utility Function |
+| **Purpose** | Highlight/mark text within documents for issue identification |
+| **Location** | `client/src/components/common/TextMarker/` |
+| **Import** | `import { TextMarker } from '@/components/common/TextMarker'` |
+| **Status** | ✅ Complete |
+| **Docs** | `TextMarker_Function_Documentation.md` |
+| **Added** | January 05, 2026 |
+
+---
+
+### TipBox
+
+| Field | Value |
+|-------|-------|
+| **Type** | React Component |
+| **Purpose** | Contextual tip/hint boxes for user guidance |
+| **Location** | `client/src/components/common/TipBox/` |
+| **Import** | `import { TipBox } from '@/components/common/TipBox'` |
+| **Status** | ✅ Complete |
+| **Docs** | `TipBox_Function_Documentation.md` |
+| **Added** | January 05, 2026 |
+
+---
+
+### ScoreDashboard
+
+| Field | Value |
+|-------|-------|
+| **Type** | React Component |
+| **Purpose** | Display CV score breakdown with progress bars |
+| **Location** | `client/src/components/cv-optimizer/ScoreDashboard.jsx` |
+| **Import** | `import ScoreDashboard from './ScoreDashboard'` |
+| **Props** | `breakdown`, `totalScore`, `grade`, `message` |
+| **Status** | ✅ Complete |
+| **Used By** | CV Optimizer Report Page |
+| **Added** | December 30, 2025 |
+
+---
+
+### ScoreComparison
+
+| Field | Value |
+|-------|-------|
+| **Type** | React Component |
+| **Purpose** | Display before/after score comparison after optimization |
+| **Location** | `client/src/components/cv-optimizer/ScoreComparison.jsx` |
+| **Import** | `import ScoreComparison from './ScoreComparison'` |
+| **Props** | `beforeScore`, `afterScore`, `improvement`, `categoryImprovements` |
+| **Status** | ✅ Complete |
+| **Used By** | CV Optimizer Fixed Page |
+| **Added** | December 30, 2025 |
+
+---
+
+## CATEGORY: UTILITIES
+
+### copyToClipboard
+
+| Field | Value |
+|-------|-------|
+| **Type** | Utility Function |
+| **Purpose** | Copy text to clipboard with fallback for older browsers |
+| **Location** | `client/src/components/common/ActionBar/utils/clipboard.js` |
+| **Import** | `import { copyToClipboard } from '@/components/common/ActionBar/utils'` |
+| **Input** | `text: string` |
+| **Output** | `Promise<boolean>` |
 | **Status** | ✅ Complete |
 | **Used By** | ActionBar |
 | **Added** | December 30, 2025 |
 
-**Main Methods:**
-
-| Method | Description |
-|--------|-------------|
-| `DocStyler.generate({ content, format, options })` | Generate document in specified format |
-| `DocStyler.pdf(content, options)` | Generate PDF |
-| `DocStyler.word(content, options)` | Generate Word document |
-| `DocStyler.md(content, options)` | Generate Markdown |
-
-**Options Object:**
-
-| Option | Type | Description |
-|--------|------|-------------|
-| `title` | string | Document title |
-| `service` | string | Service name (cv-optimizer, xray-analyzer, etc.) |
-| `fileName` | string | Download filename |
-| `metadata` | object | Additional data (score, grade, etc.) |
-
-**Related Files:**
-- `generators/generatePDF.js` - PDF generation with pdf-lib
-- `generators/generateWord.js` - Word generation with docx
-- `generators/generateMD.js` - Markdown with header/footer
-- `styles/documentStyles.js` - Brand colors, fonts, company info
-
-**Document Styling Includes:**
-- Professional header with title, service name, date
-- Footer with page numbers (Page X of Y)
-- Footer links: GetHiredAlly App | GetHiredAlly Blog
-- Brand color: #1E5A85
-- Markdown to styled text conversion
-
-**Example:**
-```javascript
-import { DocStyler } from '@/components/common/DocStyler';
-
-await DocStyler.pdf(content, {
-  title: 'CV Analysis Report',
-  service: 'cv-optimizer',
-  fileName: 'CV_Report',
-  metadata: { score: 72, grade: 'Good' }
-});
-```
-
 ---
 
-### generatePDF
+### sendEmail
 
 | Field | Value |
 |-------|-------|
-| **Purpose** | Generate styled PDF document using pdf-lib |
-| **Location** | `client/src/components/common/DocStyler/generators/generatePDF.js` |
-| **Import** | `import { generatePDF } from '@/components/common/DocStyler'` |
-| **Parameters** | `content` (string), `options` (object) |
+| **Type** | Utility Function |
+| **Purpose** | Open email client with pre-filled content |
+| **Location** | `client/src/components/common/ActionBar/utils/email.js` |
+| **Import** | `import { sendEmail } from '@/components/common/ActionBar/utils'` |
+| **Input** | `{ subject, body, to }` |
+| **Output** | `void` |
 | **Status** | ✅ Complete |
+| **Used By** | ActionBar |
+| **Added** | December 30, 2025 |
 
 ---
 
-### generateWord
+### shareToWhatsApp
 
 | Field | Value |
 |-------|-------|
-| **Purpose** | Generate styled Word document using docx library |
-| **Location** | `client/src/components/common/DocStyler/generators/generateWord.js` |
-| **Import** | `import { generateWord } from '@/components/common/DocStyler'` |
-| **Parameters** | `content` (string), `options` (object) |
+| **Type** | Utility Function |
+| **Purpose** | Share content via WhatsApp (opens in new tab) |
+| **Location** | `client/src/components/common/ActionBar/utils/whatsapp.js` |
+| **Import** | `import { shareToWhatsApp } from '@/components/common/ActionBar/utils'` |
+| **Input** | `text: string` (max 4096 chars) |
+| **Output** | `void` |
 | **Status** | ✅ Complete |
+| **Used By** | ActionBar |
+| **Added** | December 30, 2025 |
 
 ---
 
-### generateMD
+### stripMarkdown
 
 | Field | Value |
 |-------|-------|
-| **Purpose** | Generate styled Markdown document with header/footer |
-| **Location** | `client/src/components/common/DocStyler/generators/generateMD.js` |
-| **Import** | `import { generateMD, downloadMD } from '@/components/common/DocStyler'` |
-| **Parameters** | `content` (string), `options` (object) |
+| **Type** | Utility Function |
+| **Purpose** | Remove markdown formatting from text |
+| **Location** | `client/src/components/common/ActionBar/utils/formatters.js` |
+| **Import** | `import { stripMarkdown } from '@/components/common/ActionBar/utils'` |
+| **Input** | `content: string` |
+| **Output** | `string` (plain text) |
 | **Status** | ✅ Complete |
+| **Used By** | ActionBar |
+| **Added** | December 30, 2025 |
 
 ---
 
-## HOW TO UPDATE THIS REGISTRY
+### formatContent
 
-### Adding New Entry:
-1. Choose correct category
-2. Add entry with all fields
-3. Include example if helpful
+| Field | Value |
+|-------|-------|
+| **Type** | Utility Function |
+| **Purpose** | Format content for specific output type (plain/html/markdown) |
+| **Location** | `client/src/components/common/ActionBar/utils/formatters.js` |
+| **Import** | `import { formatContent } from '@/components/common/ActionBar/utils'` |
+| **Input** | `content: string`, `format: 'plain' | 'html' | 'markdown'` |
+| **Output** | `string` |
+| **Status** | ✅ Complete |
+| **Used By** | ActionBar |
+| **Added** | December 30, 2025 |
 
-### Template for New Entry:
+---
+
+## HOW TO REGISTER NEW COMPONENTS
+
+### Step 1: Add to Quick Lookup Table
+
+Add a row with: Name, Type, Category, Status, Location
+
+### Step 2: Add Detailed Entry
+
+Copy this template:
 ```markdown
-### [Name]
+### [Component Name]
 
 | Field | Value |
 |-------|-------|
+| **Type** | [Function/Component/Hook/Data Class] |
 | **Purpose** | [One-line description] |
 | **Location** | [File path] |
 | **Import** | [Import statement] |
-| **Status** | [✅/⏳/🚧/❌] |
-
-**Props/Parameters:** [List]
+| **Input** | [Parameters] |
+| **Output** | [Return type] |
+| **Status** | [✅/🚧/⏳/❌] |
+| **Used By** | [Services using this] |
+| **Docs** | [Link to detailed documentation] |
+| **Added** | [Date] |
 ```
+
+### Step 3: Create Knowledge Document (if complex)
+
+For complex components, create `[ComponentName]_Knowledge_Document.md`
 
 ---
 
-## COMPONENT RELATIONSHIPS
+## RELATED DOCUMENTATION
 
-This section documents how components work together.
-
-### ActionBar → DocStyler (Document Export)
-
-**Flow:**
-1. User clicks PDF/WORD/MD button
-2. ActionBar captures: content, fileName, contentType, metadata
-3. ActionBar calls DocStyler.pdf() or .word() or .md()
-4. DocStyler applies: header, footer, styling, branding
-5. User downloads styled document
-
-**How to Connect:**
-1. ActionBar passes contentType and contentMetadata props
-2. DocStyler uses these to generate appropriate header
-3. Document includes service name, date, score (if applicable)
-
-```
-ActionBar.handlePDF() → DocStyler.pdf(content, options) → Downloads styled PDF
-ActionBar.handleWord() → DocStyler.word(content, options) → Downloads styled DOCX
-ActionBar.handleMD() → DocStyler.md(content, options) → Downloads Markdown
-```
-
-### ActionBar → GHATooltip (Button Explanations)
-
-**Flow:**
-1. ActionBarButton wrapped in GHATooltip
-2. User hovers over button
-3. GHATooltip shows: title, description, icon
-4. User understands button purpose
-
-**How to Connect:**
-1. Import GHATooltip and TOOLTIP_TEXTS
-2. Wrap ActionBarButton with GHATooltip
-3. Use TOOLTIP_TEXTS.actionBar.[buttonName] for content
-
-```tsx
-import { GHATooltip, TOOLTIP_TEXTS } from '@/components/common/Tooltip';
-
-<GHATooltip {...TOOLTIP_TEXTS.actionBar.pdf}>
-  <ActionBarButton label="PDF" onClick={handlePDF} />
-</GHATooltip>
-```
-
-### TOOLTIP_TEXTS Central Storage
-
-All tooltip content organized by service:
-- `TOOLTIP_TEXTS.actionBar` - ActionBar button tooltips
-- `TOOLTIP_TEXTS.cvOptimizer` - CV Optimizer tooltips
-- `TOOLTIP_TEXTS.xrayAnalyzer` - X-Ray Analyzer tooltips
-- `TOOLTIP_TEXTS.interviewQuestions` - Interview Questions tooltips
-- `TOOLTIP_TEXTS.general` - Shared tooltips (delete, save, etc.)
-
-### Full Integration Example
-
-```tsx
-import { ActionBar } from '@/components/common/ActionBar';
-import { DocStyler } from '@/components/common/DocStyler';
-import { GHATooltip, TOOLTIP_TEXTS } from '@/components/common/Tooltip';
-
-<ActionBar
-  content={analysisResult.report}
-  fileName="CV_Analysis_Report"
-  emailSubject="My CV Analysis"
-  contentType="cv-optimizer"
-  contentMetadata={{
-    score: analysisResult.score,
-    grade: analysisResult.grade,
-  }}
-/>
-```
+| Document | Purpose |
+|----------|---------|
+| `*_Knowledge_Document.md` | Detailed component specifications |
+| `*_Function_Documentation.md` | Function specifications |
+| `ServiceDocumentationStandard.md` | Documentation format guidelines |
+| `ReplitFunctionCreationGuidelines.md` | How to create new functions |
 
 ---
 
-**TOTAL COMPONENTS:** 24  
+## VERSION HISTORY
+
+| Version | Date | Changes |
+|---------|------|---------|
+| 1.0 | Dec 30, 2025 | Initial creation with 11 components |
+| 2.0 | Jan 05, 2026 | Major update: Added CV Detection functions, Session Management, restructured as Single Source of Truth |
+
+---
+
+**TOTAL COMPONENTS:** 21  
 **Last Updated:** January 05, 2026
+
+---
+
+**END OF COMPONENT REGISTRY v2.0**
