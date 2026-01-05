@@ -82,8 +82,17 @@ def detect_skills_section_position(cv_text: str) -> List[Dict]:
     return issues
 
 
-def detect_all_skills_issues(cv_text: str) -> List[Dict]:
-    """Run all skills-related detections."""
+def detect_all_skills_issues(
+    cv_text: str,
+    cv_block_structure: 'Optional[CVBlockStructure]' = None
+) -> List[Dict]:
+    """
+    Run all skills-related detections.
+    
+    Args:
+        cv_text: Full CV text
+        cv_block_structure: Optional pre-computed CV structure (for efficiency)
+    """
     issues = []
     
     missing_issues = detect_skills_section_missing(cv_text)

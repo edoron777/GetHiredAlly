@@ -7,12 +7,16 @@ import re
 from typing import List, Dict, Any
 
 
-def detect_standards_issues(cv_text: str) -> List[Dict[str, Any]]:
+def detect_standards_issues(
+    cv_text: str,
+    cv_block_structure: 'Optional[CVBlockStructure]' = None
+) -> List[Dict[str, Any]]:
     """
     Main function to detect all standards-related issues.
     
     Args:
         cv_text: Full CV text content
+        cv_block_structure: Optional pre-computed CV structure (for efficiency)
         
     Returns:
         List of detected issues

@@ -110,9 +110,16 @@ def detect_abbreviation_issues(text: str) -> List[Dict]:
     return issues
 
 
-def detect_all_abbreviation_issues(text: str) -> List[Dict]:
+def detect_all_abbreviation_issues(
+    text: str,
+    cv_block_structure: 'Optional[CVBlockStructure]' = None
+) -> List[Dict]:
     """
     Main entry point for abbreviation detection.
+    
+    Args:
+        text: Full CV text
+        cv_block_structure: Optional pre-computed CV structure (for efficiency)
     
     DETERMINISTIC: Same text → Same issues (always)
     """

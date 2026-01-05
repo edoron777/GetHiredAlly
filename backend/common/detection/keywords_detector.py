@@ -7,13 +7,18 @@ import re
 from typing import List, Dict, Any, Optional
 
 
-def detect_keywords_issues(cv_text: str, job_description: Optional[str] = None) -> List[Dict[str, Any]]:
+def detect_keywords_issues(
+    cv_text: str,
+    job_description: Optional[str] = None,
+    cv_block_structure: 'Optional[CVBlockStructure]' = None
+) -> List[Dict[str, Any]]:
     """
     Main function to detect all keyword-related issues.
     
     Args:
         cv_text: Full CV text content
         job_description: Optional job description for keyword matching
+        cv_block_structure: Optional pre-computed CV structure (for efficiency)
         
     Returns:
         List of detected issues

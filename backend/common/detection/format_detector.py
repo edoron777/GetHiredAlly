@@ -570,7 +570,10 @@ def detect_skills_format_issues(text: str) -> List[Dict]:
     return issues
 
 
-def detect_format_issues(text: str) -> List[Dict]:
+def detect_format_issues(
+    text: str,
+    cv_block_structure: 'Optional[CVBlockStructure]' = None
+) -> List[Dict]:
     """
     Detect all formatting issues.
     
@@ -579,6 +582,7 @@ def detect_format_issues(text: str) -> List[Dict]:
     
     Args:
         text: Full CV text
+        cv_block_structure: Optional pre-computed CV structure (for efficiency)
         
     Returns:
         List of formatting issues

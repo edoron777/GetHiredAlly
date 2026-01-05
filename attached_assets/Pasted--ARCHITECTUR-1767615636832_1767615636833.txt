@@ -1,0 +1,236 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  🏗️ ARCHITECTURE FIX: Pass Block Structure to All Detectors                  ║
+║  Priority: HIGH | Type: Refactoring                                          ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+CONTEXT:
+The CV detection system creates block structure (sections) but doesn't pass it
+to individual detectors. This causes:
+- Wasted parsing work (structure created but not used)
+- Inconsistent section detection (each detector re-parses differently)
+- Missing section-specific issues (detectors can't know which section they're analyzing)
+
+GOAL:
+Update ALL detectors to receive and use cv_block_structure parameter.
+
+───────────────────────────────────────────────────────────────────────────────
+PHASE 1: UNDERSTAND CURRENT STATE
+───────────────────────────────────────────────────────────────────────────────
+
+First, show me:
+
+1. The CVBlockStructure class/type definition:
+```bash
+   grep -r "class CVBlockStructure" backend/common/detection/
+   grep -r "CVBlockStructure" backend/common/detection/block_detector.py | head -20
+```
+
+2. What detect_cv_blocks() returns:
+```bash
+   grep -A 30 "def detect_cv_blocks" backend/common/detection/block_detector.py
+```
+
+3. List ALL detector functions that need updating:
+```bash
+   grep -n "def detect_" backend/common/detection/*.py | grep -v "__"
+```
+
+4. How detectors are called in master_detector.py:
+```bash
+   grep -n "detect_" backend/common/detection/master_detector.py | head -40
+```
+
+DO NOT make any changes yet. Just show me the output.
+
+───────────────────────────────────────────────────────────────────────────────
+PHASE 2: UPDATE DETECTOR SIGNATURES
+───────────────────────────────────────────────────────────────────────────────
+
+After reviewing Phase 1, update each detector file to accept optional cv_block_structure.
+
+PATTERN TO FOLLOW:
+```python
+# BEFORE:
+def detect_format_issues(cv_text: str) -> List[Dict]:
+    # ... detection logic using only cv_text
+
+# AFTER:
+from typing import Optional
+from common.detection.block_detector import CVBlockStructure
+
+def detect_format_issues(
+    cv_text: str, 
+    cv_block_structure: Optional[CVBlockStructure] = None
+) -> List[Dict]:
+    # If block structure provided, use it
+    # Otherwise, fall back to parsing cv_text (backward compatible)
+    
+    if cv_block_structure:
+        # Use provided structure
+        experience_section = cv_block_structure.get_section('experience')
+        certifications_section = cv_block_structure.get_section('certifications')
+    else:
+        # Fallback: parse ourselves (for backward compatibility)
+        experience_section = find_experience_section(cv_text)
+```
+
+FILES TO UPDATE (in order):
+1. backend/common/detection/format_detector.py
+2. backend/common/detection/language_detector.py
+3. backend/common/detection/content_detector.py
+4. backend/common/detection/length_detector.py
+5. backend/common/detection/standards_detector.py
+6. backend/common/detection/keywords_detector.py
+7. backend/common/detection/contact_detector.py
+8. backend/common/detection/certification_detector.py
+9. Any other detector files found in Phase 1
+
+For EACH file:
+- Add import for CVBlockStructure
+- Add optional parameter to main detect function
+- Keep backward compatible (parameter is optional with default None)
+
+───────────────────────────────────────────────────────────────────────────────
+PHASE 3: UPDATE MASTER_DETECTOR.PY CALLS
+───────────────────────────────────────────────────────────────────────────────
+
+Update master_detector.py to pass cv_block_structure to all detectors.
+
+FIND lines like:
+```python
+format_issues = detect_format_issues(cv_text)
+language_issues = detect_language_issues(cv_text)
+```
+
+CHANGE TO:
+```python
+format_issues = detect_format_issues(cv_text, cv_block_structure)
+language_issues = detect_language_issues(cv_text, cv_block_structure)
+```
+
+IMPORTANT: The cv_block_structure variable already exists (line ~261).
+Just need to pass it to each detector call.
+
+───────────────────────────────────────────────────────────────────────────────
+PHASE 4: ENHANCE ONE DETECTOR AS PROOF OF CONCEPT
+───────────────────────────────────────────────────────────────────────────────
+
+Update certification_detector.py to USE the block structure (not just accept it).
+
+CURRENT (has its own section finder):
+```python
+def detect_all_certification_issues(cv_text: str) -> List[Dict]:
+    cert_section = find_certification_section(cv_text)  # Re-parses!
+    ...
+```
+
+NEW (uses provided structure):
+```python
+def detect_all_certification_issues(
+    cv_text: str,
+    cv_block_structure: Optional[CVBlockStructure] = None
+) -> List[Dict]:
+    # Use provided structure if available
+    if cv_block_structure and cv_block_structure.certifications:
+        cert_section = cv_block_structure.certifications
+    else:
+        # Fallback to own parsing
+        cert_section = find_certification_section(cv_text)
+    ...
+```
+
+───────────────────────────────────────────────────────────────────────────────
+PHASE 5: TEST THE FIX
+───────────────────────────────────────────────────────────────────────────────
+
+Create a test to verify block structure is being passed:
+```python
+# backend/tests/test_block_structure_passing.py
+
+from common.detection import detect_cv_issues, detect_cv_blocks
+
+test_cv = """John Smith
+john@email.com
+
+CERTIFICATIONS
+- Cert 1
+- Cert 2
+- Cert 3
+- Cert 4
+- Cert 5
+- Cert 6
+- Cert 7
+- Cert 8
+- Cert 9
+- Cert 10
+"""
+
+print("Testing block structure passing...")
+
+# This should now use block structure internally
+result = detect_cv_issues(test_cv)
+
+print(f"Total issues found: {len(result.issues)}")
+
+# Check for certification issues
+cert_issues = [i for i in result.issues if 'cert' in i.get('issue_type', '').lower()]
+print(f"Certification issues: {len(cert_issues)}")
+
+for issue in cert_issues:
+    print(f"  - {issue.get('issue_type')}: {issue.get('description', '')[:50]}")
+```
+
+Run: cd backend && python tests/test_block_structure_passing.py
+
+───────────────────────────────────────────────────────────────────────────────
+VERIFICATION CHECKLIST
+───────────────────────────────────────────────────────────────────────────────
+
+After completing all phases, verify:
+
+[ ] All detector functions accept optional cv_block_structure parameter
+[ ] All detector calls in master_detector.py pass cv_block_structure
+[ ] At least certification_detector uses the structure (not re-parsing)
+[ ] Test passes - certification issues detected
+[ ] No import errors
+[ ] No runtime errors
+[ ] Backward compatible - detectors still work if called without structure
+
+───────────────────────────────────────────────────────────────────────────────
+IMPORTANT NOTES
+───────────────────────────────────────────────────────────────────────────────
+
+1. BACKWARD COMPATIBILITY: Keep cv_block_structure parameter OPTIONAL
+   - Old code calling detectors without it should still work
+   
+2. DO NOT BREAK: Run tests after each phase
+   
+3. INCREMENTAL: Complete one phase, verify it works, then next phase
+
+4. IF ERRORS: Stop and report before continuing
+
+───────────────────────────────────────────────────────────────────────────────
+EXPECTED OUTCOME
+───────────────────────────────────────────────────────────────────────────────
+
+After this fix:
+
+BEFORE:
+  detect_cv_blocks() → creates structure → WASTED
+  detect_format_issues(cv_text) → re-parses text
+  detect_language_issues(cv_text) → re-parses text
+  detect_certification_issues(cv_text) → re-parses text
+
+AFTER:
+  detect_cv_blocks() → creates structure → USED
+  detect_format_issues(cv_text, structure) → uses provided sections
+  detect_language_issues(cv_text, structure) → uses provided sections  
+  detect_certification_issues(cv_text, structure) → uses provided sections
+
+Benefits:
+- Consistent section detection across all detectors
+- No duplicate parsing work
+- Section-aware issue detection works properly
+- Foundation for more sophisticated section-based rules
+
+╚══════════════════════════════════════════════════════════════════════════════╝

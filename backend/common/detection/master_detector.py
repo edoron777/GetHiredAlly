@@ -316,42 +316,42 @@ def detect_all_issues(cv_text: str, job_description: Optional[str] = None) -> Li
         logger.error(f"Error detecting bullet issues: {e}")
     
     try:
-        language_issues = detect_language_issues(cv_text)
+        language_issues = detect_language_issues(cv_text, cv_block_structure)
         all_issues.extend(language_issues)
         logger.info(f"Language issues found: {len(language_issues)}")
     except Exception as e:
         logger.error(f"Error detecting language issues: {e}")
     
     try:
-        format_issues = detect_format_issues(cv_text)
+        format_issues = detect_format_issues(cv_text, cv_block_structure)
         all_issues.extend(format_issues)
         logger.info(f"Format issues found: {len(format_issues)}")
     except Exception as e:
         logger.error(f"Error detecting format issues: {e}")
     
     try:
-        polish_issues = detect_polish_issues(cv_text)
+        polish_issues = detect_polish_issues(cv_text, cv_block_structure)
         all_issues.extend(polish_issues)
         logger.info(f"Polish issues found: {len(polish_issues)}")
     except Exception as e:
         logger.error(f"Error detecting polish issues: {e}")
     
     try:
-        standards_issues = detect_standards_issues(cv_text)
+        standards_issues = detect_standards_issues(cv_text, cv_block_structure)
         all_issues.extend(standards_issues)
         logger.info(f"Standards issues found: {len(standards_issues)}")
     except Exception as e:
         logger.error(f"Error detecting standards issues: {e}")
     
     try:
-        keywords_issues = detect_keywords_issues(cv_text, job_description)
+        keywords_issues = detect_keywords_issues(cv_text, job_description, cv_block_structure)
         all_issues.extend(keywords_issues)
         logger.info(f"Keywords issues found: {len(keywords_issues)}")
     except Exception as e:
         logger.error(f"Error detecting keywords issues: {e}")
     
     try:
-        structure_issues = detect_structure_issues(cv_text)
+        structure_issues = detect_structure_issues(cv_text, cv_block_structure)
         all_issues.extend(structure_issues)
         logger.info(f"Structure issues found: {len(structure_issues)}")
     except Exception as e:
@@ -359,7 +359,7 @@ def detect_all_issues(cv_text: str, job_description: Optional[str] = None) -> Li
     
     # Skills Section Detection (v1.4)
     try:
-        skills_issues = detect_all_skills_issues(cv_text)
+        skills_issues = detect_all_skills_issues(cv_text, cv_block_structure)
         all_issues.extend(skills_issues)
         logger.info(f"Skills issues found: {len(skills_issues)}")
     except Exception as e:
@@ -388,7 +388,7 @@ def detect_all_issues(cv_text: str, job_description: Optional[str] = None) -> Li
     
     # Abbreviation consistency detection
     try:
-        abbreviation_issues = detect_all_abbreviation_issues(cv_text)
+        abbreviation_issues = detect_all_abbreviation_issues(cv_text, cv_block_structure)
         all_issues.extend(abbreviation_issues)
         logger.info(f"Abbreviation issues found: {len(abbreviation_issues)}")
     except Exception as e:
@@ -396,7 +396,7 @@ def detect_all_issues(cv_text: str, job_description: Optional[str] = None) -> Li
     
     # Certification count detection
     try:
-        certification_issues = detect_all_certification_issues(cv_text)
+        certification_issues = detect_all_certification_issues(cv_text, cv_block_structure)
         all_issues.extend(certification_issues)
         logger.info(f"Certification issues found: {len(certification_issues)}")
     except Exception as e:

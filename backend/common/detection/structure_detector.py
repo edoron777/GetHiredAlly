@@ -47,13 +47,20 @@ def detect_section_positions(cv_text: str) -> Dict[str, int]:
     return positions
 
 
-def detect_structure_issues(cv_text: str) -> List[Dict]:
+def detect_structure_issues(
+    cv_text: str,
+    cv_block_structure: 'Optional[CVBlockStructure]' = None
+) -> List[Dict]:
     """
     Detect CV structure issues.
     
     Checks for:
     - Education appearing before Experience (major violation)
     - Skills appearing after Education (minor violation)
+    
+    Args:
+        cv_text: Full CV text
+        cv_block_structure: Optional pre-computed CV structure (for efficiency)
     
     Returns list of issues with:
     - issue_type: str

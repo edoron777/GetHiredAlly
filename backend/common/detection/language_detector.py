@@ -482,7 +482,10 @@ def detect_irrelevant_information(text: str, has_college_degree: bool = False) -
     return issues
 
 
-def detect_language_issues(text: str) -> List[Dict]:
+def detect_language_issues(
+    text: str,
+    cv_block_structure: 'Optional[CVBlockStructure]' = None
+) -> List[Dict]:
     """
     Detect all language quality issues.
     
@@ -491,6 +494,7 @@ def detect_language_issues(text: str) -> List[Dict]:
     
     Args:
         text: Full CV text
+        cv_block_structure: Optional pre-computed CV structure (for efficiency)
         
     Returns:
         List of language issues

@@ -140,10 +140,50 @@ def detect_certification_count_issues(text: str) -> List[Dict]:
     return issues
 
 
-def detect_all_certification_issues(text: str) -> List[Dict]:
+def detect_all_certification_issues(
+    text: str,
+    cv_block_structure: 'Optional[CVBlockStructure]' = None
+) -> List[Dict]:
     """
     Main entry point for certification detection.
     
+    Args:
+        text: Full CV text
+        cv_block_structure: Optional pre-computed CV structure (for efficiency)
+    
     DETERMINISTIC: Same text → Same issues (always)
     """
+    if cv_block_structure and cv_block_structure.all_certifications:
+        cert_count = len(cv_block_structure.all_certifications)
+        issues = []
+        
+        if cert_count >= 13:
+            issues.append({
+                'issue_type': 'CONTENT_TOO_MANY_CERTIFICATIONS',
+                'match_text': f'{cert_count} certifications listed',
+                'suggestion': f'You have {cert_count} certifications listed. Consider featuring only the top 5 most relevant ones.',
+                'severity': 'important',
+                'can_auto_fix': False,
+                'details': {
+                    'certification_count': cert_count,
+                    'threshold': 13,
+                    'recommended_max': 5
+                }
+            })
+        elif cert_count >= 9:
+            issues.append({
+                'issue_type': 'CONTENT_TOO_MANY_CERTIFICATIONS',
+                'match_text': f'{cert_count} certifications listed',
+                'suggestion': f'You have {cert_count} certifications. Consider focusing on the 5 most relevant.',
+                'severity': 'consider',
+                'can_auto_fix': False,
+                'details': {
+                    'certification_count': cert_count,
+                    'threshold': 9,
+                    'recommended_max': 5
+                }
+            })
+        
+        return issues
+    
     return detect_certification_count_issues(text)
