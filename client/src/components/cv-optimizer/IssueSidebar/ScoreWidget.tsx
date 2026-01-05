@@ -22,7 +22,7 @@ export default function ScoreWidget({ score, originalScore, issuesCounts }: Scor
   const scoreImprovement = originalScore && score > originalScore ? score - originalScore : 0;
 
   return (
-    <div className="score-widget">
+    <div className="score-widget" data-tour="cv-score">
       <div 
         className="score-circle"
         style={{ borderColor: scoreColor }}

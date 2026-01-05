@@ -1,0 +1,107 @@
+FIX: "Detected CV Structure" modal shows "No structure data available"
+
+PROBLEM:
+The modal opens but shows no data. This means either:
+1. Structure data is not being saved after CV scan
+2. Structure data is not being passed to the modal
+3. The endpoint /api/cv/analyze-structure is not being called
+
+DEBUG & FIX:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 1: Check if backend endpoint exists and works
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Show me:
+1. Does /api/cv/analyze-structure endpoint exist?
+2. What does detect_cv_blocks() return?
+
+Test the endpoint directly:
+- Find a test CV file path
+- Call detect_cv_blocks() with sample text and show the output
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 2: Check frontend - where does structure data come from?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Show me:
+1. Where is the "View Structure" button click handler?
+2. What state variable holds the structure data?
+3. Is the API being called when button is clicked?
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 3: Fix the data flow
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Option A: Save structure during CV scan
+- When CV is scanned, also save block_structure to state
+- Modal reads from this saved state
+
+Option B: Fetch structure when button clicked
+- When "View Structure" button clicked
+- Call /api/cv/analyze-structure with current CV
+- Show results in modal
+
+PREFERRED: Option A (structure already computed during scan)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 4: Update backend to return structure in scan response
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+In the CV scan endpoint, add structure data to response:
+```python
+# In the scan/analyze endpoint
+from common.detection.block_detector import detect_cv_blocks
+
+# After scanning CV
+block_structure = detect_cv_blocks(cv_text)
+
+# Add to response
+response = {
+    "score": score,
+    "issues": issues,
+    # ADD THIS:
+    "structure": {
+        "sections": [
+            {
+                "type": section.block_type.name,
+                "start_line": section.start_line,
+                "end_line": section.end_line,
+                "items_count": len(section.items) if hasattr(section, 'items') else 0
+            }
+            for section in block_structure.sections
+        ] if block_structure else []
+    }
+}
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 5: Update frontend to save and display structure
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```tsx
+// State to hold structure
+const [cvStructure, setCvStructure] = useState(null);
+
+// When scan completes, save structure
+const handleScanComplete = (response) => {
+    setScore(response.score);
+    setIssues(response.issues);
+    setCvStructure(response.structure);  // ADD THIS
+};
+
+// Modal should read from cvStructure
+<StructureModal 
+    isOpen={showStructureModal}
+    data={cvStructure}
+    onClose={() => setShowStructureModal(false)}
+/>
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+First, show me:
+1. The CV scan endpoint code
+2. The structure modal component code
+3. What data is currently being passed to the modal
+
+Then implement the fix.

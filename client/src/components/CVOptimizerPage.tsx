@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, Upload, FileText, Search } from 'lucide-react'
+import { ArrowLeft, Upload, FileText, Search, HelpCircle } from 'lucide-react'
 import { isAuthenticated, getAuthToken } from '@/lib/auth'
+import { useCVOptimizerTour } from '@/hooks/useCVOptimizerTour'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024
 const ALLOWED_EXTENSIONS = ['pdf', 'docx', 'doc', 'txt', 'md', 'rtf', 'odt']
@@ -19,6 +20,7 @@ export function CVOptimizerPage() {
   const [error, setError] = useState<string | null>(null)
   const [testFiles, setTestFiles] = useState<TestFile[]>([])
   const [loadingTestFile, setLoadingTestFile] = useState(false)
+  const { startUploadTour } = useCVOptimizerTour()
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -187,6 +189,7 @@ export function CVOptimizerPage() {
         )}
 
         <div
+          data-tour="upload-area"
           className={`
             border-2 border-dashed rounded-lg p-12 text-center transition-colors cursor-pointer
             ${isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300 bg-gray-50'}
@@ -263,12 +266,13 @@ export function CVOptimizerPage() {
           </div>
         )}
 
-        <div className="text-center mt-8">
+        <div className="flex items-center justify-center gap-4 mt-8">
           <button
+            data-tour="scan-button"
             onClick={handleStartScan}
             disabled={!selectedFile}
             className={`
-              px-8 py-3 rounded-lg font-medium text-lg flex items-center justify-center mx-auto
+              px-8 py-3 rounded-lg font-medium text-lg flex items-center justify-center
               ${selectedFile
                 ? 'bg-blue-600 text-white hover:bg-blue-700'
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
@@ -277,6 +281,13 @@ export function CVOptimizerPage() {
           >
             <Search size={20} className="mr-2" />
             Start Scan
+          </button>
+          <button
+            onClick={startUploadTour}
+            className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 px-3 py-2 border border-blue-200 rounded-lg hover:bg-blue-50"
+          >
+            <HelpCircle size={16} />
+            Show me how
           </button>
         </div>
       </div>

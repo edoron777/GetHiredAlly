@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { FileText, List, Copy, Check, ArrowLeft, Loader2, RefreshCw, Columns } from 'lucide-react';
+import { FileText, List, Copy, Check, ArrowLeft, Loader2, RefreshCw, Columns, GraduationCap } from 'lucide-react';
 import { classifyIssues } from '../../components/cv-optimizer/DocumentView';
 import { DocumentEditor } from '../../components/common/DocumentEditor';
 import { TipBox } from '../../components/common/TipBox';
@@ -14,9 +14,9 @@ import SideBySideView from '../../components/cv-optimizer/SideBySideView';
 // @ts-ignore - DocStyler types not available
 import { DocStyler } from '../../components/common/DocStyler';
 import { getAuthToken, isAuthenticated } from '../../lib/auth';
-import { BulkAutoFixSection } from '../../components/cv-optimizer/BulkAutoFixSection';
 import { BulkAutoFixModal } from '../../components/cv-optimizer/BulkAutoFixModal';
 import { ResultModal } from '../../components/cv-optimizer/ResultModal';
+import { useCVOptimizerTour } from '../../hooks/useCVOptimizerTour';
 
 interface CVIssue {
   id: string;
@@ -72,6 +72,7 @@ export default function ResultsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reportData, setReportData] = useState<ReportData | null>(null);
+  const { startResultsTour } = useCVOptimizerTour();
 
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
   const [isTipBoxOpen, setIsTipBoxOpen] = useState(false);
@@ -908,7 +909,14 @@ export default function ResultsPage() {
             </h1>
             
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
+              <button
+                onClick={startResultsTour}
+                className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800 px-3 py-1 border border-gray-200 rounded-lg hover:bg-gray-50"
+              >
+                <GraduationCap size={16} />
+                Take a tour
+              </button>
+              <div className="flex items-center gap-2" data-tour="export-buttons">
                 <span className="text-sm text-gray-600">Export:</span>
                 <ContentSelector
                   selectedContent={selectedExportContent}
@@ -985,7 +993,7 @@ export default function ResultsPage() {
             </div>
           )}
 
-          <div className="flex gap-2 mb-6">
+          <div className="flex gap-2 mb-6" data-tour="view-toggle">
             <button
               onClick={() => setActiveTab('document')}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -1027,6 +1035,7 @@ export default function ResultsPage() {
             {/* Auto Fix Button */}
             {autoFixableCount > 0 && !bulkAutoFixUsed && (
               <button
+                data-tour="auto-fix-button"
                 onClick={handleOpenBulkAutoFixModal}
                 disabled={isRescanning}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-green-600 text-white hover:bg-green-700"
@@ -1052,7 +1061,7 @@ export default function ResultsPage() {
           </div>
           
           {activeTab === 'document' ? (
-            <>
+            <div data-tour="document-view">
               <DocumentEditor
                   content={cvContent?.fullText || ''}
                   format="auto"
@@ -1078,7 +1087,7 @@ export default function ResultsPage() {
                   isApplying={isApplyingFixes}
                 />
               )}
-            </>
+            </div>
           ) : activeTab === 'list' ? (
             <ListViewTab
               issues={listViewIssues}

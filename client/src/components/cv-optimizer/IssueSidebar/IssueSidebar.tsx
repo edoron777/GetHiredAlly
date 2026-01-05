@@ -87,7 +87,7 @@ export default function IssueSidebar({
 
       <div className="sidebar-divider" />
       
-      <div className="issue-legend">
+      <div className="issue-legend" data-tour="issues-summary">
         <div className="legend-title">Found {totalCount} opportunities</div>
         <div className="legend-counts">
           <span className="legend-item">
