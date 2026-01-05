@@ -1,0 +1,57 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  📋 INTRODUCTION: CV Issue Detection Function Project                        ║
+║  Prompt 1 of 4 in this series                                                ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+PROJECT OVERVIEW:
+═════════════════
+
+I am creating a new function called detect_cv_issues() that will be the 
+main entry point for CV issue detection in GetHiredAlly.
+
+WHAT WE'RE BUILDING:
+────────────────────
+
+1. CVIssueReport dataclass - Wrapper for all detected issues
+2. detect_cv_issues() function - Main entry point
+3. Export updates - Make function available to other services
+
+THE FUNCTION PAIR:
+──────────────────
+
+┌─────────────────────────────────────────────────────────────────┐
+│  detect_cv_blocks()  →  CVBlockStructure                       │
+│  Purpose: Identify CV STRUCTURE (sections, jobs, bullets)      │
+│  Status: ✅ EXISTS in block_detector.py                        │
+├─────────────────────────────────────────────────────────────────┤
+│  detect_cv_issues()  →  CVIssueReport                          │
+│  Purpose: Identify CV ISSUES (problems, improvements)          │
+│  Status: 🔨 CREATING NOW in master_detector.py                 │
+└─────────────────────────────────────────────────────────────────┘
+
+FILES TO MODIFY:
+────────────────
+
+1. backend/common/detection/master_detector.py
+   - Add CVIssueReport dataclass
+   - Add IssueReportSummary dataclass  
+   - Add detect_cv_issues() function
+
+2. backend/common/detection/__init__.py
+   - Export new function and classes
+
+PROMPT SERIES:
+──────────────
+
+This is prompt 1 of 4:
+- Prompt 1: Introduction (this prompt)
+- Prompt 2: Create CVIssueReport dataclass
+- Prompt 3: Create detect_cv_issues() function
+- Prompt 4: Verification
+
+⚠️ IMPORTANT:
+- Do NOT modify any code yet
+- Just acknowledge you understand the project
+- Wait for the next prompts with specific instructions
+
+╚══════════════════════════════════════════════════════════════════════════════╝
