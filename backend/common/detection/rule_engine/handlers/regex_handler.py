@@ -105,17 +105,17 @@ class RegexHandler(BaseHandler):
             
             if first_match.strip() == '':
                 if '\n' in first_match or first_match == '':
-                    current_display = '[blank line]'
+                    current_text = '[blank line]'
                 else:
-                    current_display = '[whitespace]'
+                    current_text = '[whitespace]'
                 is_highlight = False
             else:
-                current_display = first_match[:47] + '...' if len(first_match) > 50 else first_match
-                is_highlight = bool(current_display and current_display in text)
+                current_text = first_match.replace('\r\n', '\n').replace('\r', '\n')
+                is_highlight = bool(current_text and len(current_text) >= 2)
             
             issue = self.create_issue(
                 rule=rule,
-                current=current_display,
+                current=current_text,
                 location=target_section,
                 is_highlightable=is_highlight,
                 details={

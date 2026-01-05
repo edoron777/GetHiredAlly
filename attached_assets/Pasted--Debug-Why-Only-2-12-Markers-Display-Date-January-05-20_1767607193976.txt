@@ -1,0 +1,95 @@
+# Debug: Why Only 2/12 Markers Display
+
+**Date:** January 05, 2026  
+**Problem:** 12 issues detected, but only 2 markers show on CV text
+
+---
+
+## Copy This Prompt to Replit:
+
+```
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  🔍 SYSTEMATIC DEBUG: Why Only 2/12 Markers Display?                         ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+GOAL: Find exactly WHERE issues are lost in the pipeline.
+
+───────────────────────────────────────────────────────────────────────────────
+STEP 1: Add Debug Logging to ResultsPage.tsx
+───────────────────────────────────────────────────────────────────────────────
+
+FILE: client/src/pages/cv-optimizer/ResultsPage.tsx
+
+Find where documentIssues is created (around line 813-818).
+
+ADD this debug code BEFORE the existing documentIssues mapping:
+
+// ===== DEBUG START =====
+console.log('=== MARKER DEBUG ===');
+console.log('Total normalized issues:', normalizedIssues.length);
+
+normalizedIssues.forEach((issue, i) => {
+  console.log('Issue ' + (i+1) + ':', {
+    type: issue.issue_type || issue.type,
+    severity: issue.severity,
+    matchText: issue.matchText ? issue.matchText.substring(0, 40) : 'EMPTY',
+    hasMatchText: !!issue.matchText,
+    matchTextLength: issue.matchText ? issue.matchText.length : 0
+  });
+});
+// ===== DEBUG END =====
+
+───────────────────────────────────────────────────────────────────────────────
+STEP 2: Add Debug Logging to MarkerService.ts
+───────────────────────────────────────────────────────────────────────────────
+
+FILE: client/src/components/common/DocumentEditor/services/MarkerService.ts
+
+Find the findMarkerPositions function.
+
+ADD at the START of the function:
+
+console.log('=== MARKER SERVICE ===');
+console.log('Content length:', content.length);
+console.log('Markers received:', markers.length);
+
+markers.forEach((m, i) => {
+  const text = m.matchText || '';
+  const found = content.toLowerCase().indexOf(text.toLowerCase());
+  console.log('Marker ' + (i+1) + ':', {
+    matchText: text.substring(0, 40),
+    foundInContent: found !== -1,
+    foundAt: found
+  });
+});
+
+───────────────────────────────────────────────────────────────────────────────
+STEP 3: Test and Capture Output
+───────────────────────────────────────────────────────────────────────────────
+
+1. Save the files
+2. Reload CV Optimizer page
+3. Open browser DevTools (F12) - Console tab
+4. Copy the debug output
+5. Return it to me
+
+───────────────────────────────────────────────────────────────────────────────
+
+DO NOT FIX ANYTHING - just add logging and report the console output.
+
+╚══════════════════════════════════════════════════════════════════════════════╝
+```
+
+---
+
+## What We're Looking For
+
+The debug output will show:
+
+| What to Check | Good | Bad |
+|---------------|------|-----|
+| matchText has value | "worked on..." | "EMPTY" |
+| foundInContent | true | false |
+| Markers received | 12 | 2 |
+
+This tells us WHERE issues are lost.

@@ -20,20 +20,24 @@ export function findMarkerPositions(
 ): MarkerPosition[] {
   const positions: MarkerPosition[] = []
   
+  const normalizedContent = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+  
   markers.forEach(marker => {
     if (!marker.matchText || marker.matchText.length === 0) return
     
     const matchText = marker.matchText
     let index = -1
     
-    if (needsWordBoundary(matchText)) {
-      const pattern = new RegExp(`\\b${escapeRegex(matchText)}\\b`, 'i')
-      const match = pattern.exec(content)
+    const normalizedMatchText = matchText.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+    
+    if (needsWordBoundary(normalizedMatchText)) {
+      const pattern = new RegExp(`\\b${escapeRegex(normalizedMatchText)}\\b`, 'i')
+      const match = pattern.exec(normalizedContent)
       if (match) {
         index = match.index
       }
     } else {
-      index = content.toLowerCase().indexOf(matchText.toLowerCase())
+      index = normalizedContent.toLowerCase().indexOf(normalizedMatchText.toLowerCase())
     }
     
     if (index !== -1) {
