@@ -118,6 +118,26 @@ export default function ResultsPage() {
     issueId: string;
   }>>([]);
 
+  // DEV: CV Structure Analysis
+  const [structureData, setStructureData] = useState<{
+    total_blocks: number;
+    total_jobs: number;
+    total_bullets: number;
+    total_certifications: number;
+    processing_time_ms: number;
+    blocks: Array<{
+      type: string;
+      start_line: number;
+      end_line: number;
+      word_count: number;
+      content_preview: string;
+      jobs?: Array<{ title: string; company: string; dates: string; bullet_count: number; lines: string }>;
+      entries?: Array<{ degree: string; institution: string; year: string }>;
+      certs?: string[];
+    }>;
+  } | null>(null);
+  const [structureLoading, setStructureLoading] = useState(false);
+
   const normalizeIssue = (issue: CVIssue, index: number) => ({
     id: issue.id || String(index + 1),
     severity: issue.severity || 'consider',
@@ -235,6 +255,24 @@ export default function ResultsPage() {
 
     fetchReport();
   }, [cvId, navigate]);
+
+  // DEV: Fetch CV structure analysis
+  const fetchStructure = async () => {
+    if (!cvId) return;
+    setStructureLoading(true);
+    try {
+      const token = getAuthToken();
+      const response = await fetch(`/api/cv/dev/analyze-structure/${cvId}?token=${token}`);
+      if (response.ok) {
+        const data = await response.json();
+        setStructureData(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch structure:', err);
+    } finally {
+      setStructureLoading(false);
+    }
+  };
 
   // Initialize score from API response
   useEffect(() => {
@@ -955,6 +993,62 @@ export default function ResultsPage() {
               <span className="text-sm font-medium text-green-600 ml-1">{currentScore}</span>
             </div>
           )}
+
+          {/* DEV: CV Structure Viewer */}
+          <details className="mb-4 bg-gray-100 border border-gray-300 rounded-lg">
+            <summary 
+              className="cursor-pointer p-3 font-medium text-gray-700 flex items-center justify-between"
+              onClick={() => { if (!structureData && !structureLoading) fetchStructure(); }}
+            >
+              <span>🔍 Dev: View Detected Structure {structureData ? `(${structureData.total_blocks} blocks)` : ''}</span>
+              {structureLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+            </summary>
+            {structureData && (
+              <div className="p-3 pt-0 space-y-2">
+                <div className="text-xs text-gray-500 mb-2">
+                  {structureData.total_jobs} jobs • {structureData.total_bullets} bullets • {structureData.total_certifications} certs • {structureData.processing_time_ms}ms
+                </div>
+                {structureData.blocks.map((block, idx) => (
+                  <details key={idx} className="bg-white border rounded p-2">
+                    <summary className="cursor-pointer text-sm">
+                      <span className="font-medium text-blue-600 uppercase">{block.type}</span>
+                      <span className="text-gray-500 ml-2">Lines {block.start_line}-{block.end_line}</span>
+                      <span className="text-gray-400 ml-2">({block.word_count} words)</span>
+                    </summary>
+                    <div className="mt-2 text-xs">
+                      {block.jobs && (
+                        <div className="mb-2">
+                          <div className="font-medium text-gray-600 mb-1">Jobs ({block.jobs.length}):</div>
+                          {block.jobs.map((job, jIdx) => (
+                            <div key={jIdx} className="ml-2 text-gray-500">
+                              • {job.title || 'Unknown'} @ {job.company || 'Unknown'} ({job.dates}) - {job.bullet_count} bullets [L{job.lines}]
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {block.entries && (
+                        <div className="mb-2">
+                          <div className="font-medium text-gray-600 mb-1">Education ({block.entries.length}):</div>
+                          {block.entries.map((entry, eIdx) => (
+                            <div key={eIdx} className="ml-2 text-gray-500">
+                              • {entry.degree || 'Degree'} - {entry.institution || 'Institution'} ({entry.year || 'Year'})
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {block.certs && (
+                        <div className="mb-2">
+                          <div className="font-medium text-gray-600 mb-1">Certifications ({block.certs.length}):</div>
+                          <div className="ml-2 text-gray-500">{block.certs.slice(0, 5).join(', ')}{block.certs.length > 5 ? ` +${block.certs.length - 5} more` : ''}</div>
+                        </div>
+                      )}
+                      <div className="text-gray-400 mt-1 truncate">{block.content_preview}</div>
+                    </div>
+                  </details>
+                ))}
+              </div>
+            )}
+          </details>
 
           <div className="flex gap-2 mb-6">
             <button

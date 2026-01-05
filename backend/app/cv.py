@@ -342,3 +342,81 @@ async def get_test_cv_file(filename: str):
         raise HTTPException(status_code=400, detail="Invalid filename")
     
     return FileResponse(filepath, filename=filename)
+
+
+@router.get("/dev/analyze-structure/{cv_id}")
+async def analyze_cv_structure(cv_id: str, token: str = None):
+    """DEV ONLY: Return detailed block structure analysis for debugging."""
+    from common.detection.block_detector import detect_cv_blocks, BlockType
+    
+    user = get_user_from_token(token) if token else None
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    try:
+        conn = get_db_connection()
+        if not conn:
+            raise HTTPException(status_code=500, detail="Database not available")
+        
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute(
+            "SELECT cv_content FROM user_cvs WHERE id = %s AND user_id = %s",
+            (cv_id, str(user["id"]))
+        )
+        cv = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if not cv or not cv.get("cv_content"):
+            raise HTTPException(status_code=404, detail="CV not found")
+        
+        cv_text = cv["cv_content"]
+        block_structure = detect_cv_blocks(cv_text)
+        
+        result = {
+            "total_blocks": len(block_structure.blocks),
+            "total_jobs": len(block_structure.all_jobs),
+            "total_bullets": len(block_structure.all_bullets),
+            "total_education": len(block_structure.all_education),
+            "total_certifications": len(block_structure.all_certifications),
+            "processing_time_ms": round(block_structure.processing_time_ms, 2),
+            "blocks": []
+        }
+        
+        for block in block_structure.blocks:
+            block_info = {
+                "type": block.block_type.value if hasattr(block.block_type, 'value') else str(block.block_type),
+                "start_line": block.start_line,
+                "end_line": block.end_line,
+                "word_count": block.word_count,
+                "content_preview": block.content[:150] + "..." if len(block.content) > 150 else block.content
+            }
+            
+            if block.block_type == BlockType.EXPERIENCE and block.jobs:
+                block_info["jobs"] = [{
+                    "title": job.job_title,
+                    "company": job.company_name,
+                    "dates": job.dates,
+                    "duration_months": job.duration_months,
+                    "bullet_count": len(job.bullets),
+                    "lines": f"{job.start_line}-{job.end_line}"
+                } for job in block.jobs]
+            
+            if block.block_type == BlockType.EDUCATION and block.education_entries:
+                block_info["entries"] = [{
+                    "degree": entry.degree,
+                    "institution": entry.institution,
+                    "year": entry.graduation_year
+                } for entry in block.education_entries]
+            
+            if block.block_type == BlockType.CERTIFICATIONS and block.certifications:
+                block_info["certs"] = [cert.name for cert in block.certifications]
+            
+            result["blocks"].append(block_info)
+        
+        return result
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
