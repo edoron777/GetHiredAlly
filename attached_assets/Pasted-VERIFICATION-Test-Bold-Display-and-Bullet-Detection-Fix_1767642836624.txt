@@ -1,0 +1,107 @@
+VERIFICATION: Test Bold Display and Bullet Detection Fixes
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TEST 1: Bold Display
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Check that ** no longer appears in Document View:
+
+1. Upload a CV with bold text
+2. View in Document View
+3. Verify:
+   - NO literal ** characters visible
+   - Bold text appears as actual bold (styled)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TEST 2: Bullet Detection
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Create test script:
+```python
+# backend/test_bullet_text_detection.py
+from docx import Document
+from app.cv import _extract_docx_with_markers
+import io
+
+doc = Document()
+
+# Test 1: Word native bullet (via style)
+try:
+    doc.add_paragraph("Native bullet item", style='List Bullet')
+except:
+    doc.add_paragraph("Native bullet item")
+
+# Test 2: Typed bullet with •
+p2 = doc.add_paragraph("• Typed bullet with dot")
+
+# Test 3: Typed bullet with -
+p3 = doc.add_paragraph("- Typed bullet with dash")
+
+# Test 4: Typed bullet with *
+p4 = doc.add_paragraph("* Typed bullet with asterisk")
+
+# Test 5: Regular paragraph (no bullet)
+p5 = doc.add_paragraph("This is a normal paragraph without bullet")
+
+# Save and extract
+doc_bytes = io.BytesIO()
+doc.save(doc_bytes)
+doc_bytes.seek(0)
+
+result = _extract_docx_with_markers(doc_bytes.read())
+
+print("=== EXTRACTION RESULT ===")
+for line in result.split('\n'):
+    if line.strip():
+        print(line)
+print("=== END ===")
+
+# Count bullets
+bullet_count = result.count('[BULLET]')
+print(f"\n[BULLET] markers found: {bullet_count}")
+print(f"Expected: 4 (or more)")
+
+if bullet_count >= 4:
+    print("✅ Bullet detection working!")
+else:
+    print("❌ Bullet detection needs work")
+
+# Check no double bullets (•• or bullet char + [BULLET])
+if '• ' in result and '[BULLET]' in result:
+    # This is OK if they're on different lines
+    pass
+```
+
+Run: cd backend && python test_bullet_text_detection.py
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TEST 3: Visual Check
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Upload a real CV and check Document View:
+- Bullets should show with • symbol
+- No duplicate bullets (•• )
+- Bold text should be bold (no **)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+REPORT FORMAT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+VERIFICATION RESULT:
+
+1. Bold Display:
+   - ** characters visible: YES/NO (should be NO)
+   - Bold text styled correctly: YES/NO
+
+2. Bullet Detection:
+   - Native bullets detected: YES/NO
+   - Typed • bullets detected: YES/NO
+   - Typed - bullets detected: YES/NO
+   - Typed * bullets detected: YES/NO
+   - Bullet count in test: [number]
+
+3. Regression Check:
+   - Headers still work: YES/NO
+   - No errors in console: YES/NO
+
+OVERALL STATUS: ✅ PASS / ❌ FAIL

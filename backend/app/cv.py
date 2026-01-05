@@ -330,7 +330,7 @@ def _extract_docx_with_markers(file_content: bytes, preserve_markers: bool = Tru
                             markers.append("H2")
                             break
                 
-                # Check 4: List item (bullet/numbered)
+                # Check 4: List item (bullet/numbered) - Word native lists
                 try:
                     if para._element.pPr is not None:
                         numPr = para._element.pPr.numPr
@@ -339,7 +339,20 @@ def _extract_docx_with_markers(file_content: bytes, preserve_markers: bool = Tru
                 except:
                     pass
                 
-                # Check 5: ALL CAPS short text (likely header)
+                # Check 5: Text-based bullets (manually typed bullet characters)
+                if "BULLET" not in markers:
+                    text_stripped = para.text.strip()
+                    if text_stripped:
+                        first_char = text_stripped[0]
+                        bullet_chars = ['•', '·', '●', '○', '■', '□', '▪', '▫', '▸', '►', '→', '➤', '➢', '✓', '✔', '★', '☆']
+                        dash_bullets = ['-', '–', '—', '*']
+                        
+                        if first_char in bullet_chars:
+                            markers.append("BULLET")
+                        elif first_char in dash_bullets and len(text_stripped) > 1 and text_stripped[1] == ' ':
+                            markers.append("BULLET")
+                
+                # Check 6: ALL CAPS short text (likely header)
                 plain_text = para.text.strip()
                 if len(plain_text) < 50 and plain_text.isupper() and not markers:
                     markers.append("BOLD")
@@ -360,8 +373,12 @@ def _extract_docx_with_markers(file_content: bytes, preserve_markers: bool = Tru
                     clean_text = text.replace("[BOLD]", "").replace("[/BOLD]", "")
                     result_lines.append(f"[BOLD] {clean_text}")
                 elif "BULLET" in markers:
-                    # Keep inline bold for bullets
-                    result_lines.append(f"[BULLET] {text}")
+                    # Keep inline bold for bullets, but remove leading bullet character
+                    bullet_text = text
+                    bullet_chars = ['•', '·', '●', '○', '■', '□', '▪', '▫', '▸', '►', '→', '➤', '➢', '✓', '✔', '★', '☆', '-', '–', '—', '*']
+                    if bullet_text and bullet_text[0] in bullet_chars:
+                        bullet_text = bullet_text[1:].lstrip()
+                    result_lines.append(f"[BULLET] {bullet_text}")
                 else:
                     result_lines.append(text)
             else:
