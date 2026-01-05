@@ -1,0 +1,106 @@
+╔══════════════════════════════════════════════════════════════════════════╗
+║  PROJECT: CV Detection Refactoring                                       ║
+║  PROMPT 2#2: Pass CVBlockStructure to Detectors                          ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+PREREQUISITE: PHASE2-1#2 must be completed first.
+
+CONTEXT:
+Now we modify the detector calls to ALSO receive cv_block_structure.
+Since each detector is ALREADY wrapped in try/except (from RFI), we just
+need to add cv_block_structure as an optional keyword argument.
+
+KEY INSIGHT FROM RFI:
+Each detector is already wrapped in try/except with logging!
+We just need to add the new parameter.
+
+───────────────────────────────────────────────────────────────────────────
+FILE TO MODIFY: backend/common/detection/master_detector.py
+───────────────────────────────────────────────────────────────────────────
+
+TASK: Add cv_block_structure parameter to these 12 detector calls
+
+DETECTORS TO UPDATE (currently use cv_text only):
+
+1. detect_language_issues(cv_text)
+2. detect_format_issues(cv_text)
+3. detect_polish_issues(cv_text)
+4. detect_standards_issues(cv_text)
+5. detect_keywords_issues(cv_text, job_description)
+6. detect_structure_issues(cv_text)
+7. detect_all_skills_issues(cv_text)
+8. detect_all_abbreviation_issues(cv_text)
+9. detect_all_certification_issues(cv_text)
+10. get_cv_length_issues(cv_text)
+11. get_experience_detail_issues(cv_text)
+12. get_bullets_per_job_issues(cv_text)
+
+───────────────────────────────────────────────────────────────────────────
+
+CODE PATTERN:
+
+For each detector above, FIND the call and ADD cv_block_structure:
+
+BEFORE:
+```python
+language_issues = detect_language_issues(cv_text)
+```
+
+AFTER:
+```python
+language_issues = detect_language_issues(cv_text, cv_block_structure=cv_block_structure)
+```
+
+BEFORE:
+```python
+keywords_issues = detect_keywords_issues(cv_text, job_description)
+```
+
+AFTER:
+```python
+keywords_issues = detect_keywords_issues(cv_text, job_description, cv_block_structure=cv_block_structure)
+```
+
+───────────────────────────────────────────────────────────────────────────
+
+DETECTORS TO LEAVE UNCHANGED (already use structure properly):
+
+| Detector | Current Call | Leave As-Is |
+|----------|--------------|-------------|
+| get_section_issues | get_section_issues(structure) | ✅ |
+| get_education_detail_issues | get_education_detail_issues(structure) | ✅ |
+| detect_summary_too_long | detect_summary_too_long(structure.summary) | ✅ |
+| detect_job_description_issues_simple | detect_job_description_issues_simple(structure.experience) | ✅ |
+| extract_bullets | extract_bullets(experience_text) | ✅ |
+| get_bullet_issues | get_bullet_issues(bullets) | ✅ |
+| get_contact_issues | get_contact_issues(contact_info, cv_text) | ✅ |
+
+───────────────────────────────────────────────────────────────────────────
+
+IMPORTANT: The detectors don't accept cv_block_structure yet!
+
+The detectors will ignore the parameter for now (using **kwargs or just
+ignoring unknown kwargs). This is fine - we're preparing for Phase 3.
+
+If a detector throws TypeError for unexpected keyword argument:
+- That's OK, the try/except already catches it
+- The detector runs without cv_block_structure
+- We'll fix it in Phase 3 when we update each detector
+
+───────────────────────────────────────────────────────────────────────────
+VERIFICATION
+───────────────────────────────────────────────────────────────────────────
+
+[ ] All 12 detectors updated with cv_block_structure parameter
+[ ] No syntax errors
+[ ] Service still works (test with a CV)
+[ ] Issues still detected (check count is similar to before)
+[ ] No new unhandled exceptions
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- Add cv_block_structure=cv_block_structure to ALL 12 detectors listed
+- Do NOT modify the detector files themselves (that's Phase 3)
+- Do NOT remove any existing parameters
+- If something breaks, report the specific error
+
+╚══════════════════════════════════════════════════════════════════════════╝

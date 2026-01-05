@@ -91,6 +91,17 @@ from .length_detector import (
 from .abbreviation_detector import detect_all_abbreviation_issues
 from .certification_detector import detect_all_certification_issues
 
+# Block structure detection (Phase 2 - CV Detection Refactoring)
+from .block_detector import (
+    detect_cv_blocks,
+    CVBlockStructure,
+    BlockType,
+    get_experience_text,
+    get_education_text,
+    get_summary_text,
+    get_skills_text,
+)
+
 logger = logging.getLogger(__name__)
 
 import os
@@ -149,6 +160,22 @@ def detect_all_issues(cv_text: str, job_description: Optional[str] = None) -> Li
     """
     all_issues: List[Dict[str, Any]] = []
     structure = None
+    
+    # ═══════════════════════════════════════════════════════════════════════
+    # PHASE 2: CV BLOCK STRUCTURE DETECTION
+    # Call detect_cv_blocks() FIRST to get structured CV representation
+    # This provides line numbers, job boundaries, and section metadata
+    # ═══════════════════════════════════════════════════════════════════════
+    
+    cv_block_structure: Optional[CVBlockStructure] = None
+    try:
+        cv_block_structure = detect_cv_blocks(cv_text)
+        if cv_block_structure and cv_block_structure.errors:
+            for error in cv_block_structure.errors:
+                logger.warning(f"[block_detector] {error}")
+    except Exception as e:
+        logger.error(f"[block_detector] Error: {str(e)} - continuing with raw text")
+        cv_block_structure = None
     
     logger.info("Starting static CV analysis...")
     

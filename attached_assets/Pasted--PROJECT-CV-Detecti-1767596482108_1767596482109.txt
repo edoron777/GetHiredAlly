@@ -1,0 +1,100 @@
+╔══════════════════════════════════════════════════════════════════════════╗
+║  PROJECT: CV Detection Refactoring                                       ║
+║  PROMPT 1#2: Add Block Detection to master_detector.py                   ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+CONTEXT:
+We need to modify master_detector.py to use our new block_detector.py.
+This is the "bridge" that connects structure detection to issue detection.
+
+STRATEGY:
+- Add import for detect_cv_blocks (around line 20-30, with other local imports)
+- Call detect_cv_blocks() early in detect_all_issues() (after line 130)
+- Store result in cv_block_structure variable
+- Keep existing code working (backward compatible)
+
+───────────────────────────────────────────────────────────────────────────
+FILE TO MODIFY: backend/common/detection/master_detector.py
+───────────────────────────────────────────────────────────────────────────
+
+TASK 1: Add import (around lines 20-30, with other local imports)
+
+FIND the imports section (lines 1-98) where you see imports like:
+```python
+from .contact_extractor import extract_contact_info, get_contact_issues
+from .section_extractor import extract_sections, get_section_issues
+```
+
+ADD this import AFTER the existing local imports:
+```python
+# Block structure detection (Phase 2 - CV Detection Refactoring)
+from .block_detector import (
+    detect_cv_blocks,
+    CVBlockStructure,
+    BlockType,
+    get_experience_text,
+    get_education_text,
+    get_summary_text,
+    get_skills_text,
+)
+```
+
+───────────────────────────────────────────────────────────────────────────
+
+TASK 2: Add block detection call (after line 130, at start of function)
+
+FIND the main function (line 130):
+```python
+def detect_all_issues(cv_text: str, job_description: Optional[str] = None) -> List[Dict[str, Any]]:
+```
+
+ADD this code block RIGHT AFTER `all_issues: List[Dict[str, Any]] = []`:
+```python
+    # ═══════════════════════════════════════════════════════════════════════
+    # PHASE 2: CV BLOCK STRUCTURE DETECTION
+    # Call detect_cv_blocks() FIRST to get structured CV representation
+    # This provides line numbers, job boundaries, and section metadata
+    # ═══════════════════════════════════════════════════════════════════════
+    
+    cv_block_structure: Optional[CVBlockStructure] = None
+    try:
+        cv_block_structure = detect_cv_blocks(cv_text)
+        if cv_block_structure and cv_block_structure.errors:
+            for error in cv_block_structure.errors:
+                logger.warning(f"[block_detector] {error}")
+    except Exception as e:
+        logger.error(f"[block_detector] Error: {str(e)} - continuing with raw text")
+        cv_block_structure = None
+```
+
+───────────────────────────────────────────────────────────────────────────
+
+TASK 3: Keep existing extract_sections() call UNCHANGED
+
+The existing call at line 174:
+```python
+structure = extract_sections(cv_text)
+```
+
+DO NOT MODIFY THIS. We keep both during the transition:
+- cv_block_structure = new structure (from detect_cv_blocks)
+- structure = old structure (from extract_sections)
+
+───────────────────────────────────────────────────────────────────────────
+VERIFICATION
+───────────────────────────────────────────────────────────────────────────
+
+[ ] Import added successfully (around line 20-30)
+[ ] detect_cv_blocks() called at start of detect_all_issues()
+[ ] cv_block_structure variable created
+[ ] No syntax errors
+[ ] Existing extract_sections() call NOT removed (line 174)
+[ ] Service still works (test with a CV)
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- Add ONLY what is specified above
+- Do NOT remove any existing code
+- Do NOT modify detector calls yet (that's PHASE2-2#2)
+- If anything is unclear, STOP and ask
+
+╚══════════════════════════════════════════════════════════════════════════╝
