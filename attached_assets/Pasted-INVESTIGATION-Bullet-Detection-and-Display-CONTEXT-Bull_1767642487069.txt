@@ -1,0 +1,72 @@
+INVESTIGATION: Bullet Detection and Display
+
+CONTEXT:
+Bullets from the original Word document are NOT appearing in Document View.
+
+Original Word shows:
+  • Conducted comprehensive evaluations...
+  • Created deliverables...
+  • Enabled informed decisions...
+
+Document View shows:
+  Conducted comprehensive evaluations...
+  Created deliverables...
+  Enabled informed decisions...
+
+Bullets are completely missing!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+INVESTIGATION TASKS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. BULLET DETECTION IN EXTRACTION:
+   In backend/app/cv.py, function _extract_docx_with_markers():
+   - Show me the code that detects bullets
+   - How are [BULLET] markers added?
+   - What criteria determine if a line is a bullet?
+
+2. BULLET MARKER CONVERSION:
+   In backend/common/utils/marker_converter.py:
+   - Show me how [BULLET] markers are converted to HTML
+   - Is there a convert function for bullets?
+
+3. TEST EXTRACTION OUTPUT:
+   Using a CV that has bullet points:
+   - Extract the text and show first 50 lines
+   - Are [BULLET] markers present in the extracted text?
+   - If not, bullets are not detected during extraction
+
+4. CHECK FRONTEND DISPLAY:
+   - How does DocumentView render bullet markers?
+   - Is there CSS for bullet styling?
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+REPORT FORMAT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+FINDING 1 - Bullet Detection Code:
+- Location: [file:line]
+- Detection method: [describe]
+- Criteria used: [what determines a bullet?]
+
+FINDING 2 - Marker Conversion:
+- Function exists: YES/NO
+- Converts to: [HTML element]
+
+FINDING 3 - Extraction Test:
+- [BULLET] markers in output: YES/NO
+- Sample: [show lines with bullets]
+
+FINDING 4 - Frontend Display:
+- CSS exists for bullets: YES/NO
+
+ROOT CAUSE:
+[ ] Bullets not detected during extraction
+[ ] Bullets detected but markers not added
+[ ] Markers added but not converted to HTML
+[ ] HTML created but CSS missing
+[ ] Other: __________
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ DO NOT modify any code - investigation only!
