@@ -1,0 +1,135 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  ⚙️ TASK 1/2: Create enrich_issues_with_line_numbers()                       ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+PREREQUISITE: RFI-1 must be completed first.
+
+CONTEXT:
+We create a function that takes issues + cv_block_structure and adds
+line_number to each issue by finding where the 'current' text appears.
+
+───────────────────────────────────────────────────────────────────────────────
+FILE TO MODIFY: backend/common/detection/master_detector.py
+───────────────────────────────────────────────────────────────────────────────
+
+TASK: Add this function AFTER the helper functions (_organize_by_category, etc.)
+and BEFORE detect_cv_issues().
+
+CODE TO ADD:
+```python
+def enrich_issues_with_line_numbers(
+    issues: List[Dict[str, Any]],
+    cv_block_structure: Optional[CVBlockStructure],
+    cv_text: str
+) -> List[Dict[str, Any]]:
+    """
+    Enrich issues with line numbers by finding where 'current' text appears.
+    
+    Uses cv_block_structure to:
+    1. Find which block contains the issue text
+    2. Get the line number from that block
+    3. Add block_type and job_index for context
+    
+    Args:
+        issues: List of issue dicts
+        cv_block_structure: The CV structure with line numbers
+        cv_text: Original CV text (for fallback line search)
+    
+    Returns:
+        Same issues list with line_number, block_type, job_index added
+    """
+    if not cv_block_structure:
+        return issues
+    
+    # Build a line lookup from CV text
+    lines = cv_text.split('\n')
+    
+    for issue in issues:
+        current = issue.get('current', '')
+        if not current or len(current) < 3:
+            continue
+        
+        # Try to find line number
+        line_number = None
+        block_type = None
+        job_index = None
+        
+        # Method 1: Search in blocks
+        for block in cv_block_structure.blocks:
+            if current in block.content:
+                line_number = block.start_line
+                block_type = block.block_type.value
+                
+                # If it's an experience block, find which job
+                if block.block_type == BlockType.EXPERIENCE:
+                    for idx, job in enumerate(cv_block_structure.jobs):
+                        if current in job.full_text:
+                            job_index = idx
+                            # More precise line number from job
+                            if job.title_line:
+                                line_number = job.title_line
+                            break
+                
+                # Search for exact line within block
+                for i, line in enumerate(lines[block.start_line - 1:block.end_line], start=block.start_line):
+                    if current in line:
+                        line_number = i
+                        break
+                
+                break
+        
+        # Method 2: Fallback - search entire CV
+        if line_number is None:
+            for i, line in enumerate(lines, start=1):
+                if current in line:
+                    line_number = i
+                    break
+        
+        # Update issue
+        if line_number:
+            issue['line_number'] = line_number
+        if block_type:
+            issue['block_type'] = block_type
+        if job_index is not None:
+            issue['job_index'] = job_index
+    
+    return issues
+```
+
+───────────────────────────────────────────────────────────────────────────────
+VERIFICATION
+───────────────────────────────────────────────────────────────────────────────
+
+Test the function:
+```python
+from backend.common.detection.master_detector import enrich_issues_with_line_numbers
+from backend.common.detection.block_detector import detect_cv_blocks
+
+test_cv = """John Smith
+john@email.com
+
+EXPERIENCE
+Software Engineer at TechCorp
+- Managed team of developers
+- Led project initiatives
+
+EDUCATION
+BS Computer Science
+"""
+
+structure = detect_cv_blocks(test_cv)
+issues = [{'issue_type': 'TEST', 'current': 'Managed'}]
+enriched = enrich_issues_with_line_numbers(issues, structure, test_cv)
+print(f"Line number: {enriched[0].get('line_number')}")
+```
+
+[ ] Function created without errors
+[ ] Returns issues with line_number field
+[ ] Correct line numbers
+
+⚠️ ANTI-IMPROVISATION:
+- Add function EXACTLY as shown
+- Do NOT modify existing functions yet
+- We'll integrate in TASK-2
+
+╚══════════════════════════════════════════════════════════════════════════════╝
