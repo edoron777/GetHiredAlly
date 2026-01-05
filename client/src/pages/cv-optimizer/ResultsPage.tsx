@@ -137,6 +137,7 @@ export default function ResultsPage() {
     }>;
   } | null>(null);
   const [structureLoading, setStructureLoading] = useState(false);
+  const [showStructureModal, setShowStructureModal] = useState(false);
 
   const normalizeIssue = (issue: CVIssue, index: number) => ({
     id: issue.id || String(index + 1),
@@ -897,9 +898,6 @@ export default function ResultsPage() {
         pendingChanges={pendingChanges}
         onUpdateScore={handleRescan}
         isLoading={isRescanning}
-        structureData={structureData}
-        onFetchStructure={fetchStructure}
-        structureLoading={structureLoading}
       />
 
       <div className="flex-1 px-4 py-8">
@@ -976,16 +974,6 @@ export default function ResultsPage() {
             </div>
           </div>
 
-          {/* Bulk Auto Fix Section */}
-          {showBulkAutoFix && (
-            <BulkAutoFixSection
-              autoFixableCount={autoFixableCount}
-              totalIssues={reportData?.issues?.length || 0}
-              onAutoFixClick={handleOpenBulkAutoFixModal}
-              isLoading={isRescanning}
-            />
-          )}
-
           {/* Scan History */}
           {scanHistory.length > 0 && (
             <div className="mb-4 p-3 bg-white border border-gray-200 rounded-lg">
@@ -1034,6 +1022,32 @@ export default function ResultsPage() {
             >
               <Columns size={16} />
               Side by Side
+            </button>
+
+            {/* Auto Fix Button */}
+            {autoFixableCount > 0 && !bulkAutoFixUsed && (
+              <button
+                onClick={handleOpenBulkAutoFixModal}
+                disabled={isRescanning}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-green-600 text-white hover:bg-green-700"
+              >
+                <span>⚡</span>
+                Auto Fix ({autoFixableCount})
+              </button>
+            )}
+
+            {/* Dev: Structure Button */}
+            <button
+              onClick={() => {
+                if (!structureData && !structureLoading) {
+                  fetchStructure();
+                }
+                setShowStructureModal(true);
+              }}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-100 border border-gray-300 text-gray-600 hover:bg-gray-200"
+            >
+              <span>🔍</span>
+              Structure
             </button>
           </div>
           
@@ -1115,6 +1129,77 @@ export default function ResultsPage() {
         data={resultModalData}
         onCompareVersions={() => setActiveTab('sidebyside')}
       />
+
+      {/* Structure Modal */}
+      {showStructureModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[80vh] overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="text-lg font-bold text-gray-900">📋 Detected CV Structure</h3>
+              <button
+                onClick={() => setShowStructureModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-4 overflow-y-auto max-h-[60vh]">
+              {structureLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+                  <span className="ml-2 text-gray-600">Loading structure...</span>
+                </div>
+              ) : structureData ? (
+                <div className="space-y-3">
+                  <div className="text-sm text-gray-500 pb-2 border-b">
+                    {structureData.total_jobs} jobs • {structureData.total_bullets} bullets • {structureData.total_certifications} certs • {structureData.processing_time_ms}ms
+                  </div>
+                  {structureData.blocks.map((block, idx) => (
+                    <div key={idx} className="p-3 bg-gray-50 border rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-blue-600 uppercase">{block.type}</span>
+                        <span className="text-sm text-gray-500">Lines {block.start_line}-{block.end_line}</span>
+                      </div>
+                      {block.jobs && (
+                        <div className="text-sm text-gray-600 mt-1">
+                          {block.jobs.length} jobs, {block.jobs.reduce((sum, j) => sum + j.bullet_count, 0)} bullets
+                        </div>
+                      )}
+                      {block.certs && (
+                        <div className="text-sm text-gray-600 mt-1">
+                          {block.certs.length} certifications
+                        </div>
+                      )}
+                      {block.entries && (
+                        <div className="text-sm text-gray-600 mt-1">
+                          {block.entries.length} education entries
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  No structure data available
+                </div>
+              )}
+            </div>
+            <div className="p-4 border-t bg-gray-50">
+              <button
+                onClick={() => {
+                  if (structureData) {
+                    console.log('Block structure:', structureData);
+                  }
+                  setShowStructureModal(false);
+                }}
+                className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
