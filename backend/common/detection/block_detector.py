@@ -284,67 +284,98 @@ def _convert_sections_to_blocks(cv_structure: CVStructure, lines: List[str]) -> 
     """Convert CVStructure sections to CVBlock list with line numbers."""
     blocks = []
     
-    # Map section names to BlockType
-    section_type_map = {
+    # CVStructure has direct attributes for each section type (contact, summary, experience, etc.)
+    # and a sections list with CVSection objects. We'll use both approaches.
+    
+    # Map of attribute name -> BlockType
+    section_attr_map = {
         'contact': BlockType.CONTACT,
         'summary': BlockType.SUMMARY,
-        'professional_summary': BlockType.SUMMARY,
-        'objective': BlockType.SUMMARY,
         'experience': BlockType.EXPERIENCE,
-        'work_experience': BlockType.EXPERIENCE,
-        'professional_experience': BlockType.EXPERIENCE,
-        'employment': BlockType.EXPERIENCE,
         'education': BlockType.EDUCATION,
         'skills': BlockType.SKILLS,
-        'technical_skills': BlockType.SKILLS,
-        'core_competencies': BlockType.SKILLS,
         'certifications': BlockType.CERTIFICATIONS,
-        'certificates': BlockType.CERTIFICATIONS,
-        'projects': BlockType.PROJECTS,
-        'languages': BlockType.LANGUAGES,
-        'awards': BlockType.AWARDS,
-        'publications': BlockType.PUBLICATIONS,
-        'volunteer': BlockType.VOLUNTEER,
-        'interests': BlockType.INTERESTS,
-        'references': BlockType.REFERENCES,
     }
     
-    # Get sections from cv_structure
-    # Note: Adapt based on actual CVStructure attributes from section_extractor.py
-    sections = getattr(cv_structure, 'sections', {})
-    if not sections and hasattr(cv_structure, '__dict__'):
-        sections = cv_structure.__dict__
-    
-    for section_name, section_content in sections.items():
-        if not section_content:
+    # First, create blocks from direct attributes (these are the main sections)
+    for attr_name, block_type in section_attr_map.items():
+        content = getattr(cv_structure, attr_name, None)
+        if not content or not isinstance(content, str):
             continue
-            
-        # Determine block type
-        section_lower = section_name.lower().replace('_', ' ').replace('-', ' ')
-        block_type = BlockType.UNRECOGNIZED
-        confidence = 0.5
-        
-        for key, btype in section_type_map.items():
-            if key in section_lower:
-                block_type = btype
-                confidence = 0.9
-                break
         
         # Find line numbers for this content
-        start_line, end_line = _find_content_lines(section_content, lines)
+        start_line, end_line = _find_content_lines(content, lines)
         
         block = CVBlock(
             block_type=block_type,
-            header_text=section_name,
-            content=section_content if isinstance(section_content, str) else str(section_content),
+            header_text=attr_name.replace('_', ' ').title(),
+            content=content,
             start_line=start_line,
             end_line=end_line,
-            confidence=confidence,
-            word_count=len(str(section_content).split()),
-            needs_user_help=(block_type == BlockType.UNRECOGNIZED)
+            confidence=0.95,
+            word_count=len(content.split()),
+            needs_user_help=False
         )
         
         blocks.append(block)
+    
+    # Also check the sections list (List[CVSection]) for any additional sections
+    cv_sections = getattr(cv_structure, 'sections', [])
+    if cv_sections and isinstance(cv_sections, list):
+        # Map CVSection.name to BlockType
+        name_to_type = {
+            'summary': BlockType.SUMMARY,
+            'professional_summary': BlockType.SUMMARY,
+            'objective': BlockType.SUMMARY,
+            'experience': BlockType.EXPERIENCE,
+            'work_experience': BlockType.EXPERIENCE,
+            'professional_experience': BlockType.EXPERIENCE,
+            'employment': BlockType.EXPERIENCE,
+            'education': BlockType.EDUCATION,
+            'skills': BlockType.SKILLS,
+            'technical_skills': BlockType.SKILLS,
+            'core_competencies': BlockType.SKILLS,
+            'certifications': BlockType.CERTIFICATIONS,
+            'certificates': BlockType.CERTIFICATIONS,
+            'projects': BlockType.PROJECTS,
+            'languages': BlockType.LANGUAGES,
+            'awards': BlockType.AWARDS,
+            'publications': BlockType.PUBLICATIONS,
+            'volunteer': BlockType.VOLUNTEER,
+            'interests': BlockType.INTERESTS,
+            'references': BlockType.REFERENCES,
+        }
+        
+        # Track which block types we already have to avoid duplicates
+        existing_types = {b.block_type for b in blocks}
+        
+        for cv_section in cv_sections:
+            section_name = getattr(cv_section, 'name', '').lower()
+            section_content = getattr(cv_section, 'content', '')
+            
+            if not section_content:
+                continue
+            
+            # Determine block type
+            block_type = name_to_type.get(section_name, BlockType.UNRECOGNIZED)
+            
+            # Skip if we already have this block type from direct attributes
+            if block_type in existing_types and block_type != BlockType.UNRECOGNIZED:
+                continue
+            
+            block = CVBlock(
+                block_type=block_type,
+                header_text=getattr(cv_section, 'header', section_name),
+                content=section_content,
+                start_line=getattr(cv_section, 'line_number', 0),
+                end_line=getattr(cv_section, 'line_number', 0) + len(section_content.split('\n')),
+                confidence=0.9 if block_type != BlockType.UNRECOGNIZED else 0.5,
+                word_count=len(section_content.split()),
+                needs_user_help=(block_type == BlockType.UNRECOGNIZED)
+            )
+            
+            blocks.append(block)
+            existing_types.add(block_type)
     
     # Sort blocks by start_line
     blocks.sort(key=lambda b: b.start_line)
@@ -415,13 +446,21 @@ def _extract_all_sub_blocks(result: CVBlockStructure, cv_structure: CVStructure,
     """
     Extract jobs, education entries, and certifications from blocks.
     
-    CRITICAL: Uses cv_structure.job_entries which already contains job line boundaries!
-    This avoids re-parsing jobs from scratch.
+    Uses cv_structure.job_entries if available, otherwise falls back to
+    parsing jobs directly from experience content.
     """
     
-    # Extract jobs from Experience block using EXISTING job_entries
-    if result.experience_block and hasattr(cv_structure, 'job_entries'):
-        jobs = _extract_jobs_from_entries(cv_structure.job_entries, lines, result.experience_block.start_line)
+    # Extract jobs from Experience block
+    if result.experience_block:
+        job_entries = getattr(cv_structure, 'job_entries', [])
+        
+        if job_entries:
+            # Use existing job_entries from section_extractor
+            jobs = _extract_jobs_from_entries(job_entries, lines, result.experience_block.start_line)
+        else:
+            # Fallback: Parse jobs directly from experience content
+            jobs = _extract_jobs_from_content(result.experience_block, lines)
+        
         result.experience_block.jobs = jobs
         result.all_jobs = jobs
     
@@ -437,6 +476,64 @@ def _extract_all_sub_blocks(result: CVBlockStructure, cv_structure: CVStructure,
             certs = _extract_certifications(block, lines)
             block.certifications = certs
             result.all_certifications = certs
+
+
+def _extract_jobs_from_content(experience_block: CVBlock, lines: List[str]) -> List[JobEntry]:
+    """
+    Fallback: Parse jobs directly from experience content when job_entries is empty.
+    
+    Detects job boundaries by looking for date patterns like "Month YYYY - Present".
+    """
+    jobs = []
+    content = experience_block.content
+    
+    if not content:
+        return jobs
+    
+    content_lines = content.split('\n')
+    
+    # Pattern to detect job header lines (contains date range)
+    date_pattern = re.compile(
+        r'([A-Za-z]+\.?\s+\d{4})\s*[-–]\s*(Present|Current|[A-Za-z]+\.?\s+\d{4})',
+        re.IGNORECASE
+    )
+    
+    # Find lines that likely start a new job (contain date ranges)
+    job_starts = []
+    for i, line in enumerate(content_lines):
+        if date_pattern.search(line):
+            # Check if previous non-empty line might be the job title
+            title_line = i
+            if i > 0:
+                for j in range(i - 1, max(0, i - 3), -1):
+                    if content_lines[j].strip() and not date_pattern.search(content_lines[j]):
+                        title_line = j
+                        break
+            job_starts.append(title_line)
+    
+    # If no jobs found by date, try to find by "at" pattern in first lines
+    if not job_starts:
+        for i, line in enumerate(content_lines):
+            if re.search(r'\s+(?:at|@)\s+', line, re.IGNORECASE):
+                job_starts.append(i)
+    
+    # Create jobs from detected boundaries
+    for idx, start_idx in enumerate(job_starts):
+        # End is next job start or end of content
+        end_idx = job_starts[idx + 1] - 1 if idx + 1 < len(job_starts) else len(content_lines) - 1
+        
+        job_lines = content_lines[start_idx:end_idx + 1]
+        
+        job = JobEntry(job_index=idx)
+        job.start_line = experience_block.start_line + start_idx
+        job.end_line = experience_block.start_line + end_idx
+        job.raw_text = '\n'.join(job_lines)
+        
+        _parse_job_details(job, job_lines)
+        
+        jobs.append(job)
+    
+    return jobs
 
 
 def _extract_jobs_from_entries(job_entries: List[tuple], lines: List[str], experience_start: int) -> List[JobEntry]:

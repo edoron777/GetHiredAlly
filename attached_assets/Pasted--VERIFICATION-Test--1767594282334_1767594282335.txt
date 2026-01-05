@@ -1,0 +1,111 @@
+╔══════════════════════════════════════════════════════════════════════════╗
+║  VERIFICATION: Test block_detector.py                                   ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+PREREQUISITE: All PHASE1 prompts (1-4) must be completed.
+
+TASK: Test the new block_detector.py module.
+
+TEST 1: Import Test
+Run this in Python console or create a test file:
+```python
+# Test imports
+from backend.common.detection.block_detector import (
+    detect_cv_blocks,
+    CVBlockStructure,
+    CVBlock,
+    BlockType,
+    JobEntry,
+    EnhancedBullet
+)
+
+print("✓ All imports successful")
+```
+
+TEST 2: Basic Detection Test
+```python
+# Sample CV text for testing
+test_cv = """
+John Smith
+john.smith@email.com
+(555) 123-4567
+LinkedIn: linkedin.com/in/johnsmith
+
+PROFESSIONAL SUMMARY
+Experienced software engineer with 8 years of experience in Python and JavaScript development.
+
+EXPERIENCE
+
+Senior Software Engineer at TechCorp Inc.
+January 2020 - Present
+- Led development of microservices architecture reducing latency by 40%
+- Managed team of 5 developers for customer-facing applications
+- Implemented CI/CD pipeline improving deployment frequency by 300%
+
+Software Developer at StartupXYZ
+June 2016 - December 2019
+- Built RESTful APIs serving 10,000 daily active users
+- Optimized database queries reducing response time by 60%
+
+EDUCATION
+
+Bachelor of Science in Computer Science
+University of California, Berkeley
+2016
+
+SKILLS
+Programming: Python, JavaScript, TypeScript, SQL
+Frameworks: React, Django, FastAPI
+Tools: Docker, Kubernetes, AWS
+"""
+
+# Run detection
+result = detect_cv_blocks(test_cv)
+
+# Verify structure
+print(f"Total blocks: {result.summary.total_blocks}")
+print(f"Has contact: {result.summary.has_contact}")
+print(f"Has experience: {result.summary.has_experience}")
+print(f"Has education: {result.summary.has_education}")
+print(f"Total jobs: {result.summary.total_jobs}")
+print(f"Total bullets: {result.summary.total_bullets}")
+
+# Print jobs
+for job in result.all_jobs:
+    print(f"\nJob {job.job_index}: {job.job_title} at {job.company_name}")
+    print(f"  Dates: {job.dates}")
+    print(f"  Bullets: {len(job.bullets)}")
+
+# Print bullets with metrics
+for bullet in result.all_bullets:
+    if bullet.has_metrics:
+        print(f"\n✓ Bullet with metrics (line {bullet.line_number}): {bullet.text[:50]}...")
+```
+
+EXPECTED OUTPUT:
+- Total blocks: >= 5 (contact, summary, experience, education, skills)
+- Has contact: True
+- Has experience: True  
+- Has education: True
+- Total jobs: 2
+- Total bullets: >= 5
+- Jobs should have titles and companies extracted
+- Bullets should be linked to jobs
+
+───────────────────────────────────────────────────────────────────────────
+SUCCESS CRITERIA
+───────────────────────────────────────────────────────────────────────────
+
+[ ] All imports work without errors
+[ ] detect_cv_blocks() returns CVBlockStructure
+[ ] Blocks are detected (contact, summary, experience, education, skills)
+[ ] Jobs are extracted from experience
+[ ] Bullets are extracted and linked to jobs
+[ ] Line numbers are populated
+[ ] No exceptions thrown
+
+IF ANY TEST FAILS:
+Report the error and which test failed.
+Do NOT attempt to fix without understanding the root cause.
+
+╚══════════════════════════════════════════════════════════════════════════╝
