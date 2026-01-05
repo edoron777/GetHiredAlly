@@ -8,10 +8,62 @@ Runs all static detectors and combines results.
 Same CV text → Same issues → Same results (ALWAYS)
 """
 
+import re
 import logging
 from typing import List, Dict, Any, Optional
 
 from common.catalog import get_catalog_service
+
+
+def validate_issue_format(issue: Dict[str, Any], cv_text: str = '') -> Dict[str, Any]:
+    """
+    Validate and fix issue format before returning.
+    Ensures 'current' field is properly populated for highlighting.
+    
+    Args:
+        issue: The issue dictionary to validate
+        cv_text: Original CV text to verify current field exists in it
+        
+    Returns:
+        Validated issue dictionary
+    """
+    if 'issue_type' not in issue:
+        issue['issue_type'] = 'UNKNOWN'
+    
+    current = issue.get('current', '')
+    
+    if current:
+        if '...' in current:
+            current = current.replace('...', '').strip()
+        
+        invalid_patterns = [
+            r'^\d+\s*words?$',
+            r'^\d+\s*characters?$',
+            r'^Line\s*\d+',
+            r'^\d+\s*months?\s*gap',
+            r'^\d+\s*bullets?$',
+        ]
+        for pattern in invalid_patterns:
+            if re.match(pattern, current, re.IGNORECASE):
+                current = ''
+                break
+        
+        if current and len(current) > 200:
+            current = current[:200]
+        
+        if current and cv_text and current not in cv_text:
+            current = ''
+    
+    issue['current'] = current
+    
+    if 'is_highlightable' not in issue:
+        issue['is_highlightable'] = bool(current and len(current) >= 3)
+    elif current == '':
+        issue['is_highlightable'] = False
+    
+    return issue
+
+
 from .contact_extractor import extract_contact_info, get_contact_issues
 from .section_extractor import (
     extract_sections, 
@@ -235,6 +287,8 @@ def detect_all_issues(cv_text: str, job_description: Optional[str] = None) -> Li
         logger.error(f"Error detecting certification issues: {e}")
     
     logger.info(f"Static detection complete. Total issues: {len(all_issues)}")
+    
+    all_issues = [validate_issue_format(issue, cv_text) for issue in all_issues]
     
     all_issues = enrich_issues_from_catalog(all_issues)
     

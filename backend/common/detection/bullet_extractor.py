@@ -200,7 +200,8 @@ def get_bullet_issues(bullets: List[BulletPoint], max_per_type: int = MAX_ISSUES
                 'issue_type': 'CONTENT_MISSING_METRICS',
                 'location': f'Line {bullet.line_number}',
                 'description': 'Bullet point lacks quantified achievement (no numbers, percentages, or metrics)',
-                'current': bullet.text[:100] + '...' if len(bullet.text) > 100 else bullet.text,
+                'current': bullet.text[:200],
+                'is_highlightable': True,
             })
             missing_metrics_count += 1
         
@@ -209,7 +210,8 @@ def get_bullet_issues(bullets: List[BulletPoint], max_per_type: int = MAX_ISSUES
                 'issue_type': 'CONTENT_WEAK_ACTION_VERBS',
                 'location': f'Line {bullet.line_number}',
                 'description': 'Bullet should start with a strong action verb',
-                'current': bullet.text[:50] + '...' if len(bullet.text) > 50 else bullet.text,
+                'current': bullet.text[:200],
+                'is_highlightable': True,
             })
             weak_verbs_count += 1
         
@@ -218,7 +220,8 @@ def get_bullet_issues(bullets: List[BulletPoint], max_per_type: int = MAX_ISSUES
                 'issue_type': 'CONTENT_BULLET_TOO_LONG',
                 'location': f'Line {bullet.line_number}',
                 'description': f'Bullet is {bullet.word_count} words - consider splitting or condensing',
-                'current': bullet.text[:100] + '...',
+                'current': bullet.text[:200],
+                'is_highlightable': True,
             })
             too_long_count += 1
         
@@ -228,6 +231,7 @@ def get_bullet_issues(bullets: List[BulletPoint], max_per_type: int = MAX_ISSUES
                 'location': f'Line {bullet.line_number}',
                 'description': f'Bullet is only {bullet.word_count} words - add more detail',
                 'current': bullet.text,
+                'is_highlightable': True,
             })
             too_short_count += 1
     
@@ -239,12 +243,13 @@ def get_bullet_issues(bullets: List[BulletPoint], max_per_type: int = MAX_ISSUES
     if len(bullets) > 3:
         task_ratio = len(task_focused_bullets) / len(bullets)
         if task_ratio > 0.3:
-            examples = [b.text[:50] + '...' for b in task_focused_bullets[:2]]
+            first_example = task_focused_bullets[0].text[:200] if task_focused_bullets else ''
             issues.append({
                 'issue_type': 'CONTENT_TASK_FOCUSED',
                 'location': 'Experience Section',
                 'description': f'{len(task_focused_bullets)} bullets describe tasks instead of achievements',
-                'current': '; '.join(examples),
+                'current': first_example,
+                'is_highlightable': bool(first_example),
                 'suggestion': 'Focus on outcomes and results, not just responsibilities',
             })
     
@@ -256,10 +261,13 @@ def get_bullet_issues(bullets: List[BulletPoint], max_per_type: int = MAX_ISSUES
     if len(bullets) > 5:
         no_impact_ratio = len(bullets_without_impact) / len(bullets)
         if no_impact_ratio > 0.5:
+            first_example = bullets_without_impact[0].text[:200] if bullets_without_impact else ''
             issues.append({
                 'issue_type': 'CONTENT_MISSING_IMPACT',
                 'location': 'Experience Section',
                 'description': f'{len(bullets_without_impact)} of {len(bullets)} bullets lack clear impact or results',
+                'current': first_example,
+                'is_highlightable': bool(first_example),
                 'suggestion': 'Add outcomes like "resulting in 20% increase" or "saving $50K annually"',
             })
     
@@ -301,12 +309,13 @@ def get_bullets_per_job_issues(text: str) -> List[Dict]:
         bullet_count = len(re.findall(r'^\s*[•\-\*]\s+', section_text, re.MULTILINE))
         
         if bullet_count > 8:
-            job_title = lines[start].strip()[:50]
+            job_title = lines[start].strip()[:100]
             issues.append({
                 'issue_type': 'CONTENT_TOO_MANY_BULLETS',
-                'location': f'Job: {job_title}',
+                'location': f'Job: {job_title[:50]}',
                 'description': f'Too many bullet points ({bullet_count}) - consider condensing to 5-6 key achievements',
-                'current': f'{bullet_count} bullets',
+                'current': job_title,
+                'is_highlightable': True,
             })
     
     return issues

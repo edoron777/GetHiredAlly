@@ -1,0 +1,151 @@
+╔══════════════════════════════════════════════════════════════════════════╗
+║  FIX: Ensure Detectors Populate 'current' Field Correctly                ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+PROBLEM:
+Document View only shows 2 markers because most issues have:
+- Empty 'current' field
+- Meta-information in 'current' (like "50 words" or "Line 25")
+- Truncated text with "..."
+
+The 'current' field MUST contain the ACTUAL TEXT from the CV that should
+be highlighted.
+
+FILES TO REVIEW AND FIX:
+1. backend/common/detection/language_detector.py
+2. backend/common/detection/bullet_extractor.py
+3. backend/common/detection/format_detector.py
+4. backend/common/detection/polish_detector.py
+
+PRINCIPLE:
+───────────────────────────────────────────────────────────────────────────
+For EVERY issue returned:
+
+IF the issue is about SPECIFIC TEXT in the CV:
+  → 'current' = the actual text (max 200 chars, no truncation with ...)
+  → 'is_highlightable' = True
+
+IF the issue is about MISSING content or OVERALL pattern:
+  → 'current' = '' (empty string)
+  → 'is_highlightable' = False
+───────────────────────────────────────────────────────────────────────────
+
+SPECIFIC FIXES NEEDED:
+
+### Fix 3A: language_detector.py - Generic Statements
+
+FIND: detect_generic_statements() function
+ENSURE each issue has:
+```python
+{
+    'issue_type': 'CONTENT_GENERIC_STATEMENTS',
+    'location': 'Experience Section',
+    'description': 'Generic statement without specifics',
+    'current': actual_line_from_cv[:200],  # The actual generic line
+    'is_highlightable': True,
+}
+```
+
+### Fix 3B: language_detector.py - Buzzword Detection
+
+FIND: detect_buzzwords() function  
+ENSURE each issue has:
+```python
+{
+    'issue_type': 'CONTENT_BUZZWORD_STUFFING',
+    'location': section_name,
+    'description': f'Buzzword "{buzzword}" used - replace with specific achievements',
+    'current': buzzword,  # The actual buzzword
+    'is_highlightable': True,
+}
+```
+
+### Fix 3C: language_detector.py - First Person Pronouns
+
+FIND: detect_first_person() function
+ENSURE:
+```python
+{
+    'issue_type': 'CONTENT_FIRST_PERSON_PRONOUNS',
+    'location': 'Throughout CV',
+    'description': 'First person pronoun found',
+    'current': pronoun_in_context[:100],  # "I managed..." not just "I"
+    'is_highlightable': True,
+}
+```
+
+### Fix 3D: bullet_extractor.py - Long/Short Bullets
+
+FIND: where CONTENT_BULLET_TOO_LONG and CONTENT_BULLET_TOO_SHORT are created
+ENSURE:
+```python
+{
+    'issue_type': 'CONTENT_BULLET_TOO_LONG',
+    'current': the_actual_bullet_text[:200],  # Not "85 words"
+    'is_highlightable': True,
+}
+```
+
+### Fix 3E: polish_detector.py - All Issues
+
+Review ALL issues created in polish_detector.py.
+For each, ensure 'current' contains actual CV text, not metadata.
+
+───────────────────────────────────────────────────────────────────────────
+
+VALIDATION RULE FOR ALL DETECTORS:
+Add this helper function to master_detector.py:
+```python
+def validate_issue_format(issue: Dict) -> Dict:
+    """
+    Validate and fix issue format before returning.
+    Ensures 'current' field is properly populated.
+    """
+    # Ensure required fields exist
+    if 'issue_type' not in issue:
+        raise ValueError("Issue missing 'issue_type'")
+    
+    # Clean up 'current' field
+    current = issue.get('current', '')
+    
+    # Remove truncation markers - they break highlighting
+    if current and '...' in current:
+        # Try to get full text, or clear it
+        current = current.replace('...', '').strip()
+    
+    # Remove meta-information patterns
+    invalid_patterns = [
+        r'^\d+\s*words?$',  # "50 words"
+        r'^\d+\s*characters?$',  # "200 characters"
+        r'^Line\s*\d+',  # "Line 25"
+        r'^\d+\s*months?\s*gap',  # "6 months gap"
+    ]
+    for pattern in invalid_patterns:
+        if re.match(pattern, current, re.IGNORECASE):
+            current = ''
+            break
+    
+    # Update issue
+    issue['current'] = current
+    
+    # Set is_highlightable based on whether we have valid current text
+    if 'is_highlightable' not in issue:
+        issue['is_highlightable'] = bool(current and len(current) >= 3)
+    
+    return issue
+```
+
+Then wrap all issues in detect_all_issues():
+```python
+def detect_all_issues(cv_text: str) -> List[Dict]:
+    all_issues = []
+    
+    # ... existing detection code ...
+    
+    # Validate all issues before returning
+    validated_issues = [validate_issue_format(issue) for issue in all_issues]
+    
+    return validated_issues
+```
+
+╚══════════════════════════════════════════════════════════════════════════╝
