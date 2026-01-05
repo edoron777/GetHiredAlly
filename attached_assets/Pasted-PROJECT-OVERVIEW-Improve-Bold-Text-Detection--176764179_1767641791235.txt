@@ -1,0 +1,64 @@
+PROJECT OVERVIEW: Improve Bold Text Detection
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BACKGROUND
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The CV Optimizer service extracts text from Word documents (DOCX) and 
+adds markers like [H1], [BOLD], [BULLET] to preserve structure.
+
+These markers are then converted to HTML for display in Document View.
+
+PROBLEM: Some bold text from the original Word document is NOT being 
+detected, resulting in missing bold formatting in Document View.
+
+Example:
+- Original Word shows: "**AI Security & Governance** • LLM security..."
+- Document View shows: "AI Security & Governance • LLM security..." (not bold)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ROOT CAUSE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Bold text in Word can come from multiple sources:
+1. Direct bold on the run (run.bold = True)
+2. Bold from font settings (run.font.bold = True)
+3. Bold from paragraph style (paragraph.style.font.bold)
+4. Bold from character style (run.style.font.bold)
+5. Bold inherited from parent styles
+
+The current extraction likely only checks source #1 or #2, missing others.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PROMPT SERIES STRUCTURE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+This task consists of the following prompts:
+
+| # | Prompt ID | Type | Description |
+|---|-----------|------|-------------|
+| 0 | RFI-0#1 | 🔍 Investigation | Understand current implementation |
+| 1 | INTRO-1#1 | 📋 Introduction | This overview (you are here) |
+| 2 | REPLIT-1#1 | 💻 Code | Improve bold detection function |
+| 3 | VERIFY-1#1 | ✅ Verification | Test the improvements |
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+KEY FILES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- backend/app/cv.py - Contains _extract_docx_with_markers() function
+- Frontend Document View components - Use markers for display
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ ANTI-IMPROVISATION DIRECTIVE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- DO NOT make changes not explicitly specified in prompts
+- DO NOT add features not requested
+- DO NOT modify files not mentioned
+- DO NOT guess or improvise solutions
+- If instructions are unclear: STOP and ask for clarification
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Acknowledge this overview and confirm you understand the task structure.

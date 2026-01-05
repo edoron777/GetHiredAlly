@@ -1,0 +1,69 @@
+INVESTIGATION: Current Bold Detection Implementation
+
+CONTEXT:
+I need to improve bold text detection in the DOCX extraction function.
+Currently, some bold text from the original Word document is not being detected.
+
+Example problem:
+- Original Word: "**AI Security & Governance** • LLM security, prompt injection..."
+- Extracted: "AI Security & Governance • LLM security, prompt injection..." (no [BOLD] marker)
+
+INVESTIGATION TASKS:
+
+1. SHOW ME THE EXTRACTION FUNCTION:
+   Find and display the function _extract_docx_with_markers() 
+   Location should be in: backend/app/cv.py
+   Show me the COMPLETE function code.
+
+2. SHOW ME BOLD DETECTION LOGIC:
+   - How does the current code check for bold text?
+   - Does it check: run.bold?
+   - Does it check: run.font.bold?
+   - Does it check: paragraph.style.font.bold?
+   - Does it check inherited bold from styles?
+
+3. SHOW ME MARKER OUTPUT FORMAT:
+   - What format are [BOLD] markers added in?
+   - Is it [BOLD]text[/BOLD] or just [BOLD] prefix?
+
+4. SHOW ME HOW MARKERS ARE USED:
+   - Where is convert_markers_to_html() or similar function?
+   - How does Document View use the [BOLD] markers?
+
+5. TEST WITH SAMPLE:
+   If possible, show me what the extraction produces for a document
+   that has bold text applied via:
+   a) Direct bold on text
+   b) Bold from paragraph style
+   c) Bold from character style
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+REPORT FORMAT:
+
+FINDING 1 - Extraction Function Location:
+- File: [path]
+- Function: [name]
+- Lines: [start-end]
+
+FINDING 2 - Current Bold Detection:
+- Method used: [describe]
+- Checks run.bold: YES/NO
+- Checks run.font.bold: YES/NO
+- Checks style bold: YES/NO
+- Checks inherited bold: YES/NO
+
+FINDING 3 - Marker Format:
+- Format: [describe]
+
+FINDING 4 - Marker Usage:
+- File: [path]
+- Function: [name]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ CRITICAL RULES:
+- DO NOT modify any code
+- DO NOT create any files
+- ONLY investigate and report findings
+- Show actual code snippets in your response
