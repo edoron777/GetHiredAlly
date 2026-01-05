@@ -1,0 +1,134 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  ⚙️ TASK 1/3: Create CVIssueReport Dataclass                                ║
+║  Prompt 2 of 4 in this series                                                ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+CONTEXT:
+We are creating the CVIssueReport dataclass that will be returned by 
+detect_cv_issues(). This wraps all detected issues with summary statistics.
+
+───────────────────────────────────────────────────────────────────────────────
+FILE TO MODIFY: backend/common/detection/master_detector.py
+───────────────────────────────────────────────────────────────────────────────
+
+TASK: Add the following code AFTER the imports section (around line 100),
+BEFORE the existing functions.
+
+CODE TO ADD:
+```python
+# ═══════════════════════════════════════════════════════════════════════════════
+# CV ISSUE REPORT - Main output of detect_cv_issues()
+# ═══════════════════════════════════════════════════════════════════════════════
+
+from dataclasses import dataclass, field
+from typing import List, Dict, Any, Optional
+
+# Import CVBlockStructure for type hints
+from .block_detector import CVBlockStructure, BlockType
+
+
+@dataclass
+class IssueReportSummary:
+    """Summary statistics for the CV issue report."""
+    
+    # Counts
+    total_issues: int = 0
+    critical_count: int = 0
+    major_count: int = 0
+    minor_count: int = 0
+    suggestion_count: int = 0
+    
+    # By category
+    language_issues: int = 0
+    format_issues: int = 0
+    content_issues: int = 0
+    structure_issues: int = 0
+    length_issues: int = 0
+    
+    # Score (0-100)
+    overall_score: int = 100
+    
+    # Flags
+    has_critical_issues: bool = False
+    auto_fixable_count: int = 0
+
+
+@dataclass
+class CVIssueReport:
+    """
+    Complete report of all CV issues detected.
+    
+    This is the main output of detect_cv_issues() function.
+    It wraps all detected issues with organization and statistics.
+    """
+    
+    # All issues (List[Dict] format for backward compatibility)
+    issues: List[Dict[str, Any]] = field(default_factory=list)
+    
+    # Organized views
+    issues_by_category: Dict[str, List[Dict[str, Any]]] = field(default_factory=dict)
+    issues_by_severity: Dict[str, List[Dict[str, Any]]] = field(default_factory=dict)
+    
+    # Summary statistics
+    summary: IssueReportSummary = field(default_factory=IssueReportSummary)
+    
+    # The CV structure used (for reference)
+    cv_structure: Optional[CVBlockStructure] = None
+    
+    # Metadata
+    processing_time_ms: float = 0.0
+    detector_errors: List[str] = field(default_factory=list)
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for JSON serialization."""
+        return {
+            'issues': self.issues,
+            'issues_by_category': self.issues_by_category,
+            'issues_by_severity': self.issues_by_severity,
+            'summary': {
+                'total_issues': self.summary.total_issues,
+                'critical_count': self.summary.critical_count,
+                'major_count': self.summary.major_count,
+                'minor_count': self.summary.minor_count,
+                'suggestion_count': self.summary.suggestion_count,
+                'overall_score': self.summary.overall_score,
+                'has_critical_issues': self.summary.has_critical_issues,
+                'auto_fixable_count': self.summary.auto_fixable_count,
+            },
+            'processing_time_ms': self.processing_time_ms,
+            'detector_errors': self.detector_errors,
+        }
+    
+    def get_issues_for_block(self, block_type: BlockType) -> List[Dict[str, Any]]:
+        """Get all issues for a specific block type."""
+        block_name = block_type.value.lower()
+        return [i for i in self.issues if i.get('location', '').lower().find(block_name) >= 0]
+    
+    def get_auto_fixable_issues(self) -> List[Dict[str, Any]]:
+        """Get all issues that can be auto-fixed."""
+        return [i for i in self.issues if i.get('can_auto_fix', False)]
+```
+
+───────────────────────────────────────────────────────────────────────────────
+VERIFICATION
+───────────────────────────────────────────────────────────────────────────────
+
+After adding the code, verify:
+[ ] No syntax errors
+[ ] Import from block_detector works
+[ ] CVIssueReport can be instantiated
+
+Test with:
+```python
+from backend.common.detection.master_detector import CVIssueReport, IssueReportSummary
+report = CVIssueReport()
+print(f"Created: {report}")
+```
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- Add EXACTLY the code above
+- Do NOT modify existing functions
+- Do NOT rename or reorganize existing code
+- If something is unclear, STOP and ask
+
+╚══════════════════════════════════════════════════════════════════════════════╝
