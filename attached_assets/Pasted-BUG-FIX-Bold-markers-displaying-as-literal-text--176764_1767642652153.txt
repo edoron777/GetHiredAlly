@@ -1,0 +1,75 @@
+BUG FIX: Bold markers displaying as literal ** text
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PROBLEM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+In Document View, bold text shows literal ** characters:
+
+  **Security Architect, Senior Consultant | Cyber Risk Services
+  ** Deloitte · Full-time | Aug 2019 - Jul 2020 · 1 yr| Israel
+
+Instead of properly formatted bold text.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+INVESTIGATION TASK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Show me backend/common/utils/marker_converter.py
+   - Find the _process_bold_markers() function
+   - Check if [BOLD] converts to ** or <strong>
+
+2. Check where ** might be coming from:
+   - Search for '**' in marker_converter.py
+   - Search for '**' in cv.py extraction function
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIX REQUIRED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The [BOLD] markers MUST convert to HTML <strong> tags, NOT markdown **:
+
+WRONG:
+  text.replace('[BOLD]', '**')
+  text.replace('[/BOLD]', '**')
+
+CORRECT:
+  text.replace('[BOLD]', '<strong>')
+  text.replace('[/BOLD]', '</strong>')
+
+Find and fix any code that converts to ** instead of <strong>.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ALSO CHECK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Check if the extraction function (_extract_docx_with_markers) is 
+outputting ** instead of [BOLD]:
+
+WRONG output:
+  "**Security Architect**"
+
+CORRECT output:
+  "[BOLD]Security Architect[/BOLD]"
+
+If the extraction outputs **, change it to output [BOLD] markers instead.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ ANTI-IMPROVISATION DIRECTIVE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- ONLY fix the ** to <strong> conversion issue
+- DO NOT change the is_run_bold() detection logic (it's working)
+- DO NOT change other markers ([H1], [H2], [BULLET])
+- If unclear: STOP and ask
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COMPLETION CHECKLIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] Found where ** was being used
+[ ] Changed to <strong></strong>
+[ ] No more ** appears in Document View
+[ ] Bold text displays as actual bold
+
+Report what you found and fixed.

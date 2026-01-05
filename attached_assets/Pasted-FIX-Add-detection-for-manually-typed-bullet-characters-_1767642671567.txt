@@ -1,0 +1,126 @@
+FIX: Add detection for manually typed bullet characters
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BACKGROUND (from investigation)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Current bullet detection (backend/app/cv.py lines 333-340) ONLY detects 
+Word's native list formatting (numPr element).
+
+It does NOT detect manually typed bullets like:
+  • Conducted comprehensive evaluations...
+  - Created deliverables...
+  * Enabled informed decisions...
+
+Most CVs use typed bullet characters, not Word's bullet button.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FILE TO MODIFY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+File: backend/app/cv.py
+Function: _extract_docx_with_markers()
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+IMPLEMENTATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Find the bullet detection code (around line 333-340):
+```python
+# Check 4: List item (bullet/numbered)
+try:
+    if para._element.pPr is not None:
+        numPr = para._element.pPr.numPr
+        if numPr is not None:
+            markers.append("BULLET")
+except:
+    pass
+```
+
+ADD the text-based bullet detection AFTER the existing code:
+```python
+# Check 4: List item (bullet/numbered) - Word native lists
+try:
+    if para._element.pPr is not None:
+        numPr = para._element.pPr.numPr
+        if numPr is not None:
+            markers.append("BULLET")
+except:
+    pass
+
+# Check 5: Text-based bullets (manually typed bullet characters)
+if "BULLET" not in markers:
+    text_stripped = para.text.strip()
+    if text_stripped:
+        first_char = text_stripped[0]
+        # Common bullet characters
+        bullet_chars = ['•', '·', '●', '○', '■', '□', '▪', '▫', '▸', '►', '→', '➤', '➢', '✓', '✔', '★', '☆']
+        # Also check for dash/hyphen bullets (but only if followed by space)
+        dash_bullets = ['-', '–', '—', '*']
+        
+        if first_char in bullet_chars:
+            markers.append("BULLET")
+        elif first_char in dash_bullets and len(text_stripped) > 1 and text_stripped[1] == ' ':
+            markers.append("BULLET")
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+IMPORTANT: Remove bullet character from text
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+When a text-based bullet is detected, the bullet character should be 
+REMOVED from the text (since we'll add [BULLET] marker and the HTML 
+will add a proper bullet).
+
+Find where the text is extracted and add cleanup:
+```python
+# When building the output for bullets detected from text
+if "BULLET" in markers:
+    # Remove leading bullet character if present
+    text_stripped = text.strip()
+    bullet_chars = ['•', '·', '●', '○', '■', '□', '▪', '▫', '▸', '►', '→', '➤', '➢', '✓', '✔', '★', '☆', '-', '–', '—', '*']
+    if text_stripped and text_stripped[0] in bullet_chars:
+        # Remove bullet char and any following space
+        text = text_stripped[1:].lstrip()
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+EXPECTED OUTPUT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Input (Word document):
+  • Conducted comprehensive evaluations
+  - Created deliverables
+  * Enabled informed decisions
+
+Extraction output:
+  [BULLET] Conducted comprehensive evaluations
+  [BULLET] Created deliverables
+  [BULLET] Enabled informed decisions
+
+Document View (HTML rendered):
+  • Conducted comprehensive evaluations
+  • Created deliverables
+  • Enabled informed decisions
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ ANTI-IMPROVISATION DIRECTIVE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- ONLY add text-based bullet detection
+- KEEP the existing numPr detection (don't remove it)
+- DO NOT change bold or header detection
+- DO NOT modify marker_converter.py (it already handles [BULLET])
+- If unclear: STOP and ask
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COMPLETION CHECKLIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] Text-based bullet detection added
+[ ] Bullet character removed from text content
+[ ] Both numPr and text-based detection work
+[ ] Application runs without errors
+[ ] Bold detection still works
+
+Report what was changed.
