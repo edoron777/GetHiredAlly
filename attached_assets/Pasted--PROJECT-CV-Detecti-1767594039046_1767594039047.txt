@@ -1,0 +1,179 @@
+╔══════════════════════════════════════════════════════════════════════════╗
+║  PROJECT: CV Detection Refactoring                                       ║
+║  PROMPT 4#4: Create Integration Utility Functions                        ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+PREREQUISITE: PHASE1-3#4 must be completed first.
+
+CONTEXT:
+Now we add utility functions that make it easy for other detectors
+to use the CVBlockStructure. Also add the __all__ export list.
+
+───────────────────────────────────────────────────────────────────────────
+FILE TO MODIFY: backend/common/detection/block_detector.py
+───────────────────────────────────────────────────────────────────────────
+
+TASK: Add utility functions and exports at the END of the file.
+
+CODE TO ADD (append to end of file):
+```python
+
+# ═══════════════════════════════════════════════════════════════════════════
+# UTILITY FUNCTIONS FOR DETECTORS
+# ═══════════════════════════════════════════════════════════════════════════
+
+def get_experience_text(cv_block_structure: CVBlockStructure) -> str:
+    """Get just the experience section text. For detectors that analyze experience."""
+    if cv_block_structure.experience_block:
+        return cv_block_structure.experience_block.content
+    return ""
+
+
+def get_education_text(cv_block_structure: CVBlockStructure) -> str:
+    """Get just the education section text. For detectors that analyze education."""
+    if cv_block_structure.education_block:
+        return cv_block_structure.education_block.content
+    return ""
+
+
+def get_summary_text(cv_block_structure: CVBlockStructure) -> str:
+    """Get just the summary section text. For detectors that analyze summary."""
+    if cv_block_structure.summary_block:
+        return cv_block_structure.summary_block.content
+    return ""
+
+
+def get_skills_text(cv_block_structure: CVBlockStructure) -> str:
+    """Get just the skills section text. For detectors that analyze skills."""
+    if cv_block_structure.skills_block:
+        return cv_block_structure.skills_block.content
+    return ""
+
+
+def get_block_text(cv_block_structure: CVBlockStructure, block_type: BlockType) -> str:
+    """Get text for any block type."""
+    block = cv_block_structure.get_block_by_type(block_type)
+    return block.content if block else ""
+
+
+def get_all_bullet_texts(cv_block_structure: CVBlockStructure) -> List[str]:
+    """Get all bullet point texts as a list of strings."""
+    return [b.text for b in cv_block_structure.all_bullets]
+
+
+def get_bullets_for_analysis(cv_block_structure: CVBlockStructure) -> List[Dict[str, Any]]:
+    """Get bullets in a format suitable for analysis."""
+    return [
+        {
+            'text': b.text,
+            'line_number': b.line_number,
+            'has_metrics': b.has_metrics,
+            'has_strong_verb': b.has_strong_verb,
+            'starts_with_verb': b.starts_with_verb,
+            'action_verb': b.action_verb,
+            'job_index': b.parent_job_index,
+            'word_count': b.word_count
+        }
+        for b in cv_block_structure.all_bullets
+    ]
+
+
+def has_section(cv_block_structure: CVBlockStructure, block_type: BlockType) -> bool:
+    """Check if CV has a specific section type."""
+    return cv_block_structure.get_block_by_type(block_type) is not None
+
+
+def get_structure_issues(cv_block_structure: CVBlockStructure) -> List[Dict[str, Any]]:
+    """Identify structural issues based on detected structure."""
+    issues = []
+    summary = cv_block_structure.summary
+    
+    if not summary.has_contact:
+        issues.append({
+            'issue_type': 'missing_section',
+            'severity': 'critical',
+            'section': 'contact',
+            'message': 'CV is missing contact information'
+        })
+    
+    if not summary.has_experience:
+        issues.append({
+            'issue_type': 'missing_section',
+            'severity': 'major',
+            'section': 'experience',
+            'message': 'CV is missing work experience section'
+        })
+    
+    if not summary.has_education:
+        issues.append({
+            'issue_type': 'missing_section',
+            'severity': 'minor',
+            'section': 'education',
+            'message': 'CV is missing education section'
+        })
+    
+    if summary.unrecognized_blocks > 0:
+        issues.append({
+            'issue_type': 'unrecognized_sections',
+            'severity': 'info',
+            'count': summary.unrecognized_blocks,
+            'message': f'CV has {summary.unrecognized_blocks} unrecognized section(s)'
+        })
+    
+    return issues
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# EXPORTS
+# ═══════════════════════════════════════════════════════════════════════════
+
+__all__ = [
+    # Main function
+    'detect_cv_blocks',
+    
+    # Data classes
+    'CVBlockStructure',
+    'CVBlock',
+    'BlockType',
+    'JobEntry',
+    'EducationEntry',
+    'CertificationEntry',
+    'EnhancedBullet',
+    'ContactInfo',
+    'SkillCategory',
+    'StructureSummary',
+    
+    # Constants
+    'CONFIDENCE_HIGH',
+    'CONFIDENCE_MEDIUM',
+    'CONFIDENCE_LOW',
+    
+    # Utility functions
+    'get_experience_text',
+    'get_education_text',
+    'get_summary_text',
+    'get_skills_text',
+    'get_block_text',
+    'get_all_bullet_texts',
+    'get_bullets_for_analysis',
+    'has_section',
+    'get_structure_issues',
+]
+```
+
+───────────────────────────────────────────────────────────────────────────
+VERIFICATION
+───────────────────────────────────────────────────────────────────────────
+
+[ ] Utility functions added
+[ ] __all__ export list added
+[ ] No syntax errors
+[ ] Can import: from backend.common.detection.block_detector import detect_cv_blocks
+[ ] Can import: from backend.common.detection.block_detector import CVBlockStructure
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- APPEND only - do not modify existing code
+- Do NOT modify any other files
+- If something is unclear, STOP and ask
+
+╚══════════════════════════════════════════════════════════════════════════╝
