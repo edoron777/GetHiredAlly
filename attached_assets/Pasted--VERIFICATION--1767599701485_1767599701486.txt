@@ -1,0 +1,129 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  ✅ VERIFICATION: Test detect_cv_issues() Function                           ║
+║  Final verification after all tasks complete                                 ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+PREREQUISITE: All TASK prompts (1-3) must be completed.
+
+TASK: Run these tests to verify everything works correctly.
+
+───────────────────────────────────────────────────────────────────────────────
+TEST 1: Import Test
+───────────────────────────────────────────────────────────────────────────────
+```python
+from backend.common.detection import (
+    detect_cv_issues,
+    CVIssueReport,
+    IssueReportSummary,
+    detect_cv_blocks,
+    CVBlockStructure,
+)
+print("✓ TEST 1 PASSED: All imports successful")
+```
+
+───────────────────────────────────────────────────────────────────────────────
+TEST 2: Basic Function Test
+───────────────────────────────────────────────────────────────────────────────
+```python
+test_cv = """
+John Smith
+john.smith@email.com
+(555) 123-4567
+
+PROFESSIONAL SUMMARY
+Experienced software engineer with 8 years experience.
+
+EXPERIENCE
+
+Senior Software Engineer at TechCorp Inc.
+January 2020 - Present
+- Led development of microservices architecture reducing latency by 40%
+- Managed team of 5 developers
+
+Software Developer at StartupXYZ
+June 2016 - December 2019
+- Built RESTful APIs serving 10,000 daily active users
+
+EDUCATION
+
+Bachelor of Science in Computer Science
+University of California, Berkeley
+2016
+
+SKILLS
+Python, JavaScript, SQL, Docker
+"""
+
+# Test basic call
+report = detect_cv_issues(test_cv)
+
+print(f"✓ Function returned: {type(report).__name__}")
+print(f"✓ Total issues: {report.summary.total_issues}")
+print(f"✓ Overall score: {report.summary.overall_score}/100")
+print(f"✓ Categories found: {list(report.issues_by_category.keys())}")
+print(f"✓ Processing time: {report.processing_time_ms:.2f}ms")
+
+if report.cv_structure:
+    print(f"✓ CV structure detected: {report.cv_structure.summary.total_blocks} blocks")
+else:
+    print("⚠ CV structure not available")
+
+print("\n✓ TEST 2 PASSED: Basic function test successful")
+```
+
+───────────────────────────────────────────────────────────────────────────────
+TEST 3: With Pre-computed Structure
+───────────────────────────────────────────────────────────────────────────────
+```python
+# Test with pre-computed structure
+structure = detect_cv_blocks(test_cv)
+report2 = detect_cv_issues(test_cv, cv_block_structure=structure)
+
+print(f"✓ With pre-computed structure: {report2.summary.total_issues} issues")
+print("✓ TEST 3 PASSED: Pre-computed structure test successful")
+```
+
+───────────────────────────────────────────────────────────────────────────────
+TEST 4: to_dict() Method
+───────────────────────────────────────────────────────────────────────────────
+```python
+# Test serialization
+report_dict = report.to_dict()
+
+print(f"✓ to_dict() returned: {type(report_dict).__name__}")
+print(f"✓ Keys: {list(report_dict.keys())}")
+print("✓ TEST 4 PASSED: Serialization test successful")
+```
+
+───────────────────────────────────────────────────────────────────────────────
+SUCCESS CRITERIA
+───────────────────────────────────────────────────────────────────────────────
+
+All tests should pass:
+[ ] TEST 1: All imports work
+[ ] TEST 2: detect_cv_issues() returns CVIssueReport
+[ ] TEST 3: Pre-computed structure works
+[ ] TEST 4: to_dict() works
+
+EXPECTED OUTPUT:
+- Total issues: > 0 (some issues should be detected)
+- Score: 0-100 (reasonable score)
+- Categories: At least 1-2 categories
+- Processing time: < 5000ms
+
+───────────────────────────────────────────────────────────────────────────────
+SUMMARY TABLE
+───────────────────────────────────────────────────────────────────────────────
+
+After verification, fill in this table:
+
+| Metric | Value |
+|--------|-------|
+| Total issues detected | ___ |
+| Overall score | ___/100 |
+| Categories found | ___ |
+| Processing time | ___ms |
+| Detector errors | ___ |
+| All tests passed | Yes/No |
+
+╚══════════════════════════════════════════════════════════════════════════════╝
