@@ -13,12 +13,80 @@ Version: 1.0
 Date: January 2026
 """
 
+import re
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional, Any, Tuple
 from enum import Enum
 
 from .section_extractor import extract_sections, CVStructure
 from .bullet_extractor import extract_bullets, BulletPoint
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# STRUCTURE MARKER UTILITIES
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Markers added by enhanced extraction (cv.py)
+STRUCTURE_MARKER_PATTERN = re.compile(r'^\[(H1|H2|BOLD|BULLET)\]\s*', re.MULTILINE)
+
+
+def strip_structure_markers(text: str) -> str:
+    """Remove structure markers from text for user-facing output.
+    
+    Strips [H1], [H2], [BOLD], [BULLET] markers while preserving the text content.
+    """
+    return STRUCTURE_MARKER_PATTERN.sub('', text)
+
+
+def extract_marker_info(text: str) -> List[Dict[str, Any]]:
+    """Extract all structure markers and their positions.
+    
+    Returns list of dicts with:
+        - line_number: 1-indexed line number
+        - marker_type: H1, H2, BOLD, or BULLET
+        - text: The text content (without marker)
+        - is_likely_header: True if H1, H2, or BOLD
+    """
+    markers = []
+    lines = text.split('\n')
+    
+    for i, line in enumerate(lines, 1):
+        match = STRUCTURE_MARKER_PATTERN.match(line)
+        if match:
+            marker_type = match.group(1)
+            clean_text = STRUCTURE_MARKER_PATTERN.sub('', line).strip()
+            markers.append({
+                'line_number': i,
+                'marker_type': marker_type,
+                'text': clean_text,
+                'is_likely_header': marker_type in ('H1', 'H2', 'BOLD')
+            })
+    
+    return markers
+
+
+def get_marker_enhanced_headers(text: str) -> List[Tuple[int, str, str]]:
+    """Get likely section headers based on markers.
+    
+    Returns list of (line_number, header_text, confidence) tuples.
+    Markers provide much higher confidence than keyword detection alone.
+    """
+    headers = []
+    marker_info = extract_marker_info(text)
+    
+    for info in marker_info:
+        if info['is_likely_header']:
+            # Assign confidence based on marker type
+            if info['marker_type'] == 'H1':
+                confidence = 'high'  # Heading 1 style - almost certainly a section header
+            elif info['marker_type'] == 'H2':
+                confidence = 'high'  # Heading 2 style - likely a section header
+            else:  # BOLD
+                confidence = 'medium'  # Bold text - might be header or emphasis
+            
+            headers.append((info['line_number'], info['text'], confidence))
+    
+    return headers
 
 
 class BlockType(Enum):
@@ -238,8 +306,12 @@ def detect_cv_blocks(cv_text: str) -> CVBlockStructure:
     and adds enhanced metadata including line numbers, sub-blocks (jobs,
     education entries), and confidence scores.
     
+    ENHANCED: Now supports structure markers ([H1], [H2], [BOLD], [BULLET])
+    from enhanced extraction (cv.py). When markers are present, they boost
+    confidence scores and improve section detection accuracy.
+    
     Args:
-        cv_text: Raw CV text content
+        cv_text: Raw CV text content (may include structure markers)
         
     Returns:
         CVBlockStructure with all detected blocks and metadata
@@ -247,18 +319,30 @@ def detect_cv_blocks(cv_text: str) -> CVBlockStructure:
     import time
     start_time = time.time()
     
-    result = CVBlockStructure(raw_text=cv_text)
+    # Check for structure markers and extract their info BEFORE stripping
+    marker_info = extract_marker_info(cv_text)
+    has_markers = len(marker_info) > 0
+    
+    # Strip markers for clean processing by section_extractor
+    # (section_extractor doesn't understand markers yet)
+    clean_text = strip_structure_markers(cv_text) if has_markers else cv_text
+    
+    result = CVBlockStructure(raw_text=clean_text)
     
     try:
-        # Step 1: Get lines for line number tracking
-        lines = cv_text.split('\n')
+        # Step 1: Get lines for line number tracking (from clean text)
+        lines = clean_text.split('\n')
         result.summary.total_lines = len(lines)
         
-        # Step 2: Use existing section extractor
-        cv_structure = extract_sections(cv_text)
+        # Step 2: Use existing section extractor (with clean text)
+        cv_structure = extract_sections(clean_text)
         
         # Step 3: Convert to our enhanced block structure
         result.blocks = _convert_sections_to_blocks(cv_structure, lines)
+        
+        # Step 3.5: ENHANCED - Boost confidence using markers
+        if has_markers:
+            _enhance_blocks_with_markers(result, marker_info, lines)
         
         # Step 4: Set quick-access references
         _set_block_references(result)
@@ -278,6 +362,39 @@ def detect_cv_blocks(cv_text: str) -> CVBlockStructure:
     
     result.processing_time_ms = (time.time() - start_time) * 1000
     return result
+
+
+def _enhance_blocks_with_markers(result: CVBlockStructure, marker_info: List[Dict], lines: List[str]) -> None:
+    """Enhance block detection using structure markers.
+    
+    When markers like [H1], [BOLD] are present, we can:
+    1. Boost confidence for blocks whose headers match marked lines
+    2. Potentially detect sections that keyword-only detection missed
+    """
+    # Build a map of line_number -> marker_type for quick lookup
+    # Note: marker line numbers are from the original text with markers
+    # We need to match by text content since lines are now stripped
+    header_texts = {}
+    for info in marker_info:
+        if info['is_likely_header']:
+            # Normalize text for matching
+            text_normalized = info['text'].lower().strip()
+            header_texts[text_normalized] = info['marker_type']
+    
+    # Boost confidence for blocks whose headers match marked headers
+    for block in result.blocks:
+        header_normalized = block.header_text.lower().strip()
+        
+        if header_normalized in header_texts:
+            marker_type = header_texts[header_normalized]
+            
+            # Boost confidence based on marker type
+            if marker_type == 'H1':
+                block.confidence = max(block.confidence, CONFIDENCE_HIGH + 0.05)
+            elif marker_type == 'H2':
+                block.confidence = max(block.confidence, CONFIDENCE_HIGH)
+            elif marker_type == 'BOLD':
+                block.confidence = max(block.confidence, CONFIDENCE_MEDIUM + 0.1)
 
 
 def _convert_sections_to_blocks(cv_structure: CVStructure, lines: List[str]) -> List[CVBlock]:

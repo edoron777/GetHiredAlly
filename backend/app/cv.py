@@ -84,54 +84,28 @@ def get_user_from_token(token: str) -> dict | None:
         return None
 
 
-def extract_text_from_file(file_content: bytes, filename: str) -> str:
-    """Extract text content from uploaded file."""
+def extract_text_from_file(file_content: bytes, filename: str, preserve_markers: bool = True) -> str:
+    """Extract text content from uploaded file.
+    
+    Args:
+        file_content: Raw bytes of the uploaded file
+        filename: Original filename (used to detect extension)
+        preserve_markers: If True, adds structural markers like [H1], [BOLD], [BULLET]
+                         for better section detection. If False, returns plain text.
+    
+    Returns:
+        Extracted text, optionally with structure markers
+    """
     extension = filename.split('.')[-1].lower()
     
     if extension == 'txt':
         return file_content.decode('utf-8', errors='ignore')
     
     elif extension == 'pdf':
-        try:
-            import pdfplumber
-            with pdfplumber.open(io.BytesIO(file_content)) as pdf:
-                text_parts = []
-                for page in pdf.pages:
-                    page_text = page.extract_text()
-                    if page_text:
-                        text_parts.append(page_text)
-                return '\n'.join(text_parts)
-        except Exception as e:
-            raise HTTPException(status_code=400, detail=f"Failed to parse PDF: {str(e)}")
+        return _extract_pdf_with_markers(file_content, preserve_markers)
     
     elif extension in ['docx', 'doc']:
-        try:
-            from docx import Document
-            from docx.opc.constants import RELATIONSHIP_TYPE as RT
-            doc = Document(io.BytesIO(file_content))
-            text_parts = []
-            for para in doc.paragraphs:
-                if para.text.strip():
-                    text_parts.append(para.text)
-            
-            relevant_domains = ['linkedin.com', 'github.com', 'gitlab.com', 'bitbucket.org', 'portfolio', 'behance.net', 'dribbble.com']
-            hyperlinks = set()
-            for rel in doc.part.rels.values():
-                if rel.reltype == RT.HYPERLINK and rel.target_ref:
-                    link = str(rel.target_ref).lower()
-                    if any(domain in link for domain in relevant_domains):
-                        hyperlinks.add(rel.target_ref)
-            
-            text = '\n'.join(text_parts)
-            
-            if hyperlinks:
-                text += "\n\n[HYPERLINKS FOUND IN DOCUMENT:]\n"
-                for link in sorted(hyperlinks):
-                    text += f"- {link}\n"
-            
-            return text
-        except Exception as e:
-            raise HTTPException(status_code=400, detail=f"Failed to parse DOCX: {str(e)}")
+        return _extract_docx_with_markers(file_content, preserve_markers)
     
     elif extension == 'md':
         return file_content.decode('utf-8', errors='ignore')
@@ -175,6 +149,195 @@ def extract_text_from_file(file_content: bytes, filename: str) -> str:
             return file_content.decode('utf-8', errors='ignore')
         except Exception:
             raise HTTPException(status_code=400, detail="Unsupported file type")
+
+
+def _extract_pdf_with_markers(file_content: bytes, preserve_markers: bool = True) -> str:
+    """Extract PDF text using PyMuPDF with optional structure markers.
+    
+    Markers added:
+    - [H1] for text with font size > 14pt
+    - [H2] for text with font size > 12pt  
+    - [BOLD] for bold text (potential headers)
+    """
+    try:
+        import fitz  # PyMuPDF
+        
+        doc = fitz.open(stream=file_content, filetype="pdf")
+        result_lines = []
+        
+        for page in doc:
+            blocks = page.get_text("dict", flags=fitz.TEXT_PRESERVE_WHITESPACE)["blocks"]
+            
+            for block in blocks:
+                if block.get("type") == 0:  # Text block
+                    block_lines = []
+                    
+                    for line in block.get("lines", []):
+                        line_text = ""
+                        line_is_header = False
+                        max_font_size = 0
+                        
+                        for span in line.get("spans", []):
+                            text = span.get("text", "").strip()
+                            if not text:
+                                continue
+                            
+                            font_size = span.get("size", 12)
+                            font_name = span.get("font", "").lower()
+                            is_bold = "bold" in font_name or "black" in font_name
+                            
+                            max_font_size = max(max_font_size, font_size)
+                            
+                            if preserve_markers:
+                                if font_size > 14 or (font_size > 12 and is_bold):
+                                    line_is_header = True
+                            
+                            line_text += text + " "
+                        
+                        line_text = line_text.strip()
+                        if line_text:
+                            if preserve_markers and line_is_header:
+                                if max_font_size > 14:
+                                    result_lines.append(f"[H1] {line_text}")
+                                else:
+                                    result_lines.append(f"[H2] {line_text}")
+                            else:
+                                result_lines.append(line_text)
+            
+            result_lines.append("")  # Page break
+        
+        doc.close()
+        return '\n'.join(result_lines)
+        
+    except Exception as e:
+        logger.warning(f"PyMuPDF extraction failed, falling back to pdfplumber: {e}")
+        # Fallback to pdfplumber
+        try:
+            import pdfplumber
+            with pdfplumber.open(io.BytesIO(file_content)) as pdf:
+                text_parts = []
+                for page in pdf.pages:
+                    page_text = page.extract_text()
+                    if page_text:
+                        text_parts.append(page_text)
+                return '\n'.join(text_parts)
+        except Exception as e2:
+            raise HTTPException(status_code=400, detail=f"Failed to parse PDF: {str(e2)}")
+
+
+def _extract_docx_with_markers(file_content: bytes, preserve_markers: bool = True) -> str:
+    """Extract DOCX text with optional structure markers.
+    
+    Markers added:
+    - [H1] for Heading 1 style or font size > 14pt
+    - [H2] for Heading 2/3 style or font size > 12pt
+    - [BOLD] for fully bold paragraphs (potential headers)
+    - [BULLET] for list items
+    """
+    try:
+        from docx import Document
+        from docx.opc.constants import RELATIONSHIP_TYPE as RT
+        
+        doc = Document(io.BytesIO(file_content))
+        result_lines = []
+        
+        for para in doc.paragraphs:
+            text = para.text.strip()
+            if not text:
+                result_lines.append("")  # Preserve blank lines for structure
+                continue
+            
+            markers = []
+            
+            if preserve_markers:
+                # Check 1: Heading styles
+                style_name = para.style.name if para.style else ""
+                if style_name and ("Heading 1" in style_name or "Title" in style_name):
+                    markers.append("H1")
+                elif style_name and "Heading" in style_name:
+                    markers.append("H2")
+                
+                # Check 2: All runs are bold (likely a header)
+                runs_with_text = [r for r in para.runs if r.text.strip()]
+                if runs_with_text:
+                    all_bold = all(r.bold for r in runs_with_text)
+                    if all_bold and "H1" not in markers and "H2" not in markers:
+                        markers.append("BOLD")
+                
+                # Check 3: Large font size
+                for run in para.runs:
+                    if run.font.size:
+                        size_pt = run.font.size.pt
+                        if size_pt > 14 and "H1" not in markers:
+                            markers.append("H1")
+                            break
+                        elif size_pt > 12 and "H1" not in markers and "H2" not in markers:
+                            markers.append("H2")
+                            break
+                
+                # Check 4: List item (bullet/numbered)
+                try:
+                    if para._element.pPr is not None:
+                        numPr = para._element.pPr.numPr
+                        if numPr is not None:
+                            markers.append("BULLET")
+                except:
+                    pass
+                
+                # Check 5: ALL CAPS short text (likely header)
+                if len(text) < 50 and text.isupper() and not markers:
+                    markers.append("BOLD")
+            
+            # Format output with markers
+            if markers:
+                # Use highest priority marker
+                if "H1" in markers:
+                    result_lines.append(f"[H1] {text}")
+                elif "H2" in markers:
+                    result_lines.append(f"[H2] {text}")
+                elif "BOLD" in markers:
+                    result_lines.append(f"[BOLD] {text}")
+                elif "BULLET" in markers:
+                    result_lines.append(f"[BULLET] {text}")
+                else:
+                    result_lines.append(text)
+            else:
+                result_lines.append(text)
+        
+        # Extract hyperlinks
+        relevant_domains = ['linkedin.com', 'github.com', 'gitlab.com', 'bitbucket.org', 'portfolio', 'behance.net', 'dribbble.com']
+        hyperlinks = set()
+        try:
+            for rel in doc.part.rels.values():
+                if rel.reltype == RT.HYPERLINK and rel.target_ref:
+                    link = str(rel.target_ref).lower()
+                    if any(domain in link for domain in relevant_domains):
+                        hyperlinks.add(rel.target_ref)
+        except:
+            pass
+        
+        text = '\n'.join(result_lines)
+        
+        if hyperlinks:
+            text += "\n\n[HYPERLINKS FOUND IN DOCUMENT:]\n"
+            for link in sorted(hyperlinks):
+                text += f"- {link}\n"
+        
+        return text
+        
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to parse DOCX: {str(e)}")
+
+
+def strip_structure_markers(text: str) -> str:
+    """Remove structure markers from text for user-facing output.
+    
+    Strips [H1], [H2], [BOLD], [BULLET] markers while preserving the text content.
+    """
+    import re
+    # Remove markers at start of lines
+    text = re.sub(r'^\[(H1|H2|BOLD|BULLET)\]\s*', '', text, flags=re.MULTILINE)
+    return text
 
 
 @router.get("/list")
@@ -228,12 +391,19 @@ async def upload_cv_for_scan(
     if len(file_content) > MAX_FILE_SIZE:
         raise HTTPException(status_code=400, detail="File too large. Maximum 10MB allowed")
     
-    text_content = extract_text_from_file(file_content, file.filename)
+    # Extract text WITH markers for better detection during scanning
+    # Markers like [H1], [BOLD], [BULLET] help detect section headers
+    text_with_markers = extract_text_from_file(file_content, file.filename, preserve_markers=True)
     
-    if not text_content or len(text_content.strip()) < 50:
+    # Check content length using clean text (without markers) for accurate count
+    clean_text = strip_structure_markers(text_with_markers)
+    
+    if not clean_text or len(clean_text.strip()) < 50:
         raise HTTPException(status_code=400, detail="Could not extract sufficient text from file")
     
-    encrypted_content = encrypt_text(text_content)
+    # Store WITH markers for detection - markers stripped at display time
+    # This enables better section detection during CV analysis
+    encrypted_content = encrypt_text(text_with_markers)
     
     try:
         conn = get_db_connection()
@@ -260,7 +430,7 @@ async def upload_cv_for_scan(
             "cv_id": cv_id,
             "filename": file.filename,
             "size": len(file_content),
-            "content_length": len(text_content)
+            "content_length": len(clean_text)
         }
     except HTTPException:
         raise

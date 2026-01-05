@@ -24,6 +24,7 @@ from common.scoring.extractors import extract_patterns, analyze_text
 from common.scoring.severity import assign_severity_to_issues, count_issues_by_severity
 from common.detection import detect_cv_issues, CVIssueReport
 from common.detection.changes_extractor import extract_changes_code_based
+from common.detection.block_detector import strip_structure_markers
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/cv-optimizer", tags=["cv-optimizer"])
@@ -777,13 +778,16 @@ async def get_detailed_report(scan_id: str, token: str):
         if isinstance(issues, str):
             issues = json.loads(issues)
 
-        cv_content = scan.get('original_cv_content', '')
+        cv_content_raw = scan.get('original_cv_content', '')
+        # Strip structure markers for user-facing output
+        # Markers like [H1], [BOLD] are for detection only
+        cv_content = strip_structure_markers(cv_content_raw) if cv_content_raw else ''
         score_data = extract_cv_data_and_score(cv_content) if cv_content else calculate_cv_score_from_issues(issues)
 
         return {
             'scan_id': scan['id'],
             'scan_date': scan['scan_date'],
-            'cv_content': cv_content,
+            'cv_content': cv_content,  # Clean text without markers
             'total_issues': scan['total_issues'],
             'critical_count': scan['critical_count'],
             'high_count': scan['high_count'],
@@ -840,7 +844,9 @@ async def get_report_summary(scan_id: str, token: str = ''):
         # Use deterministic severity counting (supports legacy high/medium/low names)
         breakdown = count_issues_by_severity(issues)
 
-        cv_content = scan.get('original_cv_content', '')
+        cv_content_raw = scan.get('original_cv_content', '')
+        # Strip markers for clean scoring
+        cv_content = strip_structure_markers(cv_content_raw) if cv_content_raw else ''
         score_data = extract_cv_data_and_score(cv_content) if cv_content else {'score': 0}
 
         return {
@@ -989,7 +995,9 @@ async def generate_fixed_cv(request: Request, scan_id: str, token: str):
                 'scan_id': scan_id
             }
 
-        original_content = scan.get('original_cv_content', '')
+        original_content_raw = scan.get('original_cv_content', '')
+        # Strip markers before sending to AI - markers are for detection only
+        original_content = strip_structure_markers(original_content_raw) if original_content_raw else ''
         issues = scan.get('issues_json', [])
         if isinstance(issues, str):
             issues = json.loads(issues)
@@ -1161,8 +1169,11 @@ async def get_fixed_cv(scan_id: str, token: str):
             issues = json.loads(issues)
 
         # Get REAL scores from database (calculated during fix generation)
-        original_content = scan.get('original_cv_content', '')
+        original_content_raw = scan.get('original_cv_content', '')
         fixed_content = scan.get('fixed_cv_content', '')
+        
+        # Strip markers from original content for user display
+        original_content = strip_structure_markers(original_content_raw) if original_content_raw else ''
         
         # Use stored scores if available, otherwise recalculate
         if scan.get('fixed_score') is not None:
@@ -1333,7 +1344,9 @@ async def get_latest_scan(token: str):
         if not scan:
             return None
 
-        cv_content = scan.get('original_cv_content', '')
+        cv_content_raw = scan.get('original_cv_content', '')
+        # Strip markers for clean scoring
+        cv_content = strip_structure_markers(cv_content_raw) if cv_content_raw else ''
         score_data = extract_cv_data_and_score(cv_content) if cv_content else calculate_cv_score_from_issues([])
         
         created_at = scan.get("created_at")
