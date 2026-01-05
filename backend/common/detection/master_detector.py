@@ -453,3 +453,171 @@ def get_detection_summary(issues: List[Dict]) -> Dict[str, int]:
     
     types = [issue.get('issue_type', 'UNKNOWN') for issue in issues]
     return dict(Counter(types))
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# MAIN ENTRY POINT: detect_cv_issues()
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def detect_cv_issues(
+    cv_text: str,
+    job_description: Optional[str] = None,
+    cv_block_structure: Optional[CVBlockStructure] = None
+) -> CVIssueReport:
+    """
+    Main entry point for CV issue detection.
+    
+    This function detects all issues/problems in a CV and returns
+    a structured report with categorization and statistics.
+    
+    Args:
+        cv_text: Raw CV text content
+        job_description: Optional job description for keyword matching
+        cv_block_structure: Optional pre-computed CV structure (for efficiency)
+    
+    Returns:
+        CVIssueReport with:
+        - issues: List of all detected issues
+        - issues_by_category: Issues grouped by category
+        - issues_by_severity: Issues grouped by severity
+        - summary: Statistics and counts
+        - cv_structure: The CVBlockStructure used
+    
+    Usage:
+        # Simple usage
+        report = detect_cv_issues(cv_text)
+        
+        # With job description
+        report = detect_cv_issues(cv_text, job_description=job_desc)
+        
+        # With pre-computed structure (efficiency)
+        structure = detect_cv_blocks(cv_text)
+        report = detect_cv_issues(cv_text, cv_block_structure=structure)
+    """
+    import time
+    start_time = time.time()
+    
+    # Initialize report
+    report = CVIssueReport()
+    
+    try:
+        # Step 1: Get or create CV block structure
+        if cv_block_structure is None:
+            try:
+                from .block_detector import detect_cv_blocks
+                cv_block_structure = detect_cv_blocks(cv_text)
+            except Exception as e:
+                report.detector_errors.append(f"block_detector: {str(e)}")
+                cv_block_structure = None
+        
+        report.cv_structure = cv_block_structure
+        
+        # Step 2: Call existing detect_all_issues()
+        # This runs all 17 detectors and returns List[Dict]
+        all_issues = detect_all_issues(cv_text, job_description)
+        report.issues = all_issues
+        
+        # Step 3: Organize issues by category
+        report.issues_by_category = _organize_by_category(all_issues)
+        
+        # Step 4: Organize issues by severity
+        report.issues_by_severity = _organize_by_severity(all_issues)
+        
+        # Step 5: Calculate summary statistics
+        report.summary = _calculate_summary(all_issues)
+        
+    except Exception as e:
+        report.detector_errors.append(f"detect_cv_issues: {str(e)}")
+        logger.error(f"Error in detect_cv_issues: {str(e)}")
+    
+    # Record processing time
+    report.processing_time_ms = (time.time() - start_time) * 1000
+    
+    return report
+
+
+def _organize_by_category(issues: List[Dict[str, Any]]) -> Dict[str, List[Dict[str, Any]]]:
+    """Organize issues by category based on issue_type prefix."""
+    categories = {}
+    
+    for issue in issues:
+        issue_type = issue.get('issue_type', 'UNKNOWN')
+        
+        # Extract category from issue_type (e.g., "CONTENT_MISSING_SUMMARY" -> "content")
+        if '_' in issue_type:
+            category = issue_type.split('_')[0].lower()
+        else:
+            category = 'other'
+        
+        if category not in categories:
+            categories[category] = []
+        categories[category].append(issue)
+    
+    return categories
+
+
+def _organize_by_severity(issues: List[Dict[str, Any]]) -> Dict[str, List[Dict[str, Any]]]:
+    """Organize issues by severity level."""
+    severities = {
+        'critical': [],
+        'major': [],
+        'minor': [],
+        'suggestion': []
+    }
+    
+    for issue in issues:
+        severity = issue.get('severity', 'minor').lower()
+        if severity not in severities:
+            severity = 'minor'
+        severities[severity].append(issue)
+    
+    return severities
+
+
+def _calculate_summary(issues: List[Dict[str, Any]]) -> IssueReportSummary:
+    """Calculate summary statistics from issues list."""
+    summary = IssueReportSummary()
+    summary.total_issues = len(issues)
+    
+    for issue in issues:
+        # Count by severity
+        severity = issue.get('severity', 'minor').lower()
+        if severity == 'critical':
+            summary.critical_count += 1
+            summary.has_critical_issues = True
+        elif severity == 'major':
+            summary.major_count += 1
+        elif severity == 'minor':
+            summary.minor_count += 1
+        else:
+            summary.suggestion_count += 1
+        
+        # Count by category
+        issue_type = issue.get('issue_type', '')
+        if issue_type.startswith('CONTENT_'):
+            if 'LANGUAGE' in issue_type or 'VERB' in issue_type:
+                summary.language_issues += 1
+            else:
+                summary.content_issues += 1
+        elif issue_type.startswith('FORMAT_'):
+            summary.format_issues += 1
+        elif issue_type.startswith('LENGTH_'):
+            summary.length_issues += 1
+        elif issue_type.startswith('STRUCTURE_'):
+            summary.structure_issues += 1
+        
+        # Count auto-fixable
+        if issue.get('can_auto_fix', False):
+            summary.auto_fixable_count += 1
+    
+    # Calculate score (simple formula: 100 - weighted issues)
+    # Critical = -15, Major = -8, Minor = -3, Suggestion = -1
+    deductions = (
+        summary.critical_count * 15 +
+        summary.major_count * 8 +
+        summary.minor_count * 3 +
+        summary.suggestion_count * 1
+    )
+    summary.overall_score = max(0, min(100, 100 - deductions))
+    
+    return summary

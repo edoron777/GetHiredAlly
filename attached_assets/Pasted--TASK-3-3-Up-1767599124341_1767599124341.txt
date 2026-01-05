@@ -1,0 +1,61 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  ⚙️ TASK 3/3: Update Exports in __init__.py                                 ║
+║  Prompt 4 of 4 in this series                                                ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+PREREQUISITE: TASK-2 must be completed first.
+
+CONTEXT:
+Now we export the new function and classes so other services can import them.
+
+───────────────────────────────────────────────────────────────────────────────
+FILE TO MODIFY: backend/common/detection/__init__.py
+───────────────────────────────────────────────────────────────────────────────
+
+TASK: Add these exports to the __init__.py file.
+
+FIND the existing imports from master_detector and ADD the new exports:
+```python
+# Add these imports (find existing master_detector imports and add to them)
+from .master_detector import (
+    detect_all_issues,      # Existing
+    detect_cv_issues,       # NEW - main entry point
+    CVIssueReport,          # NEW - report class
+    IssueReportSummary,     # NEW - summary class
+)
+
+# Also ensure block_detector exports are available
+from .block_detector import (
+    detect_cv_blocks,
+    CVBlockStructure,
+    CVBlock,
+    BlockType,
+    JobEntry,
+    EnhancedBullet,
+)
+```
+
+───────────────────────────────────────────────────────────────────────────────
+VERIFICATION
+───────────────────────────────────────────────────────────────────────────────
+
+After updating, verify imports work:
+```python
+# Test imports
+from backend.common.detection import (
+    detect_cv_issues,
+    CVIssueReport,
+    detect_cv_blocks,
+    CVBlockStructure,
+)
+
+print("✓ All imports successful")
+```
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- Add ONLY the new exports
+- Do NOT remove any existing exports
+- Do NOT reorganize the file
+- If __init__.py doesn't exist or has different structure, report it
+
+╚══════════════════════════════════════════════════════════════════════════════╝
