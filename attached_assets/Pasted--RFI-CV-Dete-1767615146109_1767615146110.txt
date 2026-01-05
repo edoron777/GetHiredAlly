@@ -1,0 +1,227 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  🔍 RFI: CV Detection Pipeline - Full Investigation                          ║
+║  Purpose: Understand why detection misses important issues                   ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+CONTEXT:
+The CV detection system identifies trivial issues (bullets, spacing) but misses
+critical issues (too many certifications, missing achievements in old roles).
+
+HYPOTHESIS:
+detect_cv_blocks() creates structure but detect_cv_issues() doesn't use it.
+
+───────────────────────────────────────────────────────────────────────────────
+INVESTIGATION PART 1: What Does detect_cv_blocks() Output?
+───────────────────────────────────────────────────────────────────────────────
+
+Create a test file: backend/tests/test_block_detection.py
+```python
+"""Test what detect_cv_blocks actually produces"""
+
+from common.detection import detect_cv_blocks
+
+test_cv = """John Smith
+john@email.com | 555-123-4567 | linkedin.com/in/johnsmith
+
+PROFESSIONAL SUMMARY
+Senior software engineer with 10+ years experience.
+
+SKILLS
+Python, JavaScript, React, AWS, Docker
+
+EXPERIENCE
+
+Senior Developer at TechCorp
+2020 - Present
+- Led team of 5 engineers
+- Built microservices architecture
+
+Junior Developer at StartupXYZ  
+2015 - 2020
+- Developed web applications
+- Fixed bugs
+
+EDUCATION
+BS Computer Science, MIT, 2015
+
+CERTIFICATIONS
+- AWS Solutions Architect
+- Google Cloud Professional
+- Microsoft Azure Administrator
+- Kubernetes Administrator
+- Docker Certified
+- Python Professional
+- JavaScript Expert
+- React Developer
+- Node.js Certified
+- PostgreSQL Expert
+"""
+
+print("=" * 70)
+print("TEST 1: What does detect_cv_blocks() return?")
+print("=" * 70)
+
+result = detect_cv_blocks(test_cv)
+
+print(f"\nReturn type: {type(result)}")
+print(f"Result: {result}")
+
+if hasattr(result, '__dict__'):
+    print(f"\nAttributes: {result.__dict__}")
+
+if hasattr(result, 'blocks'):
+    print(f"\nBlocks found: {len(result.blocks)}")
+    for block in result.blocks:
+        print(f"  - {block}")
+
+if hasattr(result, 'sections'):
+    print(f"\nSections found:")
+    for name, content in result.sections.items():
+        preview = content[:50] if content else "EMPTY"
+        print(f"  - {name}: {preview}...")
+
+# Check specific sections
+section_names = ['contact', 'summary', 'skills', 'experience', 'education', 'certifications']
+for section in section_names:
+    if hasattr(result, section):
+        content = getattr(result, section)
+        print(f"\n{section.upper()}: {content[:100] if content else 'NOT FOUND'}...")
+```
+
+Run: cd backend && python tests/test_block_detection.py
+
+───────────────────────────────────────────────────────────────────────────────
+INVESTIGATION PART 2: Does detect_cv_issues() Receive Block Structure?
+───────────────────────────────────────────────────────────────────────────────
+
+Find the detect_cv_issues() function and answer:
+
+1. What parameters does it accept?
+2. Does it call detect_cv_blocks() internally?
+3. Does it pass block structure to individual detectors?
+
+Search:
+```bash
+grep -n "def detect_cv_issues" backend/common/detection/*.py
+grep -n "cv_block" backend/common/detection/master_detector.py
+grep -n "detect_cv_blocks" backend/common/detection/master_detector.py
+```
+
+Show me the function signature and first 50 lines of detect_cv_issues().
+
+───────────────────────────────────────────────────────────────────────────────
+INVESTIGATION PART 3: What Do Individual Detectors Receive?
+───────────────────────────────────────────────────────────────────────────────
+
+Check ONE detector that should use section context.
+
+Example: LENGTH detector should know about certifications section.
+```bash
+grep -n "def detect" backend/common/detection/length_detector.py
+grep -n "def get_cv_length" backend/common/detection/length_detector.py
+```
+
+Show me:
+1. Function signature (what parameters it accepts)
+2. Does it receive section/block information?
+3. How does it count certifications? (Does it know where certifications are?)
+
+───────────────────────────────────────────────────────────────────────────────
+INVESTIGATION PART 4: Trace the Data Flow
+───────────────────────────────────────────────────────────────────────────────
+
+Create: backend/tests/test_detection_pipeline.py
+```python
+"""Trace data flow through detection pipeline"""
+
+from common.detection import detect_cv_blocks, detect_cv_issues
+
+test_cv = """John Smith
+john@email.com
+
+CERTIFICATIONS
+- Cert 1
+- Cert 2
+- Cert 3
+- Cert 4
+- Cert 5
+- Cert 6
+- Cert 7
+- Cert 8
+- Cert 9
+- Cert 10
+- Cert 11
+- Cert 12
+"""
+
+print("=" * 70)
+print("TEST: Does detection know about CERTIFICATIONS section?")
+print("=" * 70)
+
+# Step 1: Block detection
+print("\n1. Block Detection:")
+blocks = detect_cv_blocks(test_cv)
+print(f"   Blocks result: {blocks}")
+
+# Step 2: Issue detection
+print("\n2. Issue Detection:")
+issues = detect_cv_issues(test_cv)
+print(f"   Total issues: {len(issues.issues)}")
+
+# Step 3: Check if any issue mentions certifications
+print("\n3. Certification-related issues:")
+cert_issues = [i for i in issues.issues if 'cert' in str(i).lower()]
+if cert_issues:
+    for issue in cert_issues:
+        print(f"   - {issue.get('issue_type')}: {issue.get('description', '')[:50]}")
+else:
+    print("   ❌ NO CERTIFICATION ISSUES DETECTED!")
+    print("   This proves detectors don't know about certifications section.")
+
+# Step 4: What issues WERE detected?
+print("\n4. Issues that WERE detected:")
+for issue in issues.issues[:10]:
+    print(f"   - {issue.get('issue_type')}")
+```
+
+Run: cd backend && python tests/test_detection_pipeline.py
+
+───────────────────────────────────────────────────────────────────────────────
+EXPECTED FINDINGS
+───────────────────────────────────────────────────────────────────────────────
+
+If hypothesis is correct:
+
+Part 1: detect_cv_blocks() returns structure with sections identified
+Part 2: detect_cv_issues() does NOT pass structure to detectors  
+Part 3: Individual detectors only accept (text: str), no section info
+Part 4: Certifications issues NOT detected despite 12 certs listed
+
+───────────────────────────────────────────────────────────────────────────────
+QUESTIONS TO ANSWER
+───────────────────────────────────────────────────────────────────────────────
+
+After running all tests, answer:
+
+Q1: Does detect_cv_blocks() correctly identify sections?
+    [ ] Yes, all sections found
+    [ ] Partial - some sections found
+    [ ] No - doesn't work
+
+Q2: Does detect_cv_issues() call detect_cv_blocks()?
+    [ ] Yes, internally
+    [ ] No, they are separate
+
+Q3: Do detectors receive block/section information?
+    [ ] Yes, as parameter
+    [ ] No, only raw text
+
+Q4: Can detectors identify section-specific issues?
+    [ ] Yes
+    [ ] No - they only see flat text
+
+───────────────────────────────────────────────────────────────────────────────
+
+DO NOT FIX ANYTHING - just investigate and report findings.
+
+╚══════════════════════════════════════════════════════════════════════════════╝
