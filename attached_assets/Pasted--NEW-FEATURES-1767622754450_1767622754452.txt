@@ -1,0 +1,1088 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  🆕 NEW FEATURES: CV Spell Check + Job Hopping Detection                     ║
+║  Priority: MEDIUM | Risk: LOW | Time: 4-6 hours                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+OVERVIEW:
+Adding two new issue detection features to CV Optimizer:
+1. CV Vocabulary Spell Check - checks ONLY known CV words (safe, no false positives)
+2. Job Hopping Detection - finds multiple short-term jobs (easy date math)
+
+───────────────────────────────────────────────────────────────────────────────
+PART 1: DATABASE - Add New Issue Types
+───────────────────────────────────────────────────────────────────────────────
+
+First, find the correct subcategory IDs:
+```sql
+SELECT id, code, display_name, category_id 
+FROM cv_issue_subcategories 
+WHERE code LIKE 'CONTENT%' OR code LIKE 'STANDARDS%' OR code LIKE 'FORMAT%';
+```
+
+Then add the new issue types:
+```sql
+-- Issue 1: Spelling Errors in CV Vocabulary
+INSERT INTO cv_issue_types (
+    issue_code,
+    display_name,
+    description,
+    severity,
+    weight,
+    can_auto_fix,
+    detection_method,
+    static_tip,
+    example_before,
+    example_after,
+    user_effort,
+    is_active,
+    subcategory_id
+) VALUES (
+    'CONTENT_SPELLING_CV_WORDS',
+    'Spelling Errors in Common CV Terms',
+    'Your CV contains spelling errors in common resume terminology. These basic errors can cause immediate rejection - 77% of recruiters dismiss resumes with spelling mistakes.',
+    'critical',
+    9,
+    true,
+    'static_code',
+    'Proofread your CV carefully, especially section headers and common terms:
+
+Common misspellings to check:
+- "Experiance" → Experience
+- "Managment" → Management  
+- "Responisble" → Responsible
+- "Acheivements" → Achievements
+- "Proffesional" → Professional
+- "Developped" → Developed
+- "Implmented" → Implemented
+
+Tip: Read your CV out loud to catch errors.',
+    'PROFESIONAL EXPERIANCE
+
+Responisble for managment of team. Developped new features and implmented solutions.',
+    'PROFESSIONAL EXPERIENCE
+
+Responsible for management of team. Developed new features and implemented solutions.',
+    'minimal',
+    true,
+    (SELECT id FROM cv_issue_subcategories WHERE code = 'CONTENT_LANGUAGE' LIMIT 1)
+);
+
+-- Issue 2: Employment Gap
+INSERT INTO cv_issue_types (
+    issue_code,
+    display_name,
+    description,
+    severity,
+    weight,
+    can_auto_fix,
+    detection_method,
+    static_tip,
+    example_before,
+    example_after,
+    user_effort,
+    is_active,
+    subcategory_id
+) VALUES (
+    'CAREER_EMPLOYMENT_GAP',
+    'Employment Gap Detected',
+    'Your CV shows a gap in employment of 3 months or more. Unexplained gaps can raise questions about your work history and may concern recruiters.',
+    'important',
+    6,
+    false,
+    'static_code',
+    'Address employment gaps proactively:
+
+1. Be honest - gaps are common and often explainable
+2. Add a brief note explaining the gap:
+   • Career break for family/health
+   • Education or certification pursuit
+   • Freelance/consulting work
+   • Relocation
+   • Job search after layoff
+
+3. If you did anything productive, mention it:
+   • "2022-2023: Career Break - Completed AWS certification, freelance consulting"
+   • "2021: Sabbatical - Traveled and studied Spanish"
+
+4. Keep explanations brief (1 line)
+5. Focus on what you learned or accomplished
+
+Note: Gaps during COVID (2020-2021) are widely understood and accepted.',
+    'EXPERIENCE
+
+Software Engineer at Company A
+January 2022 - Present
+
+[GAP: March 2021 - December 2021 = 9 months unexplained]
+
+Developer at Company B
+June 2019 - February 2021',
+    'EXPERIENCE
+
+Software Engineer at Company A
+January 2022 - Present
+
+Career Development (March 2021 - December 2021)
+- Completed AWS Solutions Architect certification
+- Contributed to open-source projects
+- Freelance consulting for 2 startups
+
+Developer at Company B
+June 2019 - February 2021',
+    'medium',
+    true,
+    (SELECT id FROM cv_issue_subcategories WHERE code = 'STANDARDS_TONE' LIMIT 1)
+);
+
+-- Issue 3: Job Hopping (Multiple Short Positions)
+INSERT INTO cv_issue_types (
+    issue_code,
+    display_name,
+    description,
+    severity,
+    weight,
+    can_auto_fix,
+    detection_method,
+    static_tip,
+    example_before,
+    example_after,
+    user_effort,
+    is_active,
+    subcategory_id
+) VALUES (
+    'CAREER_JOB_HOPPING',
+    'Multiple Short-Term Positions',
+    'Your CV shows multiple positions lasting less than one year. Frequent job changes can raise concerns about commitment, reliability, or performance issues. 61% of recruiters view job hopping as a red flag.',
+    'important',
+    7,
+    false,
+    'static_code',
+    'Address short tenures proactively:
+
+1. If contract/freelance work: Label clearly as "Contract" or "Freelance"
+2. If layoffs: Brief note is acceptable (e.g., "Company downsized")
+3. If career exploration: Frame as intentional growth
+4. Combine very short roles: Group under "Consulting" or "Contract Work"
+
+What recruiters look for:
+- At least 2-3 years in recent roles
+- Logical career progression
+- Stability increases with seniority
+
+Note: Startup experience often has shorter tenures - this is more acceptable in tech.',
+    'EXPERIENCE
+
+Software Engineer, Company A (Jan 2024 - Jun 2024) - 6 months
+Developer, Company B (Mar 2023 - Dec 2023) - 9 months  
+Engineer, Company C (Aug 2022 - Feb 2023) - 6 months
+Developer, Company D (Jan 2022 - Jul 2022) - 6 months',
+    'EXPERIENCE
+
+Software Engineer, Company A (Jan 2024 - Present)
+- [Current role - continue building tenure]
+
+Contract Software Development (2022 - 2023)
+- Delivered projects for Companies B, C, and D
+- Specialized in [specific technology/domain]
+- Chose contract work to explore different tech stacks
+
+OR add context:
+Developer, Company B (Mar 2023 - Dec 2023)
+- Role ended due to company restructuring
+- Delivered full project before departure',
+    'medium',
+    true,
+    (SELECT id FROM cv_issue_subcategories WHERE code = 'STANDARDS_TONE' LIMIT 1)
+);
+```
+
+Verify the inserts:
+```sql
+SELECT issue_code, display_name, severity 
+FROM cv_issue_types 
+WHERE issue_code IN ('CONTENT_SPELLING_CV_WORDS', 'CAREER_JOB_HOPPING');
+```
+
+───────────────────────────────────────────────────────────────────────────────
+PART 2: CV VOCABULARY SPELL CHECKER
+───────────────────────────────────────────────────────────────────────────────
+
+Create file: backend/common/detection/spelling_detector.py
+```python
+"""
+CV Vocabulary Spell Checker
+
+SAFE APPROACH: Only checks known CV terminology.
+Does NOT check technical terms (AWS, Kubernetes, etc.)
+This avoids false positives that would annoy users.
+
+Catches: "Experiance" → "Experience", "Managment" → "Management"
+Ignores: "PostgreSQL", "OAuth2", "GraphQL" (tech terms)
+"""
+
+from typing import List, Dict, Tuple
+import re
+from difflib import SequenceMatcher
+
+# ============================================================================
+# CV VOCABULARY - Words we KNOW should be spelled correctly
+# ============================================================================
+
+CV_VOCABULARY = {
+    # Section Headers
+    "experience": "experience",
+    "education": "education", 
+    "skills": "skills",
+    "summary": "summary",
+    "professional": "professional",
+    "certifications": "certifications",
+    "achievements": "achievements",
+    "objective": "objective",
+    "qualifications": "qualifications",
+    "references": "references",
+    "projects": "projects",
+    
+    # Common CV Words
+    "responsible": "responsible",
+    "responsibilities": "responsibilities",
+    "management": "management",
+    "manager": "manager",
+    "developed": "developed",
+    "development": "development",
+    "implemented": "implemented",
+    "implementation": "implementation",
+    "achieved": "achieved",
+    "achievement": "achievement",
+    "successful": "successful",
+    "successfully": "successfully",
+    "coordinated": "coordinated",
+    "collaborated": "collaborated",
+    "communication": "communication",
+    "technical": "technical",
+    "technology": "technology",
+    "technologies": "technologies",
+    "environment": "environment",
+    "performance": "performance",
+    "improved": "improved",
+    "improvement": "improvement",
+    "maintained": "maintained",
+    "maintenance": "maintenance",
+    "analysis": "analysis",
+    "analyzed": "analyzed",
+    "business": "business",
+    "customer": "customer",
+    "customers": "customers",
+    "leadership": "leadership",
+    "organization": "organization",
+    "organizational": "organizational",
+    "excellent": "excellent",
+    "effectively": "effectively",
+    "efficiency": "efficiency",
+    "efficient": "efficient",
+    "proficient": "proficient",
+    "proficiency": "proficiency",
+    "bachelor": "bachelor",
+    "master": "master",
+    "degree": "degree",
+    "university": "university",
+    "certificate": "certificate",
+    "certified": "certified",
+    
+    # Action Verbs
+    "managed": "managed",
+    "led": "led",
+    "created": "created",
+    "designed": "designed",
+    "built": "built",
+    "delivered": "delivered",
+    "launched": "launched",
+    "established": "established",
+    "increased": "increased",
+    "reduced": "reduced",
+    "streamlined": "streamlined",
+    "optimized": "optimized",
+    "executed": "executed",
+    "facilitated": "facilitated",
+    "spearheaded": "spearheaded",
+    "orchestrated": "orchestrated",
+    "architected": "architected",
+    "mentored": "mentored",
+    "supervised": "supervised",
+    "oversaw": "oversaw",
+    "conducted": "conducted",
+    "prepared": "prepared",
+    "presented": "presented",
+    "trained": "trained",
+    "supported": "supported",
+    "assisted": "assisted",
+    "contributed": "contributed",
+    "participated": "participated",
+}
+
+# Common misspellings mapping (misspelling -> correct)
+COMMON_MISSPELLINGS = {
+    # Section headers
+    "experiance": "experience",
+    "experiece": "experience",
+    "expirience": "experience",
+    "experince": "experience",
+    "eduction": "education",
+    "educaton": "education",
+    "educatoin": "education",
+    "skils": "skills",
+    "skilss": "skills",
+    "sumary": "summary",
+    "summery": "summary",
+    "proffesional": "professional",
+    "profesional": "professional",
+    "professionel": "professional",
+    "professonal": "professional",
+    "certifcations": "certifications",
+    "certificatons": "certifications",
+    "acheivements": "achievements",
+    "achievments": "achievements",
+    "achivements": "achievements",
+    
+    # Common words
+    "responisble": "responsible",
+    "responsable": "responsible",
+    "responsibile": "responsible",
+    "responsibilites": "responsibilities",
+    "responsiblities": "responsibilities",
+    "managment": "management",
+    "managament": "management",
+    "mangement": "management",
+    "developped": "developed",
+    "develped": "developed",
+    "develope": "developed",
+    "developement": "development",
+    "devlopment": "development",
+    "implmented": "implemented",
+    "implimented": "implemented",
+    "implementd": "implemented",
+    "implementaion": "implementation",
+    "achived": "achieved",
+    "acheived": "achieved",
+    "achievment": "achievement",
+    "acheivment": "achievement",
+    "succesful": "successful",
+    "successfull": "successful",
+    "succesfull": "successful",
+    "succesfully": "successfully",
+    "successfuly": "successfully",
+    "comunication": "communication",
+    "communcation": "communication",
+    "communicaton": "communication",
+    "techincal": "technical",
+    "tecnical": "technical",
+    "technolgy": "technology",
+    "technolgies": "technologies",
+    "enviroment": "environment",
+    "enviornment": "environment",
+    "performace": "performance",
+    "preformance": "performance",
+    "improvment": "improvement",
+    "improvemnt": "improvement",
+    "maintanance": "maintenance",
+    "maintenace": "maintenance",
+    "anaylsis": "analysis",
+    "analisis": "analysis",
+    "analysed": "analyzed",
+    "buisness": "business",
+    "bussiness": "business",
+    "busines": "business",
+    "custmer": "customer",
+    "cusotmer": "customer",
+    "leaderhip": "leadership",
+    "leardership": "leadership",
+    "organizaton": "organization",
+    "organisaton": "organization",
+    "excelent": "excellent",
+    "excellant": "excellent",
+    "effectivly": "effectively",
+    "effeciently": "efficiently",
+    "efficent": "efficient",
+    "efficency": "efficiency",
+    "proficent": "proficient",
+    "profficient": "proficient",
+    "univeristy": "university",
+    "universty": "university",
+    "certifed": "certified",
+    "cerfitied": "certified",
+    
+    # Action verbs
+    "managd": "managed",
+    "manged": "managed",
+    "crated": "created",
+    "craeted": "created",
+    "desinged": "designed",
+    "desigend": "designed",
+    "deliverd": "delivered",
+    "delivred": "delivered",
+    "lauched": "launched",
+    "lanched": "launched",
+    "establised": "established",
+    "establishd": "established",
+    "increasd": "increased",
+    "incresed": "increased",
+    "reducd": "reduced",
+    "reducted": "reduced",
+    "streamlined": "streamlined",
+    "optmized": "optimized",
+    "optimzed": "optimized",
+    "excuted": "executed",
+    "exectued": "executed",
+    "faciliated": "facilitated",
+    "faciltated": "facilitated",
+    "spearheaed": "spearheaded",
+    "orchastrated": "orchestrated",
+    "mentord": "mentored",
+    "mentroed": "mentored",
+    "supervized": "supervised",
+    "supervisd": "supervised",
+    "conducte": "conducted",
+    "condcuted": "conducted",
+    "prepard": "prepared",
+    "preapred": "prepared",
+    "presentd": "presented",
+    "presenetd": "presented",
+    "traind": "trained",
+    "trianed": "trained",
+    "supportd": "supported",
+    "suppored": "supported",
+    "assistd": "assisted",
+    "assited": "assisted",
+    "contribued": "contributed",
+    "contriubted": "contributed",
+    "paticipated": "participated",
+    "participted": "participated",
+}
+
+
+def is_similar(word1: str, word2: str, threshold: float = 0.8) -> bool:
+    """Check if two words are similar using SequenceMatcher."""
+    return SequenceMatcher(None, word1.lower(), word2.lower()).ratio() >= threshold
+
+
+def find_potential_misspelling(word: str) -> Tuple[bool, str, str]:
+    """
+    Check if a word is a potential misspelling of a CV vocabulary word.
+    
+    Returns: (is_misspelling, original_word, correct_word)
+    """
+    word_lower = word.lower()
+    
+    # Skip very short words
+    if len(word_lower) < 4:
+        return (False, word, "")
+    
+    # Skip words with numbers (likely tech terms)
+    if any(char.isdigit() for char in word):
+        return (False, word, "")
+    
+    # Skip words that are ALL CAPS and short (likely acronyms)
+    if word.isupper() and len(word) <= 6:
+        return (False, word, "")
+    
+    # Check against known misspellings first (fastest)
+    if word_lower in COMMON_MISSPELLINGS:
+        return (True, word, COMMON_MISSPELLINGS[word_lower])
+    
+    # Check if word is already correct
+    if word_lower in CV_VOCABULARY:
+        return (False, word, "")
+    
+    # Check similarity to CV vocabulary words
+    for correct_word in CV_VOCABULARY.keys():
+        # Only check words of similar length (±2 chars)
+        if abs(len(word_lower) - len(correct_word)) <= 2:
+            if is_similar(word_lower, correct_word, threshold=0.85):
+                # Make sure it's not already correct
+                if word_lower != correct_word:
+                    return (True, word, correct_word)
+    
+    return (False, word, "")
+
+
+def detect_cv_spelling_issues(cv_text: str) -> List[Dict]:
+    """
+    Detect spelling errors in CV-specific vocabulary.
+    
+    Returns list of issues found.
+    """
+    issues = []
+    
+    # Extract words from text
+    words = re.findall(r'\b[A-Za-z]+\b', cv_text)
+    
+    # Track found errors to avoid duplicates
+    found_errors = set()
+    
+    for word in words:
+        is_error, original, correct = find_potential_misspelling(word)
+        
+        if is_error and original.lower() not in found_errors:
+            found_errors.add(original.lower())
+            
+            issues.append({
+                "issue_type": "CONTENT_SPELLING_CV_WORDS",
+                "severity": "critical",
+                "current": original,
+                "suggestion": correct,
+                "description": f'Spelling error: "{original}" should be "{correct}"',
+                "line_number": find_line_number(cv_text, original),
+            })
+    
+    return issues
+
+
+def find_line_number(text: str, word: str) -> int:
+    """Find the line number where a word appears."""
+    lines = text.split('\n')
+    for i, line in enumerate(lines, 1):
+        if word in line:
+            return i
+    return 0
+
+
+# ============================================================================
+# MAIN DETECTION FUNCTION
+# ============================================================================
+
+def detect_spelling_issues(cv_text: str) -> List[Dict]:
+    """
+    Main entry point for spelling detection.
+    Safe approach - only checks CV vocabulary.
+    """
+    return detect_cv_spelling_issues(cv_text)
+```
+
+───────────────────────────────────────────────────────────────────────────────
+PART 3: JOB HOPPING DETECTOR
+───────────────────────────────────────────────────────────────────────────────
+
+Create file: backend/common/detection/job_hopping_detector.py
+```python
+"""
+Job Hopping Detector
+
+Identifies candidates with multiple short-term positions.
+Short-term = less than 12 months at a job.
+
+Red flags:
+- 3+ jobs lasting < 12 months = Critical
+- 2 jobs lasting < 12 months = Warning
+"""
+
+from typing import List, Dict, Optional, Tuple
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
+import re
+
+
+def parse_date_range(date_string: str) -> Tuple[Optional[datetime], Optional[datetime], bool]:
+    """
+    Parse date range from various formats.
+    
+    Handles:
+    - "Jan 2020 - Dec 2022"
+    - "January 2020 - Present"
+    - "2020 - 2022"
+    - "01/2020 - 12/2022"
+    
+    Returns: (start_date, end_date, is_current)
+    """
+    if not date_string:
+        return None, None, False
+    
+    # Check if current/present
+    is_current = any(word in date_string.lower() for word in ['present', 'current', 'now', 'ongoing'])
+    
+    # Month name mapping
+    month_map = {
+        'jan': 1, 'january': 1,
+        'feb': 2, 'february': 2,
+        'mar': 3, 'march': 3,
+        'apr': 4, 'april': 4,
+        'may': 5,
+        'jun': 6, 'june': 6,
+        'jul': 7, 'july': 7,
+        'aug': 8, 'august': 8,
+        'sep': 9, 'sept': 9, 'september': 9,
+        'oct': 10, 'october': 10,
+        'nov': 11, 'november': 11,
+        'dec': 12, 'december': 12,
+    }
+    
+    # Pattern: "Month Year" or "MM/YYYY" or just "YYYY"
+    date_pattern = r'(?:(\w+)\s*)?(\d{4})'
+    matches = re.findall(date_pattern, date_string, re.IGNORECASE)
+    
+    if len(matches) >= 1:
+        # Start date
+        month_str, year_str = matches[0]
+        start_month = month_map.get(month_str.lower(), 1) if month_str else 1
+        start_year = int(year_str)
+        start_date = datetime(start_year, start_month, 1)
+        
+        # End date
+        if is_current:
+            end_date = datetime.now()
+        elif len(matches) >= 2:
+            month_str, year_str = matches[1]
+            end_month = month_map.get(month_str.lower(), 12) if month_str else 12
+            end_year = int(year_str)
+            end_date = datetime(end_year, end_month, 1)
+        else:
+            end_date = None
+            
+        return start_date, end_date, is_current
+    
+    return None, None, False
+
+
+def calculate_tenure_months(start_date: datetime, end_date: datetime) -> int:
+    """Calculate months between two dates."""
+    if not start_date or not end_date:
+        return 0
+    
+    delta = relativedelta(end_date, start_date)
+    return delta.years * 12 + delta.months
+
+
+def extract_job_dates_from_text(cv_text: str) -> List[Dict]:
+    """
+    Extract job entries with dates from CV text.
+    
+    Returns list of jobs with start_date, end_date, tenure_months
+    """
+    jobs = []
+    
+    # Common date range patterns in CVs
+    # Pattern: captures company/role line followed by date range
+    date_patterns = [
+        # "Jan 2020 - Dec 2022" or "January 2020 - Present"
+        r'(\w+\s+\d{4})\s*[-–—to]+\s*(\w+\s+\d{4}|[Pp]resent|[Cc]urrent|[Nn]ow)',
+        # "2020 - 2022" or "2020 - Present"
+        r'(\d{4})\s*[-–—to]+\s*(\d{4}|[Pp]resent|[Cc]urrent|[Nn]ow)',
+        # "01/2020 - 12/2022"
+        r'(\d{1,2}/\d{4})\s*[-–—to]+\s*(\d{1,2}/\d{4}|[Pp]resent|[Cc]urrent)',
+    ]
+    
+    for pattern in date_patterns:
+        matches = re.findall(pattern, cv_text)
+        for match in matches:
+            date_string = f"{match[0]} - {match[1]}"
+            start_date, end_date, is_current = parse_date_range(date_string)
+            
+            if start_date and end_date:
+                tenure = calculate_tenure_months(start_date, end_date)
+                jobs.append({
+                    "date_range": date_string,
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    "is_current": is_current,
+                    "tenure_months": tenure,
+                })
+    
+    # Remove duplicates and sort by start date (most recent first)
+    seen = set()
+    unique_jobs = []
+    for job in jobs:
+        key = (job["start_date"], job["end_date"])
+        if key not in seen:
+            seen.add(key)
+            unique_jobs.append(job)
+    
+    unique_jobs.sort(key=lambda x: x["start_date"], reverse=True)
+    
+    return unique_jobs
+
+
+def detect_employment_gaps(cv_text: str) -> List[Dict]:
+    """
+    Detect gaps in employment history.
+    
+    Rules:
+    - Gap = time between end of one job and start of next
+    - Gap > 3 months = Worth mentioning
+    - Gap > 6 months = Important issue
+    - Gap > 12 months = Critical concern
+    
+    Returns list of issues found.
+    """
+    issues = []
+    
+    jobs = extract_job_dates_from_text(cv_text)
+    
+    if len(jobs) < 2:
+        return issues  # Need at least 2 jobs to find gaps
+    
+    # Sort by start date (oldest first for gap calculation)
+    jobs_sorted = sorted(jobs, key=lambda x: x["start_date"])
+    
+    gaps_found = []
+    
+    for i in range(len(jobs_sorted) - 1):
+        current_job = jobs_sorted[i]
+        next_job = jobs_sorted[i + 1]
+        
+        # Gap = next job start - current job end
+        if current_job["end_date"] and next_job["start_date"]:
+            gap_months = calculate_tenure_months(current_job["end_date"], next_job["start_date"])
+            
+            # Only flag gaps > 3 months
+            if gap_months > 3:
+                gaps_found.append({
+                    "gap_months": gap_months,
+                    "from_date": current_job["end_date"].strftime("%B %Y"),
+                    "to_date": next_job["start_date"].strftime("%B %Y"),
+                    "between": f"between {current_job['date_range']} and {next_job['date_range']}"
+                })
+    
+    if not gaps_found:
+        return issues
+    
+    # Determine severity based on largest gap
+    max_gap = max(g["gap_months"] for g in gaps_found)
+    total_gaps = len(gaps_found)
+    
+    if max_gap > 12:
+        severity = "important"
+    elif max_gap > 6:
+        severity = "important"
+    else:
+        severity = "consider"
+    
+    # Build description
+    if total_gaps == 1:
+        gap = gaps_found[0]
+        description = f"Employment gap of {gap['gap_months']} months detected ({gap['from_date']} to {gap['to_date']}). Consider adding a brief explanation."
+    else:
+        gap_list = ", ".join([f"{g['gap_months']} months" for g in gaps_found])
+        description = f"{total_gaps} employment gaps detected ({gap_list}). Unexplained gaps may raise concerns with recruiters."
+    
+    issues.append({
+        "issue_type": "CAREER_EMPLOYMENT_GAP",
+        "severity": severity,
+        "current": f"{total_gaps} gap(s) totaling {sum(g['gap_months'] for g in gaps_found)} months",
+        "suggestion": "Add brief explanations for employment gaps (career break, education, freelance work, etc.)",
+        "description": description,
+        "details": {
+            "gaps": gaps_found,
+            "total_gaps": total_gaps,
+            "max_gap_months": max_gap,
+        },
+        "line_number": None,
+    })
+    
+    return issues
+
+
+def detect_job_hopping(cv_text: str) -> List[Dict]:
+    """
+    Detect job hopping pattern in CV.
+    
+    Rules:
+    - Job lasting < 12 months = short-term
+    - 3+ short-term jobs = Critical issue
+    - 2 short-term jobs = Important issue
+    - Current job excluded (they just started)
+    
+    Returns list of issues found.
+    """
+    issues = []
+    
+    jobs = extract_job_dates_from_text(cv_text)
+    
+    if not jobs:
+        return issues
+    
+    # Find short-term jobs (excluding current position)
+    short_term_jobs = []
+    for job in jobs:
+        # Skip current job - they may have just started
+        if job["is_current"]:
+            continue
+        
+        # Short-term = less than 12 months
+        if job["tenure_months"] < 12:
+            short_term_jobs.append(job)
+    
+    # Determine severity based on count
+    short_count = len(short_term_jobs)
+    
+    if short_count >= 3:
+        # Critical: 3+ short-term jobs
+        job_list = ", ".join([
+            f"{job['date_range']} ({job['tenure_months']} months)" 
+            for job in short_term_jobs[:5]  # Show max 5
+        ])
+        
+        issues.append({
+            "issue_type": "CAREER_JOB_HOPPING",
+            "severity": "important",
+            "current": f"{short_count} positions lasting less than 1 year",
+            "suggestion": "Consider grouping short-term roles as 'Contract Work' or add brief explanations for each departure",
+            "description": f"Multiple short-term positions detected: {job_list}. This pattern may raise concerns about commitment or reliability.",
+            "details": {
+                "short_term_count": short_count,
+                "jobs": short_term_jobs,
+            },
+            "line_number": None,
+        })
+        
+    elif short_count == 2:
+        # Warning: 2 short-term jobs
+        job_list = ", ".join([
+            f"{job['date_range']} ({job['tenure_months']} months)" 
+            for job in short_term_jobs
+        ])
+        
+        issues.append({
+            "issue_type": "CAREER_JOB_HOPPING",
+            "severity": "consider",
+            "current": f"2 positions lasting less than 1 year",
+            "suggestion": "Consider adding context for short tenures (contract work, company closure, etc.)",
+            "description": f"Two short-term positions detected: {job_list}. Consider addressing these in your CV.",
+            "details": {
+                "short_term_count": short_count,
+                "jobs": short_term_jobs,
+            },
+            "line_number": None,
+        })
+    
+    return issues
+
+
+# ============================================================================
+# MAIN DETECTION FUNCTION
+# ============================================================================
+
+def detect_career_issues(cv_text: str) -> List[Dict]:
+    """
+    Main entry point for career pattern detection.
+    Includes:
+    - Employment gaps (unexplained periods between jobs)
+    - Job hopping (multiple short-term positions)
+    """
+    issues = []
+    
+    # Employment gap detection
+    issues.extend(detect_employment_gaps(cv_text))
+    
+    # Job hopping detection
+    issues.extend(detect_job_hopping(cv_text))
+    
+    return issues
+```
+
+───────────────────────────────────────────────────────────────────────────────
+PART 4: INTEGRATE INTO MASTER DETECTOR
+───────────────────────────────────────────────────────────────────────────────
+
+Update: backend/common/detection/master_detector.py
+
+Add imports at the top:
+```python
+from common.detection.spelling_detector import detect_spelling_issues
+from common.detection.job_hopping_detector import detect_career_issues
+```
+
+In the detect_cv_issues() function, add calls to new detectors:
+```python
+# Add after other detector calls:
+
+# Spelling detection (CV vocabulary only)
+try:
+    spelling_issues = detect_spelling_issues(cv_text)
+    all_issues.extend(spelling_issues)
+except Exception as e:
+    logger.error(f"Spelling detection error: {e}")
+
+# Career pattern detection (job hopping)
+try:
+    career_issues = detect_career_issues(cv_text)
+    all_issues.extend(career_issues)
+except Exception as e:
+    logger.error(f"Career detection error: {e}")
+```
+
+───────────────────────────────────────────────────────────────────────────────
+PART 5: TEST THE NEW DETECTORS
+───────────────────────────────────────────────────────────────────────────────
+
+Create test file: backend/tests/test_new_detectors.py
+```python
+"""Test new detectors: spelling, job hopping, and employment gaps"""
+
+from common.detection.spelling_detector import detect_spelling_issues
+from common.detection.job_hopping_detector import detect_job_hopping, detect_employment_gaps
+
+# Test 1: Spelling Detection
+print("=" * 60)
+print("TEST 1: CV Vocabulary Spelling Check")
+print("=" * 60)
+
+test_cv_spelling = """
+PROFESIONAL EXPERIANCE
+
+Senior Software Engineer at TechCorp
+Responisble for managment of development team.
+Developped new features and implmented cloud solutions.
+Achieved excellant results in performace optimization.
+
+EDUCTION
+Bachelor of Science in Computer Sceince
+"""
+
+issues = detect_spelling_issues(test_cv_spelling)
+print(f"\nFound {len(issues)} spelling issues:")
+for issue in issues:
+    print(f"  - '{issue['current']}' → '{issue['suggestion']}'")
+
+# Test 2: Job Hopping Detection  
+print("\n" + "=" * 60)
+print("TEST 2: Job Hopping Detection")
+print("=" * 60)
+
+test_cv_job_hopping = """
+EXPERIENCE
+
+Software Engineer at Company A
+January 2024 - June 2024
+
+Developer at Company B
+March 2023 - December 2023
+
+Engineer at Company C  
+August 2022 - February 2023
+
+Developer at Company D
+January 2022 - July 2022
+
+Senior Developer at Company E
+January 2019 - December 2021
+"""
+
+issues = detect_job_hopping(test_cv_job_hopping)
+print(f"\nFound {len(issues)} job hopping issues:")
+for issue in issues:
+    print(f"  - Severity: {issue['severity']}")
+    print(f"    Issue: {issue['current']}")
+    print(f"    Suggestion: {issue['suggestion']}")
+
+# Test 3: Employment Gap Detection
+print("\n" + "=" * 60)
+print("TEST 3: Employment Gap Detection")
+print("=" * 60)
+
+test_cv_gaps = """
+EXPERIENCE
+
+Software Engineer at Company A
+January 2024 - Present
+
+Developer at Company B
+June 2021 - March 2023
+
+[Gap: April 2023 - December 2023 = 9 months]
+
+Engineer at Company C
+January 2019 - October 2020
+
+[Gap: November 2020 - May 2021 = 7 months]
+"""
+
+issues = detect_employment_gaps(test_cv_gaps)
+print(f"\nFound {len(issues)} employment gap issues:")
+for issue in issues:
+    print(f"  - Severity: {issue['severity']}")
+    print(f"    Issue: {issue['current']}")
+    print(f"    Details: {issue['description']}")
+
+# Test 4: No Issues (Clean CV)
+print("\n" + "=" * 60)
+print("TEST 4: Clean CV (No Issues Expected)")
+print("=" * 60)
+
+clean_cv = """
+PROFESSIONAL EXPERIENCE
+
+Senior Software Engineer at TechCorp
+January 2022 - Present
+
+Software Engineer at StartupXYZ
+March 2019 - December 2021
+
+Junior Developer at AgencyABC
+June 2016 - February 2019
+
+EDUCATION
+Bachelor of Science in Computer Science
+"""
+
+spelling_issues = detect_spelling_issues(clean_cv)
+job_issues = detect_job_hopping(clean_cv)
+gap_issues = detect_employment_gaps(clean_cv)
+print(f"\nSpelling issues: {len(spelling_issues)} (expected: 0)")
+print(f"Job hopping issues: {len(job_issues)} (expected: 0)")
+print(f"Employment gap issues: {len(gap_issues)} (expected: 0)")
+
+print("\n" + "=" * 60)
+print("All tests completed!")
+print("=" * 60)
+```
+
+Run: cd backend && python tests/test_new_detectors.py
+
+───────────────────────────────────────────────────────────────────────────────
+EXPECTED OUTPUT
+───────────────────────────────────────────────────────────────────────────────
+
+Test 1 (Spelling) should find:
+- "PROFESIONAL" → "professional"
+- "EXPERIANCE" → "experience"  
+- "Responisble" → "responsible"
+- "managment" → "management"
+- "Developped" → "developed"
+- "implmented" → "implemented"
+- "excellant" → "excellent"
+- "performace" → "performance"
+- "EDUCTION" → "education"
+
+Test 2 (Job Hopping) should find:
+- 4 positions < 12 months
+- Severity: important
+- Suggests grouping as contract work
+
+Test 3 (Employment Gaps) should find:
+- 2 gaps detected (totaling ~16 months)
+- Gap 1: ~9 months (April 2023 - December 2023)
+- Gap 2: ~7 months (November 2020 - May 2021)
+- Severity: important
+
+Test 4 (Clean CV) should find:
+- 0 spelling issues
+- 0 job hopping issues
+- 0 employment gap issues
+
+───────────────────────────────────────────────────────────────────────────────
+VERIFICATION CHECKLIST
+───────────────────────────────────────────────────────────────────────────────
+
+[ ] Database: All 3 issue types added to cv_issue_types
+    - CONTENT_SPELLING_CV_WORDS
+    - CAREER_EMPLOYMENT_GAP
+    - CAREER_JOB_HOPPING
+[ ] spelling_detector.py created and working
+[ ] job_hopping_detector.py created with BOTH functions:
+    - detect_employment_gaps()
+    - detect_job_hopping()
+[ ] master_detector.py updated to call new detectors
+[ ] Tests pass with expected output (all 4 tests)
+[ ] No false positives on tech terms (AWS, Kubernetes, etc.)
+[ ] Job hopping correctly excludes current position
+[ ] Employment gaps correctly calculates time between jobs
+
+╚══════════════════════════════════════════════════════════════════════════════╝

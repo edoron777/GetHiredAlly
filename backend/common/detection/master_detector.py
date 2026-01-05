@@ -81,6 +81,8 @@ from .standards_detector import detect_standards_issues
 from .keywords_detector import detect_keywords_issues
 from .structure_detector import detect_structure_issues
 from .skills_detector import detect_all_skills_issues
+from .spelling_detector import detect_all_spelling_issues
+from .job_hopping_detector import detect_all_career_issues
 from .length_detector import (
     detect_summary_too_long,
     detect_job_description_too_short,
@@ -401,6 +403,22 @@ def detect_all_issues(cv_text: str, job_description: Optional[str] = None) -> Li
         logger.info(f"Certification issues found: {len(certification_issues)}")
     except Exception as e:
         logger.error(f"Error detecting certification issues: {e}")
+    
+    # CV Vocabulary Spelling Detection
+    try:
+        spelling_issues = detect_all_spelling_issues(cv_text, cv_block_structure)
+        all_issues.extend(spelling_issues)
+        logger.info(f"Spelling issues found: {len(spelling_issues)}")
+    except Exception as e:
+        logger.error(f"Error detecting spelling issues: {e}")
+    
+    # Career Pattern Detection (job hopping, employment gaps)
+    try:
+        career_issues = detect_all_career_issues(cv_text, cv_block_structure)
+        all_issues.extend(career_issues)
+        logger.info(f"Career issues found: {len(career_issues)}")
+    except Exception as e:
+        logger.error(f"Error detecting career issues: {e}")
     
     logger.info(f"Static detection complete. Total issues: {len(all_issues)}")
     
