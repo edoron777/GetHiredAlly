@@ -1,0 +1,155 @@
+RESEARCH: Better CV Text Extraction Methods
+
+After investigating current extraction, research improvements:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+APPROACH 1: Preserve Structure Markers
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Instead of plain text, extract with markers:
+```python
+def extract_docx_with_structure(filepath):
+    """Extract text while preserving structural hints"""
+    from docx import Document
+    from docx.shared import Pt
+    
+    doc = Document(filepath)
+    result_lines = []
+    
+    for para in doc.paragraphs:
+        if not para.text.strip():
+            result_lines.append("")  # Preserve blank lines
+            continue
+        
+        # Detect potential header
+        is_header = False
+        header_markers = []
+        
+        # Check 1: Style name contains "Heading"
+        if para.style and "Heading" in para.style.name:
+            is_header = True
+            header_markers.append("STYLE")
+        
+        # Check 2: All bold
+        all_bold = all(run.bold for run in para.runs if run.text.strip())
+        if all_bold and para.text.strip():
+            is_header = True
+            header_markers.append("BOLD")
+        
+        # Check 3: Large font
+        for run in para.runs:
+            if run.font.size and run.font.size.pt > 12:
+                is_header = True
+                header_markers.append("LARGE")
+                break
+        
+        # Check 4: Short text (likely header)
+        if len(para.text.strip()) < 50 and para.text.strip().isupper():
+            is_header = True
+            header_markers.append("CAPS")
+        
+        # Format output
+        if is_header:
+            result_lines.append(f"\n[SECTION:{','.join(header_markers)}] {para.text.strip()}")
+        else:
+            result_lines.append(para.text)
+    
+    return "\n".join(result_lines)
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+APPROACH 2: Use python-docx properly for structure
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Return structured data, not just text:
+```python
+def extract_docx_structured(filepath):
+    """Return structured CV data"""
+    from docx import Document
+    
+    doc = Document(filepath)
+    
+    structured = {
+        "paragraphs": [],
+        "headers": [],
+        "lists": [],
+        "tables": []
+    }
+    
+    for i, para in enumerate(doc.paragraphs):
+        para_data = {
+            "index": i,
+            "text": para.text,
+            "style": para.style.name if para.style else None,
+            "is_bold": all(run.bold for run in para.runs if run.text.strip()),
+            "font_sizes": [run.font.size.pt for run in para.runs if run.font.size],
+            "is_list_item": para._element.pPr is not None and 
+                           para._element.pPr.numPr is not None
+        }
+        structured["paragraphs"].append(para_data)
+        
+        # Identify headers
+        if para_data["is_bold"] or (para.style and "Heading" in para.style.name):
+            structured["headers"].append({
+                "index": i,
+                "text": para.text,
+                "type": "style" if "Heading" in (para.style.name or "") else "bold"
+            })
+    
+    # Extract tables
+    for table in doc.tables:
+        table_data = []
+        for row in table.rows:
+            table_data.append([cell.text for cell in row.cells])
+        structured["tables"].append(table_data)
+    
+    return structured
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+APPROACH 3: For PDF - Use pymupdf (fitz) with layout
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```python
+def extract_pdf_with_layout(filepath):
+    """Extract PDF preserving layout and font info"""
+    import fitz  # pymupdf
+    
+    doc = fitz.open(filepath)
+    result = []
+    
+    for page in doc:
+        blocks = page.get_text("dict")["blocks"]
+        
+        for block in blocks:
+            if block["type"] == 0:  # Text block
+                for line in block["lines"]:
+                    for span in line["spans"]:
+                        text = span["text"]
+                        font_size = span["size"]
+                        is_bold = "bold" in span["font"].lower()
+                        
+                        # Mark headers
+                        if font_size > 12 or is_bold:
+                            result.append(f"[HEADER:{font_size}pt] {text}")
+                        else:
+                            result.append(text)
+    
+    return "\n".join(result)
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+RECOMMENDATION: Update block_detector to use structure hints
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+After extraction preserves markers like [SECTION:BOLD], update 
+block_detector.py to:
+
+1. First look for [SECTION:...] markers
+2. Fall back to keyword detection if no markers found
+
+This gives much better section detection!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+First run the investigation (Prompt 1), then we'll know exactly 
+what to improve.

@@ -1,0 +1,192 @@
+INVESTIGATE: CV Text Extraction - What Gets Lost?
+
+GOAL:
+Understand exactly how Word/PDF files are converted to text,
+and what formatting/structure is lost in the process.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 1: Find the text extraction code
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Show me:
+1. Where is the file upload handled?
+2. What library extracts text from DOCX? (python-docx? docx2txt?)
+3. What library extracts text from PDF? (pdfplumber? PyPDF2? pymupdf?)
+4. Show me the actual extraction function code
+
+Search for:
+grep -r "docx" backend/ --include="*.py" | head -20
+grep -r "pdf" backend/ --include="*.py" | head -20
+grep -r "extract" backend/ --include="*.py" | grep -i "text" | head -20
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 2: Create diagnostic test
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Create a test script: backend/tests/test_extraction_quality.py
+```python
+"""
+Diagnostic: What gets lost in CV text extraction?
+"""
+import os
+from docx import Document
+
+# Test with a real CV file
+test_file = "test_cvs/Sample_CV_David_Doron.docx"  # or actual path
+
+def analyze_docx_structure(filepath):
+    """Extract and analyze DOCX structure"""
+    doc = Document(filepath)
+    
+    print("=" * 60)
+    print("DOCX STRUCTURE ANALYSIS")
+    print("=" * 60)
+    
+    # 1. Paragraph styles (headers, normal, etc.)
+    print("\n1. PARAGRAPH STYLES:")
+    style_counts = {}
+    for para in doc.paragraphs:
+        style = para.style.name if para.style else "None"
+        style_counts[style] = style_counts.get(style, 0) + 1
+        
+        # Show first 50 chars of each styled paragraph
+        if para.text.strip():
+            print(f"  [{style}] {para.text[:50]}...")
+    
+    print(f"\nStyle distribution: {style_counts}")
+    
+    # 2. Bold text (potential headers)
+    print("\n2. BOLD TEXT (potential headers):")
+    for para in doc.paragraphs:
+        for run in para.runs:
+            if run.bold and run.text.strip():
+                print(f"  BOLD: {run.text[:50]}")
+    
+    # 3. Font sizes (larger = likely header)
+    print("\n3. FONT SIZES:")
+    font_sizes = set()
+    for para in doc.paragraphs:
+        for run in para.runs:
+            if run.font.size:
+                size_pt = run.font.size.pt
+                font_sizes.add(size_pt)
+                if size_pt > 12:  # Larger than normal
+                    print(f"  Size {size_pt}pt: {run.text[:40]}...")
+    print(f"\nUnique font sizes: {sorted(font_sizes)}")
+    
+    # 4. Lists and bullets
+    print("\n4. LIST ITEMS:")
+    list_count = 0
+    for para in doc.paragraphs:
+        # Check for bullet/number formatting
+        if para._element.pPr is not None:
+            numPr = para._element.pPr.numPr
+            if numPr is not None:
+                list_count += 1
+                print(f"  • {para.text[:50]}...")
+    print(f"\nTotal list items: {list_count}")
+    
+    # 5. Tables
+    print("\n5. TABLES:")
+    print(f"  Table count: {len(doc.tables)}")
+    for i, table in enumerate(doc.tables):
+        print(f"  Table {i+1}: {len(table.rows)} rows x {len(table.columns)} cols")
+    
+    # 6. Sections/Page breaks
+    print("\n6. SECTIONS:")
+    print(f"  Section count: {len(doc.sections)}")
+
+def compare_extraction_methods(filepath):
+    """Compare different text extraction methods"""
+    print("\n" + "=" * 60)
+    print("EXTRACTION METHOD COMPARISON")
+    print("=" * 60)
+    
+    # Method 1: Simple paragraph join (common approach)
+    doc = Document(filepath)
+    method1 = "\n".join([p.text for p in doc.paragraphs])
+    
+    # Method 2: With style preservation
+    method2_lines = []
+    for para in doc.paragraphs:
+        style = para.style.name if para.style else ""
+        if "Heading" in style:
+            method2_lines.append(f"\n=== {para.text} ===\n")
+        else:
+            method2_lines.append(para.text)
+    method2 = "\n".join(method2_lines)
+    
+    # Method 3: With bold markers
+    method3_lines = []
+    for para in doc.paragraphs:
+        line = ""
+        for run in para.runs:
+            if run.bold:
+                line += f"**{run.text}**"
+            else:
+                line += run.text
+        method3_lines.append(line)
+    method3 = "\n".join(method3_lines)
+    
+    print("\nMethod 1 (Simple - loses everything):")
+    print("-" * 40)
+    print(method1[:500])
+    
+    print("\n\nMethod 2 (With heading markers):")
+    print("-" * 40)
+    print(method2[:500])
+    
+    print("\n\nMethod 3 (With bold markers):")
+    print("-" * 40)
+    print(method3[:500])
+
+def show_current_extraction(filepath):
+    """Show what current system extracts"""
+    print("\n" + "=" * 60)
+    print("CURRENT SYSTEM EXTRACTION")
+    print("=" * 60)
+    
+    # Import your actual extraction function
+    try:
+        from common.utils.file_parser import extract_text_from_file
+        # or wherever your extraction function is
+        
+        with open(filepath, 'rb') as f:
+            content = f.read()
+        
+        extracted = extract_text_from_file(content, filepath)
+        print(f"\nExtracted text (first 1000 chars):")
+        print("-" * 40)
+        print(extracted[:1000])
+        
+    except ImportError as e:
+        print(f"Could not import extraction function: {e}")
+        print("Please manually check the extraction output")
+
+# Run diagnostics
+if __name__ == "__main__":
+    if os.path.exists(test_file):
+        analyze_docx_structure(test_file)
+        compare_extraction_methods(test_file)
+        show_current_extraction(test_file)
+    else:
+        print(f"Test file not found: {test_file}")
+        print("Available files in test_cvs/:")
+        if os.path.exists("test_cvs"):
+            print(os.listdir("test_cvs"))
+```
+
+Run: cd backend && python tests/test_extraction_quality.py
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 3: Show me the results
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+After running, tell me:
+1. What paragraph styles exist in the DOCX?
+2. What font sizes are used?
+3. How many bold headers were found?
+4. Are there tables?
+5. What does current extraction output look like?
+
+This will show exactly what information is available but being lost.
