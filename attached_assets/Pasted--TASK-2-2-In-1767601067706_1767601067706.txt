@@ -1,0 +1,72 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  ⚙️ TASK 2/2: Integrate Line Number Enrichment                               ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+PREREQUISITE: TASK-1 must be completed first.
+
+CONTEXT:
+Now we call enrich_issues_with_line_numbers() inside detect_cv_issues()
+to add line numbers to all issues.
+
+───────────────────────────────────────────────────────────────────────────────
+FILE TO MODIFY: backend/common/detection/master_detector.py
+───────────────────────────────────────────────────────────────────────────────
+
+TASK: Modify the detect_cv_issues() function to call the enrichment function.
+
+FIND this section in detect_cv_issues():
+```python
+        # Step 2: Call existing detect_all_issues()
+        # This runs all 17 detectors and returns List[Dict]
+        all_issues = detect_all_issues(cv_text, job_description)
+        report.issues = all_issues
+```
+
+REPLACE WITH:
+```python
+        # Step 2: Call existing detect_all_issues()
+        # This runs all 17 detectors and returns List[Dict]
+        all_issues = detect_all_issues(cv_text, job_description)
+        
+        # Step 2.5: Enrich issues with line numbers
+        # Uses cv_block_structure to find exact line for each issue
+        all_issues = enrich_issues_with_line_numbers(
+            all_issues, 
+            cv_block_structure, 
+            cv_text
+        )
+        
+        report.issues = all_issues
+```
+
+───────────────────────────────────────────────────────────────────────────────
+VERIFICATION
+───────────────────────────────────────────────────────────────────────────────
+
+Test the full flow:
+```python
+from backend.common.detection import detect_cv_issues
+
+test_cv = """John Smith
+john@email.com
+
+EXPERIENCE
+Software Engineer at TechCorp
+- Managed team of developers
+- Led project initiatives
+
+EDUCATION
+BS Computer Science
+"""
+
+report = detect_cv_issues(test_cv)
+
+# Check for line numbers
+issues_with_lines = [i for i in report.issues if 'line_number' in i]
+print(f"Issues with line numbers: {len(issues_with_lines)} / {len(report.issues)}")
+
+for issue in report.issues[:5]:
+    print(f"  Line {issue.get('line_number', '?')}: {issue.get('issue_type')} - {issue.get('current', '')[:30]}")
+```
+
+Expected output:

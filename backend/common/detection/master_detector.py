@@ -455,6 +455,85 @@ def get_detection_summary(issues: List[Dict]) -> Dict[str, int]:
     return dict(Counter(types))
 
 
+def enrich_issues_with_line_numbers(
+    issues: List[Dict[str, Any]],
+    cv_block_structure: Optional[CVBlockStructure],
+    cv_text: str
+) -> List[Dict[str, Any]]:
+    """
+    Enrich issues with line numbers by finding where 'current' text appears.
+    
+    Uses cv_block_structure to:
+    1. Find which block contains the issue text
+    2. Get the line number from that block
+    3. Add block_type and job_index for context
+    
+    Args:
+        issues: List of issue dicts
+        cv_block_structure: The CV structure with line numbers
+        cv_text: Original CV text (for fallback line search)
+    
+    Returns:
+        Same issues list with line_number, block_type, job_index added
+    """
+    if not cv_block_structure:
+        return issues
+    
+    # Build a line lookup from CV text
+    lines = cv_text.split('\n')
+    
+    for issue in issues:
+        current = issue.get('current', '')
+        if not current or len(current) < 3:
+            continue
+        
+        # Try to find line number
+        line_number = None
+        block_type = None
+        job_index = None
+        
+        # Method 1: Search in blocks
+        for block in cv_block_structure.blocks:
+            if current in block.content:
+                line_number = block.start_line
+                block_type = block.block_type.value
+                
+                # If it's an experience block, find which job
+                if block.block_type == BlockType.EXPERIENCE:
+                    for idx, job in enumerate(cv_block_structure.all_jobs):
+                        if current in job.raw_text:
+                            job_index = idx
+                            # More precise line number from job
+                            if job.start_line:
+                                line_number = job.start_line
+                            break
+                
+                # Search for exact line within block
+                for i, line in enumerate(lines[block.start_line - 1:block.end_line], start=block.start_line):
+                    if current in line:
+                        line_number = i
+                        break
+                
+                break
+        
+        # Method 2: Fallback - search entire CV
+        if line_number is None:
+            for i, line in enumerate(lines, start=1):
+                if current in line:
+                    line_number = i
+                    break
+        
+        # Update issue
+        if line_number:
+            issue['line_number'] = line_number
+        if block_type:
+            issue['block_type'] = block_type
+        if job_index is not None:
+            issue['job_index'] = job_index
+    
+    return issues
+
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # MAIN ENTRY POINT: detect_cv_issues()
 # ═══════════════════════════════════════════════════════════════════════════════
