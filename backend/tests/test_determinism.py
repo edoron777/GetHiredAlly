@@ -11,7 +11,7 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from common.detection import detect_all_issues
+from common.detection import detect_all_issues, detect_cv_issues, CVIssueReport
 from common.scoring.severity import assign_severity_to_issues
 
 
@@ -177,6 +177,65 @@ def run_all_tests():
         print("\n⚠️ SOME TESTS FAILED - Please fix before proceeding")
     
     return failed == 0
+
+
+def test_detect_cv_issues_returns_report():
+    """Test that detect_cv_issues returns CVIssueReport."""
+    report = detect_cv_issues(TEST_CV)
+    
+    # Verify return type
+    assert isinstance(report, CVIssueReport), "Should return CVIssueReport"
+    
+    # Verify issues list exists
+    assert isinstance(report.issues, list), "issues should be a list"
+    
+    # Verify summary exists
+    assert report.summary is not None, "summary should exist"
+    assert isinstance(report.summary.total_issues, int), "total_issues should be int"
+    assert isinstance(report.summary.overall_score, int), "overall_score should be int"
+    
+    # Verify score is valid range
+    assert 0 <= report.summary.overall_score <= 100, "score should be 0-100"
+    
+    print(f"✓ detect_cv_issues test passed: {report.summary.total_issues} issues, score={report.summary.overall_score}")
+
+
+def test_detect_cv_issues_determinism():
+    """Test that detect_cv_issues returns consistent results."""
+    report1 = detect_cv_issues(TEST_CV)
+    report2 = detect_cv_issues(TEST_CV)
+    
+    # Same number of issues
+    assert report1.summary.total_issues == report2.summary.total_issues, \
+        "Issue count should be deterministic"
+    
+    # Same score
+    assert report1.summary.overall_score == report2.summary.overall_score, \
+        "Score should be deterministic"
+    
+    # Same issue types
+    types1 = sorted([i.get('issue_type', '') for i in report1.issues])
+    types2 = sorted([i.get('issue_type', '') for i in report2.issues])
+    assert types1 == types2, "Issue types should be deterministic"
+    
+    print(f"✓ detect_cv_issues determinism test passed")
+
+
+def test_backward_compatibility():
+    """Test that detect_cv_issues().issues matches detect_all_issues()."""
+    old_issues = detect_all_issues(TEST_CV)
+    new_report = detect_cv_issues(TEST_CV)
+    
+    # Same number of issues
+    assert len(old_issues) == len(new_report.issues), \
+        "New function should return same number of issues"
+    
+    # Same issue types
+    old_types = sorted([i.get('issue_type', '') for i in old_issues])
+    new_types = sorted([i.get('issue_type', '') for i in new_report.issues])
+    assert old_types == new_types, "Issue types should match"
+    
+    print(f"✓ Backward compatibility test passed: {len(old_issues)} issues")
 
 
 if __name__ == '__main__':
