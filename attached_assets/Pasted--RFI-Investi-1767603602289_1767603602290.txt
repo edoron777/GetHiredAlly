@@ -1,0 +1,69 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  🔍 RFI: Investigate MISSING_IMPACT and MISSING_METRICS Detection            ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+CONTEXT:
+The issues CONTENT_MISSING_IMPACT and CONTENT_MISSING_METRICS have 
+`current` field set to "Not found in: Senior Developer..." which won't
+match any text in the CV.
+
+We need to change it to the actual bullet text that's missing impact/metrics.
+
+───────────────────────────────────────────────────────────────────────────────
+TASK 1: Find the detector functions
+───────────────────────────────────────────────────────────────────────────────
+
+Search for where these issue types are created:
+- CONTENT_MISSING_IMPACT
+- CONTENT_MISSING_METRICS
+
+Commands to run:
+```bash
+grep -rn "MISSING_IMPACT" backend/common/detection/
+grep -rn "MISSING_METRICS" backend/common/detection/
+```
+
+Tell me:
+1. Which file(s) create these issues?
+2. Which function(s) create these issues?
+3. Show the code where `current` field is set
+
+───────────────────────────────────────────────────────────────────────────────
+TASK 2: Show the function code
+───────────────────────────────────────────────────────────────────────────────
+
+Show me the FULL function that creates CONTENT_MISSING_IMPACT issues.
+
+I need to see:
+- What parameters the function receives
+- How it detects missing impact
+- How it sets the `current` field
+- What text it has access to (bullets, job entries, etc.)
+
+───────────────────────────────────────────────────────────────────────────────
+TASK 3: Identify available text
+───────────────────────────────────────────────────────────────────────────────
+
+When the function detects a bullet is missing impact:
+- Does it have access to the full bullet text?
+- Does it have access to the job title/company?
+- What variables contain the actual CV text?
+
+Example of what I'm looking for:
+```python
+# If code looks like:
+for bullet in bullets:
+    if not has_impact(bullet.text):
+        issues.append({
+            'issue_type': 'CONTENT_MISSING_IMPACT',
+            'current': 'Not found in: ...',  # ← BAD
+            # Should be:
+            'current': bullet.text,  # ← GOOD - actual bullet text
+        })
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+DO NOT MODIFY ANY FILES - this is investigation only.
+
+╚══════════════════════════════════════════════════════════════════════════════╝
