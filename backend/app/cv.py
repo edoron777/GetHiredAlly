@@ -344,9 +344,13 @@ async def get_test_cv_file(filename: str):
     return FileResponse(filepath, filename=filename)
 
 
-@router.get("/dev/analyze-structure/{cv_id}")
-async def analyze_cv_structure(cv_id: str, token: str = None):
-    """DEV ONLY: Return detailed block structure analysis for debugging."""
+@router.get("/dev/analyze-structure/{scan_id}")
+async def analyze_cv_structure(scan_id: str, token: str = None):
+    """DEV ONLY: Return detailed block structure analysis for debugging.
+    
+    Note: scan_id is the ID from cv_scan_results table (numeric), 
+    NOT the user_cvs.id (UUID). This matches what the frontend passes.
+    """
     from common.detection.block_detector import detect_cv_blocks, BlockType
     from utils.encryption import decrypt_text, is_encrypted
     
@@ -361,17 +365,17 @@ async def analyze_cv_structure(cv_id: str, token: str = None):
         
         cursor = conn.cursor(cursor_factory=RealDictCursor)
         cursor.execute(
-            "SELECT content FROM user_cvs WHERE id = %s AND user_id = %s",
-            (cv_id, str(user["id"]))
+            "SELECT original_cv_content FROM cv_scan_results WHERE id = %s AND user_id = %s",
+            (scan_id, str(user["id"]))
         )
-        cv = cursor.fetchone()
+        scan = cursor.fetchone()
         cursor.close()
         conn.close()
         
-        if not cv or not cv.get("content"):
-            raise HTTPException(status_code=404, detail="CV not found")
+        if not scan or not scan.get("original_cv_content"):
+            raise HTTPException(status_code=404, detail="Scan not found")
         
-        cv_text = cv["content"]
+        cv_text = scan["original_cv_content"]
         
         if is_encrypted(cv_text):
             cv_text = decrypt_text(cv_text)
