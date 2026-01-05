@@ -1,0 +1,57 @@
+DAVID DORON
+Senior Cloud Architect
+david.doron@email.com | +1-555-123-4567 | linkedin.com/in/daviddoron | github.com/daviddoron
+
+PROFESIONAL SUMMARY
+Experainced cloud architect with 10+ years of experiance in cloud computing, DevOps, and infrastructure managment. Responisble for leading teams and developping enterprise solutions.
+
+CERTIFICATIONS
+• AWS Solutions Architect Professional
+• AWS DevOps Engineer Professional  
+• AWS Security Specialty
+• AWS Database Specialty
+• AWS Machine Learning Specialty
+• Google Cloud Professional Architect
+• Google Cloud Professional Data Engineer
+• Azure Solutions Architect Expert
+• Azure DevOps Engineer Expert
+• Kubernetes Administrator (CKA)
+• Certified Kubernetes Security Specialist (CKS)
+• HashiCorp Terraform Associate
+• Docker Certified Associate
+• CISSP - Certified Information Systems Security Professional
+• PMP - Project Management Professional
+
+EXPERIENCE
+
+Senior Cloud Architect at TechCorp Global
+January 2024 - June 2024
+Led cloud migration initiatives for Fortune 500 clients.
+Implmented cost optimization strategies reducing cloud spend by 40%.
+
+Cloud Engineer at StartupXYZ
+March 2023 - December 2023
+Developped microservices architecture using Kubernetes.
+Maintained CI/CD pipelines.
+
+DevOps Lead at MegaCorp
+August 2022 - February 2023
+Managed infrastructure as code with Terraform.
+Achieved excellant uptime metrics.
+
+Platform Engineer at CloudFirst
+January 2022 - July 2022
+Built automated deployment pipelines.
+Reduced deployment time by 60%.
+
+Senior DevOps Engineer at TechBase
+January 2019 - December 2021
+Led infrastructure team of 5 engineers.
+Implemented security best practices across all environments.
+
+EDUCTION
+Bachelor of Science in Computer Science
+Stanford Univeristy, 2018
+
+SKILLS
+AWS, Azure, GCP, Kubernetes, Docker, Terraform, Python, Go, CI/CD, Microservices

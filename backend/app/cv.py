@@ -304,3 +304,41 @@ async def get_cv(cv_id: str, token: str):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/dev/test-files")
+async def list_test_cv_files():
+    """DEV ONLY: List available test CV files."""
+    test_cv_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "test_cvs")
+    
+    if not os.path.exists(test_cv_dir):
+        return {"files": []}
+    
+    files = []
+    for filename in os.listdir(test_cv_dir):
+        ext = filename.split('.')[-1].lower() if '.' in filename else ''
+        if ext in ALLOWED_EXTENSIONS:
+            filepath = os.path.join(test_cv_dir, filename)
+            files.append({
+                "name": filename,
+                "size": os.path.getsize(filepath)
+            })
+    
+    return {"files": sorted(files, key=lambda x: x["name"])}
+
+
+from fastapi.responses import FileResponse
+
+@router.get("/dev/test-files/{filename}")
+async def get_test_cv_file(filename: str):
+    """DEV ONLY: Get a test CV file."""
+    test_cv_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "test_cvs")
+    filepath = os.path.join(test_cv_dir, filename)
+    
+    if not os.path.exists(filepath):
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    if ".." in filename or "/" in filename:
+        raise HTTPException(status_code=400, detail="Invalid filename")
+    
+    return FileResponse(filepath, filename=filename)

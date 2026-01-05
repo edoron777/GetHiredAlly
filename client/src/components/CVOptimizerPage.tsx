@@ -6,18 +6,32 @@ import { isAuthenticated, getAuthToken } from '@/lib/auth'
 const MAX_FILE_SIZE = 10 * 1024 * 1024
 const ALLOWED_EXTENSIONS = ['pdf', 'docx', 'doc', 'txt', 'md', 'rtf', 'odt']
 
+interface TestFile {
+  name: string
+  size: number
+}
+
 export function CVOptimizerPage() {
   const navigate = useNavigate()
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [testFiles, setTestFiles] = useState<TestFile[]>([])
+  const [loadingTestFile, setLoadingTestFile] = useState(false)
 
   useEffect(() => {
     if (!isAuthenticated()) {
       navigate('/login')
     }
   }, [navigate])
+
+  useEffect(() => {
+    fetch('/api/cv/dev/test-files')
+      .then(res => res.json())
+      .then(data => setTestFiles(data.files || []))
+      .catch(() => setTestFiles([]))
+  }, [])
 
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return bytes + ' B'
@@ -72,6 +86,28 @@ export function CVOptimizerPage() {
   const clearFile = () => {
     setSelectedFile(null)
     setError(null)
+  }
+
+  const handleTestFileSelect = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const filename = e.target.value
+    if (!filename) return
+    
+    setLoadingTestFile(true)
+    setError(null)
+    
+    try {
+      const response = await fetch(`/api/cv/dev/test-files/${encodeURIComponent(filename)}`)
+      if (!response.ok) throw new Error('Failed to fetch test file')
+      
+      const blob = await response.blob()
+      const file = new File([blob], filename, { type: blob.type })
+      validateAndSetFile(file)
+    } catch (err) {
+      setError('Failed to load test file')
+    } finally {
+      setLoadingTestFile(false)
+      e.target.value = ''
+    }
   }
 
   const uploadAndScan = async (file: File) => {
@@ -200,6 +236,32 @@ export function CVOptimizerPage() {
             </div>
           )}
         </div>
+
+        {testFiles.length > 0 && (
+          <div className="mt-4 p-3 bg-gray-100 border border-gray-300 rounded-lg">
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-gray-600 whitespace-nowrap">
+                🧪 Dev: Quick Test
+              </span>
+              <select
+                onChange={handleTestFileSelect}
+                disabled={loadingTestFile}
+                className="flex-1 text-sm border border-gray-300 rounded px-2 py-1 bg-white"
+                defaultValue=""
+              >
+                <option value="">Select a test CV...</option>
+                {testFiles.map(f => (
+                  <option key={f.name} value={f.name}>
+                    {f.name} ({formatFileSize(f.size)})
+                  </option>
+                ))}
+              </select>
+              {loadingTestFile && (
+                <div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full" />
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="text-center mt-8">
           <button
