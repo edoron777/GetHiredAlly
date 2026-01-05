@@ -1,0 +1,60 @@
+╔══════════════════════════════════════════════════════════════════════════╗
+║  🔍 RFI: Reconnaissance - CV Parser Structure                            ║
+║  Type: INVESTIGATION - DO NOT MODIFY CODE                                ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+CONTEXT:
+I need to create a new CV block structure detection function.
+Before creating it, I need to understand the current code structure.
+
+───────────────────────────────────────────────────────────────────────────
+QUESTIONS - PLEASE ANSWER ALL
+───────────────────────────────────────────────────────────────────────────
+
+1. CV PARSER LOCATION
+   - Does `backend/common/cv_parser/` directory exist?
+   - If yes, list ALL files in this directory
+   - Show the directory tree
+
+2. EXISTING PARSER FILES
+   - Does `enhanced_parser.py` exist? Show its main class/functions
+   - Does `section_detector.py` exist? Show its main functions
+   - Does `skills_extractor.py` exist? Show its main functions
+
+3. DETECTION FOLDER
+   - List ALL files in `backend/common/detection/`
+   - Show the imports in `master_detector.py`
+
+4. EXISTING SECTION EXTRACTOR
+   - Is there already a `section_extractor.py` in detection folder?
+   - If yes, show its main functions and return format
+   - How does it currently identify CV sections?
+
+5. WORD LISTS
+   - Where is `word_lists.py` located?
+   - What word lists does it contain? (list names only)
+
+6. COMPONENT REGISTRY
+   - Where is the Component Registry located?
+   - What is its current format?
+
+7. COMMON FOLDER STRUCTURE
+   - Show the complete tree of `backend/common/`
+
+───────────────────────────────────────────────────────────────────────────
+RESPONSE FORMAT
+───────────────────────────────────────────────────────────────────────────
+
+For each question:
+- Answer with SPECIFIC FILE PATHS
+- Include CODE SNIPPETS where requested
+- Say "NOT FOUND" if something doesn't exist
+- Say "UNCLEAR" if logic is confusing
+
+───────────────────────────────────────────────────────────────────────────
+
+⚠️ DO NOT MODIFY ANY CODE
+⚠️ REPORT ONLY - INVESTIGATION MODE
+⚠️ I need to understand before we implement
+
+╚══════════════════════════════════════════════════════════════════════════╝
