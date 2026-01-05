@@ -33,7 +33,7 @@ export function findMarkerPositions(
         index = match.index
       }
     } else {
-      index = content.indexOf(matchText)
+      index = content.toLowerCase().indexOf(matchText.toLowerCase())
     }
     
     if (index !== -1) {
