@@ -594,6 +594,15 @@ def detect_cv_issues(
         # Step 2: Call existing detect_all_issues()
         # This runs all 17 detectors and returns List[Dict]
         all_issues = detect_all_issues(cv_text, job_description)
+        
+        # Step 2.5: Enrich issues with line numbers
+        # Uses cv_block_structure to find exact line for each issue
+        all_issues = enrich_issues_with_line_numbers(
+            all_issues, 
+            cv_block_structure, 
+            cv_text
+        )
+        
         report.issues = all_issues
         
         # Step 3: Organize issues by category

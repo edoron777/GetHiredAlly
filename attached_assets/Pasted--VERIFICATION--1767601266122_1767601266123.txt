@@ -1,0 +1,100 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  ✅ VERIFICATION: Line Numbers Working                                        ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+PREREQUISITE: TASK-1 and TASK-2 must be completed.
+
+───────────────────────────────────────────────────────────────────────────────
+TEST 1: Basic Line Number Test
+───────────────────────────────────────────────────────────────────────────────
+```python
+from backend.common.detection import detect_cv_issues
+
+test_cv = """John Smith
+john.smith@email.com
+555-123-4567
+
+PROFESSIONAL SUMMARY
+Experienced software engineer with strong skills.
+
+EXPERIENCE
+
+Senior Developer at TechCorp Inc
+January 2020 - Present
+- Managed team of 5 developers
+- Responsible for system architecture
+- Helped improve performance
+
+Software Engineer at StartupXYZ
+2016 - 2019
+- Built web applications
+- Worked on backend systems
+
+EDUCATION
+BS Computer Science, UC Berkeley, 2016
+
+SKILLS
+Python, JavaScript, SQL
+"""
+
+report = detect_cv_issues(test_cv)
+
+print("=" * 60)
+print("LINE NUMBER TEST RESULTS")
+print("=" * 60)
+
+total = len(report.issues)
+with_lines = len([i for i in report.issues if i.get('line_number')])
+
+print(f"\nTotal issues: {total}")
+print(f"With line numbers: {with_lines}")
+print(f"Coverage: {with_lines/total*100:.1f}%")
+
+print("\nSample issues with line numbers:")
+for issue in report.issues:
+    if issue.get('line_number'):
+        print(f"  Line {issue['line_number']:2d}: {issue.get('issue_type', 'UNKNOWN')[:30]}")
+        if issue.get('current'):
+            print(f"           Text: '{issue['current'][:40]}'")
+```
+
+───────────────────────────────────────────────────────────────────────────────
+TEST 2: Verify Line Numbers Are Correct
+───────────────────────────────────────────────────────────────────────────────
+
+Manually check a few issues:
+1. Find an issue with "Managed" as current text
+2. Check if line_number points to line with "Managed"
+3. Count lines in test CV to verify
+
+───────────────────────────────────────────────────────────────────────────────
+TEST 3: Service Integration
+───────────────────────────────────────────────────────────────────────────────
+
+1. Start backend server
+2. Run CV Optimizer with a real CV
+3. Check browser console / API response for line_number in issues
+4. (Future) UI can use line numbers to show markers
+
+───────────────────────────────────────────────────────────────────────────────
+SUCCESS CRITERIA
+───────────────────────────────────────────────────────────────────────────────
+
+[ ] At least 50% of issues have line_number
+[ ] Line numbers are accurate (spot check 3-5 issues)
+[ ] No errors during detection
+[ ] Service still works normally
+
+───────────────────────────────────────────────────────────────────────────────
+SUMMARY TABLE
+───────────────────────────────────────────────────────────────────────────────
+
+| Metric | Value |
+|--------|-------|
+| Total issues | ___ |
+| Issues with line_number | ___ |
+| Coverage | ___% |
+| Line numbers accurate | Yes/No |
+| Service works | Yes/No |
+
+╚══════════════════════════════════════════════════════════════════════════════╝
