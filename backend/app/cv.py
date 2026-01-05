@@ -361,17 +361,17 @@ async def analyze_cv_structure(cv_id: str, token: str = None):
         
         cursor = conn.cursor(cursor_factory=RealDictCursor)
         cursor.execute(
-            "SELECT cv_content FROM user_cvs WHERE id = %s AND user_id = %s",
+            "SELECT content FROM user_cvs WHERE id = %s AND user_id = %s",
             (cv_id, str(user["id"]))
         )
         cv = cursor.fetchone()
         cursor.close()
         conn.close()
         
-        if not cv or not cv.get("cv_content"):
+        if not cv or not cv.get("content"):
             raise HTTPException(status_code=404, detail="CV not found")
         
-        cv_text = cv["cv_content"]
+        cv_text = cv["content"]
         
         if is_encrypted(cv_text):
             cv_text = decrypt_text(cv_text)
