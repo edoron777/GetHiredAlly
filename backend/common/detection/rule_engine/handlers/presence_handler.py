@@ -40,6 +40,10 @@ class PresenceHandler(BaseHandler):
         """
         Detect presence or absence of patterns.
         """
+        skip_codes = ['CONTENT_MISSING_IMPACT', 'CONTENT_MISSING_METRICS']
+        if hasattr(rule, 'issue_code') and rule.issue_code in skip_codes:
+            return []
+        
         issues = []
         config = rule.detection_config
         
