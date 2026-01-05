@@ -260,17 +260,28 @@ export default function ResultsPage() {
 
   // DEV: Fetch CV structure analysis
   const fetchStructure = async () => {
-    if (!cvId) return;
+    if (!cvId) {
+      console.log('fetchStructure: No cvId available');
+      return;
+    }
+    console.log('fetchStructure: Starting fetch for cvId:', cvId);
     setStructureLoading(true);
     try {
       const token = getAuthToken();
-      const response = await fetch(`/api/cv/dev/analyze-structure/${cvId}?token=${token}`);
+      const url = `/api/cv/dev/analyze-structure/${cvId}?token=${token}`;
+      console.log('fetchStructure: Calling URL:', url);
+      const response = await fetch(url);
+      console.log('fetchStructure: Response status:', response.status);
       if (response.ok) {
         const data = await response.json();
+        console.log('fetchStructure: Got data:', data);
         setStructureData(data);
+      } else {
+        const errorText = await response.text();
+        console.error('fetchStructure: Error response:', response.status, errorText);
       }
     } catch (err) {
-      console.error('Failed to fetch structure:', err);
+      console.error('fetchStructure: Failed to fetch structure:', err);
     } finally {
       setStructureLoading(false);
     }
@@ -1048,12 +1059,14 @@ export default function ResultsPage() {
             {/* Dev: Structure Button */}
             <button
               onClick={() => {
+                console.log('Structure button clicked, cvId:', cvId);
+                console.log('Current structureData:', structureData);
                 if (!structureData && !structureLoading) {
                   fetchStructure();
                 }
                 setShowStructureModal(true);
               }}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-100 border border-gray-300 text-gray-600 hover:bg-gray-200"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-700 text-white hover:bg-gray-800"
             >
               <span>🔍</span>
               Structure
