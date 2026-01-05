@@ -27,6 +27,9 @@ BULLET_STYLES = {
     'number': re.compile(r'^\s*\d+[.)]\s+', re.MULTILINE),
 }
 
+MIN_BULLET_COUNT_FOR_INCONSISTENCY = 3  # Minimum bullets of a style to count as significant
+MINORITY_STYLE_THRESHOLD = 0.20  # 20% - minority style must be significant portion
+
 REQUIRED_SECTIONS = ['experience', 'education', 'skills']
 
 SECTION_HEADER_PATTERNS = [
@@ -98,12 +101,13 @@ def detect_date_inconsistency(text: str) -> List[Dict]:
 def detect_bullet_inconsistency(text: str) -> List[Dict]:
     """
     Detect inconsistent bullet point styles.
+    Only triggers if multiple styles are significantly used (not just 1-2 stray bullets).
     
     Args:
         text: Text to analyze
         
     Returns:
-        List of FORMAT_INCONSISTENT issues
+        List of FORMAT_INCONSISTENT_BULLETS issues
     """
     issues = []
     styles_found = {}
@@ -113,15 +117,38 @@ def detect_bullet_inconsistency(text: str) -> List[Dict]:
         if matches:
             styles_found[style_name] = len(matches)
     
-    if len(styles_found) > 1:
+    if len(styles_found) < 2:
+        return issues
+    
+    total_bullets = sum(styles_found.values())
+    significant_styles = []
+    
+    if total_bullets < 10:
+        return issues
+    
+    for style_name, count in styles_found.items():
+        is_significant = count >= MIN_BULLET_COUNT_FOR_INCONSISTENCY
+        if is_significant:
+            significant_styles.append((style_name, count))
+    
+    if len(significant_styles) >= 2:
+        significant_styles.sort(key=lambda x: x[1], reverse=True)
+        primary_style = significant_styles[0][0]
+        secondary_styles = [s[0] for s in significant_styles[1:]]
+        
+        style_chars = {'dash': '-', 'bullet': '•', 'asterisk': '*', 'arrow': '>', 'number': '1.'}
+        examples = [f"{style_chars.get(style_name, style_name)} ({count}x)" for style_name, count in significant_styles[:3]]
+        
         issues.append({
             'issue_type': 'FORMAT_INCONSISTENT_BULLETS',
             'location': 'Bullet Points',
-            'description': f'Inconsistent bullet styles ({len(styles_found)} different styles: {", ".join(styles_found.keys())})',
-            'current': '',
+            'description': f'Multiple bullet styles found: {", ".join(examples)}. Use one consistent style.',
+            'current': ', '.join(examples),
             'is_highlightable': False,
-            'meta_info': ', '.join(styles_found.keys()),
-            'suggestion': 'Use a consistent bullet style throughout',
+            'styles_found': styles_found,
+            'primary_style': primary_style,
+            'secondary_styles': secondary_styles,
+            'suggestion': f'Standardize all bullets to use "{style_chars.get(primary_style, primary_style)}" style',
         })
     
     return issues

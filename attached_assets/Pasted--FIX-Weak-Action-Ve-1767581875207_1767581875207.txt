@@ -1,0 +1,159 @@
+╔══════════════════════════════════════════════════════════════════════════╗
+║  FIX: Weak Action Verb Detection - Add Minimum Threshold                 ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+PROBLEM:
+The weak verb detector in language_detector.py triggers when finding just 
+1 weak verb. This is too aggressive - most CVs will have at least 1.
+
+Example: CV has 50 strong action verbs and 1 "supported" → triggers issue.
+
+FILE TO MODIFY:
+backend/common/detection/language_detector.py
+
+FIND THE FUNCTION:
+detect_weak_verbs() (approximately lines 99-142)
+
+CURRENT LOGIC:
+- Creates an issue for EACH weak verb found
+- No minimum threshold
+- No consideration of ratio (weak vs strong verbs)
+
+NEW LOGIC:
+1. Only trigger if 3+ UNIQUE weak verbs found
+2. OR if weak verbs are more than 30% of all action verbs
+3. Group all weak verbs into ONE issue (not separate issues per verb)
+
+CHANGES TO MAKE:
+───────────────────────────────────────────────────────────────────────────
+# Add constants at top of file (near other constants)
+MIN_WEAK_VERBS_FOR_ISSUE = 3  # Need 3+ different weak verbs to trigger
+WEAK_VERB_RATIO_THRESHOLD = 0.30  # 30% - if weak verbs are 30%+ of total
+
+# REPLACE the detect_weak_verbs function with:
+
+def detect_weak_verbs(text: str) -> List[Dict]:
+    """
+    Detect weak or passive action verbs in experience section.
+    Only triggers if weak verbs are a significant pattern, not isolated cases.
+    """
+    issues = []
+    
+    # Focus on experience/work sections
+    experience_text = _extract_experience_section(text)
+    if not experience_text:
+        experience_text = text  # Fallback to full text
+    
+    # Find all weak verbs used
+    weak_verbs_found = set()
+    weak_verb_locations = []
+    
+    for line in experience_text.split('\n'):
+        line_lower = line.lower().strip()
+        if not line_lower:
+            continue
+            
+        for verb in WEAK_VERBS:
+            verb_lower = verb.lower()
+            if verb_lower in line_lower:
+                weak_verbs_found.add(verb)
+                # Store first occurrence for each verb
+                if verb not in [loc['verb'] for loc in weak_verb_locations]:
+                    weak_verb_locations.append({
+                        'verb': verb,
+                        'line': line.strip()[:100]  # Truncate long lines
+                    })
+    
+    # Count strong verbs for ratio calculation
+    strong_verbs_count = 0
+    for line in experience_text.split('\n'):
+        line_lower = line.lower().strip()
+        for verb in STRONG_VERBS:
+            if line_lower.startswith(verb.lower()):
+                strong_verbs_count += 1
+                break
+    
+    total_verbs = len(weak_verbs_found) + strong_verbs_count
+    weak_ratio = len(weak_verbs_found) / total_verbs if total_verbs > 0 else 0
+    
+    # Only trigger if:
+    # 1. 3+ unique weak verbs found, OR
+    # 2. Weak verbs are 30%+ of all action verbs (and at least 2 found)
+    should_trigger = (
+        len(weak_verbs_found) >= MIN_WEAK_VERBS_FOR_ISSUE or
+        (weak_ratio >= WEAK_VERB_RATIO_THRESHOLD and len(weak_verbs_found) >= 2)
+    )
+    
+    if should_trigger:
+        # Create ONE consolidated issue with all weak verbs
+        weak_list = sorted(list(weak_verbs_found))[:5]  # Show max 5 examples
+        
+        issues.append({
+            'issue_type': 'CONTENT_WEAK_ACTION_VERBS',
+            'location': 'Experience Section',
+            'description': f'Found {len(weak_verbs_found)} weak/passive verbs: {", ".join(weak_list)}. Replace with strong action verbs.',
+            'current': ', '.join(weak_list),  # The weak verbs found
+            'is_highlightable': False,  # Multiple locations, can't highlight one
+            'weak_verbs': list(weak_verbs_found),
+            'weak_verb_count': len(weak_verbs_found),
+            'examples': weak_verb_locations[:3],  # Show up to 3 example lines
+        })
+    
+    return issues
+
+
+def _extract_experience_section(text: str) -> str:
+    """Extract experience/work history section from CV text."""
+    # Look for experience section headers
+    experience_headers = [
+        'experience', 'work experience', 'professional experience',
+        'employment history', 'work history', 'career history',
+        'employment', 'positions held'
+    ]
+    
+    lines = text.split('\n')
+    in_experience = False
+    experience_lines = []
+    
+    for i, line in enumerate(lines):
+        line_lower = line.lower().strip()
+        
+        # Check if this is an experience header
+        if any(header in line_lower for header in experience_headers):
+            in_experience = True
+            continue
+        
+        # Check if we've hit another major section
+        if in_experience and _is_section_header(line):
+            break
+        
+        if in_experience:
+            experience_lines.append(line)
+    
+    return '\n'.join(experience_lines)
+
+
+def _is_section_header(line: str) -> bool:
+    """Check if line is likely a section header."""
+    section_keywords = [
+        'education', 'skills', 'certifications', 'projects',
+        'awards', 'publications', 'languages', 'interests',
+        'references', 'summary', 'objective', 'contact'
+    ]
+    line_lower = line.lower().strip()
+    
+    # Short line that matches a section keyword
+    if len(line_lower) < 30:
+        for keyword in section_keywords:
+            if keyword in line_lower:
+                return True
+    return False
+───────────────────────────────────────────────────────────────────────────
+
+TEST CASES:
+1. CV with 1 "supported" → Should NOT trigger (below threshold)
+2. CV with "helped, assisted, worked on" (3 weak verbs) → SHOULD trigger
+3. CV with 10 strong verbs and 1 weak verb → Should NOT trigger (10% ratio)
+4. CV with 5 strong verbs and 3 weak verbs → SHOULD trigger (37.5% ratio)
+
+╚══════════════════════════════════════════════════════════════════════════╝

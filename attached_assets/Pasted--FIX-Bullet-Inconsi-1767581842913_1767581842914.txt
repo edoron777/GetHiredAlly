@@ -1,0 +1,102 @@
+╔══════════════════════════════════════════════════════════════════════════╗
+║  FIX: Bullet Inconsistency Detection - Add Tolerance Threshold           ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+PROBLEM:
+The bullet inconsistency detector triggers when finding ANY 2 different 
+bullet styles, even if one appears only once. This creates false positives.
+
+Example: CV has 20 bullets with "•" and 1 line with "-" → triggers issue.
+This is too aggressive.
+
+FILE TO MODIFY:
+backend/common/detection/format_detector.py
+
+CURRENT CODE (approximately lines 98-127):
+───────────────────────────────────────────────────────────────────────────
+def detect_bullet_inconsistency(text: str) -> List[Dict]:
+    styles_found = {}
+    for style_name, pattern in BULLET_STYLES.items():
+        matches = pattern.findall(text)
+        if matches:
+            styles_found[style_name] = len(matches)
+    
+    if len(styles_found) > 1:  # ← TOO SENSITIVE - triggers on ANY 2 styles
+        issues.append({
+            'issue_type': 'FORMAT_INCONSISTENT_BULLETS',
+            ...
+        })
+───────────────────────────────────────────────────────────────────────────
+
+NEW LOGIC:
+1. Only trigger if BOTH styles have 3+ occurrences each
+2. OR if the minority style has 20%+ of total bullets
+
+REPLACE WITH:
+───────────────────────────────────────────────────────────────────────────
+# Add constant at top of file (near other constants)
+MIN_BULLET_COUNT_FOR_INCONSISTENCY = 3  # Minimum bullets of a style to count
+MINORITY_STYLE_THRESHOLD = 0.20  # 20% - minority style must be significant
+
+def detect_bullet_inconsistency(text: str) -> List[Dict]:
+    """
+    Detect inconsistent bullet point styles.
+    Only triggers if multiple styles are significantly used (not just 1-2 stray bullets).
+    """
+    issues = []
+    styles_found = {}
+    
+    for style_name, pattern in BULLET_STYLES.items():
+        matches = pattern.findall(text)
+        if matches:
+            styles_found[style_name] = len(matches)
+    
+    # Need at least 2 different styles
+    if len(styles_found) < 2:
+        return issues
+    
+    # Calculate total bullets and check significance
+    total_bullets = sum(styles_found.values())
+    significant_styles = []
+    
+    for style_name, count in styles_found.items():
+        # Style is significant if:
+        # 1. Has MIN_BULLET_COUNT_FOR_INCONSISTENCY or more occurrences, OR
+        # 2. Represents 20%+ of all bullets
+        if count >= MIN_BULLET_COUNT_FOR_INCONSISTENCY or (count / total_bullets) >= MINORITY_STYLE_THRESHOLD:
+            significant_styles.append((style_name, count))
+    
+    # Only report issue if 2+ SIGNIFICANT styles found
+    if len(significant_styles) >= 2:
+        # Sort by count descending
+        significant_styles.sort(key=lambda x: x[1], reverse=True)
+        primary_style = significant_styles[0][0]
+        secondary_styles = [s[0] for s in significant_styles[1:]]
+        
+        # Build example of inconsistent bullets found
+        examples = []
+        for style_name, count in significant_styles[:3]:  # Show top 3 styles
+            style_char = {'dash': '-', 'bullet': '•', 'asterisk': '*', 'arrow': '>', 'number': '1.'}
+            examples.append(f"{style_char.get(style_name, style_name)} ({count}x)")
+        
+        issues.append({
+            'issue_type': 'FORMAT_INCONSISTENT_BULLETS',
+            'location': 'Throughout CV',
+            'description': f'Multiple bullet styles found: {", ".join(examples)}. Use one consistent style.',
+            'current': ', '.join(examples),  # Show the styles found
+            'is_highlightable': False,  # Can't highlight style inconsistency
+            'styles_found': styles_found,
+            'primary_style': primary_style,
+            'secondary_styles': secondary_styles,
+        })
+    
+    return issues
+───────────────────────────────────────────────────────────────────────────
+
+TEST CASES:
+1. CV with 20 "•" and 1 "-" → Should NOT trigger (1 is below threshold)
+2. CV with 10 "•" and 5 "-" → SHOULD trigger (both significant)
+3. CV with 50 "•" and 15 "-" → SHOULD trigger (15 is 23% of total)
+4. CV with only "•" bullets → Should NOT trigger (single style)
+
+╚══════════════════════════════════════════════════════════════════════════╝
