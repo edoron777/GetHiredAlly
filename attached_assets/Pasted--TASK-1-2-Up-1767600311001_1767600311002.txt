@@ -1,0 +1,90 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  ⚙️ TASK 1/2: Update cv_optimizer.py                                         ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+CONTEXT:
+We need to update the main CV Optimizer service to use detect_cv_issues()
+instead of detect_all_issues().
+
+───────────────────────────────────────────────────────────────────────────────
+FILE TO MODIFY: backend/app/cv_optimizer.py
+───────────────────────────────────────────────────────────────────────────────
+
+CHANGE 1: Update Import (Line 25)
+
+FIND:
+```python
+from common.detection import detect_all_issues
+```
+
+REPLACE WITH:
+```python
+from common.detection import detect_cv_issues, CVIssueReport
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+CHANGE 2: Update Function Call (around Line 525-526)
+
+FIND the code that looks like:
+```python
+issues = detect_all_issues(cv_content)
+```
+
+REPLACE WITH:
+```python
+# Use new detect_cv_issues() for enhanced reporting
+report = detect_cv_issues(cv_content)
+issues = report.issues  # Same List[Dict] format for backward compatibility
+
+# Log enhanced metrics (optional but useful)
+logger.info(f"CV Analysis: Score={report.summary.overall_score}/100, Issues={report.summary.total_issues}")
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+CHANGE 3: If there's a job_description parameter, include it
+
+If the current code is:
+```python
+issues = detect_all_issues(cv_content, job_description)
+```
+
+Replace with:
+```python
+report = detect_cv_issues(cv_content, job_description=job_description)
+issues = report.issues
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+OPTIONAL ENHANCEMENT: Use CVIssueReport features
+
+If the code sends a score to the frontend, you can now use:
+```python
+response_data = {
+    'issues': report.issues,
+    'score': report.summary.overall_score,
+    'total_issues': report.summary.total_issues,
+    'critical_count': report.summary.critical_count,
+    'categories': list(report.issues_by_category.keys()),
+}
+```
+
+───────────────────────────────────────────────────────────────────────────────
+VERIFICATION
+───────────────────────────────────────────────────────────────────────────────
+
+After changes:
+[ ] No syntax errors
+[ ] Import works
+[ ] Service starts without errors
+[ ] CV analysis still returns issues
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- Change ONLY the import and function call
+- Keep the variable name 'issues' for backward compatibility
+- Do NOT change how 'issues' is used after the function call
+- If the existing code structure is different, report it
+
+╚══════════════════════════════════════════════════════════════════════════════╝

@@ -22,7 +22,7 @@ from config.rate_limiter import limiter
 from common.scoring import calculate_cv_score as calculate_cv_score_new, calculate_after_fix_score, get_score_message
 from common.scoring.extractors import extract_patterns, analyze_text
 from common.scoring.severity import assign_severity_to_issues, count_issues_by_severity
-from common.detection import detect_all_issues
+from common.detection import detect_cv_issues, CVIssueReport
 from common.detection.changes_extractor import extract_changes_code_based
 
 logger = logging.getLogger(__name__)
@@ -522,9 +522,12 @@ async def analyze_cv_with_ai(cv_content: str, user_id: str, is_markdown: bool = 
     try:
         logger.info("[CV_SCAN] Starting STATIC issue detection (deterministic)...")
         
-        # detect_all_issues already enriches from catalog (assigns severity, category, etc.)
-        issues = detect_all_issues(cv_content)
-        logger.info(f"[CV_SCAN] Static detection found {len(issues)} issues (severity from catalog)")
+        # Use new detect_cv_issues() for enhanced reporting
+        report = detect_cv_issues(cv_content)
+        issues = report.issues  # Same List[Dict] format for backward compatibility
+        
+        # Log enhanced metrics
+        logger.info(f"[CV_SCAN] Static detection: Score={report.summary.overall_score}/100, Issues={report.summary.total_issues}")
         
         for i, issue in enumerate(issues):
             issue['id'] = i + 1
