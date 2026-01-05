@@ -125,9 +125,9 @@ def test_specific_detections():
     issue_types = [iss['issue_type'] for iss in issues]
     
     expected = [
-        'WEAK_ACTION_VERBS',
-        'VAGUE_DESCRIPTION',
-        'NO_METRICS',
+        'CONTENT_WEAK_ACTION_VERBS',
+        'CONTENT_MISSING_METRICS',
+        'CONTENT_MISSING_IMPACT',
     ]
     
     for expected_type in expected:
