@@ -1,0 +1,110 @@
+FIX: Convert structure markers to HTML for better Document View display
+
+PROBLEM:
+The function strip_structure_markers() removes all [H1], [BOLD], [BULLET] markers
+before sending CV content to frontend. This makes Document View look ugly and unformatted.
+
+SOLUTION:
+Create a new function that converts markers to HTML instead of removing them.
+
+STEP 1: Create new file backend/common/utils/marker_converter.py
+
+import re
+
+def convert_markers_to_html(text: str) -> str:
+    """Convert structure markers to HTML elements."""
+    if not text:
+        return ""
+    
+    lines = text.split('\n')
+    result_lines = []
+    in_bullet_list = False
+    
+    for line in lines:
+        is_bullet = '[BULLET]' in line
+        
+        # Handle bullet list open/close
+        if is_bullet and not in_bullet_list:
+            result_lines.append('<ul class="cv-bullets">')
+            in_bullet_list = True
+        elif not is_bullet and in_bullet_list:
+            result_lines.append('</ul>')
+            in_bullet_list = False
+        
+        # Convert [H1] to heading
+        if '[H1]' in line:
+            line = re.sub(r'\[H1\](.*)', r'<h2 class="cv-section">\1</h2>', line)
+        
+        # Convert [H2] to subheading
+        elif '[H2]' in line:
+            line = re.sub(r'\[H2\](.*)', r'<h3 class="cv-subsection">\1</h3>', line)
+        
+        # Convert [BULLET] to list item
+        elif '[BULLET]' in line:
+            line = re.sub(r'\[BULLET\](.*)', r'<li>\1</li>', line)
+        
+        # Regular paragraph
+        elif line.strip():
+            line = f'<p>{line}</p>'
+        
+        # Convert [BOLD] to strong
+        line = line.replace('[BOLD]', '<strong>').replace('[/BOLD]', '</strong>')
+        
+        result_lines.append(line)
+    
+    if in_bullet_list:
+        result_lines.append('</ul>')
+    
+    return '\n'.join(result_lines)
+
+STEP 2: Update get_detailed_report() in backend/app/cv_optimizer.py
+
+Find where strip_structure_markers() is called and add:
+
+from common.utils.marker_converter import convert_markers_to_html
+
+# Add cv_content_html to the response
+cv_content_html = convert_markers_to_html(original_cv_content)
+
+# In the return dictionary, add:
+"cv_content_html": cv_content_html,
+
+STEP 3: Update frontend DocumentView to use HTML
+
+Find the DocumentView component and use cv_content_html:
+
+{data.cv_content_html ? (
+  <div 
+    className="cv-document-content"
+    dangerouslySetInnerHTML={{ __html: data.cv_content_html }}
+  />
+) : (
+  <pre>{data.cv_content}</pre>
+)}
+
+STEP 4: Add CSS styling in the frontend:
+
+.cv-section {
+  font-size: 16px;
+  font-weight: bold;
+  color: #1a365d;
+  margin-top: 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.cv-subsection {
+  font-size: 14px;
+  font-weight: bold;
+  margin-top: 12px;
+}
+
+.cv-bullets {
+  padding-left: 24px;
+  margin: 8px 0;
+}
+
+.cv-bullets li {
+  margin-bottom: 4px;
+}
+
+Show me the current code before making changes.

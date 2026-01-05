@@ -25,6 +25,7 @@ from common.scoring.severity import assign_severity_to_issues, count_issues_by_s
 from common.detection import detect_cv_issues, CVIssueReport
 from common.detection.changes_extractor import extract_changes_code_based
 from common.detection.block_detector import strip_structure_markers
+from common.utils.marker_converter import convert_markers_to_html
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/cv-optimizer", tags=["cv-optimizer"])
@@ -779,15 +780,17 @@ async def get_detailed_report(scan_id: str, token: str):
             issues = json.loads(issues)
 
         cv_content_raw = scan.get('original_cv_content', '')
-        # Strip structure markers for user-facing output
-        # Markers like [H1], [BOLD] are for detection only
+        # Strip structure markers for plain text output
         cv_content = strip_structure_markers(cv_content_raw) if cv_content_raw else ''
+        # Convert markers to HTML for formatted display
+        cv_content_html = convert_markers_to_html(cv_content_raw) if cv_content_raw else ''
         score_data = extract_cv_data_and_score(cv_content) if cv_content else calculate_cv_score_from_issues(issues)
 
         return {
             'scan_id': scan['id'],
             'scan_date': scan['scan_date'],
             'cv_content': cv_content,  # Clean text without markers
+            'cv_content_html': cv_content_html,  # HTML-formatted with headings/bullets
             'total_issues': scan['total_issues'],
             'critical_count': scan['critical_count'],
             'high_count': scan['high_count'],

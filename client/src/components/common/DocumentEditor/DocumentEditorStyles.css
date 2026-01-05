@@ -50,6 +50,45 @@
 .text-content { white-space: pre-wrap; word-wrap: break-word; }
 .text-preformatted { font-family: inherit; font-size: inherit; line-height: inherit; margin: 0; white-space: pre-wrap; }
 
+.cv-html-content { white-space: normal; }
+.cv-html-content h2.cv-section {
+  font-size: 1.1em;
+  font-weight: 700;
+  color: #1a365d;
+  margin: 1.2em 0 0.5em 0;
+  padding-bottom: 0.3em;
+  border-bottom: 2px solid #e2e8f0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.cv-html-content h3.cv-subsection {
+  font-size: 1em;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 1em 0 0.4em 0;
+}
+.cv-html-content p {
+  margin: 0.4em 0;
+  line-height: 1.6;
+}
+.cv-html-content ul.cv-bullets {
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+  list-style-type: disc;
+}
+.cv-html-content ul.cv-bullets li {
+  margin-bottom: 0.3em;
+  line-height: 1.5;
+}
+.cv-html-content strong {
+  font-weight: 600;
+}
+.cv-html-content br {
+  display: block;
+  content: "";
+  margin-top: 0.3em;
+}
+
 @media (max-width: 768px) {
   .document-editor-container { padding: 16px; }
   .document-editor-paper { padding: 24px; }

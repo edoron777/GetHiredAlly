@@ -55,6 +55,7 @@ interface CVIssue {
 interface ReportData {
   scan_id: number;
   cv_content: string;
+  cv_content_html?: string;
   issues: CVIssue[];
   cv_score: number;
   total_issues: number;
@@ -858,7 +859,8 @@ export default function ResultsPage() {
   }
 
   const cvContent = {
-    fullText: cvContentText
+    fullText: cvContentText,
+    htmlContent: !fixedCV ? reportData?.cv_content_html : undefined
   };
 
   const documentIssues = normalizedIssues.map(issue => ({
@@ -1077,6 +1079,7 @@ export default function ResultsPage() {
             <div data-tour="document-view">
               <DocumentEditor
                   content={cvContent?.fullText || ''}
+                  htmlContent={cvContent?.htmlContent}
                   format="auto"
                   markers={documentIssues.map(issue => ({
                     id: issue.id?.toString() || '',

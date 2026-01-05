@@ -4,10 +4,20 @@ import { TextMarker, CV_OPTIMIZER_COLORS } from '../../TextMarker'
 
 export const TextRenderer: React.FC<RendererProps> = ({
   content,
+  htmlContent,
   markers = [],
   markerConfig,
   onMarkerClick
 }) => {
+  if (htmlContent && markers.length === 0) {
+    return (
+      <div 
+        className="text-content cv-html-content"
+        dangerouslySetInnerHTML={{ __html: htmlContent }}
+      />
+    )
+  }
+  
   if (markers.length === 0) {
     return (
       <div className="text-content">

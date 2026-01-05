@@ -9,6 +9,7 @@ import './DocumentEditorStyles.css'
 
 export const DocumentEditor: React.FC<DocumentEditorProps> = ({
   content,
+  htmlContent,
   format = 'auto',
   originalFileUrl,
   originalFileName,
@@ -39,6 +40,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
   const renderContent = () => {
     const rendererProps = {
       content,
+      htmlContent,
       originalFileUrl,
       markers: mergedConfig.enableHighlighting ? markers : [],
       markerConfig,

@@ -30,6 +30,7 @@ export interface DocumentEditorConfig {
  */
 export interface DocumentEditorProps {
   content: string
+  htmlContent?: string
   
   format?: DocumentFormat
   
@@ -67,6 +68,7 @@ export const DEFAULT_DOCUMENT_CONFIG: DocumentEditorConfig = {
  */
 export interface RendererProps {
   content: string
+  htmlContent?: string
   originalFileUrl?: string
   markers?: MarkerItem[]
   markerConfig?: Partial<MarkerConfig>
