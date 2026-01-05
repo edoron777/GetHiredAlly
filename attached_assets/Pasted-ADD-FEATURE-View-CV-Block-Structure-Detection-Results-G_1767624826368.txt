@@ -1,0 +1,91 @@
+ADD FEATURE: View CV Block Structure Detection Results
+
+GOAL:
+Add a button in the CV Optimizer results page that shows how the system 
+detected/parsed the CV structure (sections, blocks, line numbers).
+
+This helps debug why certain issues are/aren't being detected.
+
+IMPLEMENTATION:
+
+1. BACKEND ENDPOINT - Add to cv_routes.py:
+
+   @router.post("/api/cv/analyze-structure")
+   async def analyze_cv_structure(file: UploadFile):
+       """Return detailed block structure analysis for debugging"""
+       from common.detection.block_detector import detect_cv_blocks
+       
+       # Read file content
+       content = await file.read()
+       cv_text = extract_text_from_file(content, file.filename)
+       
+       # Get block structure
+       block_structure = detect_cv_blocks(cv_text)
+       
+       # Format for display
+       result = {
+           "total_sections_found": len(block_structure.sections) if block_structure else 0,
+           "sections": []
+       }
+       
+       if block_structure:
+           for section in block_structure.sections:
+               result["sections"].append({
+                   "type": section.block_type.name if hasattr(section, 'block_type') else str(section.type),
+                   "start_line": section.start_line,
+                   "end_line": section.end_line,
+                   "content_preview": section.content[:200] if hasattr(section, 'content') else "",
+                   "items_count": len(section.items) if hasattr(section, 'items') else 0
+               })
+       
+       return result
+
+2. FRONTEND - Add button in results area:
+
+   After CV scan completes, show a collapsible section:
+   
+   <details className="mt-4 p-3 bg-gray-50 border rounded">
+     <summary className="cursor-pointer font-medium text-gray-700">
+       🔍 View Detected Structure ({structureData?.total_sections_found || 0} sections)
+     </summary>
+     <div className="mt-3 space-y-2">
+       {structureData?.sections?.map((section, idx) => (
+         <div key={idx} className="p-2 bg-white border rounded text-sm">
+           <div className="font-medium text-blue-600">{section.type}</div>
+           <div className="text-gray-500">Lines {section.start_line} - {section.end_line}</div>
+           {section.items_count > 0 && (
+             <div className="text-gray-500">{section.items_count} items detected</div>
+           )}
+           <div className="text-gray-400 text-xs mt-1 truncate">
+             {section.content_preview}...
+           </div>
+         </div>
+       ))}
+     </div>
+   </details>
+
+3. CALL THE ENDPOINT:
+   
+   When CV is uploaded, also call /api/cv/analyze-structure 
+   and store result in state for display.
+
+4. DISPLAY FORMAT:
+   
+   Show something like:
+   ┌─────────────────────────────────────────┐
+   │ 🔍 View Detected Structure (7 sections) │
+   ├─────────────────────────────────────────┤
+   │ ▸ CONTACT (Lines 1-5)                   │
+   │ ▸ SUMMARY (Lines 7-10)                  │
+   │ ▸ EXPERIENCE (Lines 12-45) - 4 items    │
+   │ ▸ EDUCATION (Lines 47-52) - 2 items     │
+   │ ▸ SKILLS (Lines 54-60) - 15 items       │
+   │ ▸ CERTIFICATIONS (Lines 62-80) - 12 items│
+   │ ▸ UNKNOWN (Lines 82-85)                 │
+   └─────────────────────────────────────────┘
+
+First, show me:
+1. What does detect_cv_blocks() return? (the class/structure)
+2. Where is the CV results display component?
+
+Then implement the feature.
