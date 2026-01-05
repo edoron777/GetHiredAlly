@@ -1,0 +1,191 @@
+MISSION: Complete CV Lifecycle Flow Mapping
+
+I need a comprehensive map of how CV files flow through the system.
+Document EVERYTHING - function names, file locations, order of operations.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STAGE 1: FILE UPLOAD
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Find and document:
+
+1. Upload endpoint:
+   grep -r "upload" backend/routes/ --include="*.py"
+   grep -r "file" backend/routes/ --include="*.py" | grep -i upload
+
+2. What happens when file is received?
+   - Where is file saved?
+   - What format is it stored?
+   - Is original binary kept or only extracted text?
+
+3. Text extraction function:
+   grep -r "extract" backend/ --include="*.py" | grep -i text
+   grep -r "docx" backend/ --include="*.py"
+   grep -r "pdf" backend/ --include="*.py"
+   
+   Show me the EXACT function that converts DOCX/PDF to text.
+   - Function name:
+   - File location:
+   - What library used:
+   - What is lost in conversion:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STAGE 2: CV SCANNING PROCESS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Document the EXACT ORDER of function calls:
+
+1. Main scan endpoint:
+   grep -r "scan" backend/routes/ --include="*.py"
+   
+   Show me the scan function and list ALL functions it calls IN ORDER.
+
+2. For each function called during scan:
+   
+   a) Block Structure Detection:
+      - Function name:
+      - File location:
+      - Input: (what does it receive?)
+      - Output: (what does it return?)
+      - When called: (before or after text extraction?)
+   
+   b) Text Parsing:
+      - Function name:
+      - File location:
+      - Input:
+      - Output:
+   
+   c) Issue Detection:
+      - Function name:
+      - File location:
+      - Input: (does it receive block_structure? raw text? converted text?)
+      - Output:
+      - Does it query database?
+   
+   d) Score Calculation:
+      - Function name:
+      - File location:
+
+3. Create a flow diagram showing ORDER:
+   
+   User Upload → ? → ? → ? → ? → Results Display
+   
+   Fill in ALL steps with actual function names.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STAGE 3: DATABASE STORAGE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+What gets stored where?
+
+1. Show CV-related tables:
+   SELECT table_name FROM information_schema.tables 
+   WHERE table_name LIKE '%cv%' OR table_name LIKE '%scan%';
+
+2. For each table, show columns:
+   - user_cvs: what columns?
+   - cv_scan_results: what columns?
+   
+3. What CV data is stored?
+   - Is original file binary stored?
+   - Is original_cv_content the extracted text or original?
+   - Is block_structure stored?
+   - Is HTML version stored?
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STAGE 4: DOCUMENT VIEW DISPLAY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+How is CV displayed in UI?
+
+1. Document View component:
+   grep -r "DocumentView" client/src/ --include="*.tsx"
+   grep -r "document.*view" client/src/ --include="*.tsx"
+
+2. What format is sent to frontend?
+   - Plain text?
+   - HTML?
+   - Markdown?
+   - JSON with structure?
+
+3. How are issues overlaid on document?
+   - How are line numbers matched?
+   - How are highlights positioned?
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STAGE 5: EXPORT FUNCTIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+How is CV exported/saved?
+
+1. Export endpoints:
+   grep -r "export" backend/routes/ --include="*.py"
+   grep -r "download" backend/routes/ --include="*.py"
+
+2. DocStyler function:
+   grep -r "DocStyler" backend/ --include="*.py"
+   grep -r "docstyler" backend/ --include="*.py"
+   
+   - What does it do?
+   - What input does it receive?
+   - How does it format output?
+
+3. For each export format:
+   - PDF export: function name, how formatted?
+   - DOCX export: function name, how formatted?
+   - Markdown export: function name, how formatted?
+
+4. Email/WhatsApp share:
+   grep -r "email" backend/ --include="*.py"
+   grep -r "share" backend/ --include="*.py"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DELIVERABLE: Create a Flow Map
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Create this diagram with ACTUAL function names:
+
+┌─────────────────────────────────────────────────────────────────┐
+│ STAGE A: UPLOAD                                                 │
+├─────────────────────────────────────────────────────────────────┤
+│ User uploads DOCX/PDF                                           │
+│        ↓                                                        │
+│ Function: [???] in file: [???]                                  │
+│ - Receives: file binary                                         │
+│ - Stores: [where?]                                              │
+│        ↓                                                        │
+│ Text Extraction Function: [???]                                 │
+│ - Library: [???]                                                │
+│ - Output: plain text / text with markers?                       │
+└─────────────────────────────────────────────────────────────────┘
+                        ↓
+┌─────────────────────────────────────────────────────────────────┐
+│ STAGE B: SCANNING (list in ORDER)                               │
+├─────────────────────────────────────────────────────────────────┤
+│ Step 1: [function_name] - does [what]                           │
+│ Step 2: [function_name] - does [what]                           │
+│ Step 3: [function_name] - does [what]                           │
+│ Step 4: [function_name] - does [what]                           │
+│                                                                 │
+│ Data passed between functions:                                  │
+│ - Step 1 → Step 2: [what data?]                                │
+│ - Step 2 → Step 3: [what data?]                                │
+└─────────────────────────────────────────────────────────────────┘
+                        ↓
+┌─────────────────────────────────────────────────────────────────┐
+│ STAGE C: DISPLAY                                                │
+├─────────────────────────────────────────────────────────────────┤
+│ API returns: [what format?]                                     │
+│ Frontend receives: [what?]                                      │
+│ Document View renders: [how?]                                   │
+└─────────────────────────────────────────────────────────────────┘
+                        ↓
+┌─────────────────────────────────────────────────────────────────┐
+│ STAGE D: EXPORT                                                 │
+├─────────────────────────────────────────────────────────────────┤
+│ Export Function: [???]                                          │
+│ DocStyler: [does what?]                                         │
+│ Output: PDF/DOCX/MD                                             │
+└─────────────────────────────────────────────────────────────────┘
+
+Fill in ALL [???] with actual code findings.
