@@ -1,0 +1,344 @@
+╔══════════════════════════════════════════════════════════════════════════╗
+║  PROJECT: CV Detection Refactoring                                       ║
+║  PROMPT 3#4: Create Job & Education Extractors                           ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+PREREQUISITE: PHASE1-2#4 must be completed first.
+
+CONTEXT:
+Now we implement the placeholder functions for extracting sub-blocks
+(jobs from Experience, entries from Education) and linking bullets.
+
+───────────────────────────────────────────────────────────────────────────
+FILE TO MODIFY: backend/common/detection/block_detector.py
+───────────────────────────────────────────────────────────────────────────
+
+TASK: REPLACE the two placeholder functions with full implementations.
+
+FIND THIS CODE (placeholder):
+```python
+# Placeholder functions - will be implemented in next prompt
+def _extract_all_sub_blocks(result: CVBlockStructure, cv_structure: CVStructure, lines: List[str]) -> None:
+    """Extract jobs using cv_structure.job_entries for boundaries. Implemented in PHASE1-3#4."""
+    pass
+
+
+def _extract_and_link_bullets(result: CVBlockStructure, cv_structure: CVStructure) -> None:
+    """Extract bullets and link to jobs. Implemented in PHASE1-3#4."""
+    pass
+```
+
+REPLACE WITH THIS CODE:
+```python
+# ═══════════════════════════════════════════════════════════════════════════
+# SUB-BLOCK EXTRACTION (Jobs, Education, Certifications)
+# ═══════════════════════════════════════════════════════════════════════════
+
+import re
+
+def _extract_all_sub_blocks(result: CVBlockStructure, cv_structure: CVStructure, lines: List[str]) -> None:
+    """
+    Extract jobs, education entries, and certifications from blocks.
+    
+    CRITICAL: Uses cv_structure.job_entries which already contains job line boundaries!
+    This avoids re-parsing jobs from scratch.
+    """
+    
+    # Extract jobs from Experience block using EXISTING job_entries
+    if result.experience_block and hasattr(cv_structure, 'job_entries'):
+        jobs = _extract_jobs_from_entries(cv_structure.job_entries, lines, result.experience_block.start_line)
+        result.experience_block.jobs = jobs
+        result.all_jobs = jobs
+    
+    # Extract education entries
+    if result.education_block:
+        entries = _extract_education_entries(result.education_block, lines)
+        result.education_block.education_entries = entries
+        result.all_education = entries
+    
+    # Extract certifications
+    for block in result.blocks:
+        if block.block_type == BlockType.CERTIFICATIONS:
+            certs = _extract_certifications(block, lines)
+            block.certifications = certs
+            result.all_certifications = certs
+
+
+def _extract_jobs_from_entries(job_entries: List[tuple], lines: List[str], experience_start: int) -> List[JobEntry]:
+    """
+    Extract jobs using the EXISTING job_entries from CVStructure.
+    
+    job_entries is List[Tuple[int, int]] where each tuple is (start_line, end_line).
+    This is ALREADY parsed by section_extractor.py - we just need to extract details.
+    """
+    jobs = []
+    
+    if not job_entries:
+        return jobs
+    
+    for idx, (start_line, end_line) in enumerate(job_entries):
+        # Get the text for this job from lines
+        job_lines = lines[start_line - 1:end_line]  # Convert to 0-indexed
+        job_text = '\n'.join(job_lines)
+        
+        job = JobEntry(job_index=idx)
+        job.start_line = start_line
+        job.end_line = end_line
+        job.raw_text = job_text
+        
+        # Parse job details from the text
+        _parse_job_details(job, job_lines)
+        
+        jobs.append(job)
+    
+    return jobs
+
+
+def _parse_job_details(job: JobEntry, job_lines: List[str]) -> None:
+    """Parse job title, company, dates from job lines."""
+    if not job_lines:
+        return
+    
+    # First 1-3 lines usually contain title, company, dates
+    header_text = '\n'.join(job_lines[:3])
+    
+    # Pattern: "Title at Company"
+    title_company_match = re.search(r'^([A-Z][^,\n]+?)\s+(?:at|@)\s+([A-Z][^,\n(]+)', job_lines[0], re.IGNORECASE)
+    if title_company_match:
+        job.job_title = title_company_match.group(1).strip()
+        job.company_name = title_company_match.group(2).strip()
+    
+    # Pattern: Look for date range anywhere in header
+    date_match = re.search(
+        r'([A-Za-z]+\.?\s+\d{4})\s*[-–]\s*(Present|Current|[A-Za-z]+\.?\s+\d{4})',
+        header_text, re.IGNORECASE
+    )
+    if date_match:
+        job.start_date = date_match.group(1)
+        job.end_date = date_match.group(2)
+        job.dates = f"{job.start_date} - {job.end_date}"
+        job.is_current = job.end_date.lower() in ['present', 'current']
+        job.duration_months = _calculate_duration_months(job.start_date, job.end_date)
+    
+    # If title not found, try first line (after removing dates)
+    if not job.job_title and job_lines:
+        potential_title = job_lines[0].strip()
+        potential_title = re.sub(
+            r'\(?[A-Za-z]+\s+\d{4}\s*[-–]\s*(?:Present|Current|[A-Za-z]+\s+\d{4})\)?',
+            '', potential_title
+        ).strip()
+        potential_title = re.sub(r'\s*[-|]\s*$', '', potential_title).strip()
+        if 3 < len(potential_title) < 100:
+            job.job_title = potential_title
+    
+    # If company not found, try second line
+    if not job.company_name and len(job_lines) > 1:
+        potential_company = job_lines[1].strip()
+        potential_company = re.sub(
+            r'\(?[A-Za-z]+\s+\d{4}\s*[-–]\s*(?:Present|Current|[A-Za-z]+\s+\d{4})\)?',
+            '', potential_company
+        ).strip()
+        if 2 < len(potential_company) < 100:
+            if not potential_company.startswith(('•', '-', '*', '–', '►')):
+                job.company_name = potential_company
+
+
+def _calculate_duration_months(start_date: str, end_date: str) -> Optional[int]:
+    """Calculate duration in months between two dates."""
+    try:
+        from datetime import datetime
+        
+        month_map = {
+            'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6,
+            'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12,
+            'january': 1, 'february': 2, 'march': 3, 'april': 4,
+            'june': 6, 'july': 7, 'august': 8, 'september': 9,
+            'october': 10, 'november': 11, 'december': 12
+        }
+        
+        def parse_date(date_str: str):
+            date_str = date_str.lower().replace('.', '').strip()
+            if date_str in ['present', 'current']:
+                return datetime.now()
+            parts = date_str.split()
+            if len(parts) >= 2:
+                month_str = parts[0][:3]
+                year = int(parts[-1])
+                month = month_map.get(month_str, 1)
+                return datetime(year, month, 1)
+            return None
+        
+        start = parse_date(start_date)
+        end = parse_date(end_date)
+        
+        if start and end:
+            return max(0, (end.year - start.year) * 12 + (end.month - start.month))
+    except:
+        pass
+    return None
+
+
+def _extract_education_entries(education_block: CVBlock, lines: List[str]) -> List[EducationEntry]:
+    """Extract individual education entries from Education block."""
+    entries = []
+    content = education_block.content
+    
+    if not content:
+        return entries
+    
+    # Split by double newlines
+    edu_chunks = re.split(r'\n\s*\n', content)
+    
+    for chunk in edu_chunks:
+        if not chunk.strip():
+            continue
+        entry = _parse_education_chunk(chunk, education_block.start_line, lines)
+        if entry:
+            entries.append(entry)
+    
+    return entries
+
+
+def _parse_education_chunk(chunk: str, block_start_line: int, lines: List[str]) -> Optional[EducationEntry]:
+    """Parse a chunk of text into an EducationEntry."""
+    entry = EducationEntry()
+    entry.raw_text = chunk
+    chunk_lines = chunk.strip().split('\n')
+    
+    # Find line numbers
+    first_line = chunk_lines[0].strip()
+    for i, line in enumerate(lines):
+        if first_line and first_line in line:
+            entry.start_line = i + 1
+            entry.end_line = entry.start_line + len(chunk_lines) - 1
+            break
+    
+    # Look for degree patterns
+    degree_patterns = [
+        r"(Bachelor'?s?|Master'?s?|Ph\.?D\.?|MBA|B\.?S\.?|M\.?S\.?|B\.?A\.?|M\.?A\.?|Associate'?s?)\s+(?:of\s+|in\s+)?([A-Za-z\s]+)",
+        r"(Bachelor|Master|Doctor)\s+of\s+([A-Za-z\s]+)",
+    ]
+    
+    for pattern in degree_patterns:
+        match = re.search(pattern, chunk, re.IGNORECASE)
+        if match:
+            entry.degree = match.group(1).strip()
+            entry.field_of_study = match.group(2).strip()
+            break
+    
+    # Look for institution
+    inst_match = re.search(r'([A-Z][^,\n]*(?:University|College|Institute|School)[^,\n]*)', chunk, re.IGNORECASE)
+    if inst_match:
+        entry.institution = inst_match.group(1).strip()
+    
+    # Look for year
+    year_match = re.search(r'\b(19|20)\d{2}\b', chunk)
+    if year_match:
+        entry.graduation_year = year_match.group(0)
+    
+    # Look for GPA
+    gpa_match = re.search(r'GPA[:\s]+(\d+\.?\d*)', chunk, re.IGNORECASE)
+    if gpa_match:
+        entry.gpa = gpa_match.group(1)
+    
+    return entry if entry.institution or entry.degree else None
+
+
+def _extract_certifications(cert_block: CVBlock, lines: List[str]) -> List[CertificationEntry]:
+    """Extract certification entries from Certifications block."""
+    certs = []
+    content = cert_block.content
+    
+    if not content:
+        return certs
+    
+    cert_lines = content.strip().split('\n')
+    
+    for cert_line in cert_lines:
+        cert_line = cert_line.strip()
+        if not cert_line or len(cert_line) < 5:
+            continue
+        
+        cert_line = re.sub(r'^[•\-*►–]\s*', '', cert_line)
+        cert = CertificationEntry()
+        
+        issuer_match = re.search(r'\(([^)]+)\)|[-–]\s*([A-Z][^\n,]+)', cert_line)
+        if issuer_match:
+            cert.issuer = (issuer_match.group(1) or issuer_match.group(2)).strip()
+            cert.name = cert_line[:issuer_match.start()].strip()
+        else:
+            cert.name = cert_line
+        
+        date_match = re.search(r'\b(19|20)\d{2}\b', cert_line)
+        if date_match:
+            cert.date = date_match.group(0)
+        
+        if cert.name:
+            certs.append(cert)
+    
+    return certs
+
+
+def _extract_and_link_bullets(result: CVBlockStructure, cv_structure: CVStructure) -> None:
+    """Extract bullets from Experience block and link to specific jobs."""
+    if not result.experience_block:
+        return
+    
+    # Use existing bullet_extractor
+    all_bullets_bp = extract_bullets(result.experience_block.content)
+    
+    # Convert to EnhancedBullet and link to jobs
+    for bp in all_bullets_bp:
+        # Find which job this bullet belongs to based on line number
+        parent_job_index = _find_parent_job(bp.line_number, result.all_jobs, result.experience_block.start_line)
+        
+        enhanced = EnhancedBullet.from_bullet_point(bp, parent_job_index)
+        
+        # Add to the job's bullet list
+        if parent_job_index is not None and parent_job_index < len(result.all_jobs):
+            result.all_jobs[parent_job_index].bullets.append(enhanced)
+        
+        result.all_bullets.append(enhanced)
+
+
+def _find_parent_job(bullet_line: int, jobs: List[JobEntry], block_start_line: int) -> Optional[int]:
+    """Find which job a bullet belongs to based on line numbers."""
+    if not jobs:
+        return None
+    
+    # Bullet line from extract_bullets is relative to the content passed
+    # We need to convert to absolute line number
+    absolute_line = block_start_line + bullet_line - 1
+    
+    # Find the job that contains this line
+    for job in jobs:
+        if job.start_line <= absolute_line <= job.end_line:
+            return job.job_index
+    
+    # If not found within ranges, find the closest preceding job
+    for job in reversed(jobs):
+        if job.start_line <= absolute_line:
+            return job.job_index
+    
+    return 0  # Default to first job
+```
+
+───────────────────────────────────────────────────────────────────────────
+VERIFICATION
+───────────────────────────────────────────────────────────────────────────
+
+[ ] Placeholder functions replaced
+[ ] No syntax errors
+[ ] File still imports correctly
+[ ] _extract_jobs_from_entries returns JobEntry list
+[ ] _extract_education_entries returns EducationEntry list
+[ ] _extract_and_link_bullets populates all_bullets
+[ ] Jobs use cv_structure.job_entries for boundaries
+
+⚠️ ANTI-IMPROVISATION DIRECTIVE:
+- REPLACE only the placeholder functions as specified
+- Do NOT modify any other parts of the file
+- Do NOT modify section_extractor.py or bullet_extractor.py
+- If something is unclear, STOP and ask
+
+╚══════════════════════════════════════════════════════════════════════════╝

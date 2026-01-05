@@ -224,3 +224,192 @@ class CVBlockStructure:
 CONFIDENCE_HIGH = 0.90
 CONFIDENCE_MEDIUM = 0.70
 CONFIDENCE_LOW = 0.50
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# MAIN DETECTION FUNCTION
+# ═══════════════════════════════════════════════════════════════════════════
+
+def detect_cv_blocks(cv_text: str) -> CVBlockStructure:
+    """
+    Main entry point for CV block structure detection.
+    
+    This function wraps the existing section_extractor.py functionality
+    and adds enhanced metadata including line numbers, sub-blocks (jobs,
+    education entries), and confidence scores.
+    
+    Args:
+        cv_text: Raw CV text content
+        
+    Returns:
+        CVBlockStructure with all detected blocks and metadata
+    """
+    import time
+    start_time = time.time()
+    
+    result = CVBlockStructure(raw_text=cv_text)
+    
+    try:
+        # Step 1: Get lines for line number tracking
+        lines = cv_text.split('\n')
+        result.summary.total_lines = len(lines)
+        
+        # Step 2: Use existing section extractor
+        cv_structure = extract_sections(cv_text)
+        
+        # Step 3: Convert to our enhanced block structure
+        result.blocks = _convert_sections_to_blocks(cv_structure, lines)
+        
+        # Step 4: Set quick-access references
+        _set_block_references(result)
+        
+        # Step 5: Extract sub-blocks (jobs, education entries)
+        # CRITICAL: Pass cv_structure because it has job_entries with line boundaries!
+        _extract_all_sub_blocks(result, cv_structure, lines)
+        
+        # Step 6: Extract and link bullets
+        _extract_and_link_bullets(result, cv_structure)
+        
+        # Step 7: Build summary
+        _build_summary(result)
+        
+    except Exception as e:
+        result.errors.append(f"Detection error: {str(e)}")
+    
+    result.processing_time_ms = (time.time() - start_time) * 1000
+    return result
+
+
+def _convert_sections_to_blocks(cv_structure: CVStructure, lines: List[str]) -> List[CVBlock]:
+    """Convert CVStructure sections to CVBlock list with line numbers."""
+    blocks = []
+    
+    # Map section names to BlockType
+    section_type_map = {
+        'contact': BlockType.CONTACT,
+        'summary': BlockType.SUMMARY,
+        'professional_summary': BlockType.SUMMARY,
+        'objective': BlockType.SUMMARY,
+        'experience': BlockType.EXPERIENCE,
+        'work_experience': BlockType.EXPERIENCE,
+        'professional_experience': BlockType.EXPERIENCE,
+        'employment': BlockType.EXPERIENCE,
+        'education': BlockType.EDUCATION,
+        'skills': BlockType.SKILLS,
+        'technical_skills': BlockType.SKILLS,
+        'core_competencies': BlockType.SKILLS,
+        'certifications': BlockType.CERTIFICATIONS,
+        'certificates': BlockType.CERTIFICATIONS,
+        'projects': BlockType.PROJECTS,
+        'languages': BlockType.LANGUAGES,
+        'awards': BlockType.AWARDS,
+        'publications': BlockType.PUBLICATIONS,
+        'volunteer': BlockType.VOLUNTEER,
+        'interests': BlockType.INTERESTS,
+        'references': BlockType.REFERENCES,
+    }
+    
+    # Get sections from cv_structure
+    # Note: Adapt based on actual CVStructure attributes from section_extractor.py
+    sections = getattr(cv_structure, 'sections', {})
+    if not sections and hasattr(cv_structure, '__dict__'):
+        sections = cv_structure.__dict__
+    
+    for section_name, section_content in sections.items():
+        if not section_content:
+            continue
+            
+        # Determine block type
+        section_lower = section_name.lower().replace('_', ' ').replace('-', ' ')
+        block_type = BlockType.UNRECOGNIZED
+        confidence = 0.5
+        
+        for key, btype in section_type_map.items():
+            if key in section_lower:
+                block_type = btype
+                confidence = 0.9
+                break
+        
+        # Find line numbers for this content
+        start_line, end_line = _find_content_lines(section_content, lines)
+        
+        block = CVBlock(
+            block_type=block_type,
+            header_text=section_name,
+            content=section_content if isinstance(section_content, str) else str(section_content),
+            start_line=start_line,
+            end_line=end_line,
+            confidence=confidence,
+            word_count=len(str(section_content).split()),
+            needs_user_help=(block_type == BlockType.UNRECOGNIZED)
+        )
+        
+        blocks.append(block)
+    
+    # Sort blocks by start_line
+    blocks.sort(key=lambda b: b.start_line)
+    
+    return blocks
+
+
+def _find_content_lines(content: str, lines: List[str]) -> tuple:
+    """Find start and end line numbers for content within lines."""
+    if not content or not lines:
+        return (0, 0)
+    
+    content_str = str(content)
+    content_first_line = content_str.split('\n')[0].strip()
+    
+    start_line = 0
+    for i, line in enumerate(lines, 1):
+        if content_first_line and content_first_line in line:
+            start_line = i
+            break
+    
+    if start_line == 0:
+        return (0, 0)
+    
+    # Count lines in content
+    content_lines = len(content_str.split('\n'))
+    end_line = min(start_line + content_lines - 1, len(lines))
+    
+    return (start_line, end_line)
+
+
+def _set_block_references(result: CVBlockStructure) -> None:
+    """Set quick-access block references."""
+    for block in result.blocks:
+        if block.block_type == BlockType.CONTACT:
+            result.contact_block = block
+        elif block.block_type == BlockType.SUMMARY:
+            result.summary_block = block
+        elif block.block_type == BlockType.EXPERIENCE:
+            result.experience_block = block
+        elif block.block_type == BlockType.EDUCATION:
+            result.education_block = block
+        elif block.block_type == BlockType.SKILLS:
+            result.skills_block = block
+
+
+def _build_summary(result: CVBlockStructure) -> None:
+    """Build the StructureSummary."""
+    result.summary.has_contact = result.contact_block is not None
+    result.summary.has_summary = result.summary_block is not None
+    result.summary.has_experience = result.experience_block is not None
+    result.summary.has_education = result.education_block is not None
+    result.summary.has_skills = result.skills_block is not None
+    result.summary.has_certifications = any(b.block_type == BlockType.CERTIFICATIONS for b in result.blocks)
+    result.summary.total_blocks = len(result.blocks)
+    result.summary.total_jobs = len(result.all_jobs)
+    result.summary.total_bullets = len(result.all_bullets)
+    result.summary.unrecognized_blocks = len([b for b in result.blocks if b.block_type == BlockType.UNRECOGNIZED])
+
+
+def _extract_all_sub_blocks(result: CVBlockStructure, cv_structure: CVStructure, lines: List[str]) -> None:
+    """Extract jobs using cv_structure.job_entries for boundaries. Implemented in PHASE1-3#4."""
+    pass
+
+
+def _extract_and_link_bullets(result: CVBlockStructure, cv_structure: CVStructure) -> None:
+    """Extract bullets and link to jobs. Implemented in PHASE1-3#4."""
+    pass
