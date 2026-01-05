@@ -1,0 +1,125 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  🔍 DEBUG: Why Only Some Issues Display as Markers?                          ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+CONTEXT:
+- 12 issues detected
+- Only some appear as colored markers in Document View
+- We need to find WHERE each issue is lost
+
+───────────────────────────────────────────────────────────────────────────────
+STEP 1: Add Debug to ResultsPage.tsx
+───────────────────────────────────────────────────────────────────────────────
+
+FILE: client/src/pages/cv-optimizer/ResultsPage.tsx
+
+Find where markers are passed to DocumentEditor (around line 1001-1017).
+
+ADD this debug code BEFORE the DocumentEditor component:
+
+const debugMarkers = documentIssues.map(issue => ({
+  id: issue.id?.toString() || '',
+  matchText: issue.matchText || '',
+  tag: issue.severity || 'consider'
+})).filter(m => m.matchText && m.matchText.length > 0);
+
+console.log('=== MARKERS PASSED TO DOCUMENT EDITOR ===');
+console.log('Total markers:', debugMarkers.length);
+debugMarkers.forEach((m, i) => {
+  console.log('Marker ' + (i+1) + ':', {
+    id: m.id,
+    matchTextPreview: m.matchText.substring(0, 50),
+    matchTextLength: m.matchText.length,
+    tag: m.tag
+  });
+});
+console.log('=== END MARKERS ===');
+
+───────────────────────────────────────────────────────────────────────────────
+STEP 2: Add Debug to MarkerService.ts - findMarkerPositions()
+───────────────────────────────────────────────────────────────────────────────
+
+FILE: client/src/components/common/DocumentEditor/services/MarkerService.ts
+
+Find the findMarkerPositions function.
+
+ADD at the START of the function, right after the function signature:
+
+console.log('=== MARKER SERVICE: findMarkerPositions ===');
+console.log('CV Content length:', content.length);
+console.log('Markers to process:', markers.length);
+
+ADD inside the loop that processes each marker (after getting matchText):
+
+console.log('Processing marker:', {
+  id: marker.id,
+  matchText: matchText.substring(0, 50),
+  matchTextLength: matchText.length
+});
+
+const normalizedContent = content.toLowerCase().replace(/\r\n/g, '\n');
+const normalizedMatch = matchText.toLowerCase().replace(/\r\n/g, '\n');
+const foundIndex = normalizedContent.indexOf(normalizedMatch);
+
+console.log('Search result:', {
+  found: foundIndex !== -1,
+  foundAt: foundIndex,
+  willShowMarker: foundIndex !== -1
+});
+
+ADD at the END of the function, before return:
+
+console.log('=== MARKER RESULTS ===');
+console.log('Input markers:', markers.length);
+console.log('Output positions:', positions.length);
+console.log('Lost markers:', markers.length - positions.length);
+
+───────────────────────────────────────────────────────────────────────────────
+STEP 3: Check normalizeIssue function
+───────────────────────────────────────────────────────────────────────────────
+
+Find the normalizeIssue function in ResultsPage.tsx.
+
+Show me how it maps the backend issue to frontend format.
+
+Specifically:
+- How does it get the `current` field from backend?
+- How does it set the `matchText` field?
+- Is there any filtering or transformation?
+
+───────────────────────────────────────────────────────────────────────────────
+STEP 4: Run and Capture Output
+───────────────────────────────────────────────────────────────────────────────
+
+1. Save all files
+2. Reload CV Optimizer page with your CV
+3. Open browser DevTools (F12) - Console tab
+4. Look for:
+   - "=== MARKERS PASSED TO DOCUMENT EDITOR ===" 
+   - "=== MARKER SERVICE: findMarkerPositions ==="
+5. Copy the FULL output
+
+───────────────────────────────────────────────────────────────────────────────
+EXPECTED OUTPUT ANALYSIS
+───────────────────────────────────────────────────────────────────────────────
+
+The output will show us:
+
+A) How many markers are passed to DocumentEditor?
+   - If less than 12: Problem is in ResultsPage (filtering too early)
+
+B) How many markers arrive at MarkerService?
+   - If less than what was passed: Problem is in DocumentEditor
+
+C) How many markers find their text in CV?
+   - If "found: false": The matchText doesn't exist in CV content
+   - This is the MERGE step - if text not found, no marker shows
+
+D) How many output positions?
+   - This is the final count of visible markers
+
+───────────────────────────────────────────────────────────────────────────────
+
+DO NOT FIX ANYTHING - just add logging and report the console output.
+
+╚══════════════════════════════════════════════════════════════════════════════╝
