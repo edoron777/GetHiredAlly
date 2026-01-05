@@ -225,6 +225,45 @@ def _extract_pdf_with_markers(file_content: bytes, preserve_markers: bool = True
             raise HTTPException(status_code=400, detail=f"Failed to parse PDF: {str(e2)}")
 
 
+def is_run_bold(run) -> bool:
+    """
+    Check if a run is bold, including inherited bold.
+    
+    run.bold tri-state behavior in python-docx:
+    - True = Bold explicitly applied
+    - False = Bold explicitly removed
+    - None = Inherited from style
+    
+    We check multiple sources to catch inherited bold.
+    """
+    try:
+        # Check 1: Direct bold attribute (explicit)
+        if run.bold is True:
+            return True
+        
+        # Check 2: If bold is None (inherited), check font-level
+        if run.bold is None:
+            # Check font.bold property
+            try:
+                if run.font.bold is True:
+                    return True
+            except AttributeError:
+                pass
+            
+            # Check character style if exists
+            try:
+                if run.style and run.style.font and run.style.font.bold is True:
+                    return True
+            except AttributeError:
+                pass
+        
+        return False
+        
+    except Exception:
+        # Fallback: if any error, use simple check
+        return run.bold is True
+
+
 def _extract_docx_with_markers(file_content: bytes, preserve_markers: bool = True) -> str:
     """Extract DOCX text with optional structure markers.
     
@@ -232,6 +271,7 @@ def _extract_docx_with_markers(file_content: bytes, preserve_markers: bool = Tru
     - [H1] for Heading 1 style or font size > 14pt
     - [H2] for Heading 2/3 style or font size > 12pt
     - [BOLD] for fully bold paragraphs (potential headers)
+    - [BOLD]...[/BOLD] for inline bold text
     - [BULLET] for list items
     """
     try:
@@ -242,7 +282,21 @@ def _extract_docx_with_markers(file_content: bytes, preserve_markers: bool = Tru
         result_lines = []
         
         for para in doc.paragraphs:
-            text = para.text.strip()
+            # Build text with inline bold markers
+            text_parts = []
+            for run in para.runs:
+                run_text = run.text
+                if run_text:  # Only process non-empty runs
+                    if preserve_markers and is_run_bold(run):
+                        text_parts.append(f"[BOLD]{run_text}[/BOLD]")
+                    else:
+                        text_parts.append(run_text)
+            text = "".join(text_parts)
+            
+            # Clean up adjacent bold markers: [/BOLD][BOLD] -> (nothing)
+            text = text.replace("[/BOLD][BOLD]", "")
+            
+            text = text.strip()
             if not text:
                 result_lines.append("")  # Preserve blank lines for structure
                 continue
@@ -257,10 +311,11 @@ def _extract_docx_with_markers(file_content: bytes, preserve_markers: bool = Tru
                 elif style_name and "Heading" in style_name:
                     markers.append("H2")
                 
-                # Check 2: All runs are bold (likely a header)
+                # Check 2: Bold detection with inline support
                 runs_with_text = [r for r in para.runs if r.text.strip()]
                 if runs_with_text:
-                    all_bold = all(r.bold for r in runs_with_text)
+                    # Check if ALL runs are bold (whole paragraph)
+                    all_bold = all(is_run_bold(r) for r in runs_with_text)
                     if all_bold and "H1" not in markers and "H2" not in markers:
                         markers.append("BOLD")
                 
@@ -285,23 +340,32 @@ def _extract_docx_with_markers(file_content: bytes, preserve_markers: bool = Tru
                     pass
                 
                 # Check 5: ALL CAPS short text (likely header)
-                if len(text) < 50 and text.isupper() and not markers:
+                plain_text = para.text.strip()
+                if len(plain_text) < 50 and plain_text.isupper() and not markers:
                     markers.append("BOLD")
             
             # Format output with markers
+            # For whole-paragraph markers, strip inline [BOLD] markers and use prefix
             if markers:
                 # Use highest priority marker
                 if "H1" in markers:
-                    result_lines.append(f"[H1] {text}")
+                    # Strip inline markers for heading output
+                    clean_text = text.replace("[BOLD]", "").replace("[/BOLD]", "")
+                    result_lines.append(f"[H1] {clean_text}")
                 elif "H2" in markers:
-                    result_lines.append(f"[H2] {text}")
+                    clean_text = text.replace("[BOLD]", "").replace("[/BOLD]", "")
+                    result_lines.append(f"[H2] {clean_text}")
                 elif "BOLD" in markers:
-                    result_lines.append(f"[BOLD] {text}")
+                    # Whole paragraph is bold - use prefix format
+                    clean_text = text.replace("[BOLD]", "").replace("[/BOLD]", "")
+                    result_lines.append(f"[BOLD] {clean_text}")
                 elif "BULLET" in markers:
+                    # Keep inline bold for bullets
                     result_lines.append(f"[BULLET] {text}")
                 else:
                     result_lines.append(text)
             else:
+                # No paragraph-level marker, keep inline bold markers
                 result_lines.append(text)
         
         # Extract hyperlinks
@@ -333,10 +397,13 @@ def strip_structure_markers(text: str) -> str:
     """Remove structure markers from text for user-facing output.
     
     Strips [H1], [H2], [BOLD], [BULLET] markers while preserving the text content.
+    Also strips inline [BOLD]...[/BOLD] markers.
     """
     import re
     # Remove markers at start of lines
     text = re.sub(r'^\[(H1|H2|BOLD|BULLET)\]\s*', '', text, flags=re.MULTILINE)
+    # Remove inline bold markers
+    text = text.replace('[BOLD]', '').replace('[/BOLD]', '')
     return text
 
 

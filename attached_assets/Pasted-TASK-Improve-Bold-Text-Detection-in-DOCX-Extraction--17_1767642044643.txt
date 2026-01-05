@@ -1,0 +1,187 @@
+TASK: Improve Bold Text Detection in DOCX Extraction
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BACKGROUND (from investigation)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Current code in backend/app/cv.py, function _extract_docx_with_markers():
+
+PROBLEM 1: run.bold tri-state behavior
+- True = explicitly bold
+- False = explicitly not bold  
+- None = inherited from style (MISSED by current code!)
+
+Current code treats None as False:
+  all_bold = all(r.bold for r in runs_with_text)
+
+PROBLEM 2: Only whole paragraphs detected
+- Cannot handle: "**Bold text** and normal text"
+- Only detects: "**Entire paragraph bold**"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FILE TO MODIFY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+File: backend/app/cv.py
+Function: _extract_docx_with_markers()
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+IMPLEMENTATION STEPS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 1: Add helper function is_run_bold()
+
+Add this function BEFORE _extract_docx_with_markers() in the same file:
+```python
+def is_run_bold(run) -> bool:
+    """
+    Check if a run is bold, including inherited bold.
+    
+    run.bold tri-state behavior in python-docx:
+    - True = Bold explicitly applied
+    - False = Bold explicitly removed
+    - None = Inherited from style
+    
+    We check multiple sources to catch inherited bold.
+    """
+    try:
+        # Check 1: Direct bold attribute (explicit)
+        if run.bold is True:
+            return True
+        
+        # Check 2: If bold is None (inherited), check font-level
+        if run.bold is None:
+            # Check font.bold property
+            try:
+                if run.font.bold is True:
+                    return True
+            except AttributeError:
+                pass
+            
+            # Check character style if exists
+            try:
+                if run.style and run.style.font and run.style.font.bold is True:
+                    return True
+            except AttributeError:
+                pass
+        
+        return False
+        
+    except Exception:
+        # Fallback: if any error, use simple check
+        return run.bold is True
+```
+
+STEP 2: Modify paragraph processing for inline bold
+
+Find the section that processes paragraph text (around line 280-310).
+Replace the current bold detection logic with inline bold support.
+
+CURRENT CODE (find this pattern):
+```python
+# Check 2: All runs are bold (likely a header)
+runs_with_text = [r for r in para.runs if r.text.strip()]
+if runs_with_text:
+    all_bold = all(r.bold for r in runs_with_text)
+    if all_bold and "H1" not in markers and "H2" not in markers:
+        markers.append("BOLD")
+```
+
+REPLACE WITH:
+```python
+# Check 2: Bold detection with inline support
+runs_with_text = [r for r in para.runs if r.text.strip()]
+if runs_with_text:
+    # Check if ALL runs are bold (whole paragraph)
+    all_bold = all(is_run_bold(r) for r in runs_with_text)
+    if all_bold and "H1" not in markers and "H2" not in markers:
+        markers.append("BOLD")
+```
+
+STEP 3: Add inline bold marker support in text building
+
+Find where the paragraph text is built from runs.
+Modify to add [BOLD] and [/BOLD] markers around bold runs.
+
+Find the text building code (pattern like):
+```python
+text = para.text
+# or
+text = "".join([r.text for r in para.runs])
+```
+
+Replace with inline bold detection:
+```python
+# Build text with inline bold markers
+text_parts = []
+for run in para.runs:
+    run_text = run.text
+    if run_text:  # Only process non-empty runs
+        if is_run_bold(run):
+            text_parts.append(f"[BOLD]{run_text}[/BOLD]")
+        else:
+            text_parts.append(run_text)
+text = "".join(text_parts)
+
+# Clean up adjacent bold markers: [/BOLD][BOLD] -> (nothing)
+text = text.replace("[/BOLD][BOLD]", "")
+```
+
+STEP 4: Update the line output logic
+
+The current code adds [BOLD] as a prefix for whole paragraphs.
+Keep this for backwards compatibility, but the inline markers 
+will now be in the text itself.
+
+The output format will be:
+- Whole paragraph bold: "[BOLD] Some text here"
+- Inline bold: "Some [BOLD]bold text[/BOLD] and normal text"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+EXPECTED OUTPUT EXAMPLES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Example 1 - Whole paragraph bold:
+  Input:  "**Experience**" (all bold)
+  Output: "[BOLD] Experience"
+
+Example 2 - Inline bold:
+  Input:  "**AI Security** • LLM security, prompt injection"
+  Output: "[BOLD]AI Security[/BOLD] • LLM security, prompt injection"
+
+Example 3 - Multiple inline bold:
+  Input:  "**Company** - **Title** - Description"
+  Output: "[BOLD]Company[/BOLD] - [BOLD]Title[/BOLD] - Description"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ ANTI-IMPROVISATION DIRECTIVE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- ONLY modify bold detection logic as specified
+- DO NOT change [H1], [H2], [BULLET] detection
+- DO NOT modify other files
+- DO NOT change the marker_converter.py file (it already handles [/BOLD])
+- KEEP backwards compatibility with existing [BOLD] prefix format
+- If instructions are unclear: STOP and ask
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECURITY CONSIDERATIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- Use try/except for all style property access
+- Do not execute any code from document content
+- Handle None values safely
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COMPLETION CHECKLIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+After implementation, confirm:
+[ ] is_run_bold() helper function added
+[ ] Bold detection updated to use is_run_bold()
+[ ] Inline bold markers [BOLD]...[/BOLD] added to text
+[ ] Adjacent markers cleaned up
+[ ] Application runs without errors
+[ ] No other detection logic was modified
+
+Report what was changed when complete.

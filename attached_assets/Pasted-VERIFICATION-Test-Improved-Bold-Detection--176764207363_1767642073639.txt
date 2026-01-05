@@ -1,0 +1,102 @@
+VERIFICATION: Test Improved Bold Detection
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+VERIFICATION TASKS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TASK 1: Show Updated Code
+- Show me the is_run_bold() function
+- Show me the updated bold detection section in _extract_docx_with_markers()
+- Confirm the inline bold marker logic
+
+TASK 2: Application Test
+- Verify application starts without errors
+- Check for any import errors
+
+TASK 3: Create Test Script
+
+Create a temporary test script to verify bold detection:
+```python
+# Test script - create as backend/test_bold_detection.py
+from docx import Document
+from app.cv import is_run_bold, _extract_docx_with_markers
+import io
+
+# Create a test document with various bold scenarios
+doc = Document()
+
+# Test 1: Whole paragraph bold
+p1 = doc.add_paragraph()
+run1 = p1.add_run("Whole Paragraph Bold")
+run1.bold = True
+
+# Test 2: Inline bold
+p2 = doc.add_paragraph()
+run2a = p2.add_run("Bold Part")
+run2a.bold = True
+run2b = p2.add_run(" and Normal Part")
+
+# Test 3: Multiple inline bold
+p3 = doc.add_paragraph()
+run3a = p3.add_run("First Bold")
+run3a.bold = True
+run3b = p3.add_run(" - ")
+run3c = p3.add_run("Second Bold")
+run3c.bold = True
+run3d = p3.add_run(" - Normal")
+
+# Save to bytes
+doc_bytes = io.BytesIO()
+doc.save(doc_bytes)
+doc_bytes.seek(0)
+
+# Extract with markers
+result = _extract_docx_with_markers(doc_bytes.read())
+
+print("=== EXTRACTION RESULT ===")
+print(result)
+print("=== END ===")
+
+# Check expectations
+assert "[BOLD]" in result, "Missing [BOLD] markers"
+print("\n✅ Bold markers found in output")
+```
+
+Run: cd backend && python test_bold_detection.py
+
+TASK 4: Manual Test
+- Upload a CV with known bold text
+- Check Document View shows bold formatting
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+EXPECTED RESULTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Test output should show:
+- "[BOLD] Whole Paragraph Bold" (whole paragraph)
+- "[BOLD]Bold Part[/BOLD] and Normal Part" (inline)
+- "[BOLD]First Bold[/BOLD] - [BOLD]Second Bold[/BOLD] - Normal" (multiple inline)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+REPORT FORMAT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+VERIFICATION RESULT:
+
+1. Code Changes:
+   - is_run_bold() added: YES/NO
+   - Bold detection updated: YES/NO
+   - Inline markers supported: YES/NO
+
+2. Application Status:
+   - Starts without errors: YES/NO
+   - Errors found: NONE / [list]
+
+3. Test Results:
+   - Whole paragraph bold: PASS/FAIL
+   - Inline bold: PASS/FAIL
+   - Multiple inline bold: PASS/FAIL
+
+OVERALL STATUS: ✅ PASS / ❌ FAIL
+
+If FAIL, describe what needs fixing.
