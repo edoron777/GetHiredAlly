@@ -1,0 +1,144 @@
+# CV Issue Detection Function - Investigation Prompt
+
+**Document Type:** Reconnaissance / Investigation  
+**Version:** 1.0  
+**Date:** January 05, 2026  
+**Project:** GetHiredAlly Application  
+**Function:** `detect_cv_issues()` → `CVIssueReport`
+
+---
+
+## 🔍 RFI-1: INVESTIGATION PROMPT
+
+```
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  🔍 RECONNAISSANCE: CV Issue Detection Function                              ║
+║  Purpose: Understand current code before creating detect_cv_issues()         ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+CONTEXT:
+I am planning to create a new function called detect_cv_issues() that will:
+- Be the main entry point for CV issue detection
+- Return a CVIssueReport object with all detected issues
+- Use the existing detect_cv_blocks() for structure detection
+- Wrap the existing 17 detectors
+
+BEFORE I can write the implementation prompts, I need to understand:
+
+───────────────────────────────────────────────────────────────────────────────
+QUESTION 1: Current Issue Format
+───────────────────────────────────────────────────────────────────────────────
+
+Show me the CURRENT format of issues returned by detect_all_issues() in 
+master_detector.py.
+
+Specifically:
+- What fields does each issue have? (issue_type, current, suggested, etc.)
+- Is there a dataclass or TypedDict for issues?
+- Show an example issue object (as it currently looks)
+
+───────────────────────────────────────────────────────────────────────────────
+QUESTION 2: Detector Return Formats
+───────────────────────────────────────────────────────────────────────────────
+
+For these 5 detectors, show me what they RETURN (the structure of their output):
+
+1. detect_language_issues() - what does it return?
+2. detect_format_issues() - what does it return?
+3. get_cv_length_issues() - what does it return?
+4. detect_all_skills_issues() - what does it return?
+5. get_section_issues() - what does it return?
+
+Just show the return type and a brief example of the output structure.
+
+───────────────────────────────────────────────────────────────────────────────
+QUESTION 3: Existing Data Classes
+───────────────────────────────────────────────────────────────────────────────
+
+Are there ANY existing dataclasses or type definitions for issues?
+Check these files:
+- backend/common/detection/master_detector.py
+- backend/common/detection/__init__.py
+- Any shared types file
+
+If they exist, show me their definitions.
+
+───────────────────────────────────────────────────────────────────────────────
+QUESTION 4: validate_issue_format Function
+───────────────────────────────────────────────────────────────────────────────
+
+I saw that validate_issue_format(issue, cv_text) is called in master_detector.py.
+
+- Where is this function defined?
+- What fields does it expect/validate?
+- Show me the function code
+
+───────────────────────────────────────────────────────────────────────────────
+QUESTION 5: File Location Decision
+───────────────────────────────────────────────────────────────────────────────
+
+I plan to create the new function in one of these locations:
+
+Option A: backend/common/detection/issue_detector.py (NEW FILE)
+Option B: Add to backend/common/detection/master_detector.py (EXISTING)
+Option C: backend/common/detection/cv_analyzer.py (NEW FILE)
+
+Which location would be best considering:
+- Code organization
+- Import patterns in the project
+- Avoiding circular imports
+
+Just tell me which option you recommend and why.
+
+───────────────────────────────────────────────────────────────────────────────
+QUESTION 6: Component Registry Location
+───────────────────────────────────────────────────────────────────────────────
+
+Where is the Component Registry file located in this project?
+(I need to update it after creating the new function)
+
+───────────────────────────────────────────────────────────────────────────────
+
+DO NOT MODIFY ANY FILES - this is investigation only.
+Just provide the information requested.
+
+╚══════════════════════════════════════════════════════════════════════════════╝
+```
+
+---
+
+## Expected Response Format
+
+After you run this prompt in Replit, please return the answers in this format:
+
+```
+QUESTION 1 ANSWER:
+[Current issue format details]
+
+QUESTION 2 ANSWER:
+[Detector return formats]
+
+QUESTION 3 ANSWER:
+[Existing data classes]
+
+QUESTION 4 ANSWER:
+[validate_issue_format details]
+
+QUESTION 5 ANSWER:
+[Recommended file location]
+
+QUESTION 6 ANSWER:
+[Component Registry location]
+```
+
+---
+
+## What Happens Next
+
+1. ✅ You run this Investigation prompt in Replit
+2. ✅ You return the answers to me
+3. ⏳ I analyze the responses
+4. ⏳ I create the Implementation prompts based on ACTUAL code structure
+5. ⏳ You execute the Implementation prompts
+
+This ensures the implementation is based on real code, not assumptions.
