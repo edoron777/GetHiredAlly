@@ -348,6 +348,7 @@ async def get_test_cv_file(filename: str):
 async def analyze_cv_structure(cv_id: str, token: str = None):
     """DEV ONLY: Return detailed block structure analysis for debugging."""
     from common.detection.block_detector import detect_cv_blocks, BlockType
+    from utils.encryption import decrypt_text, is_encrypted
     
     user = get_user_from_token(token) if token else None
     if not user:
@@ -371,6 +372,10 @@ async def analyze_cv_structure(cv_id: str, token: str = None):
             raise HTTPException(status_code=404, detail="CV not found")
         
         cv_text = cv["cv_content"]
+        
+        if is_encrypted(cv_text):
+            cv_text = decrypt_text(cv_text)
+        
         block_structure = detect_cv_blocks(cv_text)
         
         result = {

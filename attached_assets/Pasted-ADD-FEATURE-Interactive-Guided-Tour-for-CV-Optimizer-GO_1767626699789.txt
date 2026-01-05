@@ -1,0 +1,191 @@
+ADD FEATURE: Interactive Guided Tour for CV Optimizer
+
+GOAL:
+Add a "Show me how" button that starts an interactive tour
+highlighting each step of using the CV Optimizer.
+
+IMPLEMENTATION:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 1: Install Driver.js
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+cd client
+npm install driver.js
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 2: Create Tour Hook
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Create file: client/src/hooks/useCVOptimizerTour.ts
+
+import { driver } from "driver.js";
+import "driver.js/dist/driver.css";
+
+export const useCVOptimizerTour = () => {
+  
+  // Tour for UPLOAD page (before scan)
+  const startUploadTour = () => {
+    const driverObj = driver({
+      showProgress: true,
+      animate: true,
+      smoothScroll: true,
+      stagePadding: 10,
+      steps: [
+        {
+          element: '[data-tour="upload-area"]',
+          popover: {
+            title: '📤 Upload Your CV',
+            description: 'Drag and drop your CV file here, or click "Browse Files" to select from your computer. Supports PDF, DOCX, DOC, and TXT files.',
+            side: 'bottom',
+            align: 'center'
+          }
+        },
+        {
+          element: '[data-tour="scan-button"]',
+          popover: {
+            title: '🔍 Start Analysis',
+            description: 'Click this button to start the AI-powered analysis. It takes just a few seconds to scan your CV for issues.',
+            side: 'top',
+            align: 'center'
+          }
+        }
+      ]
+    });
+    
+    driverObj.drive();
+  };
+
+  // Tour for RESULTS page (after scan)
+  const startResultsTour = () => {
+    const driverObj = driver({
+      showProgress: true,
+      animate: true,
+      smoothScroll: true,
+      stagePadding: 10,
+      steps: [
+        {
+          element: '[data-tour="cv-score"]',
+          popover: {
+            title: '📊 Your CV Score',
+            description: 'This is your overall CV score out of 100. Below you can see the breakdown: Critical (red), Important (orange), and Consider (blue).',
+            side: 'right',
+            align: 'start'
+          }
+        },
+        {
+          element: '[data-tour="issues-summary"]',
+          popover: {
+            title: '🎯 Found Issues',
+            description: 'Here you can see how many issues were found in your CV.',
+            side: 'right',
+            align: 'start'
+          }
+        },
+        {
+          element: '[data-tour="auto-fix-button"]',
+          popover: {
+            title: '⚡ Quick Auto-Fix',
+            description: 'Click here to automatically fix issues that AI can correct. This is the fastest way to improve your CV!',
+            side: 'bottom',
+            align: 'center'
+          }
+        },
+        {
+          element: '[data-tour="view-toggle"]',
+          popover: {
+            title: '👁️ View Options',
+            description: 'Switch between Document View (see your CV with highlights), List View (all issues in a list), or Side by Side comparison.',
+            side: 'bottom',
+            align: 'start'
+          }
+        },
+        {
+          element: '[data-tour="issue-marker"]',
+          popover: {
+            title: '🔴 Issue Markers',
+            description: 'Colored highlights show where issues are in your CV. Click on any highlight to see details and fix suggestions.',
+            side: 'left',
+            align: 'start'
+          }
+        },
+        {
+          element: '[data-tour="tipbox"]',
+          popover: {
+            title: '💡 TipBox - How to Fix',
+            description: 'When you click an issue, this panel shows: what the problem is, why it matters, and exactly how to fix it.',
+            side: 'left',
+            align: 'start'
+          }
+        },
+        {
+          element: '[data-tour="export-buttons"]',
+          popover: {
+            title: '📥 Export Your CV',
+            description: 'Once you are happy with the fixes, export your optimized CV as PDF, Word, or Markdown.',
+            side: 'bottom',
+            align: 'end'
+          }
+        }
+      ]
+    });
+    
+    driverObj.drive();
+  };
+
+  return { startUploadTour, startResultsTour };
+};
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 3: Add data-tour Attributes to Elements
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Find these elements in CVOptimizerPage.tsx and add data-tour attributes:
+
+UPLOAD PAGE elements:
+- Upload dropzone div: add data-tour="upload-area"
+- Start Scan button: add data-tour="scan-button"
+
+RESULTS PAGE elements:
+- Score circle div: add data-tour="cv-score"
+- "Found X opportunities" div: add data-tour="issues-summary"  
+- Auto Fix button: add data-tour="auto-fix-button"
+- View toggle buttons container: add data-tour="view-toggle"
+- First issue highlight in CV: add data-tour="issue-marker"
+- TipBox panel: add data-tour="tipbox"
+- Export buttons container: add data-tour="export-buttons"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 4: Add Tour Buttons
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Import and use the hook:
+
+import { useCVOptimizerTour } from '../hooks/useCVOptimizerTour';
+
+const { startUploadTour, startResultsTour } = useCVOptimizerTour();
+
+UPLOAD PAGE - Add button below upload dropzone:
+
+<button
+  onClick={startUploadTour}
+  className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 mt-3"
+>
+  <span>❓</span>
+  <span>Show me how</span>
+</button>
+
+RESULTS PAGE - Add button in header near Export buttons:
+
+<button
+  onClick={startResultsTour}
+  className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800 px-3 py-1.5 border border-gray-300 rounded-lg hover:bg-gray-50"
+>
+  <span>🎓</span>
+  <span>Take a tour</span>
+</button>
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Show me the CVOptimizerPage component first to find the exact element locations,
+then implement all steps.
