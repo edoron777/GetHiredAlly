@@ -5,7 +5,21 @@ This module provides deterministic issue detection using static rules.
 Same CV text → Same issues found → Same results ALWAYS
 """
 
-from .master_detector import detect_all_issues, get_detection_summary
+from .master_detector import (
+    detect_all_issues,
+    get_detection_summary,
+    detect_cv_issues,
+    CVIssueReport,
+    IssueReportSummary,
+)
+from .block_detector import (
+    detect_cv_blocks,
+    CVBlockStructure,
+    CVBlock,
+    BlockType,
+    JobEntry,
+    EnhancedBullet,
+)
 from .contact_extractor import extract_contact_info
 from .section_extractor import extract_sections
 from .bullet_extractor import extract_bullets
