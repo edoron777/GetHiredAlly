@@ -17,8 +17,8 @@ from dataclasses import dataclass, field
 from typing import List, Dict, Optional, Any
 from enum import Enum
 
-from backend.common.detection.section_extractor import extract_sections, CVStructure
-from backend.common.detection.bullet_extractor import extract_bullets, BulletPoint
+from .section_extractor import extract_sections, CVStructure
+from .bullet_extractor import extract_bullets, BulletPoint
 
 
 class BlockType(Enum):
