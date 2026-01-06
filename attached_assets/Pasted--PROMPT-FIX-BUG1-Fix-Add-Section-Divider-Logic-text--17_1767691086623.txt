@@ -1,0 +1,140 @@
+💻 PROMPT FIX-BUG1: Fix Add Section Divider Logic
+text═══════════════════════════════════════════════════════════════════
+💻 FIX-BUG1: Fix Add Section Divider Logic
+═══════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE ⚠️
+- The "Add Section Divider" feature is creating wrong line boundaries
+- It only captures a few lines instead of all content until next section
+
+───────────────────────────────────────────────────────────────────
+PROBLEM
+───────────────────────────────────────────────────────────────────
+
+When user adds a section divider at line 70:
+- EXPECTED: New section from line 70 to END of content (until next section)
+- ACTUAL: New section only from line 70 to 85 (small range)
+
+The logic should:
+1. Find where user clicked (start_line)
+2. Find the NEXT section's start_line (or end of document)
+3. New section = from click point to (next_section.start_line - 1)
+
+───────────────────────────────────────────────────────────────────
+FILE TO EDIT
+───────────────────────────────────────────────────────────────────
+
+File: client/src/components/cv-optimizer/DocumentView/StructureOverlay.tsx
+
+───────────────────────────────────────────────────────────────────
+FIND AND FIX
+───────────────────────────────────────────────────────────────────
+
+Find the function that handles adding a section divider.
+It might be named:
+- handleAddSection
+- handleAddDivider
+- addSectionDivider
+- handleCreateSection
+
+The function needs to calculate end_line correctly:
+
+WRONG (current logic - probably):
+```tsx
+// Creates section with arbitrary small end_line
+const newSection = {
+  type: selectedType,
+  start_line: clickedLine,
+  end_line: clickedLine + 15,  // WRONG - arbitrary small range
+};
+```
+
+CORRECT (fixed logic):
+```tsx
+const handleAddSectionDivider = (clickedLine: number, newType: string) => {
+  console.log('=== ADD SECTION DIVIDER ===');
+  console.log('Clicked line:', clickedLine);
+  console.log('New section type:', newType);
+  
+  setLocalBlocks(prevBlocks => {
+    const newBlocks = [...prevBlocks];
+    
+    // Find which block contains the clicked line
+    const containingBlockIndex = newBlocks.findIndex(
+      block => clickedLine >= block.start_line && clickedLine <= block.end_line
+    );
+    
+    if (containingBlockIndex === -1) {
+      console.error('No block contains line', clickedLine);
+      return prevBlocks;
+    }
+    
+    const containingBlock = newBlocks[containingBlockIndex];
+    console.log('Containing block:', containingBlock.type, 'lines', containingBlock.start_line, '-', containingBlock.end_line);
+    
+    // Calculate end_line for new section
+    // It should extend to the end of the containing block
+    const newSectionEndLine = containingBlock.end_line;
+    
+    // Create new section from clicked line to end of containing block
+    const newSection: CVBlock = {
+      type: newType,
+      start_line: clickedLine,
+      end_line: newSectionEndLine,  // CORRECT - extends to end of original block
+      word_count: 0, // Will be recalculated
+      content_preview: '',
+    };
+    
+    // Update the original block to end before the new section
+    newBlocks[containingBlockIndex] = {
+      ...containingBlock,
+      end_line: clickedLine - 1,  // Original block now ends before new section
+    };
+    
+    // Calculate word counts
+    const originalContent = extractContent(containingBlock.start_line, clickedLine - 1);
+    const newContent = extractContent(clickedLine, newSectionEndLine);
+    
+    newBlocks[containingBlockIndex].word_count = originalContent.split(/\s+/).filter(Boolean).length;
+    newSection.word_count = newContent.split(/\s+/).filter(Boolean).length;
+    newSection.content_preview = newContent.split('\n').slice(0, 2).join(' ').substring(0, 100);
+    
+    console.log('Original block new range:', newBlocks[containingBlockIndex].start_line, '-', newBlocks[containingBlockIndex].end_line);
+    console.log('New section range:', newSection.start_line, '-', newSection.end_line);
+    
+    // Insert new section after the containing block
+    newBlocks.splice(containingBlockIndex + 1, 0, newSection);
+    
+    console.log('Total blocks after:', newBlocks.length);
+    
+    // Notify parent - use setTimeout to avoid setState during render
+    setTimeout(() => {
+      onStructureChange?.(newBlocks);
+    }, 0);
+    
+    return newBlocks;
+  });
+};
+```
+
+───────────────────────────────────────────────────────────────────
+KEY CHANGES
+───────────────────────────────────────────────────────────────────
+
+1. New section end_line = containing block's end_line (not arbitrary small range)
+2. Original block shrinks to (start_line) to (clicked_line - 1)
+3. New section is (clicked_line) to (original_end_line)
+
+BEFORE FIX:
+Summary: lines 5-85
+Click at line 70
+Result:
+Summary: lines 5-69
+New Section: lines 70-85 ← WRONG (should be 70-85 of what?)
+
+AFTER FIX:
+Summary: lines 5-85
+Click at line 70
+Result:
+Summary: lines 5-69
+New Section: lines 70-85 ← CORRECT (inherits rest of Summary's range)

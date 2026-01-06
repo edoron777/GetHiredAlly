@@ -1,0 +1,104 @@
+═══════════════════════════════════════════════════════════════════
+💻 FIX-BUG2: Fix React setState During Render Error
+═══════════════════════════════════════════════════════════════════
+
+───────────────────────────────────────────────────────────────────
+ERROR
+───────────────────────────────────────────────────────────────────
+
+Console shows:
+"Cannot update a component ('ResultsPage') while rendering a 
+different component ('StructureOverlay')"
+
+This happens when onStructureChange is called during render, 
+not in an event handler.
+
+───────────────────────────────────────────────────────────────────
+FILE TO EDIT
+───────────────────────────────────────────────────────────────────
+
+File: client/src/components/cv-optimizer/DocumentView/StructureOverlay.tsx
+
+───────────────────────────────────────────────────────────────────
+SOLUTION: Wrap onStructureChange in setTimeout
+───────────────────────────────────────────────────────────────────
+
+Find ALL places where onStructureChange is called.
+
+BEFORE (causes React error):
+```tsx
+onStructureChange?.(newBlocks);
+```
+
+AFTER (fixed - defers to next tick):
+```tsx
+// Defer to avoid setState during render
+setTimeout(() => {
+  onStructureChange?.(newBlocks);
+}, 0);
+```
+
+───────────────────────────────────────────────────────────────────
+LOCATIONS TO FIX
+───────────────────────────────────────────────────────────────────
+
+Search for "onStructureChange" in the file and wrap each call:
+
+1. In handleMergeUp:
+```tsx
+// At the end of setLocalBlocks callback
+setTimeout(() => {
+  onStructureChange?.(newBlocks);
+}, 0);
+```
+
+2. In handleMergeDown:
+```tsx
+setTimeout(() => {
+  onStructureChange?.(newBlocks);
+}, 0);
+```
+
+3. In handleAddSectionDivider (or similar):
+```tsx
+setTimeout(() => {
+  onStructureChange?.(newBlocks);
+}, 0);
+```
+
+4. In handleSectionTypeChange (if exists):
+```tsx
+setTimeout(() => {
+  onStructureChange?.(newBlocks);
+}, 0);
+```
+
+───────────────────────────────────────────────────────────────────
+ALTERNATIVE: Use useEffect
+───────────────────────────────────────────────────────────────────
+
+Instead of setTimeout, you can use useEffect:
+```tsx
+const [pendingChange, setPendingChange] = useState<CVBlock[] | null>(null);
+
+// When you need to notify parent:
+setPendingChange(newBlocks);
+
+// useEffect handles the actual callback
+useEffect(() => {
+  if (pendingChange) {
+    onStructureChange?.(pendingChange);
+    setPendingChange(null);
+  }
+}, [pendingChange, onStructureChange]);
+```
+
+───────────────────────────────────────────────────────────────────
+COMPLETION CHECKLIST
+───────────────────────────────────────────────────────────────────
+
+□ All onStructureChange calls wrapped in setTimeout
+□ No more "Cannot update component" errors in console
+□ Parent still receives structure updates correctly
+
+Type "FIX-BUG2 COMPLETE" when done.

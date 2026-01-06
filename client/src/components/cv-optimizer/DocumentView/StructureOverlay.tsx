@@ -315,28 +315,49 @@ export const StructureOverlay: React.FC<StructureOverlayProps> = ({
   };
 
   const handleSplitSection = (lineNumber: number, sectionType: SectionType) => {
+    console.log('\n' + '='.repeat(60));
+    console.log('✂️ SPLIT SECTION (Add Section Divider)');
+    console.log('='.repeat(60));
+    console.log(`Split at line: ${lineNumber}`);
+    console.log(`New section type: ${sectionType}`);
+    console.log(`Total lines in cvContent: ${lines.length}`);
+    
     setLocalBlocks(prevBlocks => {
+      console.log('\n📋 Blocks before split:');
+      debugBlocks('prevBlocks', prevBlocks);
+      
       const newBlocks: CVBlock[] = [];
       
       for (const block of prevBlocks) {
         if (lineNumber > block.start_line && lineNumber <= block.end_line) {
-          const firstPartLines = lines.slice(block.start_line - 1, lineNumber - 1);
-          const secondPartLines = lines.slice(lineNumber - 1, block.end_line);
+          console.log(`\n🎯 Found containing block: ${block.type} (${block.start_line}-${block.end_line})`);
+          
+          // Use extractContent for proper content extraction
+          const firstPartContent = extractContent(block.start_line, lineNumber - 1);
+          const secondPartContent = extractContent(lineNumber, block.end_line);
+          
+          console.log(`\n📊 Content extraction:`);
+          console.log(`  First part (${block.start_line}-${lineNumber - 1}): ${firstPartContent.length} chars, ${firstPartContent.split('\n').length} lines`);
+          console.log(`  Second part (${lineNumber}-${block.end_line}): ${secondPartContent.length} chars, ${secondPartContent.split('\n').length} lines`);
           
           const firstPart: CVBlock = {
             ...block,
             end_line: lineNumber - 1,
-            content_preview: firstPartLines.slice(0, 2).join(' ').substring(0, 100),
-            word_count: firstPartLines.join(' ').split(/\s+/).filter(Boolean).length,
+            content_preview: firstPartContent.split('\n').slice(0, 2).join(' ').substring(0, 100),
+            word_count: firstPartContent.split(/\s+/).filter(Boolean).length,
           };
           
           const secondPart: CVBlock = {
             type: sectionType.toUpperCase(),
             start_line: lineNumber,
             end_line: block.end_line,
-            content_preview: secondPartLines.slice(0, 2).join(' ').substring(0, 100),
-            word_count: secondPartLines.join(' ').split(/\s+/).filter(Boolean).length,
+            content_preview: secondPartContent.split('\n').slice(0, 2).join(' ').substring(0, 100),
+            word_count: secondPartContent.split(/\s+/).filter(Boolean).length,
           };
+          
+          console.log(`\n✨ Created blocks:`);
+          console.log(`  First: ${firstPart.type} (${firstPart.start_line}-${firstPart.end_line}) ${firstPart.word_count}w`);
+          console.log(`  Second: ${secondPart.type} (${secondPart.start_line}-${secondPart.end_line}) ${secondPart.word_count}w`);
           
           newBlocks.push(firstPart, secondPart);
         } else {
@@ -344,7 +365,21 @@ export const StructureOverlay: React.FC<StructureOverlayProps> = ({
         }
       }
       
-      onStructureChange?.(newBlocks);
+      console.log('\n📋 Blocks after split:');
+      debugBlocks('newBlocks', newBlocks);
+      
+      if (onStructureChange) {
+        console.log('\n📨 Calling onStructureChange...');
+        onStructureChange(newBlocks);
+        console.log('✅ onStructureChange called');
+      } else {
+        console.warn('⚠️ WARNING: onStructureChange is not defined!');
+      }
+      
+      console.log('\n' + '='.repeat(60));
+      console.log('✂️ SPLIT SECTION COMPLETED');
+      console.log('='.repeat(60) + '\n');
+      
       return newBlocks;
     });
     
