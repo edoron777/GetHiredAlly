@@ -221,31 +221,52 @@ def _detect_job_entry_start(line: str, next_lines: List[str]) -> bool:
     """
     Detect if this line starts a job entry.
     
-    Requirements for job entry detection:
-    - Must have date pattern (e.g., "Jul 2020 - Present") on current line OR next few lines
+    Requirements:
+    - Must have date pattern nearby (current line or next 5 NON-BLANK lines)
     - Must have company name OR job title
-    - Company name alone is NOT enough (prevents false positives like "worked at Citi, Microsoft...")
     """
     line_stripped = line.strip()
     if not line_stripped:
         return False
     
+    # Check current line
     has_company = any(company.lower() in line_stripped.lower() for company in KNOWN_COMPANIES)
     has_title = any(re.search(p, line_stripped, re.IGNORECASE) for p in JOB_TITLE_PATTERNS)
     has_date = any(re.search(p, line_stripped, re.IGNORECASE) for p in DATE_PATTERNS)
     
+    # Direct match: date + (company or title) on same line
     if has_date and (has_company or has_title):
         return True
     
+    # Skip very long lines (likely paragraph text, not job header)
     if len(line_stripped) > 100:
         return False
     
+    # Check if line looks like job start (company or title) with date nearby
     if (has_company or has_title) and line_stripped and line_stripped[0].isupper():
-        upcoming_text = ' '.join(next_lines[:3])
+        # FIXED: Filter out blank lines and check more lines
+        non_blank_lines = [l for l in next_lines if l.strip()][:5]  # Up to 5 non-blank lines
+        upcoming_text = ' '.join(non_blank_lines)
+        
         has_date_nearby = any(re.search(p, upcoming_text, re.IGNORECASE) for p in DATE_PATTERNS)
         
         if has_date_nearby:
+            logger.debug(f"[JOB_DETECT] Found job entry: '{line_stripped[:50]}...' with date in next lines")
             return True
+    
+    # NEW: Check for bold company name pattern like "**Citi**"
+    bold_company_pattern = r'^\*\*([A-Z][a-zA-Z\s&,\.]+)\*\*\s*$'
+    match = re.match(bold_company_pattern, line_stripped)
+    if match:
+        company_name = match.group(1).strip()
+        # Check if it's a known company OR followed by job indicators
+        if any(company.lower() == company_name.lower() for company in KNOWN_COMPANIES):
+            non_blank_lines = [l for l in next_lines if l.strip()][:5]
+            upcoming_text = ' '.join(non_blank_lines)
+            has_date_nearby = any(re.search(p, upcoming_text, re.IGNORECASE) for p in DATE_PATTERNS)
+            if has_date_nearby:
+                logger.debug(f"[JOB_DETECT] Found bold company job entry: '{company_name}'")
+                return True
     
     return False
 
@@ -405,7 +426,7 @@ def extract_sections(text: str) -> CVStructure:
                 # This handles cases where Experience header exists but jobs appear in summary
                 for scan_line in range(start, end + 1):
                     if scan_line < len(lines):
-                        remaining = [l.strip() for l in lines[scan_line+1:scan_line+6]] if scan_line+1 < len(lines) else []
+                        remaining = [l.strip() for l in lines[scan_line+1:scan_line+10]] if scan_line+1 < len(lines) else []
                         if _detect_job_entry_start(lines[scan_line].strip(), remaining):
                             logger.debug(f"[SECTION_PARSER] Job entry detected at line {scan_line} within summary, adjusting end")
                             end = scan_line - 1
@@ -427,7 +448,7 @@ def extract_sections(text: str) -> CVStructure:
             experience_start = start
             for scan_back in range(line_idx - 1, contact_end, -1):
                 if scan_back >= 0 and scan_back < len(lines):
-                    remaining = [l.strip() for l in lines[scan_back+1:scan_back+6]] if scan_back+1 < len(lines) else []
+                    remaining = [l.strip() for l in lines[scan_back+1:scan_back+10]] if scan_back+1 < len(lines) else []
                     if _detect_job_entry_start(lines[scan_back].strip(), remaining):
                         experience_start = scan_back
                         logger.debug(f"[SECTION_PARSER] Extended experience start from {start} to {experience_start}")
