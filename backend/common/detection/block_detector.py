@@ -399,10 +399,14 @@ def _enhance_blocks_with_markers(result: CVBlockStructure, marker_info: List[Dic
 
 def _convert_sections_to_blocks(cv_structure: CVStructure, lines: List[str]) -> List[CVBlock]:
     """Convert CVStructure sections to CVBlock list with line numbers."""
+    import logging
+    logger = logging.getLogger(__name__)
+    
     blocks = []
     
-    # CVStructure has direct attributes for each section type (contact, summary, experience, etc.)
-    # and a sections list with CVSection objects. We'll use both approaches.
+    # Get section_boundaries from cv_structure (set by section_extractor)
+    section_boundaries = getattr(cv_structure, 'section_boundaries', {})
+    logger.debug(f"[BLOCK_DETECTOR] Section boundaries: {section_boundaries}")
     
     # Map of attribute name -> BlockType
     section_attr_map = {
@@ -420,8 +424,17 @@ def _convert_sections_to_blocks(cv_structure: CVStructure, lines: List[str]) -> 
         if not content or not isinstance(content, str):
             continue
         
-        # Find line numbers for this content
-        start_line, end_line = _find_content_lines(content, lines)
+        # PRIORITY: Use section_boundaries if available (preserves correct boundaries)
+        if attr_name in section_boundaries:
+            start_line, end_line = section_boundaries[attr_name]
+            # Convert 0-indexed to 1-indexed if needed
+            start_line = start_line + 1 if start_line > 0 else 1
+            end_line = end_line + 1 if end_line > 0 else len(lines)
+            logger.debug(f"[BLOCK_DETECTOR] {attr_name}: Using section_boundaries {start_line}-{end_line}")
+        else:
+            # Fallback to finding content lines (less accurate)
+            start_line, end_line = _find_content_lines(content, lines)
+            logger.debug(f"[BLOCK_DETECTOR] {attr_name}: Fallback to content lines {start_line}-{end_line}")
         
         block = CVBlock(
             block_type=block_type,
@@ -480,12 +493,23 @@ def _convert_sections_to_blocks(cv_structure: CVStructure, lines: List[str]) -> 
             if block_type in existing_types and block_type != BlockType.UNRECOGNIZED:
                 continue
             
+            # Get line boundaries from CVSection or section_boundaries
+            section_start_line = getattr(cv_section, 'line_number', 0)
+            
+            # Try to get end_line from section_boundaries
+            if section_name in section_boundaries:
+                _, section_end_line = section_boundaries[section_name]
+                section_end_line = section_end_line + 1  # Convert to 1-indexed
+            else:
+                # Fallback: calculate from content (less accurate)
+                section_end_line = section_start_line + len(section_content.split('\n'))
+            
             block = CVBlock(
                 block_type=block_type,
                 header_text=getattr(cv_section, 'header', section_name),
                 content=section_content,
-                start_line=getattr(cv_section, 'line_number', 0),
-                end_line=getattr(cv_section, 'line_number', 0) + len(section_content.split('\n')),
+                start_line=section_start_line,
+                end_line=section_end_line,
                 confidence=0.9 if block_type != BlockType.UNRECOGNIZED else 0.5,
                 word_count=len(section_content.split()),
                 needs_user_help=(block_type == BlockType.UNRECOGNIZED)

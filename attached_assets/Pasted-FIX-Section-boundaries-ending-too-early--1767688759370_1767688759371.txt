@@ -1,0 +1,180 @@
+FIX: Section boundaries ending too early
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PROBLEM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CERTIFICATIONS section ends at line 290 but should end at line 330+.
+The detector is treating sub-categories as new section headers.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SOLUTION: Only Major Headers Start New Sections
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+File: backend/common/detection/block_detector.py
+
+Define the ONLY headers that should start new sections:
+```python
+# Main section headers - ONLY these start new sections
+MAIN_SECTION_HEADERS = [
+    # Contact variations
+    'contact', 'contact information', 'personal information', 'personal details',
+    
+    # Summary variations
+    'summary', 'professional summary', 'about', 'about me', 'profile', 
+    'objective', 'career objective',
+    
+    # Experience variations
+    'experience', 'work experience', 'professional experience', 
+    'employment history', 'work history', 'career history',
+    
+    # Education variations
+    'education', 'academic background', 'educational background',
+    'academic qualifications', 'qualifications',
+    
+    # Skills variations
+    'skills', 'technical skills', 'core competencies', 'competencies',
+    'areas of expertise', 'expertise',
+    
+    # Certifications variations
+    'certifications', 'certificates', 'professional certifications',
+    'licenses', 'licenses and certifications',
+    
+    # Other main sections
+    'projects', 'publications', 'awards', 'honors', 'achievements',
+    'languages', 'interests', 'hobbies', 'references', 'volunteer',
+    'volunteering', 'volunteer experience',
+]
+
+def is_main_section_header(text: str) -> bool:
+    """Check if text is a MAIN section header (not sub-category)"""
+    cleaned = text.lower().strip()
+    
+    # Remove markers
+    cleaned = cleaned.replace('[h1]', '').replace('[h2]', '')
+    cleaned = cleaned.replace('**', '').replace('*', '')
+    cleaned = cleaned.strip(':').strip()
+    
+    # Check against main headers list
+    return cleaned in MAIN_SECTION_HEADERS
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SOLUTION: Fix Section Detection Logic
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Find the section detection loop and update it:
+
+BEFORE (buggy - any bold/header starts new section):
+```python
+for i, line in enumerate(lines):
+    # BUG: Any bold text or formatted text triggers new section
+    if line.startswith('**') or '[H1]' in line or '[H2]' in line:
+        # End current section
+        current_block.end_line = i
+        blocks.append(current_block)
+        # Start new section
+        current_block = CVBlock(start_line=i+1, ...)
+```
+
+AFTER (fixed - only main headers start new sections):
+```python
+for i, line in enumerate(lines):
+    line_text = line.strip()
+    
+    # Check if this is a MAIN section header
+    if is_main_section_header(line_text):
+        # End current section at previous line
+        if current_block:
+            current_block.end_line = i  # Line before this header
+            blocks.append(current_block)
+        
+        # Start new section
+        section_type = detect_section_type(line_text)
+        current_block = CVBlock(
+            block_type=section_type,
+            start_line=i + 1,  # 1-indexed
+            header_text=line_text,
+        )
+    
+    # Sub-headers (like "AI & Product Management") do NOT start new sections
+    # They stay within the current section
+
+# Don't forget the last section
+if current_block:
+    current_block.end_line = len(lines)
+    blocks.append(current_block)
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SOLUTION: Add Sub-Category Exclusion List
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Add a list of things that should NOT start new sections:
+```python
+# These are SUB-CATEGORIES, not main sections
+# They should be IGNORED when detecting section breaks
+SUB_CATEGORY_PATTERNS = [
+    # Certification sub-categories
+    'ai & product management',
+    'google ai certifications',
+    'microsoft cloud & security',
+    'microsoft infrastructure',
+    'security & compliance',
+    'systems & business analysis',
+    
+    # Experience sub-headers (within a job)
+    'technology research',
+    'ai security projects',
+    'identity infrastructure',
+    'delivery excellence',
+    'technology domains',
+    'responsibilities',
+    'achievements',
+    'key accomplishments',
+    
+    # Skills sub-categories
+    'technical skills',
+    'soft skills',
+    'programming languages',
+    'frameworks',
+    'tools',
+]
+
+def is_sub_category(text: str) -> bool:
+    """Check if text is a sub-category (should NOT start new section)"""
+    cleaned = text.lower().strip()
+    cleaned = cleaned.replace('**', '').replace('*', '').strip(':')
+    
+    for pattern in SUB_CATEGORY_PATTERNS:
+        if pattern in cleaned:
+            return True
+    return False
+```
+
+Update detection logic:
+```python
+for i, line in enumerate(lines):
+    line_text = line.strip()
+    
+    # Skip if this is a sub-category
+    if is_sub_category(line_text):
+        continue  # Don't start new section
+    
+    # Only main headers start new sections
+    if is_main_section_header(line_text):
+        # ... start new section
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+VERIFICATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+After fix, rescan the CV and check:
+
+EXPECTED:
+- CERTIFICATIONS section: Lines 280-330+ (includes ALL certifications)
+- "AI & Product Management" is INSIDE Certifications (not separate section)
+- "Google AI Certifications" is INSIDE Certifications (not separate section)
+
+Console/logs should show:
