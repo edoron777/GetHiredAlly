@@ -1,0 +1,105 @@
+SURGICAL RESTORE: Return ONLY formatting functions to simple state
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WHAT TO DO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Restore the SIMPLE working logic from ae0280a, but keep the file structure.
+
+DO NOT use git checkout on entire files!
+Instead, manually edit the specific functions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FILE 1: backend/app/cv.py
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CHANGE 1: Remove is_run_bold() function entirely
+- Delete the entire is_run_bold() helper function (about 25 lines)
+
+CHANGE 2: In _extract_docx_with_markers(), restore simple bold detection
+- Find the complex inline bold marking code (lines ~286-297)
+- Replace with simple prefix-only approach:
+
+REMOVE this complex code:
+```python
+# Build text with inline bold markers
+text_parts = []
+for run in para.runs:
+    run_text = run.text
+    if run_text:
+        if is_run_bold(run):
+            text_parts.append(f"[BOLD]{run_text}[/BOLD]")
+        else:
+            text_parts.append(run_text)
+text = "".join(text_parts)
+text = text.replace("[/BOLD][BOLD]", "")
+```
+
+RESTORE simple approach:
+```python
+text = para.text
+```
+
+CHANGE 3: Restore simple bold marker logic
+- Find the bold detection section
+- Use simple check:
+```python
+# Check: All runs are bold (likely a header)
+runs_with_text = [r for r in para.runs if r.text.strip()]
+if runs_with_text:
+    all_bold = all(r.bold for r in runs_with_text)
+    if all_bold and "H1" not in markers and "H2" not in markers:
+        markers.append("BOLD")
+```
+
+CHANGE 4: Remove bullet character stripping
+- Find code that removes bullet characters from text (lines ~378-380)
+- DELETE or COMMENT OUT this code:
+```python
+# REMOVE THIS:
+if text_stripped and text_stripped[0] in bullet_chars:
+    text = text_stripped[1:].lstrip()
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FILE 2: backend/common/utils/marker_converter.py
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CHANGE 5: Restore simple strip_structure_markers()
+- Find the strip_structure_markers() function
+- Replace complex multi-step logic with SIMPLE one-liner:
+```python
+def strip_structure_markers(text: str) -> str:
+    """Remove structure markers from text."""
+    text = re.sub(r'^\[(H1|H2|BOLD|BULLET)\]\s*', '', text, flags=re.MULTILINE)
+    return text
+```
+
+CHANGE 6: Remove markdown ** handling if it exists
+- Remove any code that converts [BOLD] to **markdown**
+- We only want HTML conversion, not markdown
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ CRITICAL - DO NOT CHANGE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- DO NOT change file upload functions
+- DO NOT change CV scanning functions
+- DO NOT change database functions
+- DO NOT change API endpoints
+- ONLY change the formatting/marker functions listed above
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COMPLETION CHECKLIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] is_run_bold() function REMOVED
+[ ] Inline [BOLD]...[/BOLD] code REMOVED
+[ ] Simple bold prefix logic RESTORED
+[ ] Bullet character stripping REMOVED
+[ ] strip_structure_markers() simplified
+[ ] File upload still works
+[ ] CV scanning still works
+[ ] Application runs without errors
+
+Test after changes and report results.
