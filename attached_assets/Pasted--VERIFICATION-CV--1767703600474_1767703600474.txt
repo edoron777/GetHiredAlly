@@ -1,0 +1,135 @@
+═══════════════════════════════════════════════════════════════════════════════
+✅ VERIFICATION: CV GUIDE MODE COMPLETE FEATURE TEST
+═══════════════════════════════════════════════════════════════════════════════
+
+PREREQUISITES:
+- All REPLIT prompts completed
+- Database prompts completed
+- Application running without errors
+
+───────────────────────────────────────────────────────────────────────────────
+
+TEST CASES:
+
+1. TOGGLE FUNCTIONALITY
+   Steps:
+   a) Navigate to CV Optimizer Results page
+   b) Look for "💡 Guide Mode" button in toolbar
+   c) Click button
+   
+   Expected:
+   - [ ] Button becomes highlighted/active
+   - [ ] 💡 icons appear on section headers
+   - [ ] Missing sections bar appears at bottom
+   
+   d) Click button again
+   
+   Expected:
+   - [ ] Button returns to inactive state
+   - [ ] 💡 icons disappear
+   - [ ] Missing sections bar disappears
+
+───────────────────────────────────────────────────────────────────────────────
+
+2. GUIDE TIPBOX - FOUND SECTION
+   Steps:
+   a) Enable Guide Mode
+   b) Click 💡 icon next to a DETECTED section (e.g., EXPERIENCE)
+   
+   Expected:
+   - [ ] TipBox opens
+   - [ ] Header shows section name with 💡 icon
+   - [ ] Status badge shows "✅ Found in your CV"
+   - [ ] Shows: About, Purpose, Best Practices, Requirements, Examples
+   - [ ] Requirements show 🔴🟡🟢 markers
+   - [ ] "Got It" button at bottom
+   
+   c) Click "Got It"
+   
+   Expected:
+   - [ ] TipBox closes
+   - [ ] Can reopen same section
+
+───────────────────────────────────────────────────────────────────────────────
+
+3. GUIDE TIPBOX - MISSING SECTION
+   Steps:
+   a) Enable Guide Mode
+   b) Click chip in "Sections Not Found" bar
+   
+   Expected:
+   - [ ] TipBox opens
+   - [ ] Status badge shows "⚠️ Missing from your CV"
+   - [ ] Same content structure as found sections
+   - [ ] "Got It" closes TipBox
+
+───────────────────────────────────────────────────────────────────────────────
+
+4. COEXISTENCE WITH ISSUE MODE
+   Steps:
+   a) Enable Guide Mode
+   b) CV should still show issue markers (● dots)
+   c) Click on an issue marker
+   
+   Expected:
+   - [ ] Issue TipBox opens (not Guide TipBox)
+   - [ ] Issue TipBox has original styling
+   - [ ] Shows issue details, not guide content
+   
+   d) Close issue TipBox
+   e) Click 💡 guide icon
+   
+   Expected:
+   - [ ] Guide TipBox opens
+   - [ ] Different styling (gradient header)
+
+───────────────────────────────────────────────────────────────────────────────
+
+5. MOBILE RESPONSIVENESS
+   Steps:
+   a) Open in mobile view (or resize browser)
+   b) Enable Guide Mode
+   
+   Expected:
+   - [ ] Toggle button visible and clickable
+   - [ ] 💡 icons properly positioned
+   - [ ] TipBox is full-screen or well-sized
+   - [ ] Scrollable content if needed
+   - [ ] "Got It" button accessible
+
+───────────────────────────────────────────────────────────────────────────────
+
+6. ERROR HANDLING
+   Test:
+   a) Click guide icon for section without database entry
+   
+   Expected:
+   - [ ] No crash
+   - [ ] Console shows warning (optional)
+   - [ ] TipBox doesn't open OR shows fallback message
+
+───────────────────────────────────────────────────────────────────────────────
+
+REPORT FORMAT:
+
+TEST 1 - Toggle: [PASS/FAIL]
+- Notes: [any observations]
+
+TEST 2 - Found Section: [PASS/FAIL]
+- Notes: [any observations]
+
+TEST 3 - Missing Section: [PASS/FAIL]
+- Notes: [any observations]
+
+TEST 4 - Issue Mode Coexistence: [PASS/FAIL]
+- Notes: [any observations]
+
+TEST 5 - Mobile: [PASS/FAIL]
+- Notes: [any observations]
+
+TEST 6 - Error Handling: [PASS/FAIL]
+- Notes: [any observations]
+
+OVERALL STATUS: [ALL PASS / ISSUES FOUND]
+
+═══════════════════════════════════════════════════════════════════════════════
