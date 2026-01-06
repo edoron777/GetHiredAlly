@@ -149,11 +149,9 @@ export const StructureOverlay: React.FC<StructureOverlayProps> = ({
         return (
           <div 
             key={`${section.start_line}-${section.end_line}-${idx}`}
-            className="section-wrapper relative flex mb-2"
+            className="section-wrapper mb-4 rounded-lg overflow-hidden shadow-sm"
             style={{
-              backgroundColor: colors.background,
-              borderLeft: `4px solid ${colors.border}`,
-              borderRadius: '0 8px 8px 0',
+              borderLeft: `4px solid ${colors.tab}`,
             }}
           >
             <SectionTab
@@ -169,7 +167,12 @@ export const StructureOverlay: React.FC<StructureOverlayProps> = ({
               onDelete={() => handleDeleteDivider(idx)}
             />
             
-            <div className="section-content flex-1 p-4 font-mono text-sm whitespace-pre-wrap">
+            <div 
+              className="section-content p-4 font-mono text-sm whitespace-pre-wrap"
+              style={{
+                backgroundColor: colors.background,
+              }}
+            >
               {section.sectionLines.map((line, lineIdx) => {
                 const actualLineNumber = section.start_line + lineIdx;
                 const isFirstLine = lineIdx === 0;

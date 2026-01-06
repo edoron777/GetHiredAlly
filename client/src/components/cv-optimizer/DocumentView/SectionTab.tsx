@@ -1,24 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronDown, Check, ArrowUpCircle, ArrowDownCircle, Trash2 } from 'lucide-react';
-import { SECTION_COLORS } from './structureTypes';
+import { SECTION_COLORS, SECTION_OPTIONS } from './structureTypes';
 import type { SectionType } from './structureTypes';
-
-const SECTION_OPTIONS: { value: SectionType; label: string; icon: string }[] = [
-  { value: 'contact', label: 'Contact', icon: '📧' },
-  { value: 'summary', label: 'Summary', icon: '📝' },
-  { value: 'experience', label: 'Experience', icon: '💼' },
-  { value: 'education', label: 'Education', icon: '🎓' },
-  { value: 'skills', label: 'Skills', icon: '⚡' },
-  { value: 'certifications', label: 'Certifications', icon: '📜' },
-  { value: 'projects', label: 'Projects', icon: '🚀' },
-  { value: 'languages', label: 'Languages', icon: '🌍' },
-  { value: 'awards', label: 'Awards', icon: '🏆' },
-  { value: 'publications', label: 'Publications', icon: '📚' },
-  { value: 'volunteer', label: 'Volunteer', icon: '🤝' },
-  { value: 'interests', label: 'Interests', icon: '⭐' },
-  { value: 'references', label: 'References', icon: '👤' },
-  { value: 'unrecognized', label: 'Unknown', icon: '❓' },
-];
 
 interface SectionTabProps {
   sectionType: SectionType;
@@ -61,48 +44,28 @@ export const SectionTab: React.FC<SectionTabProps> = ({
   const hasActions = onMergeUp || onMergeDown || onDelete;
 
   return (
-    <div className="section-tab-wrapper relative flex-shrink-0">
-      <button
+    <div className="section-tab-wrapper relative">
+      <div 
+        className={`section-tab-header flex items-center gap-2 px-4 py-2
+                   text-white font-semibold text-sm
+                   hover:brightness-110 transition-all rounded-t-lg
+                   ${onTypeChange ? 'cursor-pointer' : 'cursor-default'}`}
+        style={{ backgroundColor: colors.tab || tabColor }}
         onClick={() => onTypeChange && setIsDropdownOpen(!isDropdownOpen)}
-        className={`section-tab flex flex-col items-center justify-center
-                   text-white font-medium text-xs cursor-pointer
-                   hover:brightness-110 transition-all shadow-md
-                   rounded-l-lg ${onTypeChange ? 'cursor-pointer' : 'cursor-default'}`}
-        style={{ 
-          backgroundColor: colors.tab || tabColor,
-          minHeight: '120px',
-          width: '32px',
-          marginLeft: '-4px',
-        }}
       >
-        <div 
-          className="flex items-center gap-1 uppercase tracking-wider"
-          style={{ 
-            writingMode: 'vertical-rl',
-            textOrientation: 'mixed',
-            transform: 'rotate(180deg)',
-          }}
-        >
-          <span className="text-[10px] font-semibold">{displayLabel}</span>
-          {onTypeChange && <ChevronDown className="w-2 h-2" />}
-        </div>
+        <div className="w-2 h-2 rounded-full bg-white/50" />
         
-        <div 
-          className="text-[8px] text-white/70 mt-2 whitespace-nowrap"
-          style={{ writingMode: 'horizontal-tb' }}
-        >
-          {lineRange}
-        </div>
+        <span className="uppercase tracking-wider">{displayLabel}</span>
         
-        {wordCount !== undefined && (
-          <div 
-            className="text-[8px] text-white/60"
-            style={{ writingMode: 'horizontal-tb' }}
-          >
-            {wordCount}w
-          </div>
+        {onTypeChange && (
+          <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
         )}
-      </button>
+        
+        <span className="text-white/70 text-xs ml-auto">
+          Lines {lineRange}
+          {wordCount !== undefined && ` · ${wordCount}w`}
+        </span>
+      </div>
 
       {isDropdownOpen && onTypeChange && (
         <>
@@ -111,11 +74,11 @@ export const SectionTab: React.FC<SectionTabProps> = ({
             onClick={() => setIsDropdownOpen(false)}
           />
           <div 
-            className="absolute left-full top-0 ml-2 z-50
+            className="absolute left-0 top-full mt-1 z-50
                        bg-white rounded-lg shadow-xl border border-gray-200
-                       py-1 min-w-[200px] max-h-[400px] overflow-y-auto"
+                       py-1 min-w-[220px] max-h-[400px] overflow-y-auto"
           >
-            <div className="px-3 py-2 text-xs text-gray-500 border-b font-medium">
+            <div className="px-3 py-2 text-xs text-gray-500 border-b font-medium bg-gray-50">
               Change section type:
             </div>
             {SECTION_OPTIONS.map((option) => (
@@ -128,9 +91,8 @@ export const SectionTab: React.FC<SectionTabProps> = ({
                            }`}
               >
                 <div className="flex items-center gap-2">
-                  <span>{option.icon}</span>
                   <span 
-                    className="w-2 h-2 rounded-full"
+                    className="w-3 h-3 rounded-full"
                     style={{ backgroundColor: SECTION_COLORS[option.value]?.tab || '#6B7280' }}
                   />
                   <span>{option.label}</span>
@@ -154,7 +116,7 @@ export const SectionTab: React.FC<SectionTabProps> = ({
                       onMergeUp();
                       setIsDropdownOpen(false);
                     }}
-                    className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100
+                    className="w-full px-3 py-2 text-left text-sm hover:bg-blue-50
                                flex items-center gap-2 text-blue-600"
                   >
                     <ArrowUpCircle className="w-4 h-4" />
@@ -168,7 +130,7 @@ export const SectionTab: React.FC<SectionTabProps> = ({
                       onMergeDown();
                       setIsDropdownOpen(false);
                     }}
-                    className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100
+                    className="w-full px-3 py-2 text-left text-sm hover:bg-blue-50
                                flex items-center gap-2 text-blue-600"
                   >
                     <ArrowDownCircle className="w-4 h-4" />
