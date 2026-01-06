@@ -159,10 +159,14 @@ export default function ResultsPage() {
 
   const handleGuideModeToggle = () => {
     console.log('🔍 Guide Mode toggle clicked, current state:', isGuideModeEnabled);
-    setIsGuideModeEnabled(prev => {
-      console.log('🔍 Guide Mode new state:', !prev);
-      return !prev;
-    });
+    const newState = !isGuideModeEnabled;
+    setIsGuideModeEnabled(newState);
+    console.log('🔍 Guide Mode new state:', newState);
+    
+    // Fetch structure data if enabling Guide Mode and not already loaded
+    if (newState && !structureData && !structureLoading) {
+      fetchStructure();
+    }
   };
 
   const handleGuideClick = async (sectionKey: string) => {
@@ -1246,6 +1250,15 @@ export default function ResultsPage() {
                       issues={formatIssues}
                       onApplyFixes={handleApplyQuickFixes}
                       isApplying={isApplyingFixes}
+                    />
+                  )}
+                  
+                  {/* Missing Sections Bar in Document View - visible when Guide Mode enabled */}
+                  {isGuideModeEnabled && structureData && (
+                    <MissingSectionsBar
+                      detectedSections={structureData.blocks?.map(b => b.type.toUpperCase()) || []}
+                      onSectionClick={handleGuideClick}
+                      isVisible={true}
                     />
                   )}
                 </>

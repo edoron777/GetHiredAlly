@@ -1,0 +1,81 @@
+═══════════════════════════════════════════════════════════════════════════════
+💻 REPLIT-3#3: ADD GUIDE MODE BUTTON VISUAL FEEDBACK
+═══════════════════════════════════════════════════════════════════════════════
+
+OBJECTIVE:
+Make the Guide Mode button clearly show ON/OFF state with visual feedback.
+
+CONTEXT:
+- Button exists but user can't tell if Guide Mode is active
+- Need clear visual indicator (like CV Structure button has)
+
+───────────────────────────────────────────────────────────────────────────────
+
+FILE: client/src/pages/cv-optimizer/ResultsPage.tsx
+
+FIND the Guide Mode button. It should look something like:
+```tsx
+<button
+  onClick={handleGuideModeToggle}
+  className="..."
+>
+  Guide Mode
+</button>
+```
+
+UPDATE to show active/inactive states clearly:
+```tsx
+<button
+  onClick={handleGuideModeToggle}
+  className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+    isGuideModeEnabled
+      ? 'bg-indigo-600 text-white shadow-sm'
+      : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+  }`}
+  title={isGuideModeEnabled ? 'Guide Mode ON - Click to disable' : 'Guide Mode OFF - Click to learn CV best practices'}
+>
+  <span className={isGuideModeEnabled ? 'text-yellow-300' : ''}>💡</span>
+  <span>Guide Mode</span>
+  {isGuideModeEnabled && (
+    <span className="ml-1 text-xs bg-white/20 px-1.5 py-0.5 rounded">ON</span>
+  )}
+</button>
+```
+
+ALTERNATIVE (if using Lucide icons):
+```tsx
+import { Lightbulb } from 'lucide-react';
+
+<button
+  onClick={handleGuideModeToggle}
+  className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+    isGuideModeEnabled
+      ? 'bg-indigo-600 text-white shadow-sm'
+      : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+  }`}
+>
+  <Lightbulb size={16} className={isGuideModeEnabled ? 'text-yellow-300' : ''} />
+  <span>Guide Mode</span>
+  {isGuideModeEnabled && <span className="text-xs">✓</span>}
+</button>
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+After changes:
+1. Guide Mode OFF: White background, gray text, 💡 icon normal color
+2. Guide Mode ON: Indigo/purple background, white text, 💡 icon yellow, shows "ON" or ✓
+
+EXPECTED RESULT:
+- Clear visual difference between ON and OFF states
+- User immediately knows if Guide Mode is active
+
+───────────────────────────────────────────────────────────────────────────────
+
+ANTI-IMPROVISATION:
+- Match existing button styles in toolbar
+- Do NOT change button position
+- Do NOT add new buttons
+
+═══════════════════════════════════════════════════════════════════════════════
