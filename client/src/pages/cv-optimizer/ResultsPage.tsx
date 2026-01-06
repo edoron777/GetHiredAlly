@@ -176,7 +176,7 @@ export default function ResultsPage() {
   };
   
   // Debug: Monitor structureData changes
-  React.useEffect(() => {
+  useEffect(() => {
     console.log('🔍 structureData/isGuideModeEnabled changed:', {
       hasStructureData: !!structureData,
       blockCount: structureData?.blocks?.length,
