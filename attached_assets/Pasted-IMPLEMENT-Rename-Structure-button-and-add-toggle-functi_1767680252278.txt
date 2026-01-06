@@ -1,0 +1,70 @@
+IMPLEMENT: Rename Structure button and add toggle functionality
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONTEXT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The current "Structure" button opens a modal popup.
+We need to change it to a toggle that shows/hides a structure overlay
+on the Document View.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 1: Rename Button
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+File: Find the button in ResultsPage.tsx or UnifiedResultsPage.tsx
+
+Change:
+- Label: "Structure" → "CV Structure"
+- Remove modal open logic
+- Add toggle state
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 2: Add Toggle State
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Add state to track structure overlay visibility:
+```tsx
+const [showStructureOverlay, setShowStructureOverlay] = useState(false);
+```
+
+Button behavior:
+- First click: showStructureOverlay = true (show overlay)
+- Second click: showStructureOverlay = false (hide overlay)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 3: Update Button Styling
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Button should show active state when overlay is visible:
+```tsx
+<Button
+  variant={showStructureOverlay ? "default" : "outline"}
+  onClick={() => setShowStructureOverlay(!showStructureOverlay)}
+  className={showStructureOverlay ? "bg-blue-600 text-white" : ""}
+>
+  <LayoutGrid className="w-4 h-4 mr-2" />
+  CV Structure
+</Button>
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 4: Remove Old Modal Code
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Remove or comment out:
+- fetchStructure() function (or keep for data fetching)
+- Structure modal component
+- showStructureModal state
+
+Keep the API call but redirect data to overlay instead of modal.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COMPLETION CHECKLIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] Button renamed to "CV Structure"
+[ ] Toggle state added (showStructureOverlay)
+[ ] Button shows active state when ON
+[ ] Old modal code removed/commented
+[ ] Click toggles overlay visibility

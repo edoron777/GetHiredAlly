@@ -1,0 +1,159 @@
+IMPLEMENT: Create StructureOverlay component for Document View
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONTEXT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Create an overlay that wraps Document View content and adds:
+- Colored section boundaries
+- Pastel background per section
+- Section tabs on left side
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 1: Create Component File
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Create: client/src/components/cv-optimizer/DocumentView/StructureOverlay.tsx
+```tsx
+import React, { useState } from 'react';
+import { SectionTab } from './SectionTab';
+
+// Section type definitions
+export type SectionType = 
+  | 'CONTACT'
+  | 'SUMMARY' 
+  | 'EXPERIENCE'
+  | 'EDUCATION'
+  | 'SKILLS'
+  | 'CERTIFICATIONS'
+  | 'PROJECTS'
+  | 'LANGUAGES'
+  | 'UNKNOWN';
+
+// Section color scheme (pastel colors)
+export const SECTION_COLORS: Record<SectionType, { tab: string; background: string; border: string }> = {
+  CONTACT: { 
+    tab: '#3B82F6',      // Blue
+    background: 'rgba(59, 130, 246, 0.08)', 
+    border: 'rgba(59, 130, 246, 0.3)' 
+  },
+  SUMMARY: { 
+    tab: '#10B981',      // Green
+    background: 'rgba(16, 185, 129, 0.08)', 
+    border: 'rgba(16, 185, 129, 0.3)' 
+  },
+  EXPERIENCE: { 
+    tab: '#F59E0B',      // Orange
+    background: 'rgba(245, 158, 11, 0.08)', 
+    border: 'rgba(245, 158, 11, 0.3)' 
+  },
+  EDUCATION: { 
+    tab: '#8B5CF6',      // Purple
+    background: 'rgba(139, 92, 246, 0.08)', 
+    border: 'rgba(139, 92, 246, 0.3)' 
+  },
+  SKILLS: { 
+    tab: '#EC4899',      // Pink
+    background: 'rgba(236, 72, 153, 0.08)', 
+    border: 'rgba(236, 72, 153, 0.3)' 
+  },
+  CERTIFICATIONS: { 
+    tab: '#06B6D4',      // Cyan
+    background: 'rgba(6, 182, 212, 0.08)', 
+    border: 'rgba(6, 182, 212, 0.3)' 
+  },
+  PROJECTS: { 
+    tab: '#EF4444',      // Red
+    background: 'rgba(239, 68, 68, 0.08)', 
+    border: 'rgba(239, 68, 68, 0.3)' 
+  },
+  LANGUAGES: { 
+    tab: '#84CC16',      // Lime
+    background: 'rgba(132, 204, 22, 0.08)', 
+    border: 'rgba(132, 204, 22, 0.3)' 
+  },
+  UNKNOWN: { 
+    tab: '#6B7280',      // Gray
+    background: 'rgba(107, 114, 128, 0.08)', 
+    border: 'rgba(107, 114, 128, 0.3)' 
+  },
+};
+
+// Block structure from API
+interface CVBlock {
+  block_type: SectionType;
+  header_text: string;
+  content: string;
+  start_line: number;
+  end_line: number;
+  confidence: float;
+  word_count: number;
+}
+
+interface StructureOverlayProps {
+  blocks: CVBlock[];
+  cvContent: string;
+  onSectionTypeChange?: (blockIndex: number, newType: SectionType) => void;
+}
+
+export const StructureOverlay: React.FC<StructureOverlayProps> = ({
+  blocks,
+  cvContent,
+  onSectionTypeChange
+}) => {
+  // Split CV content into lines for section mapping
+  const lines = cvContent.split('\n');
+  
+  // Group lines by section
+  const sections = blocks.map((block, index) => ({
+    ...block,
+    index,
+    lines: lines.slice(block.start_line - 1, block.end_line)
+  }));
+
+  return (
+    <div className="structure-overlay">
+      {sections.map((section, idx) => (
+        <div 
+          key={idx}
+          className="section-wrapper relative flex mb-4"
+          style={{
+            backgroundColor: SECTION_COLORS[section.block_type]?.background,
+            borderLeft: `4px solid ${SECTION_COLORS[section.block_type]?.border}`,
+            borderRadius: '0 8px 8px 0',
+          }}
+        >
+          {/* Section Tab on Left */}
+          <SectionTab
+            sectionType={section.block_type}
+            lineRange={`${section.start_line}-${section.end_line}`}
+            onTypeChange={(newType) => onSectionTypeChange?.(idx, newType)}
+          />
+          
+          {/* Section Content */}
+          <div className="section-content flex-1 p-4">
+            {section.lines.map((line, lineIdx) => (
+              <div key={lineIdx} className="cv-line">
+                {line}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+export default StructureOverlay;
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COMPLETION CHECKLIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] Created StructureOverlay.tsx
+[ ] Defined section types
+[ ] Defined pastel color scheme
+[ ] Component renders sections with backgrounds
+[ ] Sections have left border color
+[ ] SectionTab component placeholder

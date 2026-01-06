@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { FileText, List, Copy, Check, ArrowLeft, Loader2, RefreshCw, Columns, GraduationCap } from 'lucide-react';
+import { FileText, List, Copy, Check, ArrowLeft, Loader2, RefreshCw, Columns, GraduationCap, LayoutGrid } from 'lucide-react';
 import { classifyIssues, FloatingSummaryBadge } from '../../components/cv-optimizer/DocumentView';
 import { DocumentEditor } from '../../components/common/DocumentEditor';
 import { TipBox } from '../../components/common/TipBox';
@@ -139,7 +139,7 @@ export default function ResultsPage() {
     }>;
   } | null>(null);
   const [structureLoading, setStructureLoading] = useState(false);
-  const [showStructureModal, setShowStructureModal] = useState(false);
+  const [showStructureOverlay, setShowStructureOverlay] = useState(false);
 
   const normalizeIssue = (issue: CVIssue, index: number) => ({
     id: issue.id || String(index + 1),
@@ -1058,20 +1058,22 @@ export default function ResultsPage() {
               </button>
             )}
 
-            {/* Dev: Structure Button */}
+            {/* CV Structure Toggle Button */}
             <button
               onClick={() => {
-                console.log('Structure button clicked, cvId:', cvId);
-                console.log('Current structureData:', structureData);
-                if (!structureData && !structureLoading) {
+                if (!showStructureOverlay && !structureData && !structureLoading) {
                   fetchStructure();
                 }
-                setShowStructureModal(true);
+                setShowStructureOverlay(!showStructureOverlay);
               }}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-700 text-white hover:bg-gray-800"
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                showStructureOverlay
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
             >
-              <span>🔍</span>
-              Structure
+              <LayoutGrid size={16} />
+              CV Structure
             </button>
           </div>
           
@@ -1166,73 +1168,61 @@ export default function ResultsPage() {
         onCompareVersions={() => setActiveTab('sidebyside')}
       />
 
-      {/* Structure Modal */}
-      {showStructureModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[80vh] overflow-hidden">
-            <div className="flex items-center justify-between p-4 border-b">
-              <h3 className="text-lg font-bold text-gray-900">📋 Detected CV Structure</h3>
-              <button
-                onClick={() => setShowStructureModal(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="p-4 overflow-y-auto max-h-[60vh]">
-              {structureLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
-                  <span className="ml-2 text-gray-600">Loading structure...</span>
+      {/* CV Structure Overlay Panel */}
+      {showStructureOverlay && (
+        <div className="fixed right-4 top-24 z-40 w-80 bg-white rounded-lg shadow-xl border border-gray-200 max-h-[70vh] overflow-hidden">
+          <div className="flex items-center justify-between p-3 border-b bg-gray-50">
+            <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+              <LayoutGrid size={16} className="text-blue-600" />
+              CV Structure
+            </h3>
+            <button
+              onClick={() => setShowStructureOverlay(false)}
+              className="text-gray-400 hover:text-gray-600 text-lg"
+            >
+              ✕
+            </button>
+          </div>
+          <div className="p-3 overflow-y-auto max-h-[60vh]">
+            {structureLoading ? (
+              <div className="flex items-center justify-center py-6">
+                <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+                <span className="ml-2 text-sm text-gray-600">Loading...</span>
+              </div>
+            ) : structureData ? (
+              <div className="space-y-2">
+                <div className="text-xs text-gray-500 pb-2 border-b">
+                  {structureData.total_jobs} jobs • {structureData.total_bullets} bullets • {structureData.total_certifications} certs
                 </div>
-              ) : structureData ? (
-                <div className="space-y-3">
-                  <div className="text-sm text-gray-500 pb-2 border-b">
-                    {structureData.total_jobs} jobs • {structureData.total_bullets} bullets • {structureData.total_certifications} certs • {structureData.processing_time_ms}ms
-                  </div>
-                  {structureData.blocks.map((block, idx) => (
-                    <div key={idx} className="p-3 bg-gray-50 border rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <span className="font-semibold text-blue-600 uppercase">{block.type}</span>
-                        <span className="text-sm text-gray-500">Lines {block.start_line}-{block.end_line}</span>
-                      </div>
-                      {block.jobs && (
-                        <div className="text-sm text-gray-600 mt-1">
-                          {block.jobs.length} jobs, {block.jobs.reduce((sum, j) => sum + j.bullet_count, 0)} bullets
-                        </div>
-                      )}
-                      {block.certs && (
-                        <div className="text-sm text-gray-600 mt-1">
-                          {block.certs.length} certifications
-                        </div>
-                      )}
-                      {block.entries && (
-                        <div className="text-sm text-gray-600 mt-1">
-                          {block.entries.length} education entries
-                        </div>
-                      )}
+                {structureData.blocks.map((block, idx) => (
+                  <div key={idx} className="p-2 bg-gray-50 border rounded text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-blue-600 uppercase text-xs">{block.type}</span>
+                      <span className="text-xs text-gray-400">L{block.start_line}-{block.end_line}</span>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  No structure data available
-                </div>
-              )}
-            </div>
-            <div className="p-4 border-t bg-gray-50">
-              <button
-                onClick={() => {
-                  if (structureData) {
-                    console.log('Block structure:', structureData);
-                  }
-                  setShowStructureModal(false);
-                }}
-                className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                Close
-              </button>
-            </div>
+                    {block.jobs && (
+                      <div className="text-xs text-gray-500 mt-1">
+                        {block.jobs.length} jobs, {block.jobs.reduce((sum, j) => sum + j.bullet_count, 0)} bullets
+                      </div>
+                    )}
+                    {block.certs && (
+                      <div className="text-xs text-gray-500 mt-1">
+                        {block.certs.length} certifications
+                      </div>
+                    )}
+                    {block.entries && (
+                      <div className="text-xs text-gray-500 mt-1">
+                        {block.entries.length} education entries
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-6 text-sm text-gray-500">
+                No structure data available
+              </div>
+            )}
           </div>
         </div>
       )}
