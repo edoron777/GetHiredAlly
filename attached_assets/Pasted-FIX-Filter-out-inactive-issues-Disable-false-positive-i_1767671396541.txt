@@ -1,0 +1,157 @@
+FIX: Filter out inactive issues + Disable false positive issue types
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CRITICAL BUG FOUND
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Setting is_active = false in cv_issue_types DOES NOT HIDE THE ISSUE!
+
+Why:
+1. Detector generates issue with code 'FORMAT_X'
+2. enrich_issues_from_catalog() can't find it (not in active cache)
+3. Falls back to default values (severity='consider')
+4. Issue STILL displayed to user!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIX PART 1: Add Filtering for Inactive Issues
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+File: backend/common/catalog/service.py
+Function: enrich_all_issues() (around line 159)
+
+Add a filter to REMOVE issues that are inactive in the database.
+
+OPTION A - Query inactive codes once at startup:
+```python
+# In CatalogService.__init__ or cache loading:
+self._inactive_issue_codes = set()
+
+# Load inactive codes from database
+inactive_query = """
+    SELECT code FROM cv_issue_types WHERE is_active = false
+"""
+# Execute and store in self._inactive_issue_codes
+```
+
+Then in enrich_all_issues():
+```python
+def enrich_all_issues(self, issues: List[Dict]) -> List[Dict]:
+    enriched = []
+    for issue in issues:
+        code = issue.get('issue_type') or issue.get('code')
+        
+        # SKIP inactive issues
+        if code and code.upper() in self._inactive_issue_codes:
+            continue  # Don't include this issue
+            
+        enriched_issue = self.enrich_detected_issue(issue)
+        enriched.append(enriched_issue)
+    
+    return enriched
+```
+
+OPTION B - Add flag during enrichment:
+
+In enrich_detected_issue(), when issue NOT found in cache:
+```python
+# Before falling back to defaults, check if it's inactive
+if not catalog_issue:
+    # Check if this code exists but is inactive
+    if self._is_issue_inactive(normalized_code):
+        return None  # Signal to filter this out
+    
+    # Otherwise, use defaults for truly unknown issues
+    # ... existing fallback code
+```
+
+Then in enrich_all_issues():
+```python
+enriched = [self.enrich_detected_issue(i) for i in issues]
+return [e for e in enriched if e is not None]  # Filter out None (inactive)
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIX PART 2: Disable False Positive Issue Types in Database
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Run this SQL to disable visual-formatting issues:
+```sql
+-- Disable visual-formatting issues (cause false positives)
+UPDATE cv_issue_types 
+SET is_active = false 
+WHERE code IN (
+    'FORMAT_INCONSISTENT_BULLETS',
+    'FORMAT_MULTIPLE_COLUMNS',
+    'FORMAT_POOR_VISUAL_HIERARCHY',
+    'FORMAT_TABLES_DETECTED',
+    'FORMAT_HEADERS_GRAPHICS',
+    'FORMAT_INCONSISTENT_SPACING',
+    'FORMAT_TRAILING_WHITESPACE',
+    'FORMAT_MULTIPLE_SPACES',
+    'FORMAT_EXCESSIVE_BLANK_LINES',
+    'FORMAT_PAGE1_INCOMPLETE',
+    'FORMAT_CONTENT_IN_FOOTER'
+);
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIX PART 3: Verify the Fix Works
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+After implementing:
+
+1. Restart the application (to reload cache)
+
+2. Run a test scan
+
+3. Check console logs for:
+   - "Filtered out inactive issue: FORMAT_X" (if you add logging)
+
+4. Verify in UI:
+   - No FORMAT_INCONSISTENT_BULLETS issues
+   - No other disabled FORMAT issues
+   - CONTENT issues still appear
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+IMPLEMENTATION ORDER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. FIRST: Add the filtering code (Fix Part 1)
+   - This makes is_active actually work
+   
+2. SECOND: Run the SQL (Fix Part 2)
+   - This disables the false positive issues
+   
+3. THIRD: Restart application
+   - To reload the cache with new inactive codes
+   
+4. FOURTH: Test
+   - Verify issues are filtered
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ IMPORTANT NOTES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. The cache loads on startup - changes to is_active require restart
+
+2. Unknown issues (not in database at all) should still show with defaults
+   - Only filter issues that ARE in database but inactive
+
+3. Add logging to track what gets filtered:
+```python
+   logger.info(f"Filtered inactive issue: {code}")
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COMPLETION CHECKLIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] Added _inactive_issue_codes set to CatalogService
+[ ] Added filtering in enrich_all_issues()
+[ ] Ran SQL to disable 11 FORMAT issues
+[ ] Restarted application
+[ ] Tested scan - disabled issues don't appear
+[ ] Tested scan - active issues still appear
+[ ] Added logging for filtered issues
+
+Report what was done and test results.

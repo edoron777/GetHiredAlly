@@ -98,7 +98,7 @@ class CatalogService:
         """Convert legacy code to new code if needed"""
         return self.cache.normalize_legacy_code(code)
     
-    def enrich_detected_issue(self, detected_issue: Dict[str, Any]) -> Dict[str, Any]:
+    def enrich_detected_issue(self, detected_issue: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """
         Enrich a detected issue with catalog metadata.
         
@@ -109,16 +109,20 @@ class CatalogService:
             detected_issue: Dict with at least 'issue_type' key
             
         Returns:
-            Enriched issue dict with all catalog metadata
+            Enriched issue dict with all catalog metadata,
+            or None if the issue is inactive and should be filtered out
         """
         issue_code = detected_issue.get('issue_type', '')
         
         normalized_code = self.cache.normalize_legacy_code(issue_code)
         detected_issue['issue_type'] = normalized_code
         
+        if self.cache.is_issue_inactive(normalized_code):
+            logger.info(f"Filtered inactive issue: {normalized_code}")
+            return None
+        
         catalog_entry = self.cache.get_issue_by_code(normalized_code)
         
-        # DEBUG: Log enrichment
         logger.debug(f"Enriching {normalized_code}: catalog_entry={catalog_entry is not None}")
         
         if catalog_entry:
@@ -157,8 +161,25 @@ class CatalogService:
         return detected_issue
     
     def enrich_all_issues(self, detected_issues: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Enrich a list of detected issues"""
-        return [self.enrich_detected_issue(issue) for issue in detected_issues]
+        """
+        Enrich a list of detected issues.
+        
+        Filters out inactive issues (is_active = false in database).
+        """
+        enriched = []
+        filtered_count = 0
+        
+        for issue in detected_issues:
+            result = self.enrich_detected_issue(issue)
+            if result is not None:
+                enriched.append(result)
+            else:
+                filtered_count += 1
+        
+        if filtered_count > 0:
+            logger.info(f"Filtered out {filtered_count} inactive issues")
+        
+        return enriched
     
     def get_severity_config(self) -> Dict[str, SeverityConfig]:
         """Get severity display configuration for frontend"""

@@ -208,3 +208,26 @@ class CatalogRepository:
         except Exception as e:
             logger.error(f"Error fetching issues for severity {severity}: {e}")
             raise
+    
+    def fetch_inactive_issue_codes(self) -> List[str]:
+        """
+        Fetch all INACTIVE issue codes from database.
+        
+        These are issues with is_active = false that should be
+        filtered out during detection, even if detectors generate them.
+        
+        Returns:
+            List of issue_code strings that are inactive
+        """
+        try:
+            response = self.db.table("cv_issue_types") \
+                .select("issue_code") \
+                .eq("is_active", False) \
+                .execute()
+            
+            codes = [row["issue_code"] for row in response.data]
+            logger.info(f"Fetched {len(codes)} inactive issue codes from database")
+            return codes
+        except Exception as e:
+            logger.error(f"Error fetching inactive issue codes: {e}", exc_info=True)
+            return []

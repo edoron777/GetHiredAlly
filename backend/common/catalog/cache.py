@@ -43,6 +43,7 @@ class CatalogCache:
         self._subcategories: List[Subcategory] = []
         self._all_issues: List[IssueType] = []
         self._legacy_mapping: Dict[str, str] = {}
+        self._inactive_issue_codes: set = set()
         
         self._issues_by_code: Dict[str, IssueType] = {}
         self._issues_by_category: Dict[str, List[IssueType]] = {}
@@ -92,6 +93,7 @@ class CatalogCache:
             self._subcategories = repository.fetch_all_subcategories()
             self._all_issues = repository.fetch_all_issues()
             self._legacy_mapping = repository.fetch_legacy_mapping()
+            self._inactive_issue_codes = set(repository.fetch_inactive_issue_codes())
             
             self._build_indexes()
             
@@ -102,7 +104,8 @@ class CatalogCache:
             logger.info(
                 f"Cache loaded: {len(self._all_issues)} issues, "
                 f"{len(self._categories)} categories, "
-                f"{len(self._legacy_mapping)} legacy mappings. "
+                f"{len(self._legacy_mapping)} legacy mappings, "
+                f"{len(self._inactive_issue_codes)} inactive codes. "
                 f"Time: {load_time:.2f}ms"
             )
             
@@ -197,6 +200,24 @@ class CatalogCache:
         """Get full legacy mapping dictionary"""
         self._ensure_loaded()
         return self._legacy_mapping.copy()
+    
+    def is_issue_inactive(self, code: str) -> bool:
+        """
+        Check if an issue code is inactive (disabled in database).
+        
+        Args:
+            code: The issue_code to check
+            
+        Returns:
+            True if the issue exists but is inactive, False otherwise
+        """
+        self._ensure_loaded()
+        return code in self._inactive_issue_codes
+    
+    def get_inactive_issue_codes(self) -> set:
+        """Get all inactive issue codes"""
+        self._ensure_loaded()
+        return self._inactive_issue_codes.copy()
     
     def get_summary(self) -> CatalogSummary:
         """Get catalog statistics"""
