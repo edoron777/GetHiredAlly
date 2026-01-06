@@ -5,6 +5,9 @@ export type {
   TipBoxSection as TipBoxSectionType,
   TipBoxButton,
   TipBoxColor,
-  SectionType
+  SectionType,
+  TipBoxMode,
+  SectionStatus,
+  RequirementItem
 } from './types'
-export { TIPBOX_COLORS } from './types'
+export { TIPBOX_COLORS, GUIDE_MODE_COLORS } from './types'

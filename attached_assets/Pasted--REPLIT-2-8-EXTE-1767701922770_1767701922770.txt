@@ -1,0 +1,152 @@
+═══════════════════════════════════════════════════════════════════════════════
+💻 REPLIT-2#8: EXTEND TIPBOX COMPONENT
+═══════════════════════════════════════════════════════════════════════════════
+
+OBJECTIVE:
+Modify TipBox component to handle guide mode with conditional rendering.
+
+TARGET FILE:
+client/src/components/common/TipBox/TipBox.tsx
+
+───────────────────────────────────────────────────────────────────────────────
+
+CHANGES REQUIRED:
+
+1. UPDATE imports (add new types):
+```typescript
+import { 
+  // existing imports...
+  TipBoxMode,
+  SectionStatus,
+  GUIDE_MODE_COLORS
+} from './tipbox-types';
+```
+
+2. UPDATE props destructuring:
+```typescript
+const TipBox: React.FC<TipBoxProps> = ({
+  // existing props...
+  mode = 'issue',           // ADD - default to issue mode
+  sectionStatus,            // ADD
+  sectionKey,               // ADD
+}) => {
+```
+
+3. ADD color scheme selection logic:
+```typescript
+// Add near top of component, after props destructuring
+const getColorScheme = () => {
+  if (mode === 'guide' && sectionStatus) {
+    return GUIDE_MODE_COLORS[sectionStatus];
+  }
+  // Fall back to existing color/severity logic
+  return color || TIPBOX_COLORS[severity];
+};
+
+const colorScheme = getColorScheme();
+```
+
+4. ADD conditional header rendering:
+```typescript
+// Find the header section and wrap with mode check
+const renderHeader = () => {
+  if (mode === 'guide') {
+    return (
+      <div className="tipbox-header tipbox-header--guide">
+        <div className="tipbox-header__content">
+          <span className="tipbox-header__icon">💡</span>
+          <span className="tipbox-header__title">{title}</span>
+        </div>
+        {sectionStatus && (
+          <span className={`tipbox-status-badge tipbox-status-badge--${sectionStatus}`}>
+            {sectionStatus === 'found' && '✅ Found in your CV'}
+            {sectionStatus === 'missing' && '⚠️ Missing from your CV'}
+            {sectionStatus === 'optional' && 'ℹ️ Optional Section'}
+          </span>
+        )}
+      </div>
+    );
+  }
+  
+  // Return existing header for issue mode
+  return (
+    <div className="tipbox-header">
+      {/* existing header content */}
+    </div>
+  );
+};
+```
+
+5. ADD requirements section renderer (new section type):
+```typescript
+// Add this function to handle 'requirements' section type
+const renderRequirementsSection = (items: RequirementItem[]) => {
+  const priorityIcons = {
+    mandatory: '🔴',
+    recommended: '🟡',
+    optional: '🟢'
+  };
+  
+  return (
+    <ul className="tipbox-requirements-list">
+      {items.map((item, idx) => (
+        <li key={idx} className={`tipbox-requirement tipbox-requirement--${item.priority}`}>
+          <span className="tipbox-requirement__icon">{priorityIcons[item.priority]}</span>
+          <span className="tipbox-requirement__text">{item.text}</span>
+        </li>
+      ))}
+    </ul>
+  );
+};
+```
+
+6. UPDATE section rendering switch/if:
+```typescript
+// In the section rendering logic, add case for 'requirements'
+case 'requirements':
+  return renderRequirementsSection(section.content as RequirementItem[]);
+```
+
+7. UPDATE button rendering for guide mode:
+```typescript
+// Find the action button(s) section
+// For guide mode, show single "Got It" button instead of issue buttons
+const renderButtons = () => {
+  if (mode === 'guide') {
+    return (
+      <div className="tipbox-buttons tipbox-buttons--guide">
+        <button 
+          className="tipbox-button tipbox-button--primary"
+          onClick={onClose}
+        >
+          Got It
+        </button>
+      </div>
+    );
+  }
+  
+  // Return existing buttons for issue mode
+  return (
+    <div className="tipbox-buttons">
+      {/* existing buttons */}
+    </div>
+  );
+};
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+After changes, confirm:
+- [ ] Existing issue mode TipBox still works identically
+- [ ] No TypeScript errors
+- [ ] Component renders without crashes
+- [ ] Guide mode props are optional (backward compatible)
+
+ANTI-IMPROVISATION:
+- Do NOT remove any existing functionality
+- Do NOT change the modal overlay behavior
+- Do NOT modify existing section type handling
+- If structure differs from expected, STOP and report
+
+═══════════════════════════════════════════════════════════════════════════════

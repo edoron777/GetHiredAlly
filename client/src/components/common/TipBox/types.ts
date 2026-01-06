@@ -11,6 +11,16 @@ export type SectionType =
   | 'instructions'
   | 'custom'
   | 'warning'
+  | 'requirements'
+
+export type TipBoxMode = 'issue' | 'guide' | 'info'
+
+export type SectionStatus = 'found' | 'missing' | 'optional'
+
+export interface RequirementItem {
+  text: string
+  priority: 'mandatory' | 'recommended' | 'optional'
+}
 
 export interface TipBoxSection {
   type: SectionType
@@ -65,6 +75,21 @@ export const TIPBOX_COLORS: Record<string, TipBoxColor> = {
   }
 }
 
+export const GUIDE_MODE_COLORS: Record<SectionStatus, { accent: string; background: string }> = {
+  found: {
+    accent: '#22C55E',
+    background: '#F0FDF4'
+  },
+  missing: {
+    accent: '#EAB308',
+    background: '#FEFCE8'
+  },
+  optional: {
+    accent: '#6366F1',
+    background: '#EEF2FF'
+  }
+}
+
 export interface TipBoxProps {
   isOpen: boolean
   onClose: () => void
@@ -81,4 +106,7 @@ export interface TipBoxProps {
   isAutoFixable?: boolean
   isPending?: boolean
   isFixed?: boolean
+  mode?: TipBoxMode
+  sectionStatus?: SectionStatus
+  sectionKey?: string
 }
