@@ -1,0 +1,196 @@
+FIX: Move issue markers from inside text to left margin
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PROBLEM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Currently, the colored circle markers (🟠🔵) appear INSIDE the text:
+
+  "I 🟠 bridge the gap between..."
+  "...SanDisk, I 🟠 deconstruct emerging..."
+
+This is confusing because:
+1. It breaks the natural reading flow
+2. User thinks "🟠" is part of the text
+3. Hard to scan for issues quickly
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DESIRED RESULT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Markers should appear in a LEFT GUTTER/MARGIN:
+
+┌────┬──────────────────────────────────────────────────────────┐
+│ 🟠 │ I bridge the gap between cutting-edge technology and    │
+│    │ enterprise security—turning complex innovations into     │
+│    │ measurable business value.                               │
+├────┼──────────────────────────────────────────────────────────┤
+│    │ Specializing in cybersecurity innovation at Citi,       │
+│    │ Microsoft, Deloitte, and SanDisk, I deconstruct...      │
+├────┼──────────────────────────────────────────────────────────┤
+│ 🟠 │ Supported security initiatives across the organization  │
+└────┴──────────────────────────────────────────────────────────┘
+  ↑
+  Left gutter with markers (fixed width ~24px)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 1: Find the Marker Rendering Code
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Find the component that renders markers in Document View.
+
+Likely locations:
+- client/src/components/cv-optimizer/DocumentView/TextMarker.tsx
+- client/src/components/cv-optimizer/DocumentView/CVDocument.tsx
+- client/src/components/cv-optimizer/DocumentView/DocumentEditor.tsx
+
+Look for:
+- Code that inserts the colored circle (🟠🔵) into text
+- The highlighting/marking logic
+- Where "current" text is found and marked
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 2: Change Marker Position Strategy
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+OPTION A: Line-Based Gutter (Recommended)
+
+Instead of inserting marker INTO the text, render each line with:
+- Left gutter (fixed width) for marker icon
+- Right area for text content
+```tsx
+// For each paragraph/line that has an issue:
+<div className="flex">
+  {/* Gutter */}
+  <div className="w-6 flex-shrink-0 flex items-start pt-1">
+    {hasIssue && (
+      <span className={`w-3 h-3 rounded-full ${severityColor}`} />
+    )}
+  </div>
+  
+  {/* Text content - highlight the issue text */}
+  <div className="flex-1">
+    <span className="bg-yellow-100">{issueText}</span>
+    {restOfText}
+  </div>
+</div>
+```
+
+OPTION B: Inline but Before (Simpler)
+
+Keep inline approach but put marker BEFORE the issue text:
+```tsx
+// Instead of: "I 🟠 bridge the gap..."
+// Render:     "🟠 I bridge the gap..."
+
+<span>
+  <span className={`inline-block w-3 h-3 rounded-full mr-1 ${severityColor}`} />
+  <span className="bg-yellow-100">{issueText}</span>
+</span>
+{restOfText}
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 3: Update the Document Container
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+If using OPTION A (gutter), update the document container:
+```tsx
+// Document container with gutter
+<div className="cv-document">
+  {paragraphs.map((para, idx) => (
+    <div key={idx} className="flex">
+      {/* Gutter column */}
+      <div className="w-6 flex-shrink-0">
+        {getMarkerForLine(idx)}
+      </div>
+      
+      {/* Content column */}
+      <div className="flex-1">
+        {renderParagraphWithHighlights(para)}
+      </div>
+    </div>
+  ))}
+</div>
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 4: Keep Text Highlighting
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The issue text should STILL be highlighted (background color),
+but WITHOUT the marker icon inside:
+
+BEFORE:
+  "I 🟠 bridge the gap..."
+     ↑ icon inside + highlight
+
+AFTER:
+  🟠 "I bridge the gap..."
+  ↑   └─ highlighted text (background)
+  icon in gutter
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 5: Severity Colors
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Keep the same severity-to-color mapping:
+
+| Severity | Marker Color | Highlight Background |
+|----------|--------------|---------------------|
+| critical | bg-red-500   | bg-red-50           |
+| important| bg-orange-500| bg-orange-50        |
+| consider | bg-blue-500  | bg-blue-50          |
+| polish   | bg-gray-400  | bg-gray-50          |
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+VISUAL EXAMPLES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+EXAMPLE 1: Single word issue (weak verb "Supported")
+
+BEFORE: "• 🟠 Supported security initiatives..."
+AFTER:  "🟠 • Supported security initiatives..."
+            └─────────┘
+            highlighted background
+
+EXAMPLE 2: First person pronoun "I"
+
+BEFORE: "I 🟠 bridge the gap between..."
+AFTER:  "🟠 I bridge the gap between..."
+           └┘
+           highlighted
+
+EXAMPLE 3: Multiple issues in same paragraph
+
+BEFORE: "I 🟠 helped 🟠 the team..."
+AFTER:  "🟠🟠 I helped the team..."
+            └┘ └────┘
+            both highlighted
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ IMPORTANT NOTES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Don't break existing highlighting - text should still be findable
+2. Keep tooltip on marker hover (if exists)
+3. Marker should align with the LINE where issue starts
+4. Multiple markers on same line = show multiple circles
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COMPLETION CHECKLIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] Found marker rendering code
+[ ] Changed marker position to LEFT of text
+[ ] Text is still highlighted (background color)
+[ ] Marker icon NOT inside text anymore
+[ ] Severity colors preserved
+[ ] Multiple markers on same line work
+[ ] Clicking marker still works (if applicable)
+[ ] No visual layout breaks
+
+Report:
+1. Which file was modified
+2. Which approach used (gutter or inline-before)
+3. Screenshot or description of result
