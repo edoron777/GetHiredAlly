@@ -1,0 +1,161 @@
+INVESTIGATION: CV Structure Detection System
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONTEXT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+I need to understand:
+1. How detect_cv_blocks() works
+2. When it runs (before/after text extraction)
+3. Which issue detectors depend on block_structure
+4. How the "Structure" button in UI should work
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 1: STRUCTURE DETECTION FUNCTION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+File: backend/common/detection/block_detector.py
+
+1A. Show the main function signature:
+    - detect_cv_blocks() or similar
+    - What parameters does it receive?
+    - What does it return?
+
+1B. Show how it detects sections:
+    - Does it use [H1], [H2], [BOLD] markers?
+    - Does it use keyword matching ("Experience", "Education")?
+    - What is the detection logic?
+
+1C. Show the output structure (CVBlockStructure or similar):
+    - What sections are identified?
+    - What data is stored per section?
+    - Line numbers? Start/end positions?
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 2: TIMING - WHEN DOES STRUCTURE DETECTION RUN?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+2A. Show the scan_cv() function flow:
+    File: backend/app/cv_optimizer.py
+    
+    What is the order of operations?
+    1. Text extraction? 
+    2. Structure detection?
+    3. Issue detection?
+
+2B. Does detect_cv_blocks() receive:
+    - Raw file (before extraction)?
+    - Extracted text WITH markers?
+    - Extracted text WITHOUT markers?
+
+2C. Show the actual call to detect_cv_blocks():
+    - Where is it called from?
+    - What is passed to it?
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 3: DEPENDENCY - WHICH ISSUES NEED STRUCTURE?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+3A. In detect_all_issues() (master_detector.py):
+    - Does it receive block_structure?
+    - How is block_structure passed to individual detectors?
+
+3B. List ALL detectors that use block_structure:
+    
+    For each detector file in backend/common/detection/detectors/:
+    - Check if it receives block_structure parameter
+    - Check if it uses block_structure in logic
+    - List the issue codes it generates
+    
+    Format:
+    | Detector File | Uses Structure? | Issue Codes |
+    |---------------|-----------------|-------------|
+
+3C. List SPECIFIC issues that depend on structure:
+
+    Search for issues that:
+    - Need to know which SECTION text is in
+    - Compare sections (e.g., Experience vs Education order)
+    - Check section-specific rules (Summary length, Job descriptions)
+    
+    Format:
+    | Issue Code | Why It Needs Structure |
+    |------------|------------------------|
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 4: UI "STRUCTURE" BUTTON
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+4A. Find the Structure button in the UI:
+    - File location (likely UnifiedResultsPage.tsx or similar)
+    - What should it show/do when clicked?
+
+4B. Is there an API endpoint for structure data?
+    - GET /api/cv-optimizer/structure/{scan_id}?
+    - Or is structure included in another endpoint?
+
+4C. What is the expected Structure View behavior?
+    - Show section breakdown?
+    - Show section order?
+    - Allow section editing?
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 5: DATABASE STORAGE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+5A. In cv_scan_results table:
+    - Is there a block_structure column?
+    - What JSON format is stored?
+    - Show an example of stored structure data
+
+5B. Query the most recent scan to show actual structure data:
+
+    SELECT block_structure 
+    FROM cv_scan_results 
+    ORDER BY created_at DESC 
+    LIMIT 1;
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+REPORT FORMAT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## STRUCTURE DETECTION REPORT
+
+### 1. FUNCTION OVERVIEW
+- Main function: [name]
+- File: [path]
+- Input: [what it receives]
+- Output: [what it returns]
+
+### 2. TIMING
+- When: [before/after extraction]
+- Input type: [raw file / text with markers / text without markers]
+- Call location: [file:line]
+
+### 3. STRUCTURE OUTPUT FORMAT
+```json
+{
+  // Show actual structure format
+}
+```
+
+### 4. ISSUES DEPENDENT ON STRUCTURE
+| Issue Code | Detector File | Why It Needs Structure |
+|------------|---------------|------------------------|
+
+### 5. ISSUES NOT DEPENDENT ON STRUCTURE
+| Issue Code | Detector File | Works Without Structure |
+|------------|---------------|------------------------|
+
+### 6. UI STATUS
+- Structure button location: [file]
+- Current state: [working / not working]
+- Expected behavior: [description]
+
+### 7. DATABASE
+- Column name: [block_structure or other]
+- Sample data: [JSON example]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ This is INVESTIGATION ONLY - do not make any changes.
