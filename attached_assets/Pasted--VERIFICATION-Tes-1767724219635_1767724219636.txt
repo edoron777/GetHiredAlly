@@ -1,0 +1,109 @@
+═══════════════════════════════════════════════════════════════════════════════
+✅ VERIFICATION: Test All Bug Fixes
+═══════════════════════════════════════════════════════════════════════════════
+Type: Verification & Testing
+Priority: CRITICAL - Must complete before deployment
+
+───────────────────────────────────────────────────────────────────────────────
+OBJECTIVE
+───────────────────────────────────────────────────────────────────────────────
+
+Verify all 6 bugs have been fixed correctly.
+
+───────────────────────────────────────────────────────────────────────────────
+TEST CHECKLIST
+───────────────────────────────────────────────────────────────────────────────
+
+BUG-01: Pipe Separator (False Positive)
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ TEST: Upload CV with "email | phone | location"                             │
+│ EXPECTED: NO "Inconsistent Contact Format" flag                             │
+│ RESULT: [ ] PASS  [ ] FAIL                                                  │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ TEST: Upload CV with "email | phone • location" (mixed)                     │
+│ EXPECTED: SHOULD flag "Inconsistent Contact Format"                         │
+│ RESULT: [ ] PASS  [ ] FAIL                                                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+BUG-02: Certification Count (False Negative)
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ TEST: Upload CV with 10+ certifications                                     │
+│ EXPECTED: "Too Many Certifications" issue detected                          │
+│ RESULT: [ ] PASS  [ ] FAIL                                                  │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ TEST: Check TipBox shows actual count                                       │
+│ EXPECTED: "Found X certifications (maximum: 8)"                             │
+│ RESULT: [ ] PASS  [ ] FAIL                                                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+BUG-03: CV Too Long TipBox
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ TEST: Trigger "CV Too Long" issue                                           │
+│ EXPECTED: TipBox shows prioritization guidance                              │
+│ RESULT: [ ] PASS  [ ] FAIL                                                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+BUG-04: "Supported" Verb (False Positive)
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ TEST: CV with "Supported Conditional Access policies"                       │
+│ EXPECTED: NOT flagged as weak verb                                          │
+│ RESULT: [ ] PASS  [ ] FAIL                                                  │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ TEST: CV with "Helped with the project"                                     │
+│ EXPECTED: SHOULD flag as weak verb                                          │
+│ RESULT: [ ] PASS  [ ] FAIL                                                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+BUG-05: LinkedIn URL Conversion
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ TEST: Open Document View for CV with LinkedIn URL                           │
+│ EXPECTED: URL visible and clickable (not just "LinkedIn" text)              │
+│ RESULT: [ ] PASS  [ ] FAIL                                                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+BUG-06: GitHub Severity
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ TEST: CV without GitHub profile                                             │
+│ EXPECTED: Issue shows as "consider" (yellow), not "important" (purple)      │
+│ RESULT: [ ] PASS  [ ] FAIL                                                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+───────────────────────────────────────────────────────────────────────────────
+REGRESSION TESTING
+───────────────────────────────────────────────────────────────────────────────
+
+Ensure existing functionality still works:
+
+[ ] CV upload works
+[ ] Analysis completes without errors
+[ ] All issue types still detect correctly
+[ ] TipBox displays for all issues
+[ ] Document View renders correctly
+[ ] Section Explorer works
+[ ] Auto-Fix functionality unchanged
+[ ] Mobile responsiveness maintained
+
+───────────────────────────────────────────────────────────────────────────────
+REPORT FORMAT
+───────────────────────────────────────────────────────────────────────────────
+
+Please report:
+
+## Test Results Summary
+| Bug | Test | Result |
+|-----|------|--------|
+| BUG-01 | Pipe not flagged | ✅/❌ |
+| BUG-01 | Mixed separators flagged | ✅/❌ |
+| BUG-02 | Certification count detected | ✅/❌ |
+| BUG-03 | Improved TipBox | ✅/❌ |
+| BUG-04 | "Supported" not flagged | ✅/❌ |
+| BUG-05 | LinkedIn URL visible | ✅/❌ |
+| BUG-06 | GitHub severity reduced | ✅/❌ |
+
+## Regression Tests
+[ ] All passed / [ ] Issues found: [describe]
+
+## Issues Found
+[List any new issues discovered during testing]
+
+═══════════════════════════════════════════════════════════════════════════════
