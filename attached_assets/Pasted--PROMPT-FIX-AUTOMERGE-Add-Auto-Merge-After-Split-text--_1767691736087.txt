@@ -1,0 +1,176 @@
+💻 PROMPT FIX-AUTOMERGE: Add Auto-Merge After Split
+text═══════════════════════════════════════════════════════════════════
+💻 FIX: Auto-Merge Adjacent Same-Type Sections After Split
+═══════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE ⚠️
+- Execute ONLY instructions below
+- Add helper function + update handleSplitSection
+- Do NOT change other functions
+
+───────────────────────────────────────────────────────────────────
+FILE TO EDIT
+───────────────────────────────────────────────────────────────────
+
+File: client/src/components/cv-optimizer/DocumentView/StructureOverlay.tsx
+
+───────────────────────────────────────────────────────────────────
+STEP 1: Add mergeAdjacentSameType Helper Function
+───────────────────────────────────────────────────────────────────
+
+Add this function AFTER extractContent function (around line 130):
+```tsx
+// Helper: Merge adjacent blocks of the same type
+const mergeAdjacentSameType = (blocks: CVBlock[]): CVBlock[] => {
+  console.log('\n🔗 mergeAdjacentSameType: Checking for adjacent same-type sections...');
+  
+  if (blocks.length < 2) {
+    console.log('  Only 1 block, nothing to merge');
+    return blocks;
+  }
+  
+  const result: CVBlock[] = [];
+  let i = 0;
+  
+  while (i < blocks.length) {
+    let current = { ...blocks[i] };
+    
+    // Check if next block is same type and contiguous
+    while (
+      i + 1 < blocks.length &&
+      blocks[i + 1].type.toUpperCase() === current.type.toUpperCase() &&
+      (blocks[i + 1].start_line === current.end_line + 1 ||
+       blocks[i + 1].start_line <= current.end_line + 2) // Allow 1 line gap
+    ) {
+      const next = blocks[i + 1];
+      console.log(`  ✨ MERGING: ${current.type} (${current.start_line}-${current.end_line}) + (${next.start_line}-${next.end_line})`);
+      
+      // Merge: extend current to include next
+      const mergedContent = extractContent(current.start_line, next.end_line);
+      
+      current = {
+        ...current,
+        end_line: next.end_line,
+        word_count: mergedContent.split(/\s+/).filter(Boolean).length,
+        content_preview: mergedContent.split('\n').slice(0, 2).join(' ').substring(0, 100),
+      };
+      
+      console.log(`  Result: ${current.type} (${current.start_line}-${current.end_line})`);
+      
+      i++; // Skip the merged block
+    }
+    
+    result.push(current);
+    i++;
+  }
+  
+  console.log(`  Before: ${blocks.length} blocks, After: ${result.length} blocks`);
+  return result;
+};
+```
+
+───────────────────────────────────────────────────────────────────
+STEP 2: Update handleSplitSection to Use Auto-Merge
+───────────────────────────────────────────────────────────────────
+
+Find handleSplitSection function.
+
+FIND this code block (near the end of the function, before the return):
+```tsx
+      // Defer to avoid setState during render
+      if (onStructureChange) {
+        console.log('\n📨 Calling onStructureChange (deferred)...');
+        setTimeout(() => {
+          onStructureChange(newBlocks);
+          console.log('✅ onStructureChange called');
+        }, 0);
+      } else {
+        console.warn('⚠️ WARNING: onStructureChange is not defined!');
+      }
+      
+      console.log('\n' + '='.repeat(60));
+      console.log('✂️ SPLIT SECTION COMPLETED');
+      console.log('='.repeat(60) + '\n');
+      
+      return newBlocks;
+```
+
+REPLACE WITH:
+```tsx
+      // AUTO-MERGE: Check for adjacent same-type sections and merge them
+      console.log('\n🔗 Checking for auto-merge...');
+      const mergedBlocks = mergeAdjacentSameType(newBlocks);
+      
+      console.log('\n📋 Final blocks after auto-merge:');
+      debugBlocks('mergedBlocks', mergedBlocks);
+      
+      // Defer to avoid setState during render
+      if (onStructureChange) {
+        console.log('\n📨 Calling onStructureChange (deferred)...');
+        setTimeout(() => {
+          onStructureChange(mergedBlocks);
+          console.log('✅ onStructureChange called');
+        }, 0);
+      } else {
+        console.warn('⚠️ WARNING: onStructureChange is not defined!');
+      }
+      
+      console.log('\n' + '='.repeat(60));
+      console.log('✂️ SPLIT SECTION COMPLETED (with auto-merge)');
+      console.log('='.repeat(60) + '\n');
+      
+      return mergedBlocks;
+```
+
+───────────────────────────────────────────────────────────────────
+WHAT THIS FIX DOES
+───────────────────────────────────────────────────────────────────
+
+BEFORE (buggy):
+1. User splits Summary at line 70, selects "Experience"
+2. Creates: Summary (5-69) + EXPERIENCE (70-85)
+3. Existing: experience (86-275)
+4. Result: 3 blocks, two EXPERIENCE sections NOT merged ❌
+
+AFTER (fixed):
+1. User splits Summary at line 70, selects "Experience"
+2. Creates: Summary (5-69) + EXPERIENCE (70-85)
+3. Existing: experience (86-275)
+4. Auto-merge detects: EXPERIENCE (70-85) + experience (86-275) are same type!
+5. Merges them: EXPERIENCE (70-275)
+6. Result: 2 blocks, single merged EXPERIENCE section ✅
+
+───────────────────────────────────────────────────────────────────
+EXPECTED CONSOLE OUTPUT
+───────────────────────────────────────────────────────────────────
+✂️ SPLIT SECTION (Add Section Divider)
+Split at line: 70
+New section type: experience
+📋 Blocks after split:
+Block 0: CONTACT (1-1)
+Block 1: SUMMARY (5-69)
+Block 2: EXPERIENCE (70-85)     ← New
+Block 3: EXPERIENCE (86-275)    ← Existing
+🔗 Checking for auto-merge...
+✨ MERGING: EXPERIENCE (70-85) + (86-275)
+Result: EXPERIENCE (70-275)
+📋 Final blocks after auto-merge:
+Block 0: CONTACT (1-1)
+Block 1: SUMMARY (5-69)
+Block 2: EXPERIENCE (70-275)    ← Merged!
+Block 3: CERTIFICATIONS (277-290)
+Block 4: EDUCATION (333-336)
+✂️ SPLIT SECTION COMPLETED (with auto-merge)
+
+───────────────────────────────────────────────────────────────────
+COMPLETION CHECKLIST
+───────────────────────────────────────────────────────────────────
+
+□ mergeAdjacentSameType function added
+□ handleSplitSection updated to call mergeAdjacentSameType
+□ Console shows "MERGING" when same-type sections are adjacent
+□ Final block count is reduced (adjacent same-types merged)
+□ No TypeScript errors
+□ Application compiles
+
+Type "FIX-AUTOMERGE COMPLETE" when done.

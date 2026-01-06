@@ -128,6 +128,54 @@ export const StructureOverlay: React.FC<StructureOverlayProps> = ({
     return content;
   };
 
+  // Helper: Merge adjacent blocks of the same type
+  const mergeAdjacentSameType = (blocks: CVBlock[]): CVBlock[] => {
+    console.log('\n🔗 mergeAdjacentSameType: Checking for adjacent same-type sections...');
+    
+    if (blocks.length < 2) {
+      console.log('  Only 1 block, nothing to merge');
+      return blocks;
+    }
+    
+    const result: CVBlock[] = [];
+    let i = 0;
+    
+    while (i < blocks.length) {
+      let current = { ...blocks[i] };
+      
+      // Check if next block is same type and contiguous
+      while (
+        i + 1 < blocks.length &&
+        blocks[i + 1].type.toUpperCase() === current.type.toUpperCase() &&
+        (blocks[i + 1].start_line === current.end_line + 1 ||
+         blocks[i + 1].start_line <= current.end_line + 2) // Allow 1 line gap
+      ) {
+        const next = blocks[i + 1];
+        console.log(`  ✨ MERGING: ${current.type} (${current.start_line}-${current.end_line}) + (${next.start_line}-${next.end_line})`);
+        
+        // Merge: extend current to include next
+        const mergedContent = extractContent(current.start_line, next.end_line);
+        
+        current = {
+          ...current,
+          end_line: next.end_line,
+          word_count: mergedContent.split(/\s+/).filter(Boolean).length,
+          content_preview: mergedContent.split('\n').slice(0, 2).join(' ').substring(0, 100),
+        };
+        
+        console.log(`  Result: ${current.type} (${current.start_line}-${current.end_line})`);
+        
+        i++; // Skip the merged block
+      }
+      
+      result.push(current);
+      i++;
+    }
+    
+    console.log(`  Before: ${blocks.length} blocks, After: ${result.length} blocks`);
+    return result;
+  };
+
   // Get block content as array of lines for rendering
   const getBlockContent = (block: CVBlock): string[] => {
     const startIdx = Math.max(0, block.start_line - 1);
@@ -372,11 +420,18 @@ export const StructureOverlay: React.FC<StructureOverlayProps> = ({
       console.log('\n📋 Blocks after split:');
       debugBlocks('newBlocks', newBlocks);
       
+      // AUTO-MERGE: Check for adjacent same-type sections and merge them
+      console.log('\n🔗 Checking for auto-merge...');
+      const mergedBlocks = mergeAdjacentSameType(newBlocks);
+      
+      console.log('\n📋 Final blocks after auto-merge:');
+      debugBlocks('mergedBlocks', mergedBlocks);
+      
       // Defer to avoid setState during render
       if (onStructureChange) {
         console.log('\n📨 Calling onStructureChange (deferred)...');
         setTimeout(() => {
-          onStructureChange(newBlocks);
+          onStructureChange(mergedBlocks);
           console.log('✅ onStructureChange called');
         }, 0);
       } else {
@@ -384,10 +439,10 @@ export const StructureOverlay: React.FC<StructureOverlayProps> = ({
       }
       
       console.log('\n' + '='.repeat(60));
-      console.log('✂️ SPLIT SECTION COMPLETED');
+      console.log('✂️ SPLIT SECTION COMPLETED (with auto-merge)');
       console.log('='.repeat(60) + '\n');
       
-      return newBlocks;
+      return mergedBlocks;
     });
     
     setSplitAtLine(null);
