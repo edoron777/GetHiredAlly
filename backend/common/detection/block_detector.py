@@ -31,24 +31,11 @@ STRUCTURE_MARKER_PATTERN = re.compile(r'^\[(H1|H2|BOLD|BULLET)\]\s*', re.MULTILI
 
 
 def strip_structure_markers(text: str) -> str:
-    """Convert structure markers to visible fallback characters for plain text display.
+    """Remove structure markers from text for user-facing output.
     
-    Converts markers to visible equivalents so formatting is preserved in plain text mode:
-    - [BULLET] -> "• " (bullet character)
-    - [BOLD]...[/BOLD] -> **...** (markdown bold)
-    - [H1], [H2] -> removed (text preserved)
+    Strips [H1], [H2], [BOLD], [BULLET] markers while preserving the text content.
     """
-    # Replace [BULLET] with visible bullet character
-    result = re.sub(r'^\[BULLET\]\s*', '• ', text, flags=re.MULTILINE)
-    # Remove [H1], [H2] markers (keep text)
-    result = re.sub(r'^\[(H1|H2)\]\s*', '', result, flags=re.MULTILINE)
-    # Replace line-start [BOLD] with nothing
-    result = re.sub(r'^\[BOLD\]\s*', '', result, flags=re.MULTILINE)
-    # Convert inline [BOLD]...[/BOLD] to markdown **...**
-    result = re.sub(r'\[BOLD\](.*?)\[/BOLD\]', r'**\1**', result)
-    # Clean up orphaned markers
-    result = result.replace('[BOLD]', '').replace('[/BOLD]', '')
-    return result
+    return STRUCTURE_MARKER_PATTERN.sub('', text)
 
 
 def extract_marker_info(text: str) -> List[Dict[str, Any]]:

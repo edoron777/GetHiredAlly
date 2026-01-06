@@ -5,23 +5,20 @@ from html import escape
 
 
 def _process_bold_markers(text: str) -> str:
-    """Convert [BOLD] markers and markdown **bold** to <strong> tags."""
-    result = text
+    """Convert [BOLD] markers to <strong> tags, closing at end of text if unclosed."""
+    if '[BOLD]' not in text:
+        return text
     
-    # Convert markdown **text** to <strong>text</strong>
-    if '**' in result:
-        result = re.sub(r'\*\*([^*]+)\*\*', r'<strong>\1</strong>', result)
+    if '[/BOLD]' in text:
+        return text.replace('[BOLD]', '<strong>').replace('[/BOLD]', '</strong>')
     
-    # Convert [BOLD]...[/BOLD] markers
-    if '[BOLD]' in result:
-        if '[/BOLD]' in result:
-            result = result.replace('[BOLD]', '<strong>').replace('[/BOLD]', '</strong>')
-        else:
-            result = result.replace('[BOLD]', '<strong>')
-            open_count = result.count('<strong>')
-            close_count = result.count('</strong>')
-            if open_count > close_count:
-                result += '</strong>' * (open_count - close_count)
+    result = text.replace('[BOLD]', '<strong>')
+    
+    open_count = result.count('<strong>')
+    close_count = result.count('</strong>')
+    
+    if open_count > close_count:
+        result += '</strong>' * (open_count - close_count)
     
     return result
 
