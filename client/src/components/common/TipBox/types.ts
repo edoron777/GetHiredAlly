@@ -30,6 +30,7 @@ export interface TipBoxSection {
   defaultValue?: string
   component?: React.ReactNode
   id?: string
+  requirements?: RequirementItem[]
 }
 
 export interface TipBoxButton {

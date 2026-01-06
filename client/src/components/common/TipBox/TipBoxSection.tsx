@@ -1,5 +1,5 @@
 import React from 'react'
-import type { TipBoxSection as SectionType, TipBoxColor } from './types'
+import type { TipBoxSection as SectionType, TipBoxColor, RequirementItem } from './types'
 
 interface Props {
   section: SectionType
@@ -12,7 +12,7 @@ export const TipBoxSection: React.FC<Props> = ({
   color,
   onInputChange 
 }) => {
-  const { type, label, content, placeholder, defaultValue, component, id } = section
+  const { type, label, content, placeholder, defaultValue, component, id, requirements } = section
 
   const renderLabel = () => {
     if (!label) return null
@@ -105,6 +105,27 @@ export const TipBoxSection: React.FC<Props> = ({
             <span className="tipbox-warning-icon">⚠</span>
             <span className="tipbox-warning-text">{content}</span>
           </div>
+        </div>
+      )
+
+    case 'requirements':
+      if (!requirements || requirements.length === 0) return null
+      const priorityIcons: Record<RequirementItem['priority'], string> = {
+        mandatory: '🔴',
+        recommended: '🟡',
+        optional: '🟢'
+      }
+      return (
+        <div className="tipbox-section tipbox-section-requirements">
+          {renderLabel()}
+          <ul className="tipbox-requirements-list">
+            {requirements.map((item, idx) => (
+              <li key={idx} className={`tipbox-requirement tipbox-requirement--${item.priority}`}>
+                <span className="tipbox-requirement__icon">{priorityIcons[item.priority]}</span>
+                <span className="tipbox-requirement__text">{item.text}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       )
 

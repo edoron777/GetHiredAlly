@@ -1,0 +1,222 @@
+═══════════════════════════════════════════════════════════════════════════════
+💻 REPLIT-3#8: CREATE GUIDE CONTENT BUILDER
+═══════════════════════════════════════════════════════════════════════════════
+
+OBJECTIVE:
+Create utility to fetch guide content from database and format for TipBox.
+
+CREATE NEW FILE:
+client/src/components/common/TipBox/guideContentBuilder.ts
+
+───────────────────────────────────────────────────────────────────────────────
+
+FILE CONTENT:
+```typescript
+/**
+ * Guide Content Builder
+ * 
+ * Fetches CV section guide content from Supabase and formats
+ * it for display in TipBox with mode="guide".
+ * 
+ * @module guideContentBuilder
+ * @version 1.0
+ */
+
+import { supabase } from '@/lib/supabase';
+import type { TipBoxSection, RequirementItem } from './tipbox-types';
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+export interface SectionGuideData {
+  section_key: string;
+  section_display_name: string;
+  section_icon: string;
+  about_section: string;
+  purpose_benefits: string;
+  best_practices: string[];
+  requirements: RequirementItem[];
+  example_good: string;
+  example_bad: string;
+  common_mistakes: string[];
+  position_guidance: string | null;
+  ats_tips: string | null;
+  is_mandatory_section: boolean;
+}
+
+export interface GuideContent {
+  title: string;
+  sections: TipBoxSection[];
+  isMandatory: boolean;
+}
+
+// ============================================================================
+// CACHE
+// ============================================================================
+
+// Cache guide data to avoid repeated API calls
+const guideCache = new Map<string, SectionGuideData>();
+let cacheLoaded = false;
+
+/**
+ * Load all section guides into cache (called once on first request)
+ */
+async function loadGuideCache(): Promise<void> {
+  if (cacheLoaded) return;
+  
+  const { data, error } = await supabase
+    .from('cv_section_guides')
+    .select('*')
+    .eq('is_active', true)
+    .order('display_order');
+  
+  if (error) {
+    console.error('Failed to load section guides:', error);
+    return;
+  }
+  
+  data?.forEach(guide => {
+    guideCache.set(guide.section_key, guide);
+  });
+  
+  cacheLoaded = true;
+}
+
+// ============================================================================
+// MAIN FUNCTION
+// ============================================================================
+
+/**
+ * Build guide content for a CV section
+ * 
+ * @param sectionKey - CV section key (CONTACT, SUMMARY, EXPERIENCE, etc.)
+ * @returns Formatted content for TipBox guide mode
+ */
+export async function buildGuideContent(sectionKey: string): Promise<GuideContent | null> {
+  // Ensure cache is loaded
+  await loadGuideCache();
+  
+  // Get guide data
+  const guide = guideCache.get(sectionKey);
+  if (!guide) {
+    console.warn(`No guide found for section: ${sectionKey}`);
+    return null;
+  }
+  
+  // Build TipBox sections
+  const sections: TipBoxSection[] = [
+    // 1. About This Section
+    {
+      type: 'text',
+      label: 'ABOUT THIS SECTION',
+      content: guide.about_section
+    },
+    
+    // 2. Purpose & Benefits
+    {
+      type: 'text',
+      label: 'PURPOSE & BENEFITS',
+      content: guide.purpose_benefits
+    },
+    
+    // 3. Best Practices (as bullet list)
+    {
+      type: 'instructions',
+      label: 'BEST PRACTICES',
+      content: guide.best_practices
+    },
+    
+    // 4. Requirements (with priority markers)
+    {
+      type: 'requirements',
+      label: 'REQUIREMENTS',
+      content: guide.requirements
+    },
+    
+    // 5. Good Example
+    {
+      type: 'example-correct',
+      label: 'GOOD EXAMPLE',
+      content: guide.example_good
+    },
+    
+    // 6. What to Avoid
+    {
+      type: 'warning',
+      label: 'COMMON MISTAKES TO AVOID',
+      content: guide.common_mistakes
+    },
+    
+    // 7. Bad Example
+    {
+      type: 'example-wrong',
+      label: 'POOR EXAMPLE',
+      content: guide.example_bad
+    }
+  ];
+  
+  // 8. Position Guidance (if available)
+  if (guide.position_guidance) {
+    sections.push({
+      type: 'text',
+      label: 'POSITION IN CV',
+      content: guide.position_guidance
+    });
+  }
+  
+  // 9. ATS Tips (if available)
+  if (guide.ats_tips) {
+    sections.push({
+      type: 'text',
+      label: '🤖 ATS OPTIMIZATION TIPS',
+      content: guide.ats_tips
+    });
+  }
+  
+  return {
+    title: `${guide.section_icon} ${guide.section_display_name}`,
+    sections,
+    isMandatory: guide.is_mandatory_section
+  };
+}
+
+/**
+ * Get list of all available section keys
+ */
+export async function getAllSectionKeys(): Promise<string[]> {
+  await loadGuideCache();
+  return Array.from(guideCache.keys());
+}
+
+/**
+ * Check if a section is mandatory
+ */
+export async function isSectionMandatory(sectionKey: string): Promise<boolean> {
+  await loadGuideCache();
+  return guideCache.get(sectionKey)?.is_mandatory_section ?? false;
+}
+
+/**
+ * Clear cache (for testing or refresh)
+ */
+export function clearGuideCache(): void {
+  guideCache.clear();
+  cacheLoaded = false;
+}
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+After creating file, confirm:
+- [ ] No TypeScript errors
+- [ ] File is in correct location
+- [ ] Imports are correct (check supabase path)
+
+ANTI-IMPROVISATION:
+- Do NOT add additional functionality
+- Do NOT create additional files
+- If supabase import path differs, adjust to match project pattern
+
+═══════════════════════════════════════════════════════════════════════════════
