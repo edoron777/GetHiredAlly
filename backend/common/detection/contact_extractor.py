@@ -80,7 +80,9 @@ PHOTO_INDICATORS = [
     re.compile(r'photo\s*:', re.IGNORECASE),
 ]
 
-CONTACT_SEPARATORS = ['|', '•', '/', '·', '–', '—']
+# Separators used in contact lines (pipe, bullet, etc.)
+# Note: '/' removed because it appears in URLs (linkedin.com/in/...) causing false positives
+CONTACT_SEPARATORS = ['|', '•', '·', '–', '—']
 
 INVALID_EMAIL_PATTERNS = [
     re.compile(r'^[^@]+$'),

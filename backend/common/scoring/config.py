@@ -109,8 +109,9 @@ STRONG_VERBS = [
 ]
 
 # Weak verbs list
+# Note: 'Supported' removed - it's valid in technical contexts like "Supported infrastructure"
 WEAK_VERBS = [
-    'Helped', 'Assisted', 'Supported', 'Worked on', 'Was responsible for',
+    'Helped', 'Assisted', 'Worked on', 'Was responsible for',
     'Participated in', 'Contributed to', 'Involved in', 'Handled',
     'Dealt with', 'Did', 'Made', 'Got', 'Tried to', 'Was part of'
 ]
