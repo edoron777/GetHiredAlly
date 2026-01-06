@@ -1,0 +1,108 @@
+═══════════════════════════════════════════════════════════════════════════════
+🔍 RFI-1#1: DEBUG GUIDE MODE - ICONS NOT SHOWING IN CV STRUCTURE
+═══════════════════════════════════════════════════════════════════════════════
+
+PROBLEM:
+Guide Mode button exists in toolbar, CV Structure shows section blocks,
+but NO 💡 icons appear on section headers when Guide Mode is clicked.
+
+───────────────────────────────────────────────────────────────────────────────
+
+INVESTIGATION TASKS:
+
+1. IN ResultsPage.tsx - Find and report:
+
+   a) Does isGuideModeEnabled state exist?
+      Search for: useState.*[Gg]uide
+      Show the line.
+   
+   b) Does handleGuideModeToggle function exist?
+      Search for: handleGuideModeToggle
+      Show the function.
+   
+   c) What does the Guide Mode button onClick do?
+      Find the button with "Guide Mode" text.
+      Show the onClick handler.
+   
+   d) Is isGuideModeEnabled passed to StructureOverlay?
+      Find: <StructureOverlay
+      Show ALL props passed to it.
+
+2. IN StructureOverlay.tsx - Find and report:
+
+   a) Props interface - what props are defined?
+      Find: interface.*Props or type.*Props
+      Show the complete interface.
+   
+   b) Props destructuring - what props are received?
+      Find: const StructureOverlay.*= ({
+      Show the destructured props.
+   
+   c) Is there ANY code for 💡 icon or guide icon?
+      Search for: guide, Guide, 💡, lightbulb, Lightbulb
+      Show what you find (or confirm nothing found).
+   
+   d) Section header JSX - show the header div
+      Find the div that renders section type (CONTACT, SUMMARY, etc.)
+      Show the complete JSX for section header.
+
+───────────────────────────────────────────────────────────────────────────────
+
+REPORT FORMAT:
+
+## ResultsPage.tsx Findings
+
+### 1a. isGuideModeEnabled state:
+[EXISTS / NOT FOUND]
+```typescript
+// paste line here
+```
+
+### 1b. handleGuideModeToggle function:
+[EXISTS / NOT FOUND]
+```typescript
+// paste function here
+```
+
+### 1c. Guide Mode button onClick:
+```typescript
+// paste button JSX here
+```
+
+### 1d. StructureOverlay props:
+```typescript
+// paste <StructureOverlay ... /> here
+```
+
+## StructureOverlay.tsx Findings
+
+### 2a. Props interface:
+```typescript
+// paste interface here
+```
+
+### 2b. Props destructuring:
+```typescript
+// paste destructuring here
+```
+
+### 2c. Guide icon code:
+[FOUND / NOT FOUND]
+// paste what you found
+
+### 2d. Section header JSX:
+```typescript
+// paste section header div here
+```
+
+## ROOT CAUSE ASSESSMENT:
+[ ] isGuideModeEnabled not passed to StructureOverlay
+[ ] StructureOverlay doesn't accept isGuideModeEnabled prop
+[ ] Guide icon JSX not added to section headers
+[ ] Other: _______________
+
+───────────────────────────────────────────────────────────────────────────────
+
+DO NOT make any changes yet. Report findings only.
+
+═══════════════════════════════════════════════════════════════════════════════
