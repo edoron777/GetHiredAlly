@@ -191,46 +191,9 @@ def detect_all_certification_issues(
         cv_block_structure: Optional pre-computed CV structure (for efficiency)
     
     DETERMINISTIC: Same text → Same issues (always)
-    """
-    if cv_block_structure and cv_block_structure.all_certifications:
-        cert_count = len(cv_block_structure.all_certifications)
-        issues = []
-        
-        if cert_count >= CERT_THRESHOLD_CRITICAL:
-            issues.append({
-                'issue_type': 'CONTENT_TOO_MANY_CERTIFICATIONS',
-                'current': f'{cert_count} certifications listed',
-                'match_text': f'{cert_count} certifications listed',
-                'suggestion': f'You have {cert_count} certifications listed, but the recommended maximum is {CERT_MAX_ALLOWED}. Consider featuring only the top {CERT_IDEAL_MAX} most relevant ones. Too many certifications dilutes impact and suggests lack of focus.',
-                'severity': 'important',
-                'can_auto_fix': False,
-                'is_highlightable': False,
-                'location': 'Certifications section',
-                'details': {
-                    'certification_count': cert_count,
-                    'threshold': CERT_THRESHOLD_CRITICAL,
-                    'max_allowed': CERT_MAX_ALLOWED,
-                    'recommended_max': CERT_IDEAL_MAX
-                }
-            })
-        elif cert_count >= CERT_THRESHOLD_WARNING:
-            issues.append({
-                'issue_type': 'CONTENT_TOO_MANY_CERTIFICATIONS',
-                'current': f'{cert_count} certifications listed',
-                'match_text': f'{cert_count} certifications listed',
-                'suggestion': f'You have {cert_count} certifications. The ideal range is 5-8. Consider focusing on the {CERT_IDEAL_MAX} most relevant.',
-                'severity': 'consider',
-                'can_auto_fix': False,
-                'is_highlightable': False,
-                'location': 'Certifications section',
-                'details': {
-                    'certification_count': cert_count,
-                    'threshold': CERT_THRESHOLD_WARNING,
-                    'max_allowed': CERT_MAX_ALLOWED,
-                    'recommended_max': CERT_IDEAL_MAX
-                }
-            })
-        
-        return issues
     
+    Note: Always uses text-based counting (count_certifications) as it's more
+    accurate than block-based extraction for counting purposes. Block-based
+    extraction may miss certifications that don't match specific patterns.
+    """
     return detect_certification_count_issues(text)

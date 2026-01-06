@@ -1,0 +1,110 @@
+PROMPT 3: Fix False Positives (BUG-01, BUG-04)
+═══════════════════════════════════════════════════════════════════════════════
+🔧 TASK: Fix False Positive Detections (BUG-01, BUG-04)
+═══════════════════════════════════════════════════════════════════════════════
+Version: ReplitPromptProtocol v2.5
+Type: Bug Fix - False Positives
+Priority: MEDIUM
+Risk Level: LOW
+
+───────────────────────────────────────────────────────────────────────────────
+BUG-01: PIPE SEPARATOR FALSE POSITIVE
+───────────────────────────────────────────────────────────────────────────────
+
+PROBLEM:
+User's CV uses pipe "|" as separator:
+"David Cohen CV | Email: dcohen@gmail.com | Phone: +972-50-1234567 | LinkedIn"
+
+System flags: "Inconsistent Contact Format"
+Reality: Pipe is a VALID ATS-safe separator per industry standards.
+
+ROOT CAUSE:
+Detection logic flags ANY separator usage as "inconsistent" instead of 
+checking if MULTIPLE DIFFERENT separators are mixed.
+
+FIX REQUIRED:
+Update CONTACT_INCONSISTENT_FORMAT detection to ONLY flag when:
+- Multiple DIFFERENT separator types are mixed in same line
+- Example of TRUE inconsistency: "email@test.com | 555-1234 • New York, NY"
+  (mixes pipe AND bullet)
+
+SHOULD FLAG: "email | phone • location" (mixed: pipe AND bullet)
+SHOULD NOT FLAG: "email | phone | location" (consistent: all pipes)
+SHOULD NOT FLAG: "email • phone • location" (consistent: all bullets)
+
+VALID SEPARATORS (do not flag if used consistently):
+- Pipe: |
+- Bullet: •
+- Comma: ,
+- Vertical line: │
+
+───────────────────────────────────────────────────────────────────────────────
+BUG-04: "SUPPORTED" VERB FALSE POSITIVE
+───────────────────────────────────────────────────────────────────────────────
+
+PROBLEM:
+User's CV text: "Supported Conditional Access policies aligned with zero trust"
+System flags: "Weak Action Verb" - "supported"
+
+Reality: In technical/IT context, "Supported" is a valid action verb meaning
+"provided support for" or "maintained support of" - it's not passive.
+
+FIX OPTIONS:
+
+OPTION A - Remove "supported" from weak verbs list:
+- Simply remove "supported" from the list of weak verbs
+- Pros: Simple fix
+- Cons: May miss actual weak usage like "supported the team"
+
+OPTION B - Add context awareness (RECOMMENDED):
+- Keep "supported" in list BUT check context
+- Flag: "Supported the team" (passive, no object)
+- Don't flag: "Supported [Technical System/Policy/Infrastructure]"
+- Pattern: "Supported" + technical noun = VALID
+
+OPTION C - Add to exceptions list:
+- Create exception patterns for technical contexts
+- "Supported * policies", "Supported * systems", etc.
+
+IMPLEMENTATION:
+Choose the option that best fits current code architecture.
+If context awareness is too complex, use Option A (remove from list).
+
+───────────────────────────────────────────────────────────────────────────────
+VERIFICATION STEPS
+───────────────────────────────────────────────────────────────────────────────
+
+After fixes:
+
+BUG-01 Test:
+1. Upload CV with: "email | phone | location" (all pipes)
+2. Should NOT flag "Inconsistent Contact Format"
+3. Upload CV with: "email | phone • location" (mixed)
+4. SHOULD flag "Inconsistent Contact Format"
+
+BUG-04 Test:
+1. Upload CV with: "Supported Conditional Access policies"
+2. Should NOT flag as weak verb
+3. Upload CV with: "Helped with the project"
+4. SHOULD flag as weak verb
+
+───────────────────────────────────────────────────────────────────────────────
+CONSTRAINTS
+───────────────────────────────────────────────────────────────────────────────
+
+⛔ DO NOT disable detection entirely - only refine logic
+⛔ DO NOT modify database issue definitions
+⛔ DO NOT affect other detection rules
+⛔ DO NOT add new issue types
+
+───────────────────────────────────────────────────────────────────────────────
+REPORT BACK
+───────────────────────────────────────────────────────────────────────────────
+
+After completing, report:
+1. Files modified for each bug
+2. Logic changes made
+3. Test results for both bugs
+4. Any edge cases discovered
+
+════════════════════════════
