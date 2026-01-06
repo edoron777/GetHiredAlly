@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { FileText, List, Copy, Check, ArrowLeft, Loader2, RefreshCw, Columns, GraduationCap, LayoutGrid } from 'lucide-react';
-import { classifyIssues, FloatingSummaryBadge } from '../../components/cv-optimizer/DocumentView';
+import { classifyIssues, FloatingSummaryBadge, StructureOverlay } from '../../components/cv-optimizer/DocumentView';
+import type { SectionType } from '../../components/cv-optimizer/DocumentView';
 import { DocumentEditor } from '../../components/common/DocumentEditor';
 import { TipBox } from '../../components/common/TipBox';
 import type { TipBoxButton } from '../../components/common/TipBox';
@@ -286,6 +287,16 @@ export default function ResultsPage() {
     } finally {
       setStructureLoading(false);
     }
+  };
+
+  const handleSectionTypeChange = (blockIndex: number, newType: SectionType) => {
+    if (!structureData) return;
+    setStructureData(prev => prev ? {
+      ...prev,
+      blocks: prev.blocks.map((block, idx) => 
+        idx === blockIndex ? { ...block, type: newType.toUpperCase() } : block
+      )
+    } : null);
   };
 
   // Initialize score from API response
@@ -1079,42 +1090,71 @@ export default function ResultsPage() {
           
           {activeTab === 'document' ? (
             <div data-tour="document-view">
-              <FloatingSummaryBadge 
-                issues={normalizedIssues.map(issue => ({
-                  issue_code: issue.issueType,
-                  display_name: issue.title,
-                  severity: issue.severity
-                }))}
-                onIssueClick={(issueCode) => {
-                  const issue = normalizedIssues.find(i => i.issueType === issueCode);
-                  if (issue) handleIssueClick(issue.id);
-                }}
-              />
-              <DocumentEditor
-                  content={cvContent?.fullText || ''}
-                  htmlContent={cvContent?.htmlContent}
-                  format="auto"
-                  markers={documentIssues.map(issue => ({
-                    id: issue.id?.toString() || '',
-                    matchText: issue.matchText || '',
-                    tag: issue.severity || 'consider'
-                  })).filter(m => m.matchText && m.matchText.length > 0)}
-                  onMarkerClick={(id) => handleIssueClick(id)}
-                  config={{
-                    maxWidth: 1600,
-                    fontSize: 20,
-                    padding: 60,
-                    showWordMargins: true,
-                    enableHighlighting: true
+              {!showStructureOverlay && (
+                <FloatingSummaryBadge 
+                  issues={normalizedIssues.map(issue => ({
+                    issue_code: issue.issueType,
+                    display_name: issue.title,
+                    severity: issue.severity
+                  }))}
+                  onIssueClick={(issueCode) => {
+                    const issue = normalizedIssues.find(i => i.issueType === issueCode);
+                    if (issue) handleIssueClick(issue.id);
                   }}
                 />
+              )}
+              
+              {showStructureOverlay && structureData ? (
+                <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+                  <div className="flex items-center gap-3 mb-4 pb-3 border-b">
+                    <LayoutGrid size={20} className="text-blue-600" />
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">CV Structure Analysis</h3>
+                      <p className="text-sm text-gray-500">
+                        {structureData.total_blocks} sections • {structureData.total_jobs} jobs • {structureData.total_bullets} bullets
+                      </p>
+                    </div>
+                  </div>
+                  <StructureOverlay
+                    blocks={structureData.blocks}
+                    cvContent={cvContent?.fullText || ''}
+                    onSectionTypeChange={handleSectionTypeChange}
+                  />
+                </div>
+              ) : showStructureOverlay && structureLoading ? (
+                <div className="bg-white rounded-lg shadow-sm p-12 border border-gray-200 flex flex-col items-center justify-center">
+                  <Loader2 className="w-8 h-8 animate-spin text-blue-600 mb-3" />
+                  <span className="text-gray-600">Analyzing CV structure...</span>
+                </div>
+              ) : (
+                <>
+                  <DocumentEditor
+                    content={cvContent?.fullText || ''}
+                    htmlContent={cvContent?.htmlContent}
+                    format="auto"
+                    markers={documentIssues.map(issue => ({
+                      id: issue.id?.toString() || '',
+                      matchText: issue.matchText || '',
+                      tag: issue.severity || 'consider'
+                    })).filter(m => m.matchText && m.matchText.length > 0)}
+                    onMarkerClick={(id) => handleIssueClick(id)}
+                    config={{
+                      maxWidth: 1600,
+                      fontSize: 20,
+                      padding: 60,
+                      showWordMargins: true,
+                      enableHighlighting: true
+                    }}
+                  />
 
-              {formatIssues.length > 0 && (
-                <QuickFormatPanel
-                  issues={formatIssues}
-                  onApplyFixes={handleApplyQuickFixes}
-                  isApplying={isApplyingFixes}
-                />
+                  {formatIssues.length > 0 && (
+                    <QuickFormatPanel
+                      issues={formatIssues}
+                      onApplyFixes={handleApplyQuickFixes}
+                      isApplying={isApplyingFixes}
+                    />
+                  )}
+                </>
               )}
             </div>
           ) : activeTab === 'list' ? (
@@ -1168,64 +1208,6 @@ export default function ResultsPage() {
         onCompareVersions={() => setActiveTab('sidebyside')}
       />
 
-      {/* CV Structure Overlay Panel */}
-      {showStructureOverlay && (
-        <div className="fixed right-4 top-24 z-40 w-80 bg-white rounded-lg shadow-xl border border-gray-200 max-h-[70vh] overflow-hidden">
-          <div className="flex items-center justify-between p-3 border-b bg-gray-50">
-            <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
-              <LayoutGrid size={16} className="text-blue-600" />
-              CV Structure
-            </h3>
-            <button
-              onClick={() => setShowStructureOverlay(false)}
-              className="text-gray-400 hover:text-gray-600 text-lg"
-            >
-              ✕
-            </button>
-          </div>
-          <div className="p-3 overflow-y-auto max-h-[60vh]">
-            {structureLoading ? (
-              <div className="flex items-center justify-center py-6">
-                <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
-                <span className="ml-2 text-sm text-gray-600">Loading...</span>
-              </div>
-            ) : structureData ? (
-              <div className="space-y-2">
-                <div className="text-xs text-gray-500 pb-2 border-b">
-                  {structureData.total_jobs} jobs • {structureData.total_bullets} bullets • {structureData.total_certifications} certs
-                </div>
-                {structureData.blocks.map((block, idx) => (
-                  <div key={idx} className="p-2 bg-gray-50 border rounded text-sm">
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium text-blue-600 uppercase text-xs">{block.type}</span>
-                      <span className="text-xs text-gray-400">L{block.start_line}-{block.end_line}</span>
-                    </div>
-                    {block.jobs && (
-                      <div className="text-xs text-gray-500 mt-1">
-                        {block.jobs.length} jobs, {block.jobs.reduce((sum, j) => sum + j.bullet_count, 0)} bullets
-                      </div>
-                    )}
-                    {block.certs && (
-                      <div className="text-xs text-gray-500 mt-1">
-                        {block.certs.length} certifications
-                      </div>
-                    )}
-                    {block.entries && (
-                      <div className="text-xs text-gray-500 mt-1">
-                        {block.entries.length} education entries
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-6 text-sm text-gray-500">
-                No structure data available
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
-import { SECTION_COLORS } from './StructureOverlay';
-import type { SectionType } from './StructureOverlay';
+import { SECTION_COLORS } from './structureTypes';
+import type { SectionType } from './structureTypes';
 
 const SECTION_OPTIONS: { value: SectionType; label: string; icon: string }[] = [
   { value: 'contact', label: 'Contact', icon: '📧' },

@@ -1,0 +1,105 @@
+IMPLEMENT: Integrate StructureOverlay with Document View
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONTEXT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+When user clicks "CV Structure" button:
+- Fetch structure data from API
+- Pass to DocumentView
+- Show StructureOverlay with colored sections
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 1: Fetch Structure Data
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+In the parent page (ResultsPage.tsx or UnifiedResultsPage.tsx):
+```tsx
+const [showStructureOverlay, setShowStructureOverlay] = useState(false);
+const [structureData, setStructureData] = useState(null);
+
+const handleStructureToggle = async () => {
+  if (!showStructureOverlay && !structureData) {
+    // Fetch structure data on first click
+    try {
+      const response = await fetch(
+        `/api/cv/dev/analyze-structure/${scanId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const data = await response.json();
+      setStructureData(data);
+    } catch (error) {
+      console.error('Failed to fetch structure:', error);
+    }
+  }
+  setShowStructureOverlay(!showStructureOverlay);
+};
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 2: Pass to DocumentView
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Add props to DocumentView/CVDocument component:
+```tsx
+<DocumentView
+  cvContent={cvContent}
+  issues={issues}
+  showStructureOverlay={showStructureOverlay}
+  structureBlocks={structureData?.blocks || []}
+  onSectionTypeChange={handleSectionTypeChange}
+/>
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 3: Conditional Rendering in CVDocument
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+In CVDocument.tsx, conditionally render either:
+- Normal view (with TextMarker)
+- Structure overlay view (with colored sections)
+```tsx
+{showStructureOverlay ? (
+  <StructureOverlay
+    blocks={structureBlocks}
+    cvContent={cvContent}
+    onSectionTypeChange={onSectionTypeChange}
+  />
+) : (
+  <TextMarker
+    content={cvContent}
+    markers={validMarkers}
+    config={markerConfig}
+  />
+)}
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 4: Handle Section Type Change (Optional)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+When user changes section type via dropdown:
+```tsx
+const handleSectionTypeChange = (blockIndex: number, newType: SectionType) => {
+  // Update local state
+  setStructureData(prev => ({
+    ...prev,
+    blocks: prev.blocks.map((block, idx) => 
+      idx === blockIndex ? { ...block, block_type: newType } : block
+    )
+  }));
+  
+  // Optional: Save to backend
+  // await fetch(`/api/cv/update-section-type`, { ... });
+};
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COMPLETION CHECKLIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] Structure data fetched on button click
+[ ] Data passed to DocumentView
+[ ] Conditional rendering based on showStructureOverlay
+[ ] Section type changes update local state
+[ ] Toggle works correctly (ON/OFF)
