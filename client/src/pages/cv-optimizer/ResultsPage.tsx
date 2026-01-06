@@ -158,7 +158,11 @@ export default function ResultsPage() {
   });
 
   const handleGuideModeToggle = () => {
-    setIsGuideModeEnabled(prev => !prev);
+    console.log('🔍 Guide Mode toggle clicked, current state:', isGuideModeEnabled);
+    setIsGuideModeEnabled(prev => {
+      console.log('🔍 Guide Mode new state:', !prev);
+      return !prev;
+    });
   };
 
   const handleGuideClick = async (sectionKey: string) => {

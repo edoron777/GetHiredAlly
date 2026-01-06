@@ -25,6 +25,8 @@ export const StructureOverlay: React.FC<StructureOverlayProps> = ({
   isGuideModeEnabled = false,
   onGuideClick
 }) => {
+  // Debug: Log isGuideModeEnabled prop
+  console.log('🔍 StructureOverlay isGuideModeEnabled:', isGuideModeEnabled);
   const [localBlocks, setLocalBlocks] = useState<CVBlock[]>([]);
   const [openDropdown, setOpenDropdown] = useState<number | null>(null);
   const [splitAtLine, setSplitAtLine] = useState<number | null>(null);
