@@ -158,16 +158,32 @@ export default function ResultsPage() {
   });
 
   const handleGuideModeToggle = () => {
-    console.log('🔍 Guide Mode toggle clicked, current state:', isGuideModeEnabled);
     const newState = !isGuideModeEnabled;
+    console.log('🔍 Guide Mode toggle:', { 
+      newState, 
+      hasStructureData: !!structureData,
+      structureLoading,
+      willFetch: newState && !structureData && !structureLoading
+    });
+    
     setIsGuideModeEnabled(newState);
-    console.log('🔍 Guide Mode new state:', newState);
     
     // Fetch structure data if enabling Guide Mode and not already loaded
     if (newState && !structureData && !structureLoading) {
+      console.log('🔍 Calling fetchStructure from Guide Mode toggle...');
       fetchStructure();
     }
   };
+  
+  // Debug: Monitor structureData changes
+  React.useEffect(() => {
+    console.log('🔍 structureData/isGuideModeEnabled changed:', {
+      hasStructureData: !!structureData,
+      blockCount: structureData?.blocks?.length,
+      isGuideModeEnabled,
+      showStructureOverlay
+    });
+  }, [structureData, isGuideModeEnabled, showStructureOverlay]);
 
   const handleGuideClick = async (sectionKey: string) => {
     const detectedSections = structureData?.blocks?.map(b => b.type.toUpperCase()) || [];
@@ -1256,6 +1272,12 @@ export default function ResultsPage() {
                   )}
                   
                   {/* Missing Sections Bar in Document View - visible when Guide Mode enabled */}
+                  {console.log('🔍 Document View MissingSectionsBar check:', {
+                    isGuideModeEnabled,
+                    hasStructureData: !!structureData,
+                    structureLoading,
+                    blockCount: structureData?.blocks?.length
+                  })}
                   {isGuideModeEnabled && structureLoading && (
                     <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mt-4 flex items-center gap-2">
                       <span className="animate-spin">⏳</span>
