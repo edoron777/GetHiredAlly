@@ -1,0 +1,84 @@
+═══════════════════════════════════════════════════════════════════════════════
+🔍 RFI: GUIDE MODE DOCUMENTATION - CODE STRUCTURE VERIFICATION
+═══════════════════════════════════════════════════════════════════════════════
+
+PURPOSE:
+Gathering accurate information for Guide Mode documentation.
+
+───────────────────────────────────────────────────────────────────────────────
+
+INVESTIGATION 1: guideContentBuilder.ts
+
+File: client/src/components/common/TipBox/guideContentBuilder.ts
+
+Show the COMPLETE file content including:
+- All imports
+- All interfaces/types
+- loadGuideCache function
+- buildGuideContent function
+- Any helper functions
+- Cache structure
+
+───────────────────────────────────────────────────────────────────────────────
+
+INVESTIGATION 2: TipBox Guide Mode Rendering
+
+File: client/src/components/common/TipBox/TipBox.tsx
+
+Show ONLY the sections that render when mode === 'guide':
+- Header rendering for guide mode
+- Status badge rendering
+- All section blocks (about, purpose, best practices, etc.)
+- Button rendering
+
+───────────────────────────────────────────────────────────────────────────────
+
+INVESTIGATION 3: TipBox Types for Guide Mode
+
+File: client/src/components/common/TipBox/types.ts
+
+Show:
+- TipBoxMode type
+- SectionStatus type
+- GuideContent interface (or similar)
+- RequirementItem interface
+- GUIDE_MODE_COLORS constant
+- Any guide-related types
+
+───────────────────────────────────────────────────────────────────────────────
+
+INVESTIGATION 4: MissingSectionsBar
+
+File: client/src/components/cv-optimizer/MissingSectionsBar/MissingSectionsBar.tsx
+
+Show:
+- ALL_SECTIONS constant (list of all section keys)
+- Props interface
+- Component logic for determining missing sections
+- Chip rendering
+
+───────────────────────────────────────────────────────────────────────────────
+
+REPORT FORMAT:
+
+## 1. guideContentBuilder.ts
+```typescript
+[FULL FILE CONTENT]
+```
+
+## 2. TipBox Guide Mode Rendering
+```typescript
+[RELEVANT JSX CODE]
+```
+
+## 3. TipBox Types
+```typescript
+[RELEVANT TYPES]
+```
+
+## 4. MissingSectionsBar
+```typescript
+[COMPONENT CODE]
+```
+
+═══════════════════════════════════════════════════════════════════════════════
