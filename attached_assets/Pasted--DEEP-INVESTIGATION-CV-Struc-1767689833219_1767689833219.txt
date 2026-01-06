@@ -1,0 +1,138 @@
+═══════════════════════════════════════════════════════════════════
+🔍 DEEP INVESTIGATION: CV Structure Merge Bug (Part 2)
+═══════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL: This is an INVESTIGATION, not a fix.
+Previous investigation showed StructureOverlay code is correct.
+Bug must be in parent component or state management.
+
+───────────────────────────────────────────────────────────────────
+INVESTIGATION QUESTIONS
+───────────────────────────────────────────────────────────────────
+
+PART A: PARENT COMPONENT ANALYSIS
+
+1. Where is StructureOverlay used/imported?
+   - Parent component file: __________
+   - Line where StructureOverlay is rendered: __________
+
+2. How is cvContent passed to StructureOverlay?
+   - Show the exact JSX where StructureOverlay is rendered
+   - What variable is passed as cvContent prop?
+   - Where does that variable come from?
+
+3. How is onStructureChange implemented in parent?
+   - Show the complete onStructureChange callback function
+   - Does it update any state?
+   - Does it call any API?
+   - Does it trigger any re-fetch?
+
+PART B: STATE MANAGEMENT
+
+4. What triggers StructureOverlay to show/hide?
+   - State variable name: __________
+   - Toggle function: __________
+
+5. When StructureOverlay opens:
+   - Is there an API call to fetch blocks?
+   - Does it use cached blocks or always fetch fresh?
+   - Show the code that fetches/provides blocks
+
+6. After merge, what happens to the blocks?
+   - Are they stored in local state only?
+   - Are they saved to backend/database?
+   - Is there any useEffect that might re-fetch and overwrite?
+
+PART C: BLOCK DATA SOURCE
+
+7. Where do the initial blocks come from?
+   - API endpoint: __________
+   - Response structure: __________
+
+8. Check the blocks received from API:
+   - Do they have correct start_line and end_line?
+   - For CITI section, what are the line numbers?
+   - For EXPERIENCE section, what are the line numbers?
+   - Are there gaps or overlaps?
+
+PART D: CONSOLE LOG ANALYSIS
+
+9. When user clicks "Merge with section above" on Citi:
+   
+   Run the merge and capture ALL console output:
+   
+   Copy everything between:
+   ========== MERGE UP START ==========
+   ... all logs ...
+   ========== MERGE UP END ==========
+   
+   Especially note:
+   - "Above lines: X - Y" → What are X and Y?
+   - "Current lines: X - Y" → What are X and Y?
+   - Are these ranges correct? Do they cover ALL content?
+
+10. After merge completes:
+    - How many blocks exist?
+    - What are the line ranges of each block?
+    - Is there a block with lines that were supposed to be merged?
+
+PART E: RE-RENDER CHECK
+
+11. After merge, does anything cause blocks to reset?
+    - Check for useEffect dependencies that might trigger
+    - Check if parent re-renders StructureOverlay
+    - Check if any API is called after merge
+
+───────────────────────────────────────────────────────────────────
+SPECIFIC TEST
+───────────────────────────────────────────────────────────────────
+
+Add this temporary logging to parent component:
+```tsx
+// In parent where onStructureChange is defined
+const handleStructureChange = (newBlocks) => {
+  console.log('=== PARENT: onStructureChange called ===');
+  console.log('New blocks count:', newBlocks.length);
+  newBlocks.forEach((block, i) => {
+    console.log(`Block ${i}: ${block.type} lines ${block.start_line}-${block.end_line}`);
+  });
+  // ... rest of existing code
+};
+```
+
+Then perform merge and check:
+1. Is onStructureChange called?
+2. Does it receive the correct merged blocks?
+3. Does something overwrite them after?
+
+───────────────────────────────────────────────────────────────────
+OUTPUT FORMAT
+───────────────────────────────────────────────────────────────────
+
+DEEP INVESTIGATION RESULTS:
+
+A1. Parent component: [file path]
+A2. StructureOverlay JSX:
+```tsx
+[paste the JSX here]
+```
+
+A3. onStructureChange implementation:
+```tsx
+[paste complete function here]
+```
+
+B4. Toggle state: [variable name]
+B5. Block fetching code:
+```tsx
+[paste code here]
+```
+B6. After merge storage: [local only / saved to backend / etc.]
+
+C7. API endpoint: [endpoint]
+C8. Block line numbers:
+- CITI: lines ___ to ___
+- EXPERIENCE: lines ___ to ___
+- Any gaps/overlaps? [YES/NO]
+
+D9. Console output during merge:
