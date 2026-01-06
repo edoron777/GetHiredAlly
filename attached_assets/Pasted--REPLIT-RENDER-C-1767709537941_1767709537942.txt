@@ -1,0 +1,115 @@
+═══════════════════════════════════════════════════════════════════════════════
+💻 REPLIT: RENDER CV STRUCTURE CONTENT LIKE DOCUMENT VIEW
+═══════════════════════════════════════════════════════════════════════════════
+
+OBJECTIVE:
+Make CV Structure View render section content beautifully, without showing
+raw markdown characters like ** and *.
+
+CURRENT PROBLEM:
+- Shows: **David Cohen CV** | Email: dcohen.demo@gmail.com
+- Should show: David Cohen CV | Email: dcohen.demo@gmail.com (with bold applied)
+
+───────────────────────────────────────────────────────────────────────────────
+
+APPROACH A: Use Same Method as Document View
+
+If Document View uses a markdown parser, apply it to Structure Overlay:
+```tsx
+import ReactMarkdown from 'react-markdown';
+// OR
+import { marked } from 'marked';
+
+// In section content rendering:
+<div className="section-content">
+  <ReactMarkdown>{sectionContent}</ReactMarkdown>
+</div>
+
+// OR with marked:
+<div 
+  className="section-content"
+  dangerouslySetInnerHTML={{ __html: marked(sectionContent) }}
+/>
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+APPROACH B: Simple Markdown Cleanup (If no parser available)
+
+Create a utility function to clean markdown:
+```tsx
+// utils/cleanMarkdown.ts
+export function cleanMarkdown(text: string): string {
+  return text
+    // Remove bold markers
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    // Remove italic markers
+    .replace(/\*([^*]+)\*/g, '$1')
+    // Remove underscores for bold/italic
+    .replace(/__([^_]+)__/g, '$1')
+    .replace(/_([^_]+)_/g, '$1')
+    // Remove heading markers
+    .replace(/^#+\s*/gm, '')
+    // Remove bullet points (keep text)
+    .replace(/^[-*]\s+/gm, '• ')
+    // Clean up extra whitespace
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+// In StructureOverlay.tsx:
+import { cleanMarkdown } from '@/utils/cleanMarkdown';
+
+// Where content is rendered:
+<div className="section-content">
+  {cleanMarkdown(sectionContent)}
+</div>
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+APPROACH C: Render HTML if Content is Already HTML
+
+If cvContent is already HTML (from Document View processing):
+```tsx
+<div 
+  className="section-content prose prose-sm"
+  dangerouslySetInnerHTML={{ __html: sectionHtml }}
+/>
+```
+
+Add Tailwind prose classes for nice typography.
+
+───────────────────────────────────────────────────────────────────────────────
+
+IMPLEMENTATION STEPS:
+
+1. Check RFI findings - which approach matches Document View?
+
+2. Apply the same approach to StructureOverlay.tsx
+
+3. Find where section content is rendered (likely inside the expandable area)
+
+4. Replace plain text rendering with formatted rendering
+
+5. Add appropriate CSS classes for typography
+
+───────────────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+After changes:
+- [ ] CV Structure View shows formatted text (no ** visible)
+- [ ] Bold text appears bold
+- [ ] Bullet points render properly
+- [ ] Line breaks preserved
+- [ ] No broken HTML/characters
+
+───────────────────────────────────────────────────────────────────────────────
+
+ANTI-IMPROVISATION:
+- Match Document View rendering exactly
+- Do NOT change the section header styling (keep colored bars)
+- Do NOT change the collapsible behavior
+- Only change the TEXT CONTENT rendering inside sections
+
+═══════════════════════════════════════════════════════════════════════════════
