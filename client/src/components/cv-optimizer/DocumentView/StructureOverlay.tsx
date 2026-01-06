@@ -27,19 +27,54 @@ export const StructureOverlay: React.FC<StructureOverlayProps> = ({
   
   const lines = React.useMemo(() => cvContent.split('\n'), [cvContent]);
 
+  // ============= DEBUG LOGGING =============
+  const debugBlocks = (label: string, blockList: CVBlock[]) => {
+    console.log(`\n📋 [${label}] Total blocks: ${blockList.length}`);
+    blockList.forEach((block, i) => {
+      console.log(`  Block ${i}: type=${block.type}, lines=${block.start_line}-${block.end_line}, wordCount=${block.word_count}`);
+    });
+  };
+
+  const debugContent = (label: string, content: string) => {
+    const contentLines = content.split('\n');
+    console.log(`\n📄 [${label}]`);
+    console.log(`  Total chars: ${content.length}`);
+    console.log(`  Total lines: ${contentLines.length}`);
+    console.log(`  First 3 lines:`);
+    contentLines.slice(0, 3).forEach((line, i) => {
+      console.log(`    ${i + 1}: "${line.substring(0, 80)}${line.length > 80 ? '...' : ''}"`);
+    });
+    if (contentLines.length > 3) {
+      console.log(`  Last 3 lines:`);
+      contentLines.slice(-3).forEach((line, i) => {
+        console.log(`    ${contentLines.length - 2 + i}: "${line.substring(0, 80)}${line.length > 80 ? '...' : ''}"`);
+      });
+    }
+  };
+  // =========================================
+
   // Debug: Verify cvContent is available
   useEffect(() => {
-    console.log('=== StructureOverlay Mounted ===');
-    console.log('cvContent length:', cvContent?.length || 0);
-    console.log('Total lines:', lines.length);
-    console.log('Blocks count:', blocks?.length || 0);
+    console.log('\n' + '='.repeat(60));
+    console.log('🚀 StructureOverlay MOUNTED');
+    console.log('='.repeat(60));
+    
+    console.log('\n📝 cvContent:');
+    console.log(`  Received: ${cvContent ? 'YES' : 'NO'}`);
+    console.log(`  Length: ${cvContent?.length || 0} chars`);
+    console.log(`  Lines: ${lines.length}`);
+    
+    if (cvContent && lines.length > 0) {
+      console.log(`  First line: "${lines[0]?.substring(0, 50)}..."`);
+      console.log(`  Last line: "${lines[lines.length - 1]?.substring(0, 50)}..."`);
+    }
     
     if (!cvContent || cvContent.length < 100) {
-      console.error('WARNING: cvContent is empty or too short!');
+      console.error('❌ WARNING: cvContent is empty or too short!');
     }
     
     if (blocks && blocks.length > 0) {
-      console.log('Blocks:', blocks.map(b => `${b.type} (${b.start_line}-${b.end_line})`).join(', '));
+      debugBlocks('Initial blocks from props', blocks);
       setLocalBlocks(blocks);
     }
   }, [blocks, cvContent, lines.length]);
@@ -47,26 +82,66 @@ export const StructureOverlay: React.FC<StructureOverlayProps> = ({
   // Helper: Extract content from cvContent using line numbers
   // ALWAYS use this instead of block.content (which may be empty)
   const extractContent = (startLine: number, endLine: number): string => {
+    console.log('\n' + '-'.repeat(40));
+    console.log(`📤 extractContent(${startLine}, ${endLine})`);
+    
     if (!cvContent) {
-      console.warn('cvContent is empty!');
+      console.error('  ❌ ERROR: cvContent is null/undefined!');
       return '';
     }
     
-    const startIdx = Math.max(0, startLine - 1); // Convert to 0-indexed
+    if (cvContent.length === 0) {
+      console.error('  ❌ ERROR: cvContent is empty string!');
+      return '';
+    }
+    
+    console.log(`  cvContent total lines: ${lines.length}`);
+    
+    // Convert to 0-indexed
+    const startIdx = Math.max(0, startLine - 1);
     const endIdx = Math.min(lines.length, endLine);
     
-    const extracted = lines.slice(startIdx, endIdx).join('\n');
+    console.log(`  Requested: lines ${startLine} to ${endLine}`);
+    console.log(`  Array indices: ${startIdx} to ${endIdx}`);
+    console.log(`  Lines to extract: ${endIdx - startIdx}`);
     
-    console.log(`extractContent(${startLine}-${endLine}): ${extracted.length} chars, ${endIdx - startIdx} lines`);
+    // Check if indices are valid
+    if (startIdx >= lines.length) {
+      console.error(`  ❌ ERROR: startIdx (${startIdx}) >= total lines (${lines.length})`);
+      return '';
+    }
     
-    return extracted;
+    if (endIdx <= startIdx) {
+      console.error(`  ❌ ERROR: endIdx (${endIdx}) <= startIdx (${startIdx})`);
+      return '';
+    }
+    
+    const extracted = lines.slice(startIdx, endIdx);
+    const content = extracted.join('\n');
+    
+    console.log(`  ✅ Extracted ${extracted.length} lines`);
+    console.log(`  Content length: ${content.length} chars`);
+    console.log(`  First line: "${extracted[0]?.substring(0, 60)}..."`);
+    console.log(`  Last line: "${extracted[extracted.length - 1]?.substring(0, 60)}..."`);
+    console.log('-'.repeat(40));
+    
+    return content;
   };
 
   // Get block content as array of lines for rendering
   const getBlockContent = (block: CVBlock): string[] => {
     const startIdx = Math.max(0, block.start_line - 1);
     const endIdx = Math.min(lines.length, block.end_line);
-    return lines.slice(startIdx, endIdx);
+    const content = lines.slice(startIdx, endIdx);
+    
+    // Debug: Log when content seems wrong
+    if (content.length < 5 && (block.end_line - block.start_line) > 5) {
+      console.warn(`⚠️ getBlockContent: Expected ${block.end_line - block.start_line} lines but got ${content.length}`);
+      console.warn(`  Block: ${block.type}, lines ${block.start_line}-${block.end_line}`);
+      console.warn(`  Total lines available: ${lines.length}`);
+    }
+    
+    return content;
   };
 
   const handleTypeChange = (index: number, newType: SectionType) => {
@@ -81,58 +156,95 @@ export const StructureOverlay: React.FC<StructureOverlayProps> = ({
   };
 
   const handleMergeUp = (index: number) => {
-    if (index === 0) return;
+    console.log('\n' + '='.repeat(60));
+    console.log('🔀 MERGE UP STARTED');
+    console.log('='.repeat(60));
     
-    console.log('========== MERGE UP START ==========');
-    console.log('Index to merge:', index);
-    console.log('Total lines in cvContent:', lines.length);
+    console.log(`\n📍 Merge index: ${index}`);
+    
+    if (index === 0) {
+      console.log('❌ Cannot merge first section - aborting');
+      return;
+    }
+    
+    // Log current state BEFORE merge
+    console.log('\n📋 STATE BEFORE MERGE:');
+    debugBlocks('localBlocks before', localBlocks);
+    
+    const currentBlock = localBlocks[index];
+    const aboveBlock = localBlocks[index - 1];
+    
+    console.log('\n🎯 BLOCKS TO MERGE:');
+    console.log('Above block (will absorb):');
+    console.log(`  Type: ${aboveBlock.type}`);
+    console.log(`  Lines: ${aboveBlock.start_line} - ${aboveBlock.end_line}`);
+    console.log(`  Word count: ${aboveBlock.word_count}`);
+    
+    console.log('Current block (will be absorbed):');
+    console.log(`  Type: ${currentBlock.type}`);
+    console.log(`  Lines: ${currentBlock.start_line} - ${currentBlock.end_line}`);
+    console.log(`  Word count: ${currentBlock.word_count}`);
+    
+    // Extract content with logging
+    console.log('\n📤 EXTRACTING CONTENT:');
+    const aboveContent = extractContent(aboveBlock.start_line, aboveBlock.end_line);
+    const currentContent = extractContent(currentBlock.start_line, currentBlock.end_line);
+    
+    console.log('\n📊 CONTENT SUMMARY:');
+    console.log(`  Above content: ${aboveContent.length} chars, ${aboveContent.split('\n').length} lines`);
+    console.log(`  Current content: ${currentContent.length} chars, ${currentContent.split('\n').length} lines`);
+    
+    // Create merged content
+    const mergedContent = aboveContent + '\n' + currentContent;
+    console.log(`  Merged content: ${mergedContent.length} chars, ${mergedContent.split('\n').length} lines`);
+    
+    // Verify merge math
+    const expectedLength = aboveContent.length + 1 + currentContent.length;
+    console.log(`  Expected length: ${expectedLength}, Actual: ${mergedContent.length}`);
+    if (mergedContent.length !== expectedLength) {
+      console.warn('  ⚠️ WARNING: Content length mismatch!');
+    }
     
     setLocalBlocks(prev => {
+      console.log('\n🔄 setLocalBlocks callback executing...');
+      
       const newBlocks = [...prev];
-      const currentBlock = { ...newBlocks[index] };
-      const aboveBlock = { ...newBlocks[index - 1] };
-      
-      console.log('--- ABOVE SECTION (merge target) ---');
-      console.log('Type:', aboveBlock.type);
-      console.log('Lines:', aboveBlock.start_line, '-', aboveBlock.end_line);
-      console.log('Line count:', aboveBlock.end_line - aboveBlock.start_line + 1);
-      
-      console.log('--- CURRENT SECTION (to be merged) ---');
-      console.log('Type:', currentBlock.type);
-      console.log('Lines:', currentBlock.start_line, '-', currentBlock.end_line);
-      console.log('Line count:', currentBlock.end_line - currentBlock.start_line + 1);
-      
-      const mergedStartLine = aboveBlock.start_line;
-      const mergedEndLine = currentBlock.end_line;
-      
-      // CRITICAL: Extract content from cvContent using line numbers
-      const aboveContent = extractContent(aboveBlock.start_line, aboveBlock.end_line);
-      const currentContent = extractContent(currentBlock.start_line, currentBlock.end_line);
-      const mergedContent = aboveContent + '\n' + currentContent;
       const mergedWordCount = mergedContent.split(/\s+/).filter(Boolean).length;
       
-      console.log('--- MERGED RESULT ---');
-      console.log('Lines:', mergedStartLine, '-', mergedEndLine);
-      console.log('Above content length:', aboveContent.length);
-      console.log('Current content length:', currentContent.length);
-      console.log('Merged content length:', mergedContent.length);
-      console.log('Word count:', mergedWordCount);
-      
+      // Create merged block
       const merged: CVBlock = {
         ...aboveBlock,
-        start_line: mergedStartLine,
-        end_line: mergedEndLine,
+        start_line: aboveBlock.start_line,
+        end_line: currentBlock.end_line,
         content_preview: mergedContent.split('\n').slice(0, 2).join(' ').substring(0, 100),
         word_count: mergedWordCount,
       };
       
+      console.log('\n✨ MERGED BLOCK CREATED:');
+      console.log(`  Type: ${merged.type}`);
+      console.log(`  Lines: ${merged.start_line} - ${merged.end_line}`);
+      console.log(`  Word count: ${merged.word_count}`);
+      
+      // Replace and remove
       newBlocks[index - 1] = merged;
       newBlocks.splice(index, 1);
       
-      console.log('New block count:', newBlocks.length);
-      console.log('========== MERGE UP END ==========');
+      console.log('\n📋 STATE AFTER MERGE:');
+      debugBlocks('newBlocks after', newBlocks);
       
-      onStructureChange?.(newBlocks);
+      // Call parent callback
+      if (onStructureChange) {
+        console.log('\n📨 Calling onStructureChange...');
+        onStructureChange(newBlocks);
+        console.log('✅ onStructureChange called');
+      } else {
+        console.warn('⚠️ WARNING: onStructureChange is not defined!');
+      }
+      
+      console.log('\n' + '='.repeat(60));
+      console.log('🔀 MERGE UP COMPLETED');
+      console.log('='.repeat(60) + '\n');
+      
       return newBlocks;
     });
     
