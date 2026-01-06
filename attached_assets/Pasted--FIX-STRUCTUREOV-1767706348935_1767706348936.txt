@@ -1,0 +1,109 @@
+═══════════════════════════════════════════════════════════════════════════════
+💻 FIX: STRUCTUREOVERLAY NOT RE-RENDERING ON GUIDE MODE TOGGLE
+═══════════════════════════════════════════════════════════════════════════════
+
+PROBLEM:
+StructureOverlay receives isGuideModeEnabled prop but doesn't re-render 
+when the prop changes. The 💡 icons never appear because the component 
+thinks isGuideModeEnabled is always false.
+
+ROOT CAUSE:
+The console log only fires once on mount, meaning React isn't triggering
+a re-render when the parent's isGuideModeEnabled state changes.
+
+───────────────────────────────────────────────────────────────────────────────
+
+INVESTIGATION FIRST:
+
+Check if StructureOverlay uses React.memo:
+
+1. Look at the export statement at bottom of StructureOverlay.tsx
+   Is it: export default React.memo(StructureOverlay) ?
+
+2. Look at the component definition
+   Is it: const StructureOverlay = React.memo(({ ... }) => { ... }) ?
+
+───────────────────────────────────────────────────────────────────────────────
+
+FIX OPTIONS:
+
+OPTION A: If React.memo is used
+
+Add isGuideModeEnabled to the comparison function OR remove React.memo:
+```typescript
+// Remove memo wrapper
+export default StructureOverlay;
+
+// OR add comparison
+export default React.memo(StructureOverlay, (prevProps, nextProps) => {
+  return (
+    prevProps.blocks === nextProps.blocks &&
+    prevProps.cvContent === nextProps.cvContent &&
+    prevProps.isGuideModeEnabled === nextProps.isGuideModeEnabled
+  );
+});
+```
+
+OPTION B: If NOT using React.memo (more likely issue)
+
+The problem might be that StructureOverlay has internal state that shadows the prop.
+
+Check if there's something like:
+```typescript
+const [localGuideModeEnabled, setLocalGuideModeEnabled] = useState(isGuideModeEnabled);
+```
+
+If found, either:
+1. Remove the local state and use prop directly, OR
+2. Add useEffect to sync:
+```typescript
+useEffect(() => {
+  setLocalGuideModeEnabled(isGuideModeEnabled);
+}, [isGuideModeEnabled]);
+```
+
+OPTION C: Force re-render with key prop
+
+In ResultsPage.tsx, add a key to StructureOverlay:
+```tsx
+<StructureOverlay
+  key={`structure-${isGuideModeEnabled}`}  // ADD THIS
+  blocks={structureData.blocks}
+  cvContent={cvContent?.fullText || ''}
+  onSectionTypeChange={handleSectionTypeChange}
+  onStructureChange={handleStructureChange}
+  isGuideModeEnabled={isGuideModeEnabled}
+  onGuideClick={handleGuideClick}
+/>
+```
+
+This forces React to recreate the component when isGuideModeEnabled changes.
+⚠️ Note: This is a workaround, not ideal for performance, but will work.
+
+───────────────────────────────────────────────────────────────────────────────
+
+DEBUGGING:
+
+Add this useEffect to StructureOverlay.tsx to verify prop changes:
+```typescript
+useEffect(() => {
+  console.log('🔍 StructureOverlay isGuideModeEnabled CHANGED:', isGuideModeEnabled);
+}, [isGuideModeEnabled]);
+```
+
+After adding, click Guide Mode toggle and check console:
+- If it logs → prop IS changing, rendering issue elsewhere
+- If it doesn't log → prop NOT changing, parent issue
+
+───────────────────────────────────────────────────────────────────────────────
+
+RECOMMENDED FIX ORDER:
+
+1. First: Add the useEffect debug log
+2. Check console when toggling Guide Mode
+3. If prop changes are detected → look for local state shadowing
+4. If prop changes NOT detected → use Option C (key prop) as quick fix
+
+Report what you find.
+
+═══════════════════════════════════════════════════════════════════════════════

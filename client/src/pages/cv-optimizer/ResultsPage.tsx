@@ -1199,6 +1199,7 @@ export default function ResultsPage() {
                     </div>
                   </div>
                   <StructureOverlay
+                    key={`structure-guide-${isGuideModeEnabled}`}
                     blocks={structureData.blocks}
                     cvContent={cvContent?.fullText || ''}
                     onSectionTypeChange={handleSectionTypeChange}
