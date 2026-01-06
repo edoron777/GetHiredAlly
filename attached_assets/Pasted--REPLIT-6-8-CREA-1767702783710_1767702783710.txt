@@ -1,0 +1,148 @@
+═══════════════════════════════════════════════════════════════════════════════
+💻 REPLIT-6#8: CREATE MISSING SECTIONS BAR
+═══════════════════════════════════════════════════════════════════════════════
+
+OBJECTIVE:
+Create a bar showing CV sections not found in the user's CV, with clickable chips.
+
+TARGET LOCATION:
+Add below CV content area, visible only when Guide Mode is enabled.
+
+CREATE NEW COMPONENT:
+client/src/components/cv-optimizer/MissingSectionsBar/MissingSectionsBar.tsx
+
+───────────────────────────────────────────────────────────────────────────────
+
+STEP 1: Create folder and component file
+
+Create folder: client/src/components/cv-optimizer/MissingSectionsBar/
+
+COMPONENT CODE (MissingSectionsBar.tsx):
+```tsx
+/**
+ * Missing Sections Bar
+ * 
+ * Shows CV sections not detected in user's CV.
+ * Each chip is clickable to open guide information.
+ * Only visible when Guide Mode is enabled.
+ */
+
+import React from 'react';
+import { Lightbulb, BookOpen } from 'lucide-react';
+
+// All possible CV sections (must match backend detection types)
+const ALL_SECTIONS = [
+  'CONTACT',
+  'HEADLINE', 
+  'SUMMARY',
+  'EXPERIENCE',
+  'SKILLS',
+  'EDUCATION',
+  'CERTIFICATIONS',
+  'PROJECTS',
+  'LANGUAGES'
+];
+
+// Section display names for UI
+const SECTION_NAMES: Record<string, string> = {
+  CONTACT: 'Contact Info',
+  HEADLINE: 'Headline',
+  SUMMARY: 'Summary',
+  EXPERIENCE: 'Experience',
+  SKILLS: 'Skills',
+  EDUCATION: 'Education',
+  CERTIFICATIONS: 'Certifications',
+  PROJECTS: 'Projects',
+  LANGUAGES: 'Languages'
+};
+
+interface MissingSectionsBarProps {
+  detectedSections: string[];  // Array of section types found in CV
+  onSectionClick: (sectionKey: string) => void;
+  isVisible: boolean;
+}
+
+export const MissingSectionsBar: React.FC<MissingSectionsBarProps> = ({
+  detectedSections,
+  onSectionClick,
+  isVisible
+}) => {
+  if (!isVisible) return null;
+  
+  // Find missing sections
+  const missingSections = ALL_SECTIONS.filter(
+    section => !detectedSections.includes(section)
+  );
+  
+  // Don't show bar if all sections present
+  if (missingSections.length === 0) return null;
+  
+  return (
+    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mt-4">
+      <div className="flex items-center gap-2 mb-3">
+        <BookOpen size={16} className="text-amber-700" />
+        <span className="text-sm font-medium text-amber-800">
+          Sections Not Found in Your CV
+        </span>
+        <span className="text-xs text-amber-600 ml-2">
+          (Click to learn more)
+        </span>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {missingSections.map(section => (
+          <button
+            key={section}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-full text-sm text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-colors"
+            onClick={() => onSectionClick(section)}
+            title={`Learn about ${SECTION_NAMES[section]} section`}
+          >
+            <Lightbulb size={14} className="text-amber-500" />
+            <span>{SECTION_NAMES[section]}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default MissingSectionsBar;
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+STEP 2: Create index.ts for clean exports
+
+Create file: client/src/components/cv-optimizer/MissingSectionsBar/index.ts
+```typescript
+export { MissingSectionsBar } from './MissingSectionsBar';
+export default MissingSectionsBar;
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+STEP 3: Add import to ResultsPage.tsx
+
+Add with other imports at top:
+```typescript
+import { MissingSectionsBar } from '@/components/cv-optimizer/MissingSectionsBar';
+```
+
+The MissingSectionsBar render was added in REPLIT-7#8.
+
+───────────────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+After changes, confirm:
+- [ ] Component file created in correct location
+- [ ] No TypeScript errors
+- [ ] Bar only visible when Guide Mode enabled
+- [ ] Bar shows correct missing sections
+- [ ] Bar hidden when all sections present
+- [ ] Chips are clickable
+
+ANTI-IMPROVISATION:
+- Use exact section keys as specified (must match backend)
+- Use Tailwind classes that match existing design system
+- Do NOT add animation effects beyond hover
+
+═══════════════════════════════════════════════════════════════════════════════

@@ -13,13 +13,17 @@ interface StructureOverlayProps {
   cvContent: string;
   onSectionTypeChange?: (blockIndex: number, newType: SectionType) => void;
   onStructureChange?: (newBlocks: CVBlock[]) => void;
+  isGuideModeEnabled?: boolean;
+  onGuideClick?: (sectionKey: string) => void;
 }
 
 export const StructureOverlay: React.FC<StructureOverlayProps> = ({
   blocks,
   cvContent,
   onSectionTypeChange,
-  onStructureChange
+  onStructureChange,
+  isGuideModeEnabled = false,
+  onGuideClick
 }) => {
   const [localBlocks, setLocalBlocks] = useState<CVBlock[]>([]);
   const [openDropdown, setOpenDropdown] = useState<number | null>(null);
@@ -489,10 +493,37 @@ export const StructureOverlay: React.FC<StructureOverlayProps> = ({
                 />
               </div>
               
-              <span className="text-white/80 text-xs">
-                Lines {block.start_line} - {block.end_line}
-                {block.word_count && ` · ${block.word_count}w`}
-              </span>
+              <div className="flex items-center gap-3">
+                <span className="text-white/80 text-xs">
+                  Lines {block.start_line} - {block.end_line}
+                  {block.word_count && ` · ${block.word_count}w`}
+                </span>
+                
+                {isGuideModeEnabled && (
+                  <button
+                    className="guide-icon-button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onGuideClick?.(block.type);
+                    }}
+                    title={`Learn about ${displayLabel} section`}
+                    style={{
+                      background: 'rgba(255,255,255,0.2)',
+                      border: 'none',
+                      borderRadius: '4px',
+                      padding: '4px 8px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      transition: 'background 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.3)'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
+                  >
+                    <span style={{ fontSize: '14px' }}>💡</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             {isDropdownOpen && (
