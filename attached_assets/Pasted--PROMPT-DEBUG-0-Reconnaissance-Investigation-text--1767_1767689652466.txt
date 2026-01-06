@@ -1,0 +1,110 @@
+🔍 PROMPT DEBUG-0: Reconnaissance / Investigation
+text═══════════════════════════════════════════════════════════════════
+🔍 INVESTIGATION: CV Structure Merge Function Bug
+═══════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL: This is an INVESTIGATION, not a fix.
+Do NOT change any code until investigation is complete.
+
+───────────────────────────────────────────────────────────────────
+PROBLEM DESCRIPTION
+───────────────────────────────────────────────────────────────────
+
+When user clicks "Merge with section above" in CV Structure overlay:
+- EXPECTED: ALL content of current section (70+ lines) merges into above section
+- ACTUAL: Only 2-3 lines merge, rest is LOST or assigned to wrong section
+
+This is a SYSTEMIC bug affecting ALL CVs, not a specific CV.
+
+───────────────────────────────────────────────────────────────────
+INVESTIGATION QUESTIONS
+───────────────────────────────────────────────────────────────────
+
+PART A: FILE LOCATIONS
+
+1. Where is StructureOverlay component located?
+   - File path: __________
+   - Total lines in file: __________
+
+2. Where is handleMergeUp function defined?
+   - File: __________
+   - Line numbers: __________
+
+3. Where is handleMergeDown function defined?
+   - File: __________
+   - Line numbers: __________
+
+PART B: DATA FLOW ANALYSIS
+
+4. How does StructureOverlay receive CV content?
+   - Props received: __________
+   - Is cvContent passed as prop? YES / NO
+   - If YES, what is the prop name? __________
+
+5. What is the structure of a "block" object?
+   - Show the interface/type definition
+   - Does block have a "content" field? YES / NO
+   - Is block.content populated or empty? __________
+
+6. How is content extracted for display in each section?
+   - Show the exact code that renders section content
+   - Does it use block.content or cvContent + line numbers?
+
+PART C: MERGE FUNCTION ANALYSIS
+
+7. Show the COMPLETE handleMergeUp function code (copy entire function)
+
+8. In handleMergeUp, answer:
+   - How is "above section" content obtained? __________
+   - How is "current section" content obtained? __________
+   - Does it use block.content or extract from cvContent?
+   - Show the exact line(s) that get the content
+
+9. Show the COMPLETE handleMergeDown function code (copy entire function)
+
+PART D: SUSPECTED ROOT CAUSE
+
+10. Based on code review, is the bug caused by:
+    [ ] block.content is empty/partial
+    [ ] cvContent is not passed to component
+    [ ] Line number calculation is wrong
+    [ ] Content extraction logic is wrong
+    [ ] Other: __________
+
+───────────────────────────────────────────────────────────────────
+OUTPUT FORMAT
+───────────────────────────────────────────────────────────────────
+
+Provide answers in this format:
+
+INVESTIGATION RESULTS:
+
+A1. StructureOverlay location: [path]
+A2. handleMergeUp: [file:lines]
+A3. handleMergeDown: [file:lines]
+
+B4. cvContent prop: [YES/NO] - prop name: [name]
+B5. Block interface:
+[paste interface here]
+
+B6. Content rendering code:
+[paste code here]
+
+C7. handleMergeUp function:
+[paste complete function here]
+
+C8. Content extraction in merge:
+- Above content: [how obtained]
+- Current content: [how obtained]
+
+C9. handleMergeDown function:
+[paste complete function here]
+
+D10. Suspected root cause: [answer]
+
+───────────────────────────────────────────────────────────────────
+
+⚠️ DO NOT FIX ANYTHING YET
+Just gather information and report back.
+
+Type "INVESTIGATION COMPLETE" when done.
