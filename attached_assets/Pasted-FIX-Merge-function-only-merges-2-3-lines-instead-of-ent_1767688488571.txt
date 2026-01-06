@@ -1,0 +1,267 @@
+FIX: Merge function only merges 2-3 lines instead of entire section
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PROBLEM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+When user clicks "Merge with section above":
+- EXPECTED: ALL content of current section merges into above section
+- ACTUAL: Only 2-3 lines merge, rest is LOST
+
+Example:
+- Citi section has lines 77-150 (73 lines of content)
+- After merge, only 2-3 lines appear in Experience section
+- The other 70 lines are LOST
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DEBUG STEP 1: Check What Data We Have
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+First, add extensive logging to understand what's happening.
+
+In StructureOverlay.tsx, find the handleMergeUp function and ADD these logs:
+```tsx
+const handleMergeUp = (index: number) => {
+  if (index === 0) return;
+  
+  // === DEBUG: Log everything ===
+  console.log('========== MERGE UP DEBUG ==========');
+  console.log('Index to merge:', index);
+  console.log('Total blocks:', localBlocks.length);
+  
+  const current = localBlocks[index];
+  const above = localBlocks[index - 1];
+  
+  console.log('--- CURRENT SECTION (to be merged) ---');
+  console.log('Type:', current.block_type);
+  console.log('Lines:', current.start_line, '-', current.end_line);
+  console.log('Content length:', current.content?.length || 0);
+  console.log('Content preview:', current.content?.substring(0, 200) || 'NO CONTENT');
+  console.log('Full content:', current.content);
+  
+  console.log('--- ABOVE SECTION (merge target) ---');
+  console.log('Type:', above.block_type);
+  console.log('Lines:', above.start_line, '-', above.end_line);
+  console.log('Content length:', above.content?.length || 0);
+  
+  console.log('--- CV CONTENT ---');
+  console.log('Total cvContent length:', cvContent?.length || 0);
+  const lines = cvContent?.split('\n') || [];
+  console.log('Total lines in cvContent:', lines.length);
+  
+  // Extract content using line numbers
+  const startIdx = Math.max(0, current.start_line - 1);
+  const endIdx = current.end_line;
+  console.log('Extracting lines:', startIdx, 'to', endIdx);
+  const extractedLines = lines.slice(startIdx, endIdx);
+  console.log('Extracted line count:', extractedLines.length);
+  console.log('Extracted content:', extractedLines.join('\n').substring(0, 500));
+  
+  console.log('=====================================');
+  
+  // ... rest of merge logic
+};
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIX STEP 2: Rewrite getBlockContent Function
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The problem is likely that block.content is empty or incomplete.
+Always extract from cvContent using line numbers:
+```tsx
+// ALWAYS extract content from cvContent using line numbers
+// Never trust block.content - it may be empty or partial
+const getBlockContent = (block: CVBlock): string => {
+  // Split cvContent into lines
+  const lines = cvContent.split('\n');
+  
+  // Line numbers are 1-indexed, array is 0-indexed
+  const startIdx = Math.max(0, block.start_line - 1);
+  const endIdx = Math.min(lines.length, block.end_line);
+  
+  // Extract the lines for this block
+  const blockLines = lines.slice(startIdx, endIdx);
+  
+  console.log(`getBlockContent: ${block.block_type} lines ${block.start_line}-${block.end_line}`);
+  console.log(`  Array indices: ${startIdx} to ${endIdx}`);
+  console.log(`  Extracted ${blockLines.length} lines`);
+  
+  return blockLines.join('\n');
+};
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIX STEP 3: Rewrite handleMergeUp with Correct Logic
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+REPLACE the entire handleMergeUp function:
+```tsx
+const handleMergeUp = (index: number) => {
+  if (index === 0) return; // Can't merge first section
+  
+  console.log('========== MERGE UP START ==========');
+  
+  setLocalBlocks(prevBlocks => {
+    // Create copies to avoid mutation
+    const newBlocks = [...prevBlocks];
+    const currentBlock = { ...newBlocks[index] };
+    const aboveBlock = { ...newBlocks[index - 1] };
+    
+    // CRITICAL: Get content directly from cvContent using line numbers
+    const lines = cvContent.split('\n');
+    
+    // Above section content
+    const aboveStartIdx = Math.max(0, aboveBlock.start_line - 1);
+    const aboveEndIdx = aboveBlock.end_line;
+    const aboveContent = lines.slice(aboveStartIdx, aboveEndIdx).join('\n');
+    
+    // Current section content (the one being merged)
+    const currentStartIdx = Math.max(0, currentBlock.start_line - 1);
+    const currentEndIdx = currentBlock.end_line;
+    const currentContent = lines.slice(currentStartIdx, currentEndIdx).join('\n');
+    
+    console.log('Above block:', aboveBlock.block_type);
+    console.log('  Lines:', aboveBlock.start_line, '-', aboveBlock.end_line);
+    console.log('  Content lines:', aboveEndIdx - aboveStartIdx);
+    
+    console.log('Current block:', currentBlock.block_type);
+    console.log('  Lines:', currentBlock.start_line, '-', currentBlock.end_line);
+    console.log('  Content lines:', currentEndIdx - currentStartIdx);
+    
+    // Create merged block
+    const mergedBlock: CVBlock = {
+      block_type: aboveBlock.block_type, // Keep type of above section
+      header_text: aboveBlock.header_text,
+      start_line: aboveBlock.start_line, // Start from above's start
+      end_line: currentBlock.end_line,   // End at current's end
+      content: aboveContent + '\n' + currentContent, // Combine ALL content
+      word_count: (aboveBlock.word_count || 0) + (currentBlock.word_count || 0),
+      confidence: aboveBlock.confidence,
+    };
+    
+    console.log('Merged block:');
+    console.log('  Lines:', mergedBlock.start_line, '-', mergedBlock.end_line);
+    console.log('  Total content length:', mergedBlock.content.length);
+    console.log('  Content preview:', mergedBlock.content.substring(0, 300));
+    
+    // Replace above block with merged
+    newBlocks[index - 1] = mergedBlock;
+    
+    // Remove current block (it's now part of above)
+    newBlocks.splice(index, 1);
+    
+    console.log('New block count:', newBlocks.length);
+    console.log('========== MERGE UP END ==========');
+    
+    // Notify parent
+    onStructureChange?.(newBlocks);
+    
+    return newBlocks;
+  });
+  
+  setOpenDropdown(null);
+};
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIX STEP 4: Same Fix for handleMergeDown
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+REPLACE handleMergeDown with same pattern:
+```tsx
+const handleMergeDown = (index: number) => {
+  if (index >= localBlocks.length - 1) return; // Can't merge last section
+  
+  console.log('========== MERGE DOWN START ==========');
+  
+  setLocalBlocks(prevBlocks => {
+    const newBlocks = [...prevBlocks];
+    const currentBlock = { ...newBlocks[index] };
+    const belowBlock = { ...newBlocks[index + 1] };
+    
+    // Get content directly from cvContent
+    const lines = cvContent.split('\n');
+    
+    const currentStartIdx = Math.max(0, currentBlock.start_line - 1);
+    const currentEndIdx = currentBlock.end_line;
+    const currentContent = lines.slice(currentStartIdx, currentEndIdx).join('\n');
+    
+    const belowStartIdx = Math.max(0, belowBlock.start_line - 1);
+    const belowEndIdx = belowBlock.end_line;
+    const belowContent = lines.slice(belowStartIdx, belowEndIdx).join('\n');
+    
+    console.log('Current block:', currentBlock.block_type);
+    console.log('  Lines:', currentBlock.start_line, '-', currentBlock.end_line);
+    
+    console.log('Below block:', belowBlock.block_type);
+    console.log('  Lines:', belowBlock.start_line, '-', belowBlock.end_line);
+    
+    // Create merged block
+    const mergedBlock: CVBlock = {
+      block_type: currentBlock.block_type, // Keep type of current section
+      header_text: currentBlock.header_text,
+      start_line: currentBlock.start_line,
+      end_line: belowBlock.end_line,
+      content: currentContent + '\n' + belowContent,
+      word_count: (currentBlock.word_count || 0) + (belowBlock.word_count || 0),
+      confidence: currentBlock.confidence,
+    };
+    
+    console.log('Merged content length:', mergedBlock.content.length);
+    
+    newBlocks[index] = mergedBlock;
+    newBlocks.splice(index + 1, 1);
+    
+    console.log('New block count:', newBlocks.length);
+    console.log('========== MERGE DOWN END ==========');
+    
+    onStructureChange?.(newBlocks);
+    return newBlocks;
+  });
+  
+  setOpenDropdown(null);
+};
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIX STEP 5: Check cvContent is Passed Correctly
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Make sure cvContent is passed to StructureOverlay component.
+
+In the parent component (ResultsPage.tsx or wherever StructureOverlay is used):
+```tsx
+<StructureOverlay
+  blocks={structureData?.blocks || []}
+  cvContent={cvContent}  // ← Make sure this is the FULL CV text
+  onStructureChange={(newBlocks) => {
+    // Handle structure changes
+    console.log('Structure changed:', newBlocks.length, 'blocks');
+  }}
+/>
+```
+
+Check that cvContent contains the full CV text:
+- Should be hundreds/thousands of characters
+- Should contain all sections including Citi, Deloitte, etc.
+
+Add this log in parent component:
+```tsx
+console.log('cvContent length:', cvContent?.length);
+console.log('cvContent preview:', cvContent?.substring(0, 500));
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+VERIFICATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+After applying fixes:
+
+1. Open Console (F12 → Console tab)
+2. Click CV Structure button
+3. Click on Citi section header
+4. Click "Merge with section above"
+5. Check Console logs:
+
+SHOULD SEE:

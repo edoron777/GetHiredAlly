@@ -24,16 +24,22 @@ export const StructureOverlay: React.FC<StructureOverlayProps> = ({
   const [localBlocks, setLocalBlocks] = useState<CVBlock[]>([]);
   const [openDropdown, setOpenDropdown] = useState<number | null>(null);
   const [splitAtLine, setSplitAtLine] = useState<number | null>(null);
-  const lines = cvContent.split('\n');
+  
+  const lines = React.useMemo(() => cvContent.split('\n'), [cvContent]);
 
   useEffect(() => {
+    console.log('StructureOverlay: cvContent length:', cvContent?.length);
+    console.log('StructureOverlay: total lines:', lines.length);
     if (blocks && blocks.length > 0) {
       setLocalBlocks(blocks);
     }
-  }, [blocks]);
+  }, [blocks, cvContent, lines.length]);
 
   const getBlockContent = (block: CVBlock): string[] => {
-    return lines.slice(Math.max(0, block.start_line - 1), block.end_line);
+    const startIdx = Math.max(0, block.start_line - 1);
+    const endIdx = Math.min(lines.length, block.end_line);
+    const extractedLines = lines.slice(startIdx, endIdx);
+    return extractedLines;
   };
 
   const handleTypeChange = (index: number, newType: SectionType) => {
@@ -50,30 +56,49 @@ export const StructureOverlay: React.FC<StructureOverlayProps> = ({
   const handleMergeUp = (index: number) => {
     if (index === 0) return;
     
+    console.log('========== MERGE UP START ==========');
+    console.log('Index to merge:', index);
+    console.log('Total lines in cvContent:', lines.length);
+    
     setLocalBlocks(prev => {
       const newBlocks = [...prev];
-      const current = { ...newBlocks[index] };
-      const above = { ...newBlocks[index - 1] };
+      const currentBlock = { ...newBlocks[index] };
+      const aboveBlock = { ...newBlocks[index - 1] };
       
-      console.log('=== MERGE UP ===');
-      console.log('Above:', above.type, 'lines', above.start_line, '-', above.end_line);
-      console.log('Current:', current.type, 'lines', current.start_line, '-', current.end_line);
+      console.log('--- ABOVE SECTION (merge target) ---');
+      console.log('Type:', aboveBlock.type);
+      console.log('Lines:', aboveBlock.start_line, '-', aboveBlock.end_line);
+      console.log('Line count:', aboveBlock.end_line - aboveBlock.start_line + 1);
       
-      const mergedLines = lines.slice(above.start_line - 1, current.end_line);
+      console.log('--- CURRENT SECTION (to be merged) ---');
+      console.log('Type:', currentBlock.type);
+      console.log('Lines:', currentBlock.start_line, '-', currentBlock.end_line);
+      console.log('Line count:', currentBlock.end_line - currentBlock.start_line + 1);
+      
+      const mergedStartLine = aboveBlock.start_line;
+      const mergedEndLine = currentBlock.end_line;
+      const mergedLines = lines.slice(mergedStartLine - 1, mergedEndLine);
       const mergedWordCount = mergedLines.join(' ').split(/\s+/).filter(Boolean).length;
       
+      console.log('--- MERGED RESULT ---');
+      console.log('Lines:', mergedStartLine, '-', mergedEndLine);
+      console.log('Total lines extracted:', mergedLines.length);
+      console.log('Word count:', mergedWordCount);
+      console.log('Content preview:', mergedLines.slice(0, 3).join(' | ').substring(0, 200));
+      
       const merged: CVBlock = {
-        ...above,
-        end_line: current.end_line,
+        ...aboveBlock,
+        start_line: mergedStartLine,
+        end_line: mergedEndLine,
         content_preview: mergedLines.slice(0, 2).join(' ').substring(0, 100),
         word_count: mergedWordCount,
       };
       
-      console.log('Merged:', merged.type, 'lines', merged.start_line, '-', merged.end_line);
-      console.log('New block count:', newBlocks.length - 1);
-      
       newBlocks[index - 1] = merged;
       newBlocks.splice(index, 1);
+      
+      console.log('New block count:', newBlocks.length);
+      console.log('========== MERGE UP END ==========');
       
       onStructureChange?.(newBlocks);
       return newBlocks;
@@ -85,30 +110,49 @@ export const StructureOverlay: React.FC<StructureOverlayProps> = ({
   const handleMergeDown = (index: number) => {
     if (index >= localBlocks.length - 1) return;
     
+    console.log('========== MERGE DOWN START ==========');
+    console.log('Index to merge:', index);
+    console.log('Total lines in cvContent:', lines.length);
+    
     setLocalBlocks(prev => {
       const newBlocks = [...prev];
-      const current = { ...newBlocks[index] };
-      const below = { ...newBlocks[index + 1] };
+      const currentBlock = { ...newBlocks[index] };
+      const belowBlock = { ...newBlocks[index + 1] };
       
-      console.log('=== MERGE DOWN ===');
-      console.log('Current:', current.type, 'lines', current.start_line, '-', current.end_line);
-      console.log('Below:', below.type, 'lines', below.start_line, '-', below.end_line);
+      console.log('--- CURRENT SECTION (merge target) ---');
+      console.log('Type:', currentBlock.type);
+      console.log('Lines:', currentBlock.start_line, '-', currentBlock.end_line);
+      console.log('Line count:', currentBlock.end_line - currentBlock.start_line + 1);
       
-      const mergedLines = lines.slice(current.start_line - 1, below.end_line);
+      console.log('--- BELOW SECTION (to be merged) ---');
+      console.log('Type:', belowBlock.type);
+      console.log('Lines:', belowBlock.start_line, '-', belowBlock.end_line);
+      console.log('Line count:', belowBlock.end_line - belowBlock.start_line + 1);
+      
+      const mergedStartLine = currentBlock.start_line;
+      const mergedEndLine = belowBlock.end_line;
+      const mergedLines = lines.slice(mergedStartLine - 1, mergedEndLine);
       const mergedWordCount = mergedLines.join(' ').split(/\s+/).filter(Boolean).length;
       
+      console.log('--- MERGED RESULT ---');
+      console.log('Lines:', mergedStartLine, '-', mergedEndLine);
+      console.log('Total lines extracted:', mergedLines.length);
+      console.log('Word count:', mergedWordCount);
+      console.log('Content preview:', mergedLines.slice(0, 3).join(' | ').substring(0, 200));
+      
       const merged: CVBlock = {
-        ...current,
-        end_line: below.end_line,
+        ...currentBlock,
+        start_line: mergedStartLine,
+        end_line: mergedEndLine,
         content_preview: mergedLines.slice(0, 2).join(' ').substring(0, 100),
         word_count: mergedWordCount,
       };
       
-      console.log('Merged:', merged.type, 'lines', merged.start_line, '-', merged.end_line);
-      console.log('New block count:', newBlocks.length - 1);
-      
       newBlocks[index] = merged;
       newBlocks.splice(index + 1, 1);
+      
+      console.log('New block count:', newBlocks.length);
+      console.log('========== MERGE DOWN END ==========');
       
       onStructureChange?.(newBlocks);
       return newBlocks;
