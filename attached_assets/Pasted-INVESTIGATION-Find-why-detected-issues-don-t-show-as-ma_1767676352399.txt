@@ -1,0 +1,104 @@
+INVESTIGATION: Find why detected issues don't show as markers
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+THE BUG
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+EXPECTED: 9 detected issues → 9 markers in Document View
+ACTUAL:   9 detected issues → 4 markers in Document View
+
+5 issues have NO marker. Users can't find them in their CV.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+KNOWN ISSUES WITHOUT MARKERS (from screenshot):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+These issues were detected but have NO marker:
+1. "CV is Too Long" - current field is likely empty
+2. "No LinkedIn Profile URL" - current = "Not found in..."
+3. "Missing GitHub/Portfolio" - current = "Not found in..."
+4. "Old Roles Have Too Much Detail" - current field is likely empty
+5. "Education Entry Lacks Detail" - current is example text
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 1: Check the "current" Field for Each Issue
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+For a recent scan, query the issues and show the "current" field:
+
+SELECT 
+    issues_json
+FROM cv_scan_results 
+ORDER BY created_at DESC 
+LIMIT 1;
+
+Then parse and show for EACH issue:
+| Issue Type | "current" Value | In CV? | Has Marker? |
+|------------|-----------------|--------|-------------|
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 2: Find the Marker Matching Logic
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+In the Marker component, find the code that decides IF a marker is shown.
+
+Look for:
+- String matching (finding "current" text in CV)
+- Conditions that skip markers
+- Filtering logic
+
+Show the code that decides: "Show marker? YES/NO"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 3: Identify Root Cause
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Based on findings, identify WHY markers are missing:
+
+Possible causes:
+A) "current" field is empty → Detector didn't provide text to highlight
+B) "current" text not found in CV → Text doesn't match exactly
+C) Frontend filtering → Some condition hides the marker
+D) CSS/styling issue → Marker exists but not visible
+
+For EACH missing marker, identify the specific cause.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 4: Propose Solutions
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+For each root cause found, propose a solution:
+
+| Cause | Solution |
+|-------|----------|
+| Empty "current" | Fix detector to provide text OR show marker at section header |
+| Text not found | Use fuzzy matching OR mark at line_number |
+| Frontend filtering | Remove/adjust filter condition |
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+REPORT FORMAT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ROOT CAUSE ANALYSIS:
+
+1. ISSUES WITHOUT MARKERS:
+   | Issue | "current" Value | Why No Marker |
+   |-------|-----------------|---------------|
+
+2. MARKER MATCHING CODE:
+   [Paste the relevant logic]
+
+3. ROOT CAUSES FOUND:
+   - Cause A: [description] - affects X issues
+   - Cause B: [description] - affects Y issues
+
+4. PROPOSED SOLUTIONS:
+   - Solution for A: [description]
+   - Solution for B: [description]
+
+5. RECOMMENDED FIX:
+   [Which solution to implement first]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ DO NOT make any changes - investigation only!
