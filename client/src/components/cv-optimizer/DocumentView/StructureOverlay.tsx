@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { SectionTab } from './SectionTab';
 import { SECTION_COLORS } from './structureTypes';
 import type { SectionType, CVBlock } from './structureTypes';
@@ -11,22 +11,86 @@ interface StructureOverlayProps {
   blocks: CVBlock[];
   cvContent: string;
   onSectionTypeChange?: (blockIndex: number, newType: SectionType) => void;
-  onMergeUp?: (blockIndex: number) => void;
-  onMergeDown?: (blockIndex: number) => void;
-  onDeleteSection?: (blockIndex: number) => void;
+  onStructureChange?: (newBlocks: CVBlock[]) => void;
 }
 
 export const StructureOverlay: React.FC<StructureOverlayProps> = ({
   blocks,
   cvContent,
   onSectionTypeChange,
-  onMergeUp,
-  onMergeDown,
-  onDeleteSection
+  onStructureChange
 }) => {
+  const [localBlocks, setLocalBlocks] = useState<CVBlock[]>(blocks);
   const lines = cvContent.split('\n');
-  
-  const sections = blocks.map((block, index) => ({
+
+  useEffect(() => {
+    setLocalBlocks(blocks);
+  }, [blocks]);
+
+  const handleTypeChange = (sectionIndex: number, newType: SectionType) => {
+    setLocalBlocks(prevBlocks => {
+      const newBlocks = [...prevBlocks];
+      newBlocks[sectionIndex] = {
+        ...newBlocks[sectionIndex],
+        type: newType.toUpperCase()
+      };
+      onStructureChange?.(newBlocks);
+      return newBlocks;
+    });
+    onSectionTypeChange?.(sectionIndex, newType);
+  };
+
+  const handleMergeUp = (sectionIndex: number) => {
+    if (sectionIndex === 0) return;
+    
+    setLocalBlocks(prevBlocks => {
+      const newBlocks = [...prevBlocks];
+      const currentSection = newBlocks[sectionIndex];
+      const aboveSection = newBlocks[sectionIndex - 1];
+      
+      const mergedSection: CVBlock = {
+        ...aboveSection,
+        end_line: currentSection.end_line,
+        content_preview: aboveSection.content_preview + ' ... ' + currentSection.content_preview,
+        word_count: (aboveSection.word_count || 0) + (currentSection.word_count || 0),
+      };
+      
+      newBlocks[sectionIndex - 1] = mergedSection;
+      newBlocks.splice(sectionIndex, 1);
+      
+      onStructureChange?.(newBlocks);
+      return newBlocks;
+    });
+  };
+
+  const handleMergeDown = (sectionIndex: number) => {
+    if (sectionIndex >= localBlocks.length - 1) return;
+    
+    setLocalBlocks(prevBlocks => {
+      const newBlocks = [...prevBlocks];
+      const currentSection = newBlocks[sectionIndex];
+      const belowSection = newBlocks[sectionIndex + 1];
+      
+      const mergedSection: CVBlock = {
+        ...currentSection,
+        end_line: belowSection.end_line,
+        content_preview: currentSection.content_preview + ' ... ' + belowSection.content_preview,
+        word_count: (currentSection.word_count || 0) + (belowSection.word_count || 0),
+      };
+      
+      newBlocks[sectionIndex] = mergedSection;
+      newBlocks.splice(sectionIndex + 1, 1);
+      
+      onStructureChange?.(newBlocks);
+      return newBlocks;
+    });
+  };
+
+  const handleDeleteDivider = (sectionIndex: number) => {
+    handleMergeUp(sectionIndex);
+  };
+
+  const sections = localBlocks.map((block, index) => ({
     ...block,
     index,
     sectionType: block.type.toLowerCase() as SectionType,
@@ -44,7 +108,7 @@ export const StructureOverlay: React.FC<StructureOverlayProps> = ({
         
         return (
           <div 
-            key={idx}
+            key={`${section.start_line}-${section.end_line}-${idx}`}
             className="section-wrapper relative flex mb-2"
             style={{
               backgroundColor: colors.background,
@@ -59,10 +123,10 @@ export const StructureOverlay: React.FC<StructureOverlayProps> = ({
               tabColor={colors.tab}
               isFirst={idx === 0}
               isLast={idx === sections.length - 1}
-              onTypeChange={(newType: SectionType) => onSectionTypeChange?.(idx, newType)}
-              onMergeUp={onMergeUp ? () => onMergeUp(idx) : undefined}
-              onMergeDown={onMergeDown ? () => onMergeDown(idx) : undefined}
-              onDelete={onDeleteSection ? () => onDeleteSection(idx) : undefined}
+              onTypeChange={(newType: SectionType) => handleTypeChange(idx, newType)}
+              onMergeUp={() => handleMergeUp(idx)}
+              onMergeDown={() => handleMergeDown(idx)}
+              onDelete={() => handleDeleteDivider(idx)}
             />
             
             <div className="section-content flex-1 p-4 font-mono text-sm whitespace-pre-wrap">

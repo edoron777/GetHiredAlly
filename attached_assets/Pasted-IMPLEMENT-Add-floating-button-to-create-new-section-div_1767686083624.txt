@@ -1,0 +1,177 @@
+IMPLEMENT: Add floating button to create new section dividers
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONTEXT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Users need to manually add section dividers when detection misses 
+a section break. Add a floating "+" button that appears when 
+hovering between sections.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 1: Add Hover Zone Between Sections
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+In StructureOverlay.tsx, add a component between sections:
+```tsx
+interface AddSectionDividerProps {
+  onAdd: (lineNumber: number, sectionType: SectionType) => void;
+  lineNumber: number;
+}
+
+const AddSectionDivider: React.FC<AddSectionDividerProps> = ({ 
+  onAdd, 
+  lineNumber 
+}) => {
+  const [isHovered, setIsHovered] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+
+  return (
+    <>
+      <div 
+        className="add-section-zone relative h-4 -my-2 z-10 flex items-center justify-center"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        {isHovered && (
+          <button
+            onClick={() => setShowModal(true)}
+            className="add-section-button flex items-center gap-1 px-3 py-1
+                       bg-blue-500 text-white text-xs rounded-full
+                       shadow-lg hover:bg-blue-600 transition-all
+                       transform hover:scale-105"
+          >
+            <Plus className="w-3 h-3" />
+            <span>Add section divider</span>
+          </button>
+        )}
+        
+        {/* Hover line indicator */}
+        <div className={`absolute left-0 right-0 h-0.5 bg-blue-400 
+                        transition-opacity ${isHovered ? 'opacity-100' : 'opacity-0'}`} 
+        />
+      </div>
+      
+      {showModal && (
+        <AddSectionModal
+          lineNumber={lineNumber}
+          onAdd={(type) => {
+            onAdd(lineNumber, type);
+            setShowModal(false);
+          }}
+          onClose={() => setShowModal(false)}
+        />
+      )}
+    </>
+  );
+};
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 2: Place Dividers Between Sections
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+In the render loop, add divider zones between sections:
+```tsx
+return (
+  <div className="structure-overlay">
+    {localBlocks.map((section, idx) => (
+      <React.Fragment key={idx}>
+        {/* Section */}
+        <div className="section-wrapper ...">
+          <SectionTab ... />
+          <div className="section-content">
+            {/* Content with line numbers for splitting */}
+            {section.lines?.map((line, lineIdx) => (
+              <div 
+                key={lineIdx} 
+                className="cv-line group relative"
+                data-line-number={section.start_line + lineIdx}
+              >
+                {line}
+                
+                {/* Add section button on each line hover */}
+                <button
+                  className="absolute -left-8 top-1/2 -translate-y-1/2
+                             opacity-0 group-hover:opacity-100
+                             w-5 h-5 rounded-full bg-blue-500 text-white
+                             flex items-center justify-center text-xs
+                             hover:bg-blue-600 transition-all"
+                  onClick={() => handleAddSection(section.start_line + lineIdx)}
+                  title="Split section here"
+                >
+                  +
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </React.Fragment>
+    ))}
+  </div>
+);
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 3: Implement Add Section Function
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```tsx
+const [addSectionAtLine, setAddSectionAtLine] = useState<number | null>(null);
+
+const handleAddSection = (lineNumber: number) => {
+  setAddSectionAtLine(lineNumber);
+};
+
+const handleConfirmAddSection = (sectionType: SectionType) => {
+  if (addSectionAtLine === null) return;
+  
+  setLocalBlocks(prevBlocks => {
+    const newBlocks: CVBlock[] = [];
+    
+    for (const block of prevBlocks) {
+      // Check if the split line is within this block
+      if (addSectionAtLine > block.start_line && addSectionAtLine <= block.end_line) {
+        // Split this block into two
+        const lines = cvContent.split('\n');
+        
+        // First part (before split)
+        const firstPart: CVBlock = {
+          ...block,
+          end_line: addSectionAtLine - 1,
+          content: lines.slice(block.start_line - 1, addSectionAtLine - 1).join('\n'),
+        };
+        
+        // Second part (from split line onwards)
+        const secondPart: CVBlock = {
+          block_type: sectionType,
+          header_text: sectionType,
+          start_line: addSectionAtLine,
+          end_line: block.end_line,
+          content: lines.slice(addSectionAtLine - 1, block.end_line).join('\n'),
+          confidence: 1.0,
+          word_count: 0,
+        };
+        
+        newBlocks.push(firstPart, secondPart);
+      } else {
+        newBlocks.push(block);
+      }
+    }
+    
+    onStructureChange?.(newBlocks);
+    return newBlocks;
+  });
+  
+  setAddSectionAtLine(null);
+};
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COMPLETION CHECKLIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] Added AddSectionDivider component
+[ ] Added hover zones between sections
+[ ] Added + button on line hover
+[ ] Implemented handleAddSection function
+[ ] Implemented handleConfirmAddSection function
