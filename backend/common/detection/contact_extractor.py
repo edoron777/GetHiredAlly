@@ -84,6 +84,25 @@ PHOTO_INDICATORS = [
 # Note: '/' removed because it appears in URLs (linkedin.com/in/...) causing false positives
 CONTACT_SEPARATORS = ['|', '•', '·', '–', '—']
 
+# Unicode variants that should be normalized to their standard equivalents
+SEPARATOR_NORMALIZATIONS = {
+    '│': '|',   # U+2502 Box Drawings Light Vertical → U+007C Vertical Line
+    '｜': '|',  # U+FF5C Fullwidth Vertical Line → U+007C
+    '⏐': '|',   # U+23D0 Vertical Line Extension → U+007C
+    '∣': '|',   # U+2223 Divides → U+007C
+    '‧': '·',   # U+2027 Hyphenation Point → U+00B7 Middle Dot
+    '‐': '-',   # U+2010 Hyphen → U+002D Hyphen-Minus
+    '‑': '-',   # U+2011 Non-Breaking Hyphen → U+002D
+    '−': '-',   # U+2212 Minus Sign → U+002D
+}
+
+
+def normalize_separators(text: str) -> str:
+    """Normalize Unicode separator variants to standard ASCII equivalents."""
+    for old, new in SEPARATOR_NORMALIZATIONS.items():
+        text = text.replace(old, new)
+    return text
+
 INVALID_EMAIL_PATTERNS = [
     re.compile(r'^[^@]+$'),
     re.compile(r'@[^.]+$'),
@@ -210,12 +229,20 @@ def check_photo_included(text: str) -> bool:
 
 
 def check_inconsistent_separators(text: str) -> Optional[List[str]]:
-    """Check for mixed separators in contact section."""
+    """Check for mixed separators in contact section.
+    
+    Normalizes Unicode variants first to prevent false positives:
+    - Different Unicode pipe characters (│, ｜) → standard |
+    - Different Unicode dashes (‐, ‑, −) → standard -
+    """
     contact_area = text[:500]
+    
+    normalized_area = normalize_separators(contact_area)
+    
     found_separators = []
     
     for sep in CONTACT_SEPARATORS:
-        if sep in contact_area:
+        if sep in normalized_area:
             found_separators.append(sep)
     
     if len(found_separators) > 1:
