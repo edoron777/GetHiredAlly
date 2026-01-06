@@ -1,0 +1,86 @@
+═══════════════════════════════════════════════════════════════════════════════
+🔍 RFI: CV SECTION EXPLORER - COMPLETE CODE STRUCTURE
+═══════════════════════════════════════════════════════════════════════════════
+
+PURPOSE:
+Gathering accurate information for CV Section Explorer documentation.
+
+───────────────────────────────────────────────────────────────────────────────
+
+INVESTIGATION 1: StructureOverlay.tsx
+
+File: client/src/components/cv-optimizer/DocumentView/StructureOverlay.tsx
+
+Show the COMPLETE file including:
+- All imports
+- Props interface
+- Component state (useState)
+- All handler functions (handleTypeChange, handleMergeUp, handleMergeDown, etc.)
+- Section header rendering JSX
+- Section content rendering JSX
+- Dropdown menu JSX
+
+───────────────────────────────────────────────────────────────────────────────
+
+INVESTIGATION 2: structureTypes.ts
+
+File: client/src/components/cv-optimizer/DocumentView/structureTypes.ts
+
+Show the COMPLETE file including:
+- CVBlock interface
+- SectionType type
+- SECTION_COLORS constant (all colors for all section types)
+- SECTION_OPTIONS constant
+- Any other types or constants
+
+───────────────────────────────────────────────────────────────────────────────
+
+INVESTIGATION 3: ResultsPage - Section Explorer Integration
+
+File: client/src/pages/cv-optimizer/ResultsPage.tsx
+
+Show ONLY the parts related to Section Explorer:
+- structureData state definition
+- fetchStructure function
+- View mode state and switching logic
+- StructureOverlay component rendering with all props
+- handleSectionTypeChange function
+- handleStructureChange function
+
+───────────────────────────────────────────────────────────────────────────────
+
+INVESTIGATION 4: Backend Structure API
+
+File: backend/app/cv.py
+
+Show the endpoint that returns CV structure analysis:
+- Route definition
+- Function that handles the request
+- Query or logic that extracts sections
+- Response format
+
+───────────────────────────────────────────────────────────────────────────────
+
+REPORT FORMAT:
+
+## 1. StructureOverlay.tsx
+```typescript
+[COMPLETE FILE OR KEY SECTIONS]
+```
+
+## 2. structureTypes.ts
+```typescript
+[COMPLETE FILE]
+```
+
+## 3. ResultsPage Section Explorer Integration
+```typescript
+[RELEVANT CODE SECTIONS]
+```
+
+## 4. Backend Structure API
+```python
+[ENDPOINT CODE]
+```
+
+═══════════════════════════════════════════════════════════════════════════════
