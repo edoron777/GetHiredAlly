@@ -27,19 +27,46 @@ export const StructureOverlay: React.FC<StructureOverlayProps> = ({
   
   const lines = React.useMemo(() => cvContent.split('\n'), [cvContent]);
 
+  // Debug: Verify cvContent is available
   useEffect(() => {
-    console.log('StructureOverlay: cvContent length:', cvContent?.length);
-    console.log('StructureOverlay: total lines:', lines.length);
+    console.log('=== StructureOverlay Mounted ===');
+    console.log('cvContent length:', cvContent?.length || 0);
+    console.log('Total lines:', lines.length);
+    console.log('Blocks count:', blocks?.length || 0);
+    
+    if (!cvContent || cvContent.length < 100) {
+      console.error('WARNING: cvContent is empty or too short!');
+    }
+    
     if (blocks && blocks.length > 0) {
+      console.log('Blocks:', blocks.map(b => `${b.type} (${b.start_line}-${b.end_line})`).join(', '));
       setLocalBlocks(blocks);
     }
   }, [blocks, cvContent, lines.length]);
 
+  // Helper: Extract content from cvContent using line numbers
+  // ALWAYS use this instead of block.content (which may be empty)
+  const extractContent = (startLine: number, endLine: number): string => {
+    if (!cvContent) {
+      console.warn('cvContent is empty!');
+      return '';
+    }
+    
+    const startIdx = Math.max(0, startLine - 1); // Convert to 0-indexed
+    const endIdx = Math.min(lines.length, endLine);
+    
+    const extracted = lines.slice(startIdx, endIdx).join('\n');
+    
+    console.log(`extractContent(${startLine}-${endLine}): ${extracted.length} chars, ${endIdx - startIdx} lines`);
+    
+    return extracted;
+  };
+
+  // Get block content as array of lines for rendering
   const getBlockContent = (block: CVBlock): string[] => {
     const startIdx = Math.max(0, block.start_line - 1);
     const endIdx = Math.min(lines.length, block.end_line);
-    const extractedLines = lines.slice(startIdx, endIdx);
-    return extractedLines;
+    return lines.slice(startIdx, endIdx);
   };
 
   const handleTypeChange = (index: number, newType: SectionType) => {
@@ -77,20 +104,25 @@ export const StructureOverlay: React.FC<StructureOverlayProps> = ({
       
       const mergedStartLine = aboveBlock.start_line;
       const mergedEndLine = currentBlock.end_line;
-      const mergedLines = lines.slice(mergedStartLine - 1, mergedEndLine);
-      const mergedWordCount = mergedLines.join(' ').split(/\s+/).filter(Boolean).length;
+      
+      // CRITICAL: Extract content from cvContent using line numbers
+      const aboveContent = extractContent(aboveBlock.start_line, aboveBlock.end_line);
+      const currentContent = extractContent(currentBlock.start_line, currentBlock.end_line);
+      const mergedContent = aboveContent + '\n' + currentContent;
+      const mergedWordCount = mergedContent.split(/\s+/).filter(Boolean).length;
       
       console.log('--- MERGED RESULT ---');
       console.log('Lines:', mergedStartLine, '-', mergedEndLine);
-      console.log('Total lines extracted:', mergedLines.length);
+      console.log('Above content length:', aboveContent.length);
+      console.log('Current content length:', currentContent.length);
+      console.log('Merged content length:', mergedContent.length);
       console.log('Word count:', mergedWordCount);
-      console.log('Content preview:', mergedLines.slice(0, 3).join(' | ').substring(0, 200));
       
       const merged: CVBlock = {
         ...aboveBlock,
         start_line: mergedStartLine,
         end_line: mergedEndLine,
-        content_preview: mergedLines.slice(0, 2).join(' ').substring(0, 100),
+        content_preview: mergedContent.split('\n').slice(0, 2).join(' ').substring(0, 100),
         word_count: mergedWordCount,
       };
       
@@ -131,20 +163,25 @@ export const StructureOverlay: React.FC<StructureOverlayProps> = ({
       
       const mergedStartLine = currentBlock.start_line;
       const mergedEndLine = belowBlock.end_line;
-      const mergedLines = lines.slice(mergedStartLine - 1, mergedEndLine);
-      const mergedWordCount = mergedLines.join(' ').split(/\s+/).filter(Boolean).length;
+      
+      // CRITICAL: Extract content from cvContent using line numbers
+      const currentContent = extractContent(currentBlock.start_line, currentBlock.end_line);
+      const belowContent = extractContent(belowBlock.start_line, belowBlock.end_line);
+      const mergedContent = currentContent + '\n' + belowContent;
+      const mergedWordCount = mergedContent.split(/\s+/).filter(Boolean).length;
       
       console.log('--- MERGED RESULT ---');
       console.log('Lines:', mergedStartLine, '-', mergedEndLine);
-      console.log('Total lines extracted:', mergedLines.length);
+      console.log('Current content length:', currentContent.length);
+      console.log('Below content length:', belowContent.length);
+      console.log('Merged content length:', mergedContent.length);
       console.log('Word count:', mergedWordCount);
-      console.log('Content preview:', mergedLines.slice(0, 3).join(' | ').substring(0, 200));
       
       const merged: CVBlock = {
         ...currentBlock,
         start_line: mergedStartLine,
         end_line: mergedEndLine,
-        content_preview: mergedLines.slice(0, 2).join(' ').substring(0, 100),
+        content_preview: mergedContent.split('\n').slice(0, 2).join(' ').substring(0, 100),
         word_count: mergedWordCount,
       };
       
