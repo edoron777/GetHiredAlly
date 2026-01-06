@@ -1,0 +1,75 @@
+═══════════════════════════════════════════════════════════════════════════════
+🔍 INVESTIGATION: Pipe Separator Unicode Check
+═══════════════════════════════════════════════════════════════════════════════
+Type: Investigation
+Priority: MEDIUM
+
+───────────────────────────────────────────────────────────────────────────────
+CONTEXT
+───────────────────────────────────────────────────────────────────────────────
+
+Code logic is CORRECT:
+```python
+if len(found_separators) > 1:  # Only flags if 2+ DIFFERENT separators found
+    return found_separators
+```
+
+User's CV: "David Cohen CV | Email: dcohen.demo@gmail.com | Phone: +972-50-1234567 | LinkedIn"
+All pipes → Should NOT flag.
+
+But still flagging. Possible Unicode issue.
+
+───────────────────────────────────────────────────────────────────────────────
+INVESTIGATION TASKS
+───────────────────────────────────────────────────────────────────────────────
+
+1. Add debug logging to check_inconsistent_separators():
+```python
+def check_inconsistent_separators(text: str) -> Optional[List[str]]:
+    contact_area = text[:500]
+    found_separators = []
+    
+    print(f"DEBUG: contact_area = {repr(contact_area)}")  # Shows Unicode
+    
+    for sep in CONTACT_SEPARATORS:
+        if sep in contact_area:
+            found_separators.append(sep)
+            print(f"DEBUG: Found separator: {repr(sep)}")
+    
+    print(f"DEBUG: found_separators = {found_separators}")
+    print(f"DEBUG: len = {len(found_separators)}")
+    
+    if len(found_separators) > 1:
+        return found_separators
+    return None
+```
+
+2. Check for hidden Unicode characters:
+   - Bullet point: • (U+2022)
+   - Middle dot: · (U+00B7)  
+   - Vertical line: │ (U+2502) vs Pipe: | (U+007C)
+
+3. Show the actual TipBox output for this issue:
+   - What separators were found?
+   - The "Current" field should show what was detected
+
+───────────────────────────────────────────────────────────────────────────────
+POSSIBLE FIX
+───────────────────────────────────────────────────────────────────────────────
+
+If Unicode variants are the issue, normalize before detection:
+```python
+def normalize_separators(text: str) -> str:
+    """Convert Unicode separator variants to standard ASCII"""
+    replacements = {
+        '│': '|',  # U+2502 → U+007C
+        '｜': '|', # U+FF5C → U+007C
+        '·': '•',  # U+00B7 → U+2022
+        '‧': '•',  # U+2027 → U+2022
+    }
+    for old, new in replacements.items():
+        text = text.replace(old, new)
+    return text
+```
+
+═══════════════════════════════════════════════════════════════════════════════

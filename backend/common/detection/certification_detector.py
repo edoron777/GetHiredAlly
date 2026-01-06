@@ -26,7 +26,11 @@ CERT_LINE_PATTERNS = [
 
 CERT_SECTION_HEADERS = [
     'certifications', 'certificates', 'professional certifications',
-    'licenses & certifications', 'credentials', 'professional development'
+    'licenses & certifications', 'licenses and certifications',
+    'certifications & licenses', 'certifications and licenses',
+    'credentials', 'professional development',
+    'training & certifications', 'training and certifications',
+    'courses & certifications', 'courses and certifications',
 ]
 
 
@@ -64,6 +68,8 @@ def count_certifications(text: str) -> int:
     - Sub-categorized certifications (AI & Product Management, Google AI, etc.)
     - Bullet points at various indent levels
     - Parenthetical issuer notations like (IBM), (Google), etc.
+    - Lines with years in parentheses like "AWS Solutions Architect (2023)"
+    - Non-bulleted certification lists
     """
     cert_section = find_certification_section(text)
     
@@ -82,10 +88,20 @@ def count_certifications(text: str) -> int:
     lines = cert_section.split('\n')
     cert_count = 0
     
-    sub_category_patterns = [
-        r'^[A-Z][A-Za-z\s&]+:$',
-        r'^[A-Z][A-Za-z\s&]+\s*\(\d+\)$',
-        r'^[A-Z][A-Za-z\s&,]+$',
+    sub_category_keywords = [
+        'management', 'automation', 'cloud computing', 'security', 
+        'infrastructure', 'systems', 'analysis', 'google ai', 
+        'microsoft azure', 'amazon web'
+    ]
+    
+    cert_indicators = [
+        'certified', 'certificate', 'certification', 
+        '(ibm)', '(google)', '(aws)', '(microsoft)', '(azure)',
+        '(coursera)', '(udemy)', '(linkedin)', '(meta)', '(cisco)',
+        '(oracle)', '(vmware)', '(salesforce)', '(comptia)',
+        'professional certificate', 'specialization',
+        'associate', 'professional', 'expert', 'practitioner',
+        'foundational', 'specialty', 'solutions architect'
     ]
     
     for line in lines:
@@ -97,30 +113,35 @@ def count_certifications(text: str) -> int:
         if any(h in line.lower() for h in CERT_SECTION_HEADERS):
             continue
         
+        if len(line) < 5:
+            continue
+            
         is_subcategory = False
-        for pattern in sub_category_patterns:
-            if re.match(pattern, line) and len(line) < 50 and '(' not in line.lower()[:20]:
-                if any(kw in line.lower() for kw in ['management', 'automation', 'cloud', 'security', 'infrastructure', 'systems', 'analysis', 'ai ', 'google', 'microsoft', 'amazon']):
-                    is_subcategory = True
-                    break
+        if line.endswith(':') and len(line) < 40:
+            line_lower = line.lower()
+            if any(kw in line_lower for kw in sub_category_keywords):
+                is_subcategory = True
         
         if is_subcategory:
             continue
         
+        is_cert = False
+        
         if (line.startswith('•') or line.startswith('-') or 
             line.startswith('*') or line.startswith('·') or
-            line.startswith('►') or line.startswith('–')):
-            cert_count += 1
-        elif re.match(r'^\d+\.', line):
-            cert_count += 1
-        elif re.match(r'^○\s*', line) or re.match(r'^◦\s*', line):
-            cert_count += 1
-        elif any(indicator in line.lower() for indicator in [
-            'certified', 'certificate', 'certification', 
-            '(ibm)', '(google)', '(aws)', '(microsoft)', '(azure)',
-            '(coursera)', '(udemy)', '(linkedin)', '(meta)', '(cisco)',
-            'professional certificate', 'specialization'
-        ]):
+            line.startswith('►') or line.startswith('–') or
+            line.startswith('○') or line.startswith('◦')):
+            is_cert = True
+        elif re.match(r'^\d+[.)]\s*', line):
+            is_cert = True
+        elif re.search(r'\(\d{4}\)', line):
+            is_cert = True
+        elif any(indicator in line.lower() for indicator in cert_indicators):
+            is_cert = True
+        elif len(line) > 10 and not line.endswith(':'):
+            is_cert = True
+            
+        if is_cert:
             cert_count += 1
     
     return cert_count
