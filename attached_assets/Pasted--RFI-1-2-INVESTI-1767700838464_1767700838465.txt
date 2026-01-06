@@ -1,0 +1,74 @@
+═══════════════════════════════════════════════════════════════════════════════
+🔍 RFI-1#2: INVESTIGATE TIPBOX IMPLEMENTATION
+═══════════════════════════════════════════════════════════════════════════════
+
+I need to understand the current TipBox implementation before extending it.
+
+INVESTIGATION TARGETS:
+
+1. TIPBOX TYPES FILE
+   Location: Find the TipBox types/interface file
+   Report:
+   - Full file path
+   - Current TipBoxProps interface
+   - Current TipBoxSection interface
+   - Any existing "mode" or "variant" props
+   - Current color types/enums
+
+2. TIPBOX COMPONENT FILE
+   Location: Find the main TipBox component
+   Report:
+   - Full file path
+   - Current props destructuring
+   - How sections are rendered
+   - How colors are applied
+   - Any existing conditional rendering
+
+3. TIPBOX CSS FILE
+   Location: Find TipBox styling
+   Report:
+   - Full file path
+   - Current color variables/classes
+   - Any existing mode-specific styles
+
+4. USAGE LOCATIONS
+   Search: Find all files that import/use TipBox
+   Report:
+   - List each file path
+   - How TipBox is called (what props passed)
+   - Any patterns in usage
+
+───────────────────────────────────────────────────────────────────────────────
+
+REPORT FORMAT:
+
+FINDING 1 - TipBox Types:
+- File Path: [exact path]
+- TipBoxProps Interface:
+```typescript
+  [paste current interface]
+```
+- TipBoxSection Interface:
+```typescript
+  [paste current interface]
+```
+
+FINDING 2 - TipBox Component:
+- File Path: [exact path]
+- Props: [list current props]
+- Sections rendering method: [describe]
+
+FINDING 3 - TipBox CSS:
+- File Path: [exact path]
+- Color handling: [describe current approach]
+
+FINDING 4 - Usage Locations:
+- File 1: [path] - [how used]
+- File 2: [path] - [how used]
+- ...
+
+───────────────────────────────────────────────────────────────────────────────
+
+DO NOT make any changes. Report findings only.
+
+═══════════════════════════════════════════════════════════════════════════════
