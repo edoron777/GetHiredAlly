@@ -1,0 +1,192 @@
+═══════════════════════════════════════════════════════════════════
+FIX: Backend Block Detection - Citi Should Be Inside Experience
+═══════════════════════════════════════════════════════════════════
+
+PROBLEM:
+The backend block detector puts Citi job INSIDE Summary section.
+Citi is a JOB and should be detected as part of EXPERIENCE.
+
+CURRENT (WRONG):
+  Block 1: SUMMARY, lines 5-85    ← Contains Citi (WRONG!)
+  Block 2: EXPERIENCE, lines 86-275
+
+EXPECTED (CORRECT):
+  Block 1: SUMMARY, lines 5-55
+  Block 2: EXPERIENCE, lines 56-275  ← Citi + Deloitte together
+
+───────────────────────────────────────────────────────────────────
+TASK
+───────────────────────────────────────────────────────────────────
+
+1. Find the backend file that detects CV blocks/sections
+   - Likely in: backend/common/detection/block_detector.py
+   - Or: backend/services/cv_analyzer.py
+   - Or similar
+
+2. Find where section boundaries are determined
+
+3. Add job detection logic:
+   - Company names followed by job titles indicate EXPERIENCE
+   - Date patterns like "Jul 2020 - Present" indicate job entry
+   - These should NOT be inside SUMMARY
+
+4. Update the detection to:
+   - When a line contains company name + job title pattern
+   - AND current section is SUMMARY
+   - THEN end SUMMARY and start EXPERIENCE
+
+───────────────────────────────────────────────────────────────────
+JOB ENTRY PATTERNS TO DETECT
+───────────────────────────────────────────────────────────────────
+
+A job entry typically has:
+1. Company name line: "**Citi**" or "Citi" or "**Company Name**"
+2. Job title line: "VP, Cybersecurity..." or "Senior Consultant..."
+3. Date line: "Jul 2020 - Present" or "Aug 2019 - Jul 2020"
+
+Regex patterns:
+- Company: r'\*\*[A-Z][a-zA-Z\s&]+\*\*' (bold company name)
+- Date: r'(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4}\s*[-–]\s*(Present|\d{4})'
+- Job title indicators: VP, Director, Manager, Consultant, Engineer, Architect, Lead, Senior
+
+───────────────────────────────────────────────────────────────────
+IMPLEMENTATION
+───────────────────────────────────────────────────────────────────
+
+Add this function to detect job entry start:
+```python
+import re
+
+def is_job_entry_start(line: str, next_lines: list[str] = None) -> bool:
+    """
+    Detect if this line starts a job entry (should be EXPERIENCE).
+    
+    Job entries typically have:
+    - Company name (often bold: **Company**)
+    - Followed by job title
+    - Followed by date range
+    """
+    line_lower = line.lower().strip()
+    line_clean = line.strip()
+    
+    # Pattern 1: Bold company name like **Citi** or **Deloitte**
+    if re.match(r'^\*\*[A-Z][a-zA-Z\s&,\.]+\*\*\s*$', line_clean):
+        return True
+    
+    # Pattern 2: Date range pattern (strong indicator of job)
+    date_pattern = r'(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4}\s*[-–—]\s*(Present|Current|\d{4})'
+    if re.search(date_pattern, line, re.IGNORECASE):
+        return True
+    
+    # Pattern 3: Job title patterns
+    job_titles = [
+        r'^(VP|Vice President|Director|Manager|Senior|Lead|Principal|Chief|Head)',
+        r'(Consultant|Engineer|Architect|Developer|Analyst|Specialist|Advisor)',
+        r'(Full-time|Part-time|Contract|Freelance)',
+    ]
+    for pattern in job_titles:
+        if re.search(pattern, line, re.IGNORECASE):
+            # Check if also has company context
+            if next_lines and len(next_lines) > 0:
+                # Look for date in next few lines
+                for next_line in next_lines[:3]:
+                    if re.search(date_pattern, next_line, re.IGNORECASE):
+                        return True
+    
+    return False
+```
+
+Update block detection loop:
+```python
+def detect_blocks(cv_text: str) -> list[CVBlock]:
+    lines = cv_text.split('\n')
+    blocks = []
+    current_block = None
+    
+    for i, line in enumerate(lines):
+        line_num = i + 1  # 1-indexed
+        next_lines = lines[i+1:i+5] if i+1 < len(lines) else []
+        
+        # Check for main section headers
+        if is_main_section_header(line):
+            # ... existing header detection code ...
+            pass
+        
+        # NEW: Check for job entry inside non-EXPERIENCE section
+        elif current_block and current_block.type != 'EXPERIENCE':
+            if is_job_entry_start(line, next_lines):
+                # End current section
+                current_block.end_line = line_num - 1
+                blocks.append(current_block)
+                
+                # Start new EXPERIENCE section
+                current_block = CVBlock(
+                    type='EXPERIENCE',
+                    start_line=line_num,
+                    end_line=line_num,  # Will be extended
+                )
+        
+        # Extend current block
+        if current_block:
+            current_block.end_line = line_num
+    
+    # Don't forget last block
+    if current_block:
+        blocks.append(current_block)
+    
+    return blocks
+```
+
+───────────────────────────────────────────────────────────────────
+QUICK ALTERNATIVE: Add to Existing Detection
+───────────────────────────────────────────────────────────────────
+
+If the code structure is different, just add this check wherever
+section boundaries are determined:
+```python
+# When processing line, check if it looks like a job entry
+# If yes AND current section is SUMMARY/ABOUT, switch to EXPERIENCE
+
+JOB_INDICATORS = [
+    r'\*\*Citi\*\*',
+    r'\*\*Deloitte\*\*', 
+    r'\*\*Microsoft\*\*',
+    r'\*\*Google\*\*',
+    # Or more generally:
+    r'\*\*[A-Z][a-z]+\*\*',  # Any bold capitalized word
+    r'(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4}\s*-',
+]
+
+def line_indicates_job(line: str) -> bool:
+    for pattern in JOB_INDICATORS:
+        if re.search(pattern, line):
+            return True
+    return False
+
+# In detection loop:
+if current_section_type in ['SUMMARY', 'ABOUT', 'PROFILE']:
+    if line_indicates_job(line):
+        # End SUMMARY, start EXPERIENCE
+        end_current_section(line_num - 1)
+        start_new_section('EXPERIENCE', line_num)
+```
+
+───────────────────────────────────────────────────────────────────
+VERIFICATION
+───────────────────────────────────────────────────────────────────
+
+After fix, rescan CV and verify:
+- SUMMARY ends BEFORE "**Citi**" line
+- EXPERIENCE starts AT "**Citi**" line
+- EXPERIENCE contains both Citi and Deloitte
+
+───────────────────────────────────────────────────────────────────
+COMPLETION
+───────────────────────────────────────────────────────────────────
+
+□ Found block detection file
+□ Added is_job_entry_start function (or similar)
+□ Updated detection loop to check for jobs in non-EXPERIENCE sections
+□ Tested: Citi now detected as EXPERIENCE, not SUMMARY
+
+Type "BACKEND FIX COMPLETE" when done.

@@ -393,9 +393,23 @@ def extract_sections(text: str) -> CVStructure:
         else:
             end = len(lines) - 1
         
-        if job_entries and section_type == 'summary':
-            first_job = job_entries[0][0] if job_entries else end
-            end = min(end, first_job - 1)
+        # ENHANCED: For summary section, detect if job entries appear BEFORE the next header
+        # This catches cases where jobs (like Citi) appear in summary content
+        if section_type == 'summary':
+            # First check existing job_entries (from Pass 3)
+            if job_entries:
+                first_job = job_entries[0][0] if job_entries else end
+                end = min(end, first_job - 1)
+            else:
+                # Also scan for job entries within the summary content
+                # This handles cases where Experience header exists but jobs appear in summary
+                for scan_line in range(start, end + 1):
+                    if scan_line < len(lines):
+                        remaining = [l.strip() for l in lines[scan_line+1:scan_line+6]] if scan_line+1 < len(lines) else []
+                        if _detect_job_entry_start(lines[scan_line].strip(), remaining):
+                            logger.debug(f"[SECTION_PARSER] Job entry detected at line {scan_line} within summary, adjusting end")
+                            end = scan_line - 1
+                            break
         
         content = '\n'.join(lines[start:end + 1]).strip()
         
@@ -408,6 +422,21 @@ def extract_sections(text: str) -> CVStructure:
             if 'summary' not in structure.section_order:
                 structure.section_order.append('summary')
         elif section_type == 'experience':
+            # ENHANCED: Check if there are job entries that start BEFORE this experience header
+            # If so, extend the experience section to include them
+            experience_start = start
+            for scan_back in range(line_idx - 1, contact_end, -1):
+                if scan_back >= 0 and scan_back < len(lines):
+                    remaining = [l.strip() for l in lines[scan_back+1:scan_back+6]] if scan_back+1 < len(lines) else []
+                    if _detect_job_entry_start(lines[scan_back].strip(), remaining):
+                        experience_start = scan_back
+                        logger.debug(f"[SECTION_PARSER] Extended experience start from {start} to {experience_start}")
+                        break
+            
+            if experience_start < start:
+                content = '\n'.join(lines[experience_start:end + 1]).strip()
+                structure.section_boundaries[section_type] = (experience_start, end)
+            
             structure.experience = content
             structure.has_experience = True
             if 'experience' not in structure.section_order:
