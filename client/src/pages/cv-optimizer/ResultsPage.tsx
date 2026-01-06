@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { FileText, List, Copy, Check, ArrowLeft, Loader2, RefreshCw, Columns, GraduationCap, LayoutGrid, Lightbulb } from 'lucide-react';
+import { FileText, List, Copy, Check, ArrowLeft, Loader2, RefreshCw, Columns, GraduationCap, LayoutGrid } from 'lucide-react';
 import { classifyIssues, FloatingSummaryBadge, StructureOverlay } from '../../components/cv-optimizer/DocumentView';
 import type { SectionType } from '../../components/cv-optimizer/DocumentView';
 import { DocumentEditor } from '../../components/common/DocumentEditor';
@@ -84,7 +84,7 @@ export default function ResultsPage() {
   const [userEditText, setUserEditText] = useState('');
   const [selectedExportContent, setSelectedExportContent] = useState<'cv' | 'recommendations' | 'both'>('cv');
   const [isApplyingFixes, setIsApplyingFixes] = useState(false);
-  const [activeTab, setActiveTab] = useState<'document' | 'list' | 'sidebyside'>('document');
+  const [activeTab, setActiveTab] = useState<'document' | 'list' | 'sidebyside' | 'sectionExplorer'>('document');
   const [copied, setCopied] = useState(false);
   const [fixedCV, setFixedCV] = useState<string | null>(null);
   const [fixedIssues, setFixedIssues] = useState<Set<string>>(new Set());
@@ -143,8 +143,6 @@ export default function ResultsPage() {
     }>;
   } | null>(null);
   const [structureLoading, setStructureLoading] = useState(false);
-  const [showStructureOverlay, setShowStructureOverlay] = useState(false);
-  const [isGuideModeEnabled, setIsGuideModeEnabled] = useState(false);
   const [guideTipBoxData, setGuideTipBoxData] = useState<{
     isOpen: boolean;
     sectionKey: string | null;
@@ -157,33 +155,13 @@ export default function ResultsPage() {
     status: 'found'
   });
 
-  const handleGuideModeToggle = () => {
-    const newState = !isGuideModeEnabled;
-    console.log('🔍 Guide Mode toggle:', { 
-      newState, 
-      hasStructureData: !!structureData,
-      structureLoading,
-      willFetch: newState && !structureData && !structureLoading
-    });
-    
-    setIsGuideModeEnabled(newState);
-    
-    // Fetch structure data if enabling Guide Mode and not already loaded
-    if (newState && !structureData && !structureLoading) {
-      console.log('🔍 Calling fetchStructure from Guide Mode toggle...');
+  // Fetch structure data when switching to sectionExplorer view
+  useEffect(() => {
+    if (activeTab === 'sectionExplorer' && !structureData && !structureLoading) {
+      console.log('🔍 Fetching structure data for Section Explorer view...');
       fetchStructure();
     }
-  };
-  
-  // Debug: Monitor structureData changes
-  useEffect(() => {
-    console.log('🔍 structureData/isGuideModeEnabled changed:', {
-      hasStructureData: !!structureData,
-      blockCount: structureData?.blocks?.length,
-      isGuideModeEnabled,
-      showStructureOverlay
-    });
-  }, [structureData, isGuideModeEnabled, showStructureOverlay]);
+  }, [activeTab, structureData, structureLoading]);
 
   const handleGuideClick = async (sectionKey: string) => {
     const detectedSections = structureData?.blocks?.map(b => b.type.toUpperCase()) || [];
@@ -1157,141 +1135,109 @@ export default function ResultsPage() {
               </button>
             )}
 
-            {/* CV Structure Toggle Button */}
+            {/* Section Explorer Button */}
             <button
-              onClick={() => {
-                if (!showStructureOverlay && !structureData && !structureLoading) {
-                  fetchStructure();
-                }
-                setShowStructureOverlay(!showStructureOverlay);
-              }}
+              onClick={() => setActiveTab('sectionExplorer')}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                showStructureOverlay
+                activeTab === 'sectionExplorer'
                   ? 'bg-blue-600 text-white'
                   : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
               }`}
             >
               <LayoutGrid size={16} />
-              CV Structure
-            </button>
-
-            {/* Guide Mode Toggle Button */}
-            <button
-              onClick={handleGuideModeToggle}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                isGuideModeEnabled
-                  ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
-              }`}
-              title={isGuideModeEnabled ? 'Guide Mode ON - Click to disable' : 'Guide Mode OFF - Click to learn CV best practices'}
-            >
-              <Lightbulb size={16} className={isGuideModeEnabled ? 'text-yellow-300' : ''} />
-              Guide Mode
-              {isGuideModeEnabled && (
-                <span className="ml-1 text-xs bg-white/20 px-1.5 py-0.5 rounded">ON</span>
-              )}
+              Section Explorer
             </button>
           </div>
           
           {activeTab === 'document' ? (
             <div data-tour="document-view">
-              {!showStructureOverlay && (
-                <FloatingSummaryBadge 
-                  issues={normalizedIssues.map(issue => ({
-                    issue_code: issue.issueType,
-                    display_name: issue.title,
-                    severity: issue.severity
-                  }))}
-                  onIssueClick={(issueCode) => {
-                    const issue = normalizedIssues.find(i => i.issueType === issueCode);
-                    if (issue) handleIssueClick(issue.id);
-                  }}
+              <FloatingSummaryBadge 
+                issues={normalizedIssues.map(issue => ({
+                  issue_code: issue.issueType,
+                  display_name: issue.title,
+                  severity: issue.severity
+                }))}
+                onIssueClick={(issueCode) => {
+                  const issue = normalizedIssues.find(i => i.issueType === issueCode);
+                  if (issue) handleIssueClick(issue.id);
+                }}
+              />
+              
+              <DocumentEditor
+                content={cvContent?.fullText || ''}
+                htmlContent={cvContent?.htmlContent}
+                format="auto"
+                markers={documentIssues.map(issue => ({
+                  id: issue.id?.toString() || '',
+                  matchText: issue.matchText || '',
+                  tag: issue.severity || 'consider'
+                })).filter(m => m.matchText && m.matchText.length > 0)}
+                onMarkerClick={(id) => handleIssueClick(id)}
+                config={{
+                  maxWidth: 1600,
+                  fontSize: 20,
+                  padding: 60,
+                  showWordMargins: true,
+                  enableHighlighting: true
+                }}
+              />
+
+              {formatIssues.length > 0 && (
+                <QuickFormatPanel
+                  issues={formatIssues}
+                  onApplyFixes={handleApplyQuickFixes}
+                  isApplying={isApplyingFixes}
                 />
               )}
               
-              {showStructureOverlay && structureData ? (
-                <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+              {/* Missing Sections Bar in Document View - always visible */}
+              {structureData && (
+                <MissingSectionsBar
+                  detectedSections={structureData.blocks?.map(b => b.type.toUpperCase()) || []}
+                  onSectionClick={handleGuideClick}
+                  isVisible={true}
+                />
+              )}
+            </div>
+          ) : activeTab === 'sectionExplorer' ? (
+            <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+              {structureLoading ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <Loader2 className="w-8 h-8 animate-spin text-blue-600 mb-3" />
+                  <span className="text-gray-600">Analyzing CV structure...</span>
+                </div>
+              ) : structureData ? (
+                <>
                   <div className="flex items-center gap-3 mb-4 pb-3 border-b">
                     <LayoutGrid size={20} className="text-blue-600" />
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">CV Structure Analysis</h3>
+                      <h3 className="text-lg font-semibold text-gray-900">CV Section Explorer</h3>
                       <p className="text-sm text-gray-500">
                         {structureData.total_blocks} sections • {structureData.total_jobs} jobs • {structureData.total_bullets} bullets
                       </p>
                     </div>
                   </div>
                   <StructureOverlay
-                    key={`structure-guide-${isGuideModeEnabled}`}
+                    key="structure-explorer"
                     blocks={structureData.blocks}
                     cvContent={cvContent?.fullText || ''}
                     onSectionTypeChange={handleSectionTypeChange}
                     onStructureChange={handleStructureChange}
-                    isGuideModeEnabled={isGuideModeEnabled}
+                    isGuideModeEnabled={true}
                     onGuideClick={handleGuideClick}
                   />
                   
-                  {/* Missing Sections Bar - visible when Guide Mode enabled */}
+                  {/* Missing Sections Bar - always visible in Section Explorer */}
                   <MissingSectionsBar
                     detectedSections={structureData?.blocks?.map(b => b.type.toUpperCase()) || []}
                     onSectionClick={handleGuideClick}
-                    isVisible={isGuideModeEnabled}
+                    isVisible={true}
                   />
-                </div>
-              ) : showStructureOverlay && structureLoading ? (
-                <div className="bg-white rounded-lg shadow-sm p-12 border border-gray-200 flex flex-col items-center justify-center">
-                  <Loader2 className="w-8 h-8 animate-spin text-blue-600 mb-3" />
-                  <span className="text-gray-600">Analyzing CV structure...</span>
-                </div>
-              ) : (
-                <>
-                  <DocumentEditor
-                    content={cvContent?.fullText || ''}
-                    htmlContent={cvContent?.htmlContent}
-                    format="auto"
-                    markers={documentIssues.map(issue => ({
-                      id: issue.id?.toString() || '',
-                      matchText: issue.matchText || '',
-                      tag: issue.severity || 'consider'
-                    })).filter(m => m.matchText && m.matchText.length > 0)}
-                    onMarkerClick={(id) => handleIssueClick(id)}
-                    config={{
-                      maxWidth: 1600,
-                      fontSize: 20,
-                      padding: 60,
-                      showWordMargins: true,
-                      enableHighlighting: true
-                    }}
-                  />
-
-                  {formatIssues.length > 0 && (
-                    <QuickFormatPanel
-                      issues={formatIssues}
-                      onApplyFixes={handleApplyQuickFixes}
-                      isApplying={isApplyingFixes}
-                    />
-                  )}
-                  
-                  {/* Missing Sections Bar in Document View - visible when Guide Mode enabled */}
-                  {console.log('🔍 Document View MissingSectionsBar check:', {
-                    isGuideModeEnabled,
-                    hasStructureData: !!structureData,
-                    structureLoading,
-                    blockCount: structureData?.blocks?.length
-                  })}
-                  {isGuideModeEnabled && structureLoading && (
-                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mt-4 flex items-center gap-2">
-                      <span className="animate-spin">⏳</span>
-                      <span className="text-sm text-amber-700">Loading section analysis...</span>
-                    </div>
-                  )}
-                  {isGuideModeEnabled && structureData && (
-                    <MissingSectionsBar
-                      detectedSections={structureData.blocks?.map(b => b.type.toUpperCase()) || []}
-                      onSectionClick={handleGuideClick}
-                      isVisible={true}
-                    />
-                  )}
                 </>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+                  <span>No structure data available</span>
+                </div>
               )}
             </div>
           ) : activeTab === 'list' ? (

@@ -1,0 +1,180 @@
+═══════════════════════════════════════════════════════════════════════════════
+💻 REPLIT: 3 UX IMPROVEMENTS FOR CV SECTION VIEW
+═══════════════════════════════════════════════════════════════════════════════
+
+OBJECTIVE:
+Implement 3 UX improvements to make the CV viewing experience cleaner.
+
+───────────────────────────────────────────────────────────────────────────────
+
+CHANGE 1: VIEW SWITCHING (NOT TOGGLE)
+═══════════════════════════════════════
+
+CURRENT BEHAVIOR:
+- CV Structure button works as toggle (on/off)
+- User clicks once to show, clicks again to hide
+
+WANTED BEHAVIOR:
+- All view buttons work the same way: click = switch to that view
+- Document View, List View, CV Section Explorer are mutually exclusive
+- Clicking any view button switches directly to that view
+
+IMPLEMENTATION:
+
+In ResultsPage.tsx, change from:
+```typescript
+// REMOVE this toggle pattern
+const [showStructureOverlay, setShowStructureOverlay] = useState(false);
+
+<button onClick={() => setShowStructureOverlay(!showStructureOverlay)}>
+```
+
+TO single viewMode state:
+```typescript
+// USE single viewMode state
+type ViewMode = 'document' | 'list' | 'sideBySide' | 'sectionExplorer';
+const [viewMode, setViewMode] = useState<ViewMode>('document');
+
+// Each button just sets its view:
+<button 
+  onClick={() => setViewMode('document')}
+  className={viewMode === 'document' ? 'active-style' : 'inactive-style'}
+>
+  Document View
+</button>
+
+<button 
+  onClick={() => setViewMode('list')}
+  className={viewMode === 'list' ? 'active-style' : 'inactive-style'}
+>
+  List View
+</button>
+
+<button 
+  onClick={() => setViewMode('sectionExplorer')}
+  className={viewMode === 'sectionExplorer' ? 'active-style' : 'inactive-style'}
+>
+  CV Section Explorer
+</button>
+```
+
+Update the content rendering:
+```typescript
+{viewMode === 'document' && <DocumentEditor ... />}
+{viewMode === 'list' && <ListView ... />}
+{viewMode === 'sideBySide' && <SideBySide ... />}
+{viewMode === 'sectionExplorer' && <StructureOverlay ... />}
+```
+
+NOTE: If viewMode state already exists, just add 'sectionExplorer' option 
+and update the CV Structure button to use setViewMode('sectionExplorer').
+
+───────────────────────────────────────────────────────────────────────────────
+
+CHANGE 2: REMOVE GUIDE MODE BUTTON - MAKE IT DEFAULT
+═════════════════════════════════════════════════════
+
+CURRENT:
+- Separate "Guide Mode" button that user must click
+- 💡 icons only show when Guide Mode is ON
+
+WANTED:
+- NO Guide Mode button in toolbar
+- 💡 icons ALWAYS visible in CV Section Explorer
+- Missing Sections Bar ALWAYS visible in CV Section Explorer
+
+IMPLEMENTATION:
+
+1. REMOVE the Guide Mode button from toolbar (delete the JSX)
+
+2. REMOVE isGuideModeEnabled state (no longer needed)
+
+3. In StructureOverlay.tsx, REMOVE the isGuideModeEnabled condition:
+
+CHANGE FROM:
+```tsx
+{isGuideModeEnabled && (
+  <button className="guide-icon-button" ...>
+    <span>💡</span>
+  </button>
+)}
+```
+
+CHANGE TO:
+```tsx
+{/* Always show guide icon in Section Explorer */}
+<button className="guide-icon-button" ...>
+  <span>💡</span>
+</button>
+```
+
+4. For Missing Sections Bar, show it when viewMode === 'sectionExplorer':
+```tsx
+{viewMode === 'sectionExplorer' && structureData && (
+  <MissingSectionsBar
+    detectedSections={structureData.blocks?.map(b => b.type.toUpperCase()) || []}
+    onSectionClick={handleGuideClick}
+    isVisible={true}
+  />
+)}
+```
+
+5. ALSO show Missing Sections Bar in Document View (keep this):
+```tsx
+{viewMode === 'document' && structureData && (
+  <MissingSectionsBar
+    detectedSections={structureData.blocks?.map(b => b.type.toUpperCase()) || []}
+    onSectionClick={handleGuideClick}
+    isVisible={true}
+  />
+)}
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+CHANGE 3: RENAME "CV STRUCTURE" TO "CV SECTION EXPLORER"
+════════════════════════════════════════════════════════
+
+Find all occurrences of "CV Structure" and replace:
+
+1. Button text:
+   "CV Structure" → "Section Explorer"
+
+2. Button icon (keep or change):
+   Keep: <LayoutGrid size={16} /> 
+   OR change to: <Search size={16} /> or <Compass size={16} />
+
+3. Any tooltips or titles:
+   "CV Structure" → "CV Section Explorer"
+
+4. Header text in the view (if exists):
+   "CV Structure Analysis" → "CV Section Explorer"
+
+5. Console logs and comments (optional but nice):
+   Update for clarity
+
+───────────────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+
+After all changes:
+
+[ ] Document View button - click switches to Document View
+[ ] List View button - click switches to List View  
+[ ] Section Explorer button - click switches to Section Explorer view
+[ ] NO Guide Mode button visible in toolbar
+[ ] 💡 icons ALWAYS visible on section headers in Section Explorer
+[ ] Missing Sections Bar visible in Section Explorer (at bottom)
+[ ] Missing Sections Bar ALSO visible in Document View (at bottom)
+[ ] Button text shows "Section Explorer" (not "CV Structure")
+[ ] Clicking between views works smoothly (no toggle behavior)
+
+───────────────────────────────────────────────────────────────────────────────
+
+ANTI-IMPROVISATION:
+- Do NOT remove any existing functionality
+- Do NOT change the StructureOverlay content rendering
+- Do NOT change TipBox behavior
+- Only change: view switching logic, button visibility, button text
+
+═══════════════════════════════════════════════════════════════════════════════

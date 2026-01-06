@@ -1,0 +1,128 @@
+═══════════════════════════════════════════════════════════════════════════════
+💻 REPLIT: INCREASE FONT SIZES IN CV ANALYSIS RESULTS
+═══════════════════════════════════════════════════════════════════════════════
+
+OBJECTIVE:
+Increase font sizes in the left sidebar - they are too small to read comfortably.
+
+───────────────────────────────────────────────────────────────────────────────
+
+AREAS TO FIX:
+
+1. CV SCORE CIRCLE
+   - Score number "64" - increase size
+   - "CV Score" label below - increase size
+
+2. LEGEND (Below score)
+   - "0 Critical • 4 Important" 
+   - "5 Consider • 0 Polish"
+   - These are too small
+
+3. PROGRESS SECTION
+   - "Progress" heading
+   - "0 of 9 issues addressed (0%)"
+
+4. FOUND OPPORTUNITIES SECTION
+   - "Found 9 opportunities"
+   - "3 in document • 6 general"
+
+5. ISSUE CATEGORIES
+   - "Important (4)"
+   - "Consider (5)"
+
+───────────────────────────────────────────────────────────────────────────────
+
+RECOMMENDED FONT SIZES:
+
+| Element | Current (approx) | Recommended |
+|---------|------------------|-------------|
+| Score number (64) | 32px | 40px |
+| "CV Score" label | 12px | 14px |
+| Legend items | 10px | 13px |
+| Section headings | 12px | 14px (font-weight: 600) |
+| Section content | 11px | 13px |
+| Category items | 13px | 15px |
+
+───────────────────────────────────────────────────────────────────────────────
+
+FIND THE COMPONENT:
+
+Look in these likely locations:
+- client/src/pages/cv-optimizer/ResultsPage.tsx
+- client/src/components/cv-optimizer/ScoreCard.tsx
+- client/src/components/cv-optimizer/Sidebar.tsx
+- client/src/components/cv-optimizer/IssuesSidebar.tsx
+
+Search for: "CV Score", "Critical", "Important", "Progress", "opportunities"
+
+───────────────────────────────────────────────────────────────────────────────
+
+EXAMPLE FIXES:
+
+Score number:
+```tsx
+// Change from
+<span className="text-3xl font-bold">64</span>
+
+// Change to
+<span className="text-4xl font-bold">64</span>
+```
+
+Legend items:
+```tsx
+// Change from
+<span className="text-xs">0 Critical</span>
+
+// Change to
+<span className="text-sm">0 Critical</span>
+```
+
+Section headings:
+```tsx
+// Change from
+<h3 className="text-xs font-medium">Progress</h3>
+
+// Change to
+<h3 className="text-sm font-semibold">Progress</h3>
+```
+
+Category items:
+```tsx
+// Change from
+<span className="text-sm">Important (4)</span>
+
+// Change to
+<span className="text-base">Important (4)</span>
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+TAILWIND SIZE REFERENCE:
+- text-xs  = 12px (too small)
+- text-sm  = 14px (minimum readable)
+- text-base = 16px (comfortable)
+- text-lg  = 18px (headings)
+- text-xl  = 20px (large headings)
+- text-2xl = 24px
+- text-3xl = 30px
+- text-4xl = 36px
+
+───────────────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+After changes:
+- [ ] All text in sidebar is easily readable
+- [ ] Score number is prominent and clear
+- [ ] Legend dots and text are visible
+- [ ] Category items are comfortable to click
+- [ ] Overall sidebar doesn't look cramped
+
+───────────────────────────────────────────────────────────────────────────────
+
+ANTI-IMPROVISATION:
+- Only change font sizes
+- Do NOT change colors
+- Do NOT change layout/spacing
+- Do NOT change functionality
+
+═══════════════════════════════════════════════════════════════════════════════
