@@ -1,0 +1,93 @@
+RFI Prompt for Replit
+═══════════════════════════════════════════════════════════════════════════════
+🔍 RFI: CRITICAL BUG - TipBox Shows Database Examples Instead of Actual CV Text
+═══════════════════════════════════════════════════════════════════════════════
+
+PROBLEM DESCRIPTION:
+The TipBox "ISSUE IN YOUR CV" section displays text from the database 
+`example_before` column instead of the actual text detected in the user's CV.
+
+EXAMPLES OF THE BUG:
+1. "Education Entry Lacks Detail" shows "BS Computer Science MIT, 2023"
+   but user's CV has "Academic Studies in Sociology, Open University of Israel"
+   
+2. "Job Description Too Lengthy" shows "Software Engineer (2020-2023) - 
+   Built features (bullet 1)..." but this text doesn't exist in user's CV
+
+3. "Old Roles Have Too Much Detail" shows NO citation at all - user has
+   no idea which section is being flagged
+
+───────────────────────────────────────────────────────────────────────────────
+
+INVESTIGATION 1: Issue Detection Storage
+
+Questions:
+- When an issue is detected, WHERE is the actual CV text stored?
+- Is there a field like `detected_text`, `cv_excerpt`, or `issue_location`?
+- Show me the data structure returned by the detection process
+
+Files to check:
+- backend/common/detection/*.py (issue detection logic)
+- Any file that runs CV analysis and returns issues
+
+───────────────────────────────────────────────────────────────────────────────
+
+INVESTIGATION 2: TipBox Data Population
+
+Questions:
+- How does the frontend get the text for "ISSUE IN YOUR CV" section?
+- Is it pulling from detection results or from cv_issue_types.example_before?
+- Show me the code that populates TipBox content for detected issues
+
+Files to check:
+- client/src/components/common/TipBox/*.ts (content building)
+- client/src/pages/cv-optimizer/ResultsPage.tsx (issue click handler)
+- Any API endpoint that returns issue details
+
+───────────────────────────────────────────────────────────────────────────────
+
+INVESTIGATION 3: Data Flow Trace
+
+Show me the complete flow:
+1. Detection: How is the issue detected and what data is captured?
+2. Storage: Where is the detected issue stored (with CV text)?
+3. Retrieval: How does frontend request issue details?
+4. Display: How does TipBox receive and display the data?
+
+───────────────────────────────────────────────────────────────────────────────
+
+INVESTIGATION 4: Database Schema Check
+
+Show the schema for tables that store detected issues:
+- cv_scan_results (or similar)
+- cv_detected_issues (or similar)
+- Any table that stores per-CV issue data
+
+Question: Is there a column to store the actual detected text/excerpt?
+
+───────────────────────────────────────────────────────────────────────────────
+
+EXPECTED OUTPUT FORMAT:
+
+## 1. Detection Storage
+```python
+# Show detection code and data structure
+```
+
+## 2. TipBox Data Population  
+```typescript
+# Show frontend code that populates TipBox
+```
+
+## 3. Data Flow
+Detection → [where?] → API → [how?] → TipBox
+
+## 4. Database Schema
+```sql
+# Show relevant table schemas
+```
+
+## 5. Root Cause Identification
+Explain exactly WHY example_before is being shown instead of actual CV text
+
+═══════════════════════════════════════════════════════════════════════════════
