@@ -1,0 +1,89 @@
+═══════════════════════════════════════════════════════════════════════════════
+💻 FIX: GUIDE TIPBOX HEADER STYLING
+═══════════════════════════════════════════════════════════════════════════════
+
+PROBLEM:
+The "Found in your CV" badge in Guide TipBox header:
+1. Font too small - hard to read
+2. Font color should be white (currently dark)
+
+───────────────────────────────────────────────────────────────────────────────
+
+FIND THE STYLING:
+
+Check these files for the status badge styling:
+
+1. client/src/components/common/TipBox/TipBox.tsx
+   Look for: sectionStatus, "Found in your CV", "Missing"
+
+2. client/src/components/common/TipBox/TipBoxStyles.css
+   Look for: status-badge, guide-status, or similar class
+
+───────────────────────────────────────────────────────────────────────────────
+
+FIX THE BADGE STYLING:
+
+The badge should look like this:
+```tsx
+{/* Status badge in guide mode */}
+{mode === 'guide' && sectionStatus && (
+  <div 
+    className="guide-status-badge"
+    style={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '6px',
+      padding: '4px 12px',
+      borderRadius: '4px',
+      fontSize: '14px',           // Larger font
+      fontWeight: '500',
+      color: '#FFFFFF',           // White text
+      backgroundColor: sectionStatus === 'found' 
+        ? 'rgba(34, 197, 94, 0.3)'   // Green tint for found
+        : 'rgba(251, 191, 36, 0.3)', // Amber tint for missing
+      marginTop: '8px'
+    }}
+  >
+    <span>{sectionStatus === 'found' ? '✅' : '⚠️'}</span>
+    <span>{sectionStatus === 'found' ? 'Found in your CV' : 'Missing from your CV'}</span>
+  </div>
+)}
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+OR ADD CSS CLASS:
+
+In TipBoxStyles.css, add:
+```css
+.guide-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #FFFFFF;
+  margin-top: 8px;
+}
+
+.guide-status-badge--found {
+  background-color: rgba(34, 197, 94, 0.3);
+}
+
+.guide-status-badge--missing {
+  background-color: rgba(251, 191, 36, 0.3);
+}
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+After fix:
+- [ ] Badge text is clearly readable (larger font)
+- [ ] Badge text is WHITE
+- [ ] Green background for "Found in your CV"
+- [ ] Amber background for "Missing from your CV"
+
+═══════════════════════════════════════════════════════════════════════════════
