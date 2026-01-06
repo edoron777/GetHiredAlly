@@ -150,8 +150,8 @@ export default function CVDocument({ cvContent, issues = [], onIssueClick }: CVD
           style: 'rectangle',
           tagColors: CV_OPTIMIZER_COLORS,
           icon: { 
-            icon: 'ⓘ', 
-            position: 'after' 
+            icon: '', 
+            position: 'before' 
           },
           onClick: (id) => {
             onIssueClick?.(id);

@@ -143,17 +143,19 @@
 /* Gutter-style marker icon - appears BEFORE the text */
 .marker-icon-gutter {
   display: inline-block;
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   background-color: currentColor;
-  margin-right: 4px;
+  margin-right: 6px;
   vertical-align: middle;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9), 0 0 3px currentColor;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9), 0 0 4px currentColor;
   opacity: 1;
   flex-shrink: 0;
+  font-size: 0;
+  line-height: 0;
 }
 
 .marker-icon-gutter:hover {
