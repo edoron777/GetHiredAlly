@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronDown, Check, ArrowUpCircle, ArrowDownCircle, Trash2, Plus } from 'lucide-react';
+import { ChevronDown, Check, ArrowUpCircle, ArrowDownCircle, Trash2 } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { SECTION_COLORS, SECTION_OPTIONS } from './structureTypes';
 import type { SectionType, CVBlock } from './structureTypes';
 import { AddSectionModal } from './AddSectionModal';
@@ -44,22 +46,6 @@ export const StructureOverlay: React.FC<StructureOverlayProps> = ({
     });
   };
 
-  const debugContent = (label: string, content: string) => {
-    const contentLines = content.split('\n');
-    console.log(`\n📄 [${label}]`);
-    console.log(`  Total chars: ${content.length}`);
-    console.log(`  Total lines: ${contentLines.length}`);
-    console.log(`  First 3 lines:`);
-    contentLines.slice(0, 3).forEach((line, i) => {
-      console.log(`    ${i + 1}: "${line.substring(0, 80)}${line.length > 80 ? '...' : ''}"`);
-    });
-    if (contentLines.length > 3) {
-      console.log(`  Last 3 lines:`);
-      contentLines.slice(-3).forEach((line, i) => {
-        console.log(`    ${contentLines.length - 2 + i}: "${line.substring(0, 80)}${line.length > 80 ? '...' : ''}"`);
-      });
-    }
-  };
   // =========================================
 
   // Debug: Verify cvContent is available
@@ -616,35 +602,11 @@ export const StructureOverlay: React.FC<StructureOverlayProps> = ({
               className="section-content p-4"
               style={{ backgroundColor: colors.background }}
             >
-              {contentLines.map((line, lineIdx) => {
-                const actualLineNumber = block.start_line + lineIdx;
-                const isFirstLine = lineIdx === 0;
-                const showSplitButton = !isFirstLine && contentLines.length > 1;
-                
-                return (
-                  <div 
-                    key={lineIdx} 
-                    className="cv-line leading-relaxed group relative text-sm text-gray-800"
-                    data-line-number={actualLineNumber}
-                  >
-                    {showSplitButton && (
-                      <button
-                        className="split-line-button absolute -left-6 top-1/2 -translate-y-1/2
-                                   opacity-0 group-hover:opacity-100
-                                   w-5 h-5 rounded-full bg-blue-500 text-white
-                                   flex items-center justify-center text-xs
-                                   hover:bg-blue-600 transition-all z-20
-                                   shadow-md"
-                        onClick={() => setSplitAtLine(actualLineNumber)}
-                        title="Split section here"
-                      >
-                        <Plus className="w-3 h-3" />
-                      </button>
-                    )}
-                    <span className="whitespace-pre-wrap">{line || '\u00A0'}</span>
-                  </div>
-                );
-              })}
+              <div className="prose prose-sm max-w-none text-gray-800">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {contentLines.join('\n')}
+                </ReactMarkdown>
+              </div>
             </div>
           </div>
         );
