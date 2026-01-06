@@ -51,7 +51,8 @@ async function loadGuideCache(): Promise<void> {
     const data = await response.json()
     
     data?.forEach((guide: SectionGuideData) => {
-      guideCache.set(guide.section_key, guide)
+      // Store with uppercase key for consistent lookup
+      guideCache.set(guide.section_key.toUpperCase(), guide)
     })
     
     cacheLoaded = true
@@ -63,9 +64,13 @@ async function loadGuideCache(): Promise<void> {
 export async function buildGuideContent(sectionKey: string): Promise<GuideContent | null> {
   await loadGuideCache()
   
-  const guide = guideCache.get(sectionKey)
+  // CRITICAL: Convert to uppercase to match database
+  const normalizedKey = sectionKey.toUpperCase()
+  console.log('🔍 buildGuideContent lookup:', { original: sectionKey, normalized: normalizedKey })
+  
+  const guide = guideCache.get(normalizedKey)
   if (!guide) {
-    console.warn(`No guide found for section: ${sectionKey}`)
+    console.warn(`No guide found for section: ${sectionKey} (normalized: ${normalizedKey})`)
     return null
   }
   

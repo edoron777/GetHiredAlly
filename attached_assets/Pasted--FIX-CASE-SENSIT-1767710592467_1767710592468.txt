@@ -1,0 +1,62 @@
+═══════════════════════════════════════════════════════════════════════════════
+💻 FIX: CASE SENSITIVITY - GUIDE ICONS NOT WORKING
+═══════════════════════════════════════════════════════════════════════════════
+
+CRITICAL PROBLEM:
+Clicking 💡 icons shows "No guide found for section: contact"
+
+ROOT CAUSE:
+- Code sends: "contact" (lowercase)
+- Database has: "CONTACT" (UPPERCASE)
+
+───────────────────────────────────────────────────────────────────────────────
+
+FIX FILE: client/src/components/common/TipBox/guideContentBuilder.ts
+
+FIND this function:
+```typescript
+export async function buildGuideContent(sectionKey: string): Promise<GuideContent | null> {
+  await loadGuideCache();
+  const guide = guideCache.get(sectionKey);
+```
+
+CHANGE TO:
+```typescript
+export async function buildGuideContent(sectionKey: string): Promise<GuideContent | null> {
+  await loadGuideCache();
+  
+  // CRITICAL: Convert to uppercase to match database
+  const normalizedKey = sectionKey.toUpperCase();
+  console.log('🔍 buildGuideContent lookup:', { original: sectionKey, normalized: normalizedKey });
+  
+  const guide = guideCache.get(normalizedKey);
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+ALSO CHECK loadGuideCache function - ensure cache keys are uppercase:
+
+FIND:
+```typescript
+data?.forEach((guide: SectionGuideData) => {
+  guideCache.set(guide.section_key, guide);
+});
+```
+
+CHANGE TO:
+```typescript
+data?.forEach((guide: SectionGuideData) => {
+  // Store with uppercase key for consistent lookup
+  guideCache.set(guide.section_key.toUpperCase(), guide);
+});
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+After fix:
+1. Click 💡 icon on CONTACT section
+2. Console should show: "🔍 buildGuideContent lookup: { original: 'contact', normalized: 'CONTACT' }"
+3. TipBox should open with Contact Information guide
+
+═══════════════════════════════════════════════════════════════════════════════
