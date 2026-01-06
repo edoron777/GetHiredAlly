@@ -17,6 +17,7 @@ import { DocStyler } from '../../components/common/DocStyler';
 import { getAuthToken, isAuthenticated } from '../../lib/auth';
 import { BulkAutoFixModal } from '../../components/cv-optimizer/BulkAutoFixModal';
 import { ResultModal } from '../../components/cv-optimizer/ResultModal';
+import { MissingSectionsBar } from '../../components/cv-optimizer/MissingSectionsBar';
 import { useCVOptimizerTour } from '../../hooks/useCVOptimizerTour';
 
 interface CVIssue {

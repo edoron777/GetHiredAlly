@@ -1,0 +1,143 @@
+═══════════════════════════════════════════════════════════════════════════════
+💻 REPLIT-7#8: WIRE UP INTERACTIONS
+═══════════════════════════════════════════════════════════════════════════════
+
+OBJECTIVE:
+Connect guide icon clicks to TipBox display with guide content.
+
+TARGET FILE:
+client/src/pages/cv-optimizer/ResultsPage.tsx
+
+───────────────────────────────────────────────────────────────────────────────
+
+CHANGES REQUIRED:
+
+1. ADD imports at top of file:
+```typescript
+import { buildGuideContent, GuideContent } from '@/components/common/TipBox/guideContentBuilder';
+```
+
+2. ADD state for guide TipBox (near other useState declarations, around line 125):
+```typescript
+// Guide Mode state
+const [isGuideModeEnabled, setIsGuideModeEnabled] = useState(false);
+const [guideTipBoxData, setGuideTipBoxData] = useState<{
+  isOpen: boolean;
+  sectionKey: string | null;
+  content: GuideContent | null;
+  status: 'found' | 'missing';
+}>({
+  isOpen: false,
+  sectionKey: null,
+  content: null,
+  status: 'found'
+});
+```
+
+3. ADD handler for guide clicks (near other handlers):
+```typescript
+// Guide Mode handlers
+const handleGuideModeToggle = () => {
+  setIsGuideModeEnabled(prev => !prev);
+};
+
+const handleGuideClick = async (sectionKey: string) => {
+  // Determine if section is found or missing in user's CV
+  const detectedSections = structureData?.blocks?.map(b => b.type) || [];
+  const status = detectedSections.includes(sectionKey) ? 'found' : 'missing';
+  
+  // Fetch guide content from database
+  const content = await buildGuideContent(sectionKey);
+  
+  if (!content) {
+    console.warn(`No guide content found for section: ${sectionKey}`);
+    return;
+  }
+  
+  setGuideTipBoxData({
+    isOpen: true,
+    sectionKey,
+    content,
+    status
+  });
+};
+
+const handleGuideClose = () => {
+  setGuideTipBoxData(prev => ({
+    ...prev,
+    isOpen: false
+  }));
+};
+```
+
+4. FIND the StructureOverlay render (around lines 1126-1177) and ADD props:
+
+CURRENT (approximately):
+```tsx
+{showStructureOverlay && structureData && (
+  <StructureOverlay
+    blocks={structureData.blocks}
+    cvContent={cvContent?.fullText || ''}
+    onSectionTypeChange={handleSectionTypeChange}
+    onStructureChange={handleStructureChange}
+  />
+)}
+```
+
+CHANGE TO:
+```tsx
+{showStructureOverlay && structureData && (
+  <StructureOverlay
+    blocks={structureData.blocks}
+    cvContent={cvContent?.fullText || ''}
+    onSectionTypeChange={handleSectionTypeChange}
+    onStructureChange={handleStructureChange}
+    isGuideModeEnabled={isGuideModeEnabled}
+    onGuideClick={handleGuideClick}
+  />
+)}
+```
+
+5. ADD Guide TipBox render (add after the existing TipBox render, or at end of return):
+```tsx
+{/* Guide Mode TipBox */}
+{guideTipBoxData.isOpen && guideTipBoxData.content && (
+  <TipBox
+    isOpen={true}
+    onClose={handleGuideClose}
+    mode="guide"
+    sectionStatus={guideTipBoxData.status}
+    sectionKey={guideTipBoxData.sectionKey || undefined}
+    title={guideTipBoxData.content.title}
+    sections={guideTipBoxData.content.sections}
+  />
+)}
+```
+
+6. ADD MissingSectionsBar render (after StructureOverlay or DocumentEditor):
+```tsx
+{/* Missing Sections Bar - visible when Guide Mode enabled */}
+<MissingSectionsBar
+  detectedSections={structureData?.blocks?.map(b => b.type) || []}
+  onSectionClick={handleGuideClick}
+  isVisible={isGuideModeEnabled}
+/>
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+After changes, confirm:
+- [ ] Click 💡 icon opens TipBox
+- [ ] Click missing section chip opens TipBox
+- [ ] TipBox shows correct content for section
+- [ ] Status badge shows "Found" or "Missing" correctly
+- [ ] "Got It" button closes TipBox
+- [ ] No console errors
+
+ANTI-IMPROVISATION:
+- Do NOT modify existing TipBox (issue mode) handling
+- Keep both TipBox instances working independently
+- If state structure differs, adapt but maintain functionality
+
+═══════════════════════════════════════════════════════════════════════════════
