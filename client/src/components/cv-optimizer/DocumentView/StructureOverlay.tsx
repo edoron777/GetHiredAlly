@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Plus } from 'lucide-react';
-import { SectionTab } from './SectionTab';
-import { AddSectionModal } from './AddSectionModal';
-import { SECTION_COLORS } from './structureTypes';
+import { ChevronDown, Check, ArrowUpCircle, ArrowDownCircle, Trash2, Plus } from 'lucide-react';
+import { SECTION_COLORS, SECTION_OPTIONS } from './structureTypes';
 import type { SectionType, CVBlock } from './structureTypes';
+import { AddSectionModal } from './AddSectionModal';
 import './StructureOverlay.css';
 
 export { SECTION_COLORS };
@@ -22,95 +21,104 @@ export const StructureOverlay: React.FC<StructureOverlayProps> = ({
   onSectionTypeChange,
   onStructureChange
 }) => {
-  const [localBlocks, setLocalBlocks] = useState<CVBlock[]>(blocks);
+  const [localBlocks, setLocalBlocks] = useState<CVBlock[]>([]);
+  const [openDropdown, setOpenDropdown] = useState<number | null>(null);
   const [splitAtLine, setSplitAtLine] = useState<number | null>(null);
   const lines = cvContent.split('\n');
 
   useEffect(() => {
-    setLocalBlocks(blocks);
+    if (blocks && blocks.length > 0) {
+      setLocalBlocks(blocks);
+    }
   }, [blocks]);
 
-  const handleTypeChange = (sectionIndex: number, newType: SectionType) => {
-    setLocalBlocks(prevBlocks => {
-      const newBlocks = [...prevBlocks];
-      newBlocks[sectionIndex] = {
-        ...newBlocks[sectionIndex],
-        type: newType.toUpperCase()
-      };
-      onStructureChange?.(newBlocks);
-      return newBlocks;
-    });
-    onSectionTypeChange?.(sectionIndex, newType);
+  const getBlockContent = (block: CVBlock): string[] => {
+    return lines.slice(Math.max(0, block.start_line - 1), block.end_line);
   };
 
-  const handleMergeUp = (sectionIndex: number) => {
-    if (sectionIndex === 0) return;
+  const handleTypeChange = (index: number, newType: SectionType) => {
+    setLocalBlocks(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], type: newType.toUpperCase() };
+      onStructureChange?.(updated);
+      return updated;
+    });
+    onSectionTypeChange?.(index, newType);
+    setOpenDropdown(null);
+  };
+
+  const handleMergeUp = (index: number) => {
+    if (index === 0) return;
     
-    setLocalBlocks(prevBlocks => {
-      const newBlocks = [...prevBlocks];
-      const currentSection = { ...newBlocks[sectionIndex] };
-      const aboveSection = { ...newBlocks[sectionIndex - 1] };
+    setLocalBlocks(prev => {
+      const newBlocks = [...prev];
+      const current = { ...newBlocks[index] };
+      const above = { ...newBlocks[index - 1] };
       
-      console.log('MERGE UP DEBUG:');
-      console.log('Above section:', aboveSection.type, 'lines', aboveSection.start_line, '-', aboveSection.end_line);
-      console.log('Current section:', currentSection.type, 'lines', currentSection.start_line, '-', currentSection.end_line);
+      console.log('=== MERGE UP ===');
+      console.log('Above:', above.type, 'lines', above.start_line, '-', above.end_line);
+      console.log('Current:', current.type, 'lines', current.start_line, '-', current.end_line);
       
-      const mergedLines = lines.slice(aboveSection.start_line - 1, currentSection.end_line);
+      const mergedLines = lines.slice(above.start_line - 1, current.end_line);
       const mergedWordCount = mergedLines.join(' ').split(/\s+/).filter(Boolean).length;
       
-      const mergedSection: CVBlock = {
-        ...aboveSection,
-        end_line: currentSection.end_line,
+      const merged: CVBlock = {
+        ...above,
+        end_line: current.end_line,
         content_preview: mergedLines.slice(0, 2).join(' ').substring(0, 100),
         word_count: mergedWordCount,
       };
       
-      console.log('Merged section:', mergedSection.type, 'lines', mergedSection.start_line, '-', mergedSection.end_line);
-      console.log('New blocks count:', newBlocks.length - 1);
+      console.log('Merged:', merged.type, 'lines', merged.start_line, '-', merged.end_line);
+      console.log('New block count:', newBlocks.length - 1);
       
-      newBlocks[sectionIndex - 1] = mergedSection;
-      newBlocks.splice(sectionIndex, 1);
+      newBlocks[index - 1] = merged;
+      newBlocks.splice(index, 1);
       
       onStructureChange?.(newBlocks);
       return newBlocks;
     });
+    
+    setOpenDropdown(null);
   };
 
-  const handleMergeDown = (sectionIndex: number) => {
-    if (sectionIndex >= localBlocks.length - 1) return;
+  const handleMergeDown = (index: number) => {
+    if (index >= localBlocks.length - 1) return;
     
-    setLocalBlocks(prevBlocks => {
-      const newBlocks = [...prevBlocks];
-      const currentSection = { ...newBlocks[sectionIndex] };
-      const belowSection = { ...newBlocks[sectionIndex + 1] };
+    setLocalBlocks(prev => {
+      const newBlocks = [...prev];
+      const current = { ...newBlocks[index] };
+      const below = { ...newBlocks[index + 1] };
       
-      console.log('MERGE DOWN DEBUG:');
-      console.log('Current section:', currentSection.type, 'lines', currentSection.start_line, '-', currentSection.end_line);
-      console.log('Below section:', belowSection.type, 'lines', belowSection.start_line, '-', belowSection.end_line);
+      console.log('=== MERGE DOWN ===');
+      console.log('Current:', current.type, 'lines', current.start_line, '-', current.end_line);
+      console.log('Below:', below.type, 'lines', below.start_line, '-', below.end_line);
       
-      const mergedLines = lines.slice(currentSection.start_line - 1, belowSection.end_line);
+      const mergedLines = lines.slice(current.start_line - 1, below.end_line);
       const mergedWordCount = mergedLines.join(' ').split(/\s+/).filter(Boolean).length;
       
-      const mergedSection: CVBlock = {
-        ...currentSection,
-        end_line: belowSection.end_line,
+      const merged: CVBlock = {
+        ...current,
+        end_line: below.end_line,
         content_preview: mergedLines.slice(0, 2).join(' ').substring(0, 100),
         word_count: mergedWordCount,
       };
       
-      console.log('Merged section:', mergedSection.type, 'lines', mergedSection.start_line, '-', mergedSection.end_line);
-      console.log('New blocks count:', newBlocks.length - 1);
+      console.log('Merged:', merged.type, 'lines', merged.start_line, '-', merged.end_line);
+      console.log('New block count:', newBlocks.length - 1);
       
-      newBlocks[sectionIndex] = mergedSection;
-      newBlocks.splice(sectionIndex + 1, 1);
+      newBlocks[index] = merged;
+      newBlocks.splice(index + 1, 1);
       
       onStructureChange?.(newBlocks);
       return newBlocks;
     });
+    
+    setOpenDropdown(null);
   };
 
-  const handleDeleteDivider = (sectionIndex: number) => {
-    handleMergeUp(sectionIndex);
+  const handleDelete = (index: number) => {
+    handleMergeUp(index);
   };
 
   const handleSplitSection = (lineNumber: number, sectionType: SectionType) => {
@@ -150,63 +158,152 @@ export const StructureOverlay: React.FC<StructureOverlayProps> = ({
     setSplitAtLine(null);
   };
 
-  const sections = localBlocks.map((block, index) => ({
-    ...block,
-    index,
-    sectionType: block.type.toLowerCase() as SectionType,
-    sectionLines: lines.slice(Math.max(0, block.start_line - 1), block.end_line)
-  }));
-
-  const getColors = (sectionType: string) => {
-    return SECTION_COLORS[sectionType.toLowerCase()] || SECTION_COLORS.unrecognized;
+  const getColors = (type: string) => {
+    const normalizedType = type.toLowerCase() as SectionType;
+    return SECTION_COLORS[normalizedType] || SECTION_COLORS.unrecognized;
   };
 
   return (
-    <div className="structure-overlay">
-      {sections.map((section, idx) => {
-        const colors = getColors(section.sectionType);
+    <div className="structure-overlay space-y-4 p-4">
+      <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
+        <span className="font-medium">CV Structure Analysis</span>
+        <span className="text-gray-400">•</span>
+        <span>{localBlocks.length} sections detected</span>
+      </div>
+
+      {localBlocks.map((block, index) => {
+        const colors = getColors(block.type);
+        const contentLines = getBlockContent(block);
+        const isDropdownOpen = openDropdown === index;
+        const sectionType = block.type.toLowerCase() as SectionType;
+        const option = SECTION_OPTIONS.find(o => o.value === sectionType);
+        const displayLabel = option?.label || block.type;
         
         return (
           <div 
-            key={`${section.start_line}-${section.end_line}-${idx}`}
-            className="section-wrapper mb-4 rounded-lg overflow-hidden shadow-sm"
-            style={{
-              borderLeft: `4px solid ${colors.tab}`,
-            }}
+            key={`${block.type}-${block.start_line}-${index}`}
+            className="section-card rounded-lg overflow-hidden shadow-sm border"
+            style={{ borderColor: colors.border }}
           >
-            <SectionTab
-              sectionType={section.sectionType}
-              lineRange={`${section.start_line}-${section.end_line}`}
-              wordCount={section.word_count}
-              tabColor={colors.tab}
-              isFirst={idx === 0}
-              isLast={idx === sections.length - 1}
-              onTypeChange={(newType: SectionType) => handleTypeChange(idx, newType)}
-              onMergeUp={() => handleMergeUp(idx)}
-              onMergeDown={() => handleMergeDown(idx)}
-              onDelete={() => handleDeleteDivider(idx)}
-            />
-            
             <div 
-              className="section-content p-4 font-mono text-sm whitespace-pre-wrap"
-              style={{
-                backgroundColor: colors.background,
-              }}
+              className="section-header flex items-center justify-between px-4 py-2.5 cursor-pointer"
+              style={{ backgroundColor: colors.tab }}
+              onClick={() => setOpenDropdown(isDropdownOpen ? null : index)}
             >
-              {section.sectionLines.map((line, lineIdx) => {
-                const actualLineNumber = section.start_line + lineIdx;
+              <div className="flex items-center gap-2">
+                <span className="text-white font-semibold text-sm uppercase tracking-wide">
+                  {displayLabel}
+                </span>
+                <ChevronDown 
+                  className={`w-4 h-4 text-white/80 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} 
+                />
+              </div>
+              
+              <span className="text-white/80 text-xs">
+                Lines {block.start_line} - {block.end_line}
+                {block.word_count && ` · ${block.word_count}w`}
+              </span>
+            </div>
+
+            {isDropdownOpen && (
+              <div className="dropdown-menu bg-white border-b shadow-lg">
+                <div className="p-2 border-b">
+                  <div className="text-xs text-gray-500 px-2 py-1 font-medium">
+                    Change section type:
+                  </div>
+                  <div className="grid grid-cols-2 gap-1 max-h-48 overflow-y-auto">
+                    {SECTION_OPTIONS.map(opt => (
+                      <button
+                        key={opt.value}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleTypeChange(index, opt.value);
+                        }}
+                        className={`flex items-center gap-2 px-2 py-1.5 rounded text-sm text-left
+                          ${sectionType === opt.value ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-100'}`}
+                      >
+                        <div 
+                          className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: SECTION_COLORS[opt.value]?.tab || '#6B7280' }}
+                        />
+                        <span className="truncate">{opt.label}</span>
+                        {sectionType === opt.value && (
+                          <Check className="w-3 h-3 ml-auto text-blue-600 flex-shrink-0" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                <div className="p-2">
+                  <div className="text-xs text-gray-500 px-2 py-1 font-medium">
+                    Section actions:
+                  </div>
+                  <div className="space-y-1">
+                    {index > 0 && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleMergeUp(index);
+                        }}
+                        className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm
+                          text-blue-600 hover:bg-blue-50"
+                      >
+                        <ArrowUpCircle className="w-4 h-4" />
+                        <span>Merge with section above</span>
+                      </button>
+                    )}
+                    
+                    {index < localBlocks.length - 1 && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleMergeDown(index);
+                        }}
+                        className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm
+                          text-blue-600 hover:bg-blue-50"
+                      >
+                        <ArrowDownCircle className="w-4 h-4" />
+                        <span>Merge with section below</span>
+                      </button>
+                    )}
+                    
+                    {index > 0 && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(index);
+                        }}
+                        className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm
+                          text-red-600 hover:bg-red-50"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        <span>Remove this section divider</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div 
+              className="section-content p-4"
+              style={{ backgroundColor: colors.background }}
+            >
+              {contentLines.map((line, lineIdx) => {
+                const actualLineNumber = block.start_line + lineIdx;
                 const isFirstLine = lineIdx === 0;
-                const showSplitButton = !isFirstLine && section.sectionLines.length > 1;
+                const showSplitButton = !isFirstLine && contentLines.length > 1;
                 
                 return (
                   <div 
                     key={lineIdx} 
-                    className="cv-line leading-relaxed group relative"
+                    className="cv-line leading-relaxed group relative text-sm text-gray-800"
                     data-line-number={actualLineNumber}
                   >
                     {showSplitButton && (
                       <button
-                        className="split-line-button absolute -left-7 top-1/2 -translate-y-1/2
+                        className="split-line-button absolute -left-6 top-1/2 -translate-y-1/2
                                    opacity-0 group-hover:opacity-100
                                    w-5 h-5 rounded-full bg-blue-500 text-white
                                    flex items-center justify-center text-xs
@@ -218,7 +315,7 @@ export const StructureOverlay: React.FC<StructureOverlayProps> = ({
                         <Plus className="w-3 h-3" />
                       </button>
                     )}
-                    {line || '\u00A0'}
+                    <span className="whitespace-pre-wrap">{line || '\u00A0'}</span>
                   </div>
                 );
               })}
@@ -226,6 +323,13 @@ export const StructureOverlay: React.FC<StructureOverlayProps> = ({
           </div>
         );
       })}
+
+      {openDropdown !== null && (
+        <div 
+          className="fixed inset-0 z-[-1]"
+          onClick={() => setOpenDropdown(null)}
+        />
+      )}
 
       {splitAtLine !== null && (
         <AddSectionModal

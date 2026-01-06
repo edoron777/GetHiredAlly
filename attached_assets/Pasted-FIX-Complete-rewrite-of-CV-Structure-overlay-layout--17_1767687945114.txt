@@ -1,0 +1,547 @@
+FIX: Complete rewrite of CV Structure overlay layout
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PROBLEMS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Tab headers OVERLAP the CV content text
+2. Tab text is not clearly separated from CV text  
+3. Merge function only merges partial content
+4. Merge creates new separate tabs instead of combining
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SOLUTION: Simple Card Layout with Clear Separation
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Each section should be a CARD with:
+- Colored header bar on TOP (not overlapping content)
+- White/pastel content area BELOW header
+- Clear visual separation
+
+VISUAL TARGET:
+
+┌─────────────────────────────────────────────────────────────────┐
+│  🔵 CONTACT                                        Lines 1-5   │  ← Blue header bar
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  David Cohen CV | Email: dcohen@gmail.com | Phone: ...         │  ← Content area
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│  🟢 SUMMARY                                       Lines 6-40   │  ← Green header bar
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  I bridge the gap between cutting-edge technology...           │  ← Content area
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│  🟠 EXPERIENCE                                   Lines 41-200  │  ← Orange header bar
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  **Citi**                                                      │
+│  VP, Cybersecurity Innovation...                               │  ← Content area
+│                                                                 │
+│  **Deloitte**                                                  │
+│  ...                                                           │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 1: REPLACE StructureOverlay.tsx COMPLETELY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+File: client/src/components/cv-optimizer/DocumentView/StructureOverlay.tsx
+
+DELETE all content and REPLACE with:
+```tsx
+import React, { useState, useEffect } from 'react';
+import { ChevronDown, Check, ArrowUpCircle, ArrowDownCircle, Trash2, Plus } from 'lucide-react';
+
+// Section Types
+export type SectionType = 
+  | 'CONTACT' | 'SUMMARY' | 'EXPERIENCE' | 'EDUCATION' 
+  | 'SKILLS' | 'CERTIFICATIONS' | 'PROJECTS' | 'LANGUAGES'
+  | 'AWARDS' | 'PUBLICATIONS' | 'VOLUNTEER' | 'INTERESTS'
+  | 'REFERENCES' | 'OTHER' | 'UNKNOWN';
+
+// Section Colors
+export const SECTION_COLORS: Record<SectionType, { bg: string; header: string; border: string }> = {
+  CONTACT:        { header: '#3B82F6', bg: '#EFF6FF', border: '#3B82F6' },  // Blue
+  SUMMARY:        { header: '#10B981', bg: '#ECFDF5', border: '#10B981' },  // Green
+  EXPERIENCE:     { header: '#F59E0B', bg: '#FFFBEB', border: '#F59E0B' },  // Orange
+  EDUCATION:      { header: '#8B5CF6', bg: '#F5F3FF', border: '#8B5CF6' },  // Purple
+  SKILLS:         { header: '#EC4899', bg: '#FDF2F8', border: '#EC4899' },  // Pink
+  CERTIFICATIONS: { header: '#06B6D4', bg: '#ECFEFF', border: '#06B6D4' },  // Cyan
+  PROJECTS:       { header: '#EF4444', bg: '#FEF2F2', border: '#EF4444' },  // Red
+  LANGUAGES:      { header: '#84CC16', bg: '#F7FEE7', border: '#84CC16' },  // Lime
+  AWARDS:         { header: '#F97316', bg: '#FFF7ED', border: '#F97316' },  // Orange
+  PUBLICATIONS:   { header: '#6366F1', bg: '#EEF2FF', border: '#6366F1' },  // Indigo
+  VOLUNTEER:      { header: '#14B8A6', bg: '#F0FDFA', border: '#14B8A6' },  // Teal
+  INTERESTS:      { header: '#A855F7', bg: '#FAF5FF', border: '#A855F7' },  // Purple
+  REFERENCES:     { header: '#64748B', bg: '#F8FAFC', border: '#64748B' },  // Slate
+  OTHER:          { header: '#6B7280', bg: '#F9FAFB', border: '#6B7280' },  // Gray
+  UNKNOWN:        { header: '#9CA3AF', bg: '#F3F4F6', border: '#9CA3AF' },  // Gray
+};
+
+// Section Options for Dropdown
+const SECTION_OPTIONS: { value: SectionType; label: string }[] = [
+  { value: 'CONTACT', label: 'Contact' },
+  { value: 'SUMMARY', label: 'Summary' },
+  { value: 'EXPERIENCE', label: 'Experience' },
+  { value: 'EDUCATION', label: 'Education' },
+  { value: 'SKILLS', label: 'Skills' },
+  { value: 'CERTIFICATIONS', label: 'Certifications' },
+  { value: 'PROJECTS', label: 'Projects' },
+  { value: 'LANGUAGES', label: 'Languages' },
+  { value: 'AWARDS', label: 'Awards' },
+  { value: 'PUBLICATIONS', label: 'Publications' },
+  { value: 'VOLUNTEER', label: 'Volunteer' },
+  { value: 'INTERESTS', label: 'Interests' },
+  { value: 'REFERENCES', label: 'References' },
+  { value: 'OTHER', label: 'Other' },
+];
+
+// Block interface
+interface CVBlock {
+  block_type: SectionType;
+  header_text?: string;
+  content: string;
+  start_line: number;
+  end_line: number;
+  confidence?: number;
+  word_count?: number;
+}
+
+interface StructureOverlayProps {
+  blocks: CVBlock[];
+  cvContent: string;
+  onStructureChange?: (newBlocks: CVBlock[]) => void;
+}
+
+export const StructureOverlay: React.FC<StructureOverlayProps> = ({
+  blocks,
+  cvContent,
+  onStructureChange
+}) => {
+  const [localBlocks, setLocalBlocks] = useState<CVBlock[]>([]);
+  const [openDropdown, setOpenDropdown] = useState<number | null>(null);
+
+  // Initialize local blocks from props
+  useEffect(() => {
+    if (blocks && blocks.length > 0) {
+      // Ensure each block has content
+      const blocksWithContent = blocks.map(block => {
+        if (!block.content || block.content.trim() === '') {
+          // Extract content from cvContent using line numbers
+          const lines = cvContent.split('\n');
+          const content = lines.slice(
+            Math.max(0, block.start_line - 1), 
+            block.end_line
+          ).join('\n');
+          return { ...block, content };
+        }
+        return block;
+      });
+      setLocalBlocks(blocksWithContent);
+    }
+  }, [blocks, cvContent]);
+
+  // Get content for a block (from block or computed from lines)
+  const getBlockContent = (block: CVBlock): string => {
+    if (block.content && block.content.trim() !== '') {
+      return block.content;
+    }
+    const lines = cvContent.split('\n');
+    return lines.slice(
+      Math.max(0, block.start_line - 1), 
+      block.end_line
+    ).join('\n');
+  };
+
+  // Change section type
+  const handleTypeChange = (index: number, newType: SectionType) => {
+    setLocalBlocks(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], block_type: newType };
+      onStructureChange?.(updated);
+      return updated;
+    });
+    setOpenDropdown(null);
+  };
+
+  // MERGE UP: Combine current section with section ABOVE
+  const handleMergeUp = (index: number) => {
+    if (index === 0) return; // Can't merge first section up
+    
+    setLocalBlocks(prev => {
+      const newBlocks = [...prev];
+      const current = newBlocks[index];
+      const above = newBlocks[index - 1];
+      
+      // Get FULL content for both sections
+      const aboveContent = getBlockContent(above);
+      const currentContent = getBlockContent(current);
+      
+      console.log('=== MERGE UP ===');
+      console.log('Above:', above.block_type, 'lines', above.start_line, '-', above.end_line);
+      console.log('Current:', current.block_type, 'lines', current.start_line, '-', current.end_line);
+      
+      // Create merged section
+      const merged: CVBlock = {
+        block_type: above.block_type, // Keep type of section ABOVE
+        header_text: above.header_text,
+        start_line: above.start_line,
+        end_line: current.end_line, // Extend to include current section
+        content: aboveContent + '\n' + currentContent, // Combine ALL content
+        word_count: (above.word_count || 0) + (current.word_count || 0),
+        confidence: above.confidence,
+      };
+      
+      console.log('Merged:', merged.block_type, 'lines', merged.start_line, '-', merged.end_line);
+      console.log('Content length:', merged.content.length);
+      
+      // Replace above section with merged
+      newBlocks[index - 1] = merged;
+      
+      // REMOVE current section completely
+      newBlocks.splice(index, 1);
+      
+      console.log('New block count:', newBlocks.length);
+      
+      onStructureChange?.(newBlocks);
+      return newBlocks;
+    });
+    
+    setOpenDropdown(null);
+  };
+
+  // MERGE DOWN: Combine current section with section BELOW
+  const handleMergeDown = (index: number) => {
+    if (index >= localBlocks.length - 1) return; // Can't merge last section down
+    
+    setLocalBlocks(prev => {
+      const newBlocks = [...prev];
+      const current = newBlocks[index];
+      const below = newBlocks[index + 1];
+      
+      // Get FULL content for both sections
+      const currentContent = getBlockContent(current);
+      const belowContent = getBlockContent(below);
+      
+      console.log('=== MERGE DOWN ===');
+      console.log('Current:', current.block_type, 'lines', current.start_line, '-', current.end_line);
+      console.log('Below:', below.block_type, 'lines', below.start_line, '-', below.end_line);
+      
+      // Create merged section
+      const merged: CVBlock = {
+        block_type: current.block_type, // Keep type of CURRENT section
+        header_text: current.header_text,
+        start_line: current.start_line,
+        end_line: below.end_line, // Extend to include below section
+        content: currentContent + '\n' + belowContent, // Combine ALL content
+        word_count: (current.word_count || 0) + (below.word_count || 0),
+        confidence: current.confidence,
+      };
+      
+      console.log('Merged:', merged.block_type, 'lines', merged.start_line, '-', merged.end_line);
+      
+      // Replace current section with merged
+      newBlocks[index] = merged;
+      
+      // REMOVE below section completely
+      newBlocks.splice(index + 1, 1);
+      
+      console.log('New block count:', newBlocks.length);
+      
+      onStructureChange?.(newBlocks);
+      return newBlocks;
+    });
+    
+    setOpenDropdown(null);
+  };
+
+  // Delete = merge with above
+  const handleDelete = (index: number) => {
+    handleMergeUp(index);
+  };
+
+  // Get colors for section type
+  const getColors = (type: SectionType) => {
+    return SECTION_COLORS[type] || SECTION_COLORS.UNKNOWN;
+  };
+
+  return (
+    <div className="structure-overlay space-y-4 p-4">
+      {/* Header */}
+      <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
+        <span className="font-medium">CV Structure Analysis</span>
+        <span className="text-gray-400">•</span>
+        <span>{localBlocks.length} sections</span>
+      </div>
+
+      {/* Section Cards */}
+      {localBlocks.map((block, index) => {
+        const colors = getColors(block.block_type);
+        const content = getBlockContent(block);
+        const isDropdownOpen = openDropdown === index;
+        
+        return (
+          <div 
+            key={`${block.block_type}-${block.start_line}-${index}`}
+            className="section-card rounded-lg overflow-hidden shadow-sm border"
+            style={{ borderColor: colors.border }}
+          >
+            {/* HEADER BAR - Clearly separated from content */}
+            <div 
+              className="section-header flex items-center justify-between px-4 py-2 cursor-pointer"
+              style={{ backgroundColor: colors.header }}
+              onClick={() => setOpenDropdown(isDropdownOpen ? null : index)}
+            >
+              {/* Left side: Section name */}
+              <div className="flex items-center gap-2">
+                <span className="text-white font-semibold text-sm uppercase tracking-wide">
+                  {block.block_type}
+                </span>
+                <ChevronDown 
+                  className={`w-4 h-4 text-white transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} 
+                />
+              </div>
+              
+              {/* Right side: Line range */}
+              <span className="text-white/80 text-xs">
+                Lines {block.start_line} - {block.end_line}
+              </span>
+            </div>
+
+            {/* DROPDOWN MENU */}
+            {isDropdownOpen && (
+              <div className="dropdown-menu bg-white border-b shadow-lg">
+                {/* Section Type Options */}
+                <div className="p-2 border-b">
+                  <div className="text-xs text-gray-500 px-2 py-1 font-medium">
+                    Change section type:
+                  </div>
+                  <div className="grid grid-cols-2 gap-1">
+                    {SECTION_OPTIONS.map(option => (
+                      <button
+                        key={option.value}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleTypeChange(index, option.value);
+                        }}
+                        className={`flex items-center gap-2 px-2 py-1.5 rounded text-sm text-left
+                          ${block.block_type === option.value ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-100'}`}
+                      >
+                        <div 
+                          className="w-2.5 h-2.5 rounded-full"
+                          style={{ backgroundColor: SECTION_COLORS[option.value]?.header || '#6B7280' }}
+                        />
+                        <span>{option.label}</span>
+                        {block.block_type === option.value && (
+                          <Check className="w-3 h-3 ml-auto text-blue-600" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Section Actions */}
+                <div className="p-2">
+                  <div className="text-xs text-gray-500 px-2 py-1 font-medium">
+                    Section actions:
+                  </div>
+                  <div className="space-y-1">
+                    {/* Merge Up */}
+                    {index > 0 && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleMergeUp(index);
+                        }}
+                        className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm
+                          text-blue-600 hover:bg-blue-50"
+                      >
+                        <ArrowUpCircle className="w-4 h-4" />
+                        <span>Merge with section above</span>
+                      </button>
+                    )}
+                    
+                    {/* Merge Down */}
+                    {index < localBlocks.length - 1 && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleMergeDown(index);
+                        }}
+                        className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm
+                          text-blue-600 hover:bg-blue-50"
+                      >
+                        <ArrowDownCircle className="w-4 h-4" />
+                        <span>Merge with section below</span>
+                      </button>
+                    )}
+                    
+                    {/* Delete */}
+                    {index > 0 && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(index);
+                        }}
+                        className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm
+                          text-red-600 hover:bg-red-50"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        <span>Remove this section divider</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* CONTENT AREA - Clearly separated, below header */}
+            <div 
+              className="section-content p-4"
+              style={{ backgroundColor: colors.bg }}
+            >
+              <pre className="whitespace-pre-wrap font-sans text-sm text-gray-800 leading-relaxed">
+                {content}
+              </pre>
+            </div>
+          </div>
+        );
+      })}
+
+      {/* Click outside to close dropdown */}
+      {openDropdown !== null && (
+        <div 
+          className="fixed inset-0 z-[-1]"
+          onClick={() => setOpenDropdown(null)}
+        />
+      )}
+    </div>
+  );
+};
+
+export default StructureOverlay;
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 2: ADD CSS (Optional - for extra polish)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+File: client/src/components/cv-optimizer/DocumentView/StructureOverlay.css
+```css
+.structure-overlay {
+  max-width: 100%;
+}
+
+.section-card {
+  transition: box-shadow 0.2s ease;
+}
+
+.section-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.section-header {
+  user-select: none;
+}
+
+.section-content {
+  max-height: none;
+  overflow: visible;
+}
+
+.section-content pre {
+  margin: 0;
+  font-family: inherit;
+}
+
+.dropdown-menu {
+  animation: slideDown 0.15s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 3: VERIFY THE LAYOUT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Expected visual result:
+
+┌─────────────────────────────────────────────────────────────┐
+│  CONTACT ▼                                    Lines 1 - 5  │  ← Blue header
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  David Cohen CV | Email: dcohen@gmail.com                  │  ← Light blue bg
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│  SUMMARY ▼                                   Lines 6 - 40  │  ← Green header
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  I bridge the gap between...                               │  ← Light green bg
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│  EXPERIENCE ▼                              Lines 41 - 200  │  ← Orange header
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  **Citi**                                                  │
+│  VP, Cybersecurity Innovation...                           │  ← Light orange bg
+│                                                             │
+│  **Deloitte**                                              │
+│  ...                                                       │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+
+KEY POINTS:
+✅ Header is ABOVE content (not overlapping)
+✅ Header text is WHITE on colored background (easy to read)
+✅ Content has LIGHT colored background (easy to read)
+✅ Clear separation between header and content
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 4: TEST MERGE FUNCTION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Open CV Structure overlay
+2. Find the CITI section (if detected separately)
+3. Click on CITI header → Dropdown opens
+4. Click "Merge with section above"
+5. VERIFY:
+   [ ] CITI section DISAPPEARS completely
+   [ ] EXPERIENCE section now shows ALL Citi content
+   [ ] Only ONE EXPERIENCE card exists
+   [ ] Line range updated to include Citi lines
+   [ ] Console shows correct merge debug logs
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COMPLETION CHECKLIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] Replaced StructureOverlay.tsx completely
+[ ] Header bar is ABOVE content (not overlapping)
+[ ] Header text is white on colored background
+[ ] Content area is clearly separated
+[ ] Dropdown opens on header click
+[ ] Merge UP works correctly (combines ALL content)
+[ ] Merge DOWN works correctly
+[ ] Section is REMOVED after merge (not duplicated)
+[ ] Console shows debug logs for merge operations
