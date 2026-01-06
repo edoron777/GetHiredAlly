@@ -1,0 +1,106 @@
+═══════════════════════════════════════════════════════════════════════════════
+💻 FIX: MISSING SECTIONS BAR NOT APPEARING (TIMING ISSUE)
+═══════════════════════════════════════════════════════════════════════════════
+
+PROBLEM:
+Missing Sections Bar doesn't appear when Guide Mode is enabled.
+Root cause: structureData may not be loaded when Guide Mode is toggled.
+
+The condition is:
+{isGuideModeEnabled && structureData && ( <MissingSectionsBar ... /> )}
+
+When structureData is null, the bar never shows.
+
+───────────────────────────────────────────────────────────────────────────────
+
+STEP 1: ADD DEBUG LOGGING
+
+Add console.log right before the MissingSectionsBar render:
+```tsx
+{/* Debug - remove after testing */}
+{console.log('🔍 MissingSectionsBar check:', {
+  isGuideModeEnabled,
+  hasStructureData: !!structureData,
+  structureDataBlocks: structureData?.blocks?.length
+})}
+
+{/* Missing Sections Bar in Document View */}
+{isGuideModeEnabled && structureData && (
+  <MissingSectionsBar
+    detectedSections={structureData.blocks?.map(b => b.type.toUpperCase()) || []}
+    onSectionClick={handleGuideClick}
+    isVisible={true}
+  />
+)}
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+STEP 2: CHECK handleGuideModeToggle
+
+Find the handleGuideModeToggle function and ensure it fetches structure data:
+```typescript
+const handleGuideModeToggle = () => {
+  const newState = !isGuideModeEnabled;
+  console.log('🔍 Guide Mode toggle:', { newState, hasStructureData: !!structureData });
+  
+  setIsGuideModeEnabled(newState);
+  
+  // Fetch structure if enabling and not already loaded
+  if (newState && !structureData && !structureLoading) {
+    console.log('🔍 Fetching structure data for Guide Mode...');
+    fetchStructure();
+  }
+};
+```
+
+Does fetchStructure exist and is it being called?
+Show the fetchStructure function.
+
+───────────────────────────────────────────────────────────────────────────────
+
+STEP 3: CHECK IF STRUCTUREDATA UPDATES TRIGGER RE-RENDER
+
+Add useEffect to monitor structureData changes:
+```typescript
+useEffect(() => {
+  console.log('🔍 structureData changed:', {
+    hasData: !!structureData,
+    blockCount: structureData?.blocks?.length,
+    isGuideModeEnabled
+  });
+}, [structureData, isGuideModeEnabled]);
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+EXPECTED CONSOLE OUTPUT WHEN WORKING:
+
+1. Click Guide Mode:
+   🔍 Guide Mode toggle: { newState: true, hasStructureData: false }
+   🔍 Fetching structure data for Guide Mode...
+
+2. Structure loads:
+   🔍 structureData changed: { hasData: true, blockCount: 5, isGuideModeEnabled: true }
+
+3. Bar renders:
+   🔍 MissingSectionsBar check: { isGuideModeEnabled: true, hasStructureData: true, structureDataBlocks: 5 }
+
+───────────────────────────────────────────────────────────────────────────────
+
+IF STRUCTUREDATA NEVER LOADS:
+
+Check if fetchStructure is defined and working:
+
+1. Show the fetchStructure function
+2. Check if it's calling the correct API endpoint
+3. Check if setStructureData is called on success
+
+───────────────────────────────────────────────────────────────────────────────
+
+REPORT:
+1. Console output when clicking Guide Mode
+2. Does structureData eventually load? (check console)
+3. If structureData loads, does the bar appear?
+
+═══════════════════════════════════════════════════════════════════════════════

@@ -1256,6 +1256,12 @@ export default function ResultsPage() {
                   )}
                   
                   {/* Missing Sections Bar in Document View - visible when Guide Mode enabled */}
+                  {isGuideModeEnabled && structureLoading && (
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mt-4 flex items-center gap-2">
+                      <span className="animate-spin">⏳</span>
+                      <span className="text-sm text-amber-700">Loading section analysis...</span>
+                    </div>
+                  )}
                   {isGuideModeEnabled && structureData && (
                     <MissingSectionsBar
                       detectedSections={structureData.blocks?.map(b => b.type.toUpperCase()) || []}
