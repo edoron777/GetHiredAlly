@@ -1,0 +1,120 @@
+PROMPT 5: Fix Configuration Issues (BUG-03, BUG-06)
+═══════════════════════════════════════════════════════════════════════════════
+🔧 TASK: Fix Configuration Issues (BUG-03, BUG-06)
+═══════════════════════════════════════════════════════════════════════════════
+Version: ReplitPromptProtocol v2.5
+Type: Configuration + UX Improvement
+Priority: LOW
+Risk Level: LOW
+
+───────────────────────────────────────────────────────────────────────────────
+BUG-06: GITHUB/PORTFOLIO SEVERITY TOO HIGH
+───────────────────────────────────────────────────────────────────────────────
+
+PROBLEM:
+CONTACT_MISSING_GITHUB has severity: "important"
+Reality: GitHub is NOT mandatory for all tech professionals.
+
+CHANGE REQUIRED:
+Update in cv_issue_types table:
+```sql
+UPDATE cv_issue_types 
+SET severity = 'consider',
+    weight = 4
+WHERE issue_code = 'CONTACT_MISSING_GITHUB';
+```
+
+Justification:
+- Many senior tech professionals don't have public GitHub
+- Some companies prohibit public code sharing
+- Portfolio alternatives exist (Behance, Dribbble, personal sites)
+- Should be suggestion, not important issue
+
+───────────────────────────────────────────────────────────────────────────────
+BUG-03: CV TOO LONG TIPBOX NOT HELPFUL (OPTIONAL)
+───────────────────────────────────────────────────────────────────────────────
+
+CURRENT TIPBOX:
+WHY THIS MATTERS: all has 1838 words (maximum: 1200)
+GOOD EXAMPLE: [repeats HOW TO FIX - useless]
+
+IMPROVED STATIC_TIP (update in database):
+```sql
+UPDATE cv_issue_types 
+SET static_tip = 'Prioritize what to cut:
+
+1. REMOVE FIRST (Low Value):
+   • Duties and responsibilities (focus on achievements)
+   • Roles older than 10-15 years
+   • Irrelevant skills or outdated technologies
+   • Generic phrases ("team player", "hard worker")
+
+2. REDUCE (Keep but Shorten):
+   • Older roles: 2-3 bullets max
+   • Education details (unless recent graduate)
+   • Certification descriptions
+
+3. KEEP (High Value):
+   • Quantified achievements with metrics
+   • Recent 5 years: full detail
+   • Skills matching target job
+   • Summary/headline
+
+Target: 1 page (<10 years exp), 2 pages max (senior)'
+WHERE issue_code = 'LENGTH_CV_TOO_LONG';
+```
+
+───────────────────────────────────────────────────────────────────────────────
+DATABASE UPDATES REQUIRED
+───────────────────────────────────────────────────────────────────────────────
+
+Run these SQL commands:
+
+-- BUG-06: Reduce GitHub severity
+UPDATE cv_issue_types 
+SET severity = 'consider',
+    weight = 4,
+    description = 'For technical roles, a GitHub profile or portfolio can demonstrate your coding ability. However, this is optional - many professionals have private repositories or company restrictions on public code sharing.'
+WHERE issue_code = 'CONTACT_MISSING_GITHUB';
+
+-- BUG-03: Improve CV Too Long tip (optional)
+UPDATE cv_issue_types 
+SET static_tip = 'Prioritize what to cut:
+
+1. REMOVE FIRST:
+   • Duties/responsibilities (keep achievements)
+   • Roles older than 10-15 years
+   • Outdated technologies
+   • Generic phrases
+
+2. REDUCE:
+   • Older roles: 2-3 bullets max
+   • Education details
+
+3. KEEP:
+   • Quantified achievements
+   • Recent 5 years: full detail
+   • Skills matching target job
+
+Target: 1 page (<10 yrs), 2 pages max (senior)'
+WHERE issue_code = 'LENGTH_CV_TOO_LONG';
+
+───────────────────────────────────────────────────────────────────────────────
+VERIFICATION STEPS
+───────────────────────────────────────────────────────────────────────────────
+
+After updates:
+
+1. Run CV analysis on tech-focused CV without GitHub
+2. Verify "Missing GitHub" shows as "consider" (yellow) not "important" (purple)
+3. Check "CV Too Long" TipBox shows improved guidance
+
+───────────────────────────────────────────────────────────────────────────────
+CONSTRAINTS
+───────────────────────────────────────────────────────────────────────────────
+
+⛔ DO NOT modify frontend code for this prompt
+⛔ DO NOT change detection logic
+✅ Database updates only
+
+══════════════════════

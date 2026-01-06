@@ -1,6 +1,7 @@
 import React from 'react'
 import type { RendererProps } from '../types'
 import { TextMarker, CV_OPTIMIZER_COLORS } from '../../TextMarker'
+import { linkifyContent } from '../utils/urlLinkifier'
 
 export const TextRenderer: React.FC<RendererProps> = ({
   content,
@@ -21,7 +22,7 @@ export const TextRenderer: React.FC<RendererProps> = ({
   if (markers.length === 0) {
     return (
       <div className="text-content">
-        <div className="text-preformatted">{content}</div>
+        <div className="text-preformatted">{linkifyContent(content)}</div>
       </div>
     )
   }
