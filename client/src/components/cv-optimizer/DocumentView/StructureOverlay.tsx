@@ -48,15 +48,25 @@ export const StructureOverlay: React.FC<StructureOverlayProps> = ({
     
     setLocalBlocks(prevBlocks => {
       const newBlocks = [...prevBlocks];
-      const currentSection = newBlocks[sectionIndex];
-      const aboveSection = newBlocks[sectionIndex - 1];
+      const currentSection = { ...newBlocks[sectionIndex] };
+      const aboveSection = { ...newBlocks[sectionIndex - 1] };
+      
+      console.log('MERGE UP DEBUG:');
+      console.log('Above section:', aboveSection.type, 'lines', aboveSection.start_line, '-', aboveSection.end_line);
+      console.log('Current section:', currentSection.type, 'lines', currentSection.start_line, '-', currentSection.end_line);
+      
+      const mergedLines = lines.slice(aboveSection.start_line - 1, currentSection.end_line);
+      const mergedWordCount = mergedLines.join(' ').split(/\s+/).filter(Boolean).length;
       
       const mergedSection: CVBlock = {
         ...aboveSection,
         end_line: currentSection.end_line,
-        content_preview: aboveSection.content_preview + ' ... ' + currentSection.content_preview,
-        word_count: (aboveSection.word_count || 0) + (currentSection.word_count || 0),
+        content_preview: mergedLines.slice(0, 2).join(' ').substring(0, 100),
+        word_count: mergedWordCount,
       };
+      
+      console.log('Merged section:', mergedSection.type, 'lines', mergedSection.start_line, '-', mergedSection.end_line);
+      console.log('New blocks count:', newBlocks.length - 1);
       
       newBlocks[sectionIndex - 1] = mergedSection;
       newBlocks.splice(sectionIndex, 1);
@@ -71,15 +81,25 @@ export const StructureOverlay: React.FC<StructureOverlayProps> = ({
     
     setLocalBlocks(prevBlocks => {
       const newBlocks = [...prevBlocks];
-      const currentSection = newBlocks[sectionIndex];
-      const belowSection = newBlocks[sectionIndex + 1];
+      const currentSection = { ...newBlocks[sectionIndex] };
+      const belowSection = { ...newBlocks[sectionIndex + 1] };
+      
+      console.log('MERGE DOWN DEBUG:');
+      console.log('Current section:', currentSection.type, 'lines', currentSection.start_line, '-', currentSection.end_line);
+      console.log('Below section:', belowSection.type, 'lines', belowSection.start_line, '-', belowSection.end_line);
+      
+      const mergedLines = lines.slice(currentSection.start_line - 1, belowSection.end_line);
+      const mergedWordCount = mergedLines.join(' ').split(/\s+/).filter(Boolean).length;
       
       const mergedSection: CVBlock = {
         ...currentSection,
         end_line: belowSection.end_line,
-        content_preview: currentSection.content_preview + ' ... ' + belowSection.content_preview,
-        word_count: (currentSection.word_count || 0) + (belowSection.word_count || 0),
+        content_preview: mergedLines.slice(0, 2).join(' ').substring(0, 100),
+        word_count: mergedWordCount,
       };
+      
+      console.log('Merged section:', mergedSection.type, 'lines', mergedSection.start_line, '-', mergedSection.end_line);
+      console.log('New blocks count:', newBlocks.length - 1);
       
       newBlocks[sectionIndex] = mergedSection;
       newBlocks.splice(sectionIndex + 1, 1);

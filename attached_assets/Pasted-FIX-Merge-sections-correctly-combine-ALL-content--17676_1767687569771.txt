@@ -1,0 +1,182 @@
+FIX: Merge sections correctly - combine ALL content
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PROBLEM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+When user clicks "Merge with section above":
+1. Only PART of the content is merged
+2. A NEW section/tab is created instead of combining
+3. Expected: ALL content should merge into the section above
+
+Example problem:
+- EXPERIENCE section (lines 21-50)
+- CITI section (lines 51-80) ← User wants to merge this UP
+
+Expected result:
+- EXPERIENCE section (lines 21-80) ← Contains ALL content including Citi
+
+Actual result:
+- EXPERIENCE section (lines 21-60) ← Only partial merge
+- NEW section (lines 61-80) ← Leftover content
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SOLUTION: Fix handleMergeUp Function
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+File: client/src/components/cv-optimizer/DocumentView/StructureOverlay.tsx
+
+Find and REPLACE the handleMergeUp function with this corrected version:
+```tsx
+const handleMergeUp = (sectionIndex: number) => {
+  // Can't merge the first section up (nothing above it)
+  if (sectionIndex === 0) return;
+  
+  setLocalBlocks(prevBlocks => {
+    // Create a NEW array (don't mutate)
+    const newBlocks = [...prevBlocks];
+    
+    // Get the two sections to merge
+    const currentSection = { ...newBlocks[sectionIndex] };
+    const aboveSection = { ...newBlocks[sectionIndex - 1] };
+    
+    console.log('MERGE UP DEBUG:');
+    console.log('Above section:', aboveSection.block_type, 'lines', aboveSection.start_line, '-', aboveSection.end_line);
+    console.log('Current section:', currentSection.block_type, 'lines', currentSection.start_line, '-', currentSection.end_line);
+    
+    // Create merged section:
+    // - Keep the TYPE of the section ABOVE
+    // - Extend end_line to include current section
+    // - Combine content
+    const mergedSection = {
+      ...aboveSection,
+      end_line: currentSection.end_line,
+      content: aboveSection.content + '\n' + currentSection.content,
+      word_count: (aboveSection.word_count || 0) + (currentSection.word_count || 0),
+    };
+    
+    console.log('Merged section:', mergedSection.block_type, 'lines', mergedSection.start_line, '-', mergedSection.end_line);
+    
+    // Replace the above section with merged version
+    newBlocks[sectionIndex - 1] = mergedSection;
+    
+    // REMOVE the current section (it's now part of above)
+    newBlocks.splice(sectionIndex, 1);
+    
+    console.log('New blocks count:', newBlocks.length);
+    
+    // Notify parent if callback exists
+    onStructureChange?.(newBlocks);
+    
+    return newBlocks;
+  });
+};
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ALSO FIX handleMergeDown
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```tsx
+const handleMergeDown = (sectionIndex: number) => {
+  // Can't merge the last section down (nothing below it)
+  if (sectionIndex >= localBlocks.length - 1) return;
+  
+  setLocalBlocks(prevBlocks => {
+    const newBlocks = [...prevBlocks];
+    
+    const currentSection = { ...newBlocks[sectionIndex] };
+    const belowSection = { ...newBlocks[sectionIndex + 1] };
+    
+    console.log('MERGE DOWN DEBUG:');
+    console.log('Current section:', currentSection.block_type, 'lines', currentSection.start_line, '-', currentSection.end_line);
+    console.log('Below section:', belowSection.block_type, 'lines', belowSection.start_line, '-', belowSection.end_line);
+    
+    // Create merged section:
+    // - Keep the TYPE of the CURRENT section
+    // - Extend end_line to include below section
+    // - Combine content
+    const mergedSection = {
+      ...currentSection,
+      end_line: belowSection.end_line,
+      content: currentSection.content + '\n' + belowSection.content,
+      word_count: (currentSection.word_count || 0) + (belowSection.word_count || 0),
+    };
+    
+    console.log('Merged section:', mergedSection.block_type, 'lines', mergedSection.start_line, '-', mergedSection.end_line);
+    
+    // Replace current section with merged version
+    newBlocks[sectionIndex] = mergedSection;
+    
+    // REMOVE the below section (it's now part of current)
+    newBlocks.splice(sectionIndex + 1, 1);
+    
+    console.log('New blocks count:', newBlocks.length);
+    
+    onStructureChange?.(newBlocks);
+    
+    return newBlocks;
+  });
+};
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CHECK: Make Sure Content is Properly Stored
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The blocks from API should have `content` field populated.
+Check that when rendering, we use the block's content:
+```tsx
+// In StructureOverlay.tsx render
+{localBlocks.map((section, idx) => (
+  <div key={idx} className="section-wrapper ...">
+    <SectionTab ... />
+    
+    <div className="section-content ...">
+      {/* Make sure we're using section.content */}
+      {section.content?.split('\n').map((line, lineIdx) => (
+        <div key={lineIdx} className="cv-line">
+          {line || '\u00A0'}
+        </div>
+      ))}
+    </div>
+  </div>
+))}
+```
+
+If `section.content` is empty, we might need to compute it from line numbers:
+```tsx
+// If content is not stored in blocks, compute from CV text
+const getContentForSection = (section: CVBlock) => {
+  if (section.content) return section.content;
+  
+  // Fallback: extract from cvContent using line numbers
+  const lines = cvContent.split('\n');
+  return lines.slice(section.start_line - 1, section.end_line).join('\n');
+};
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+VERIFICATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+After fix, test:
+
+1. Click on CITI section tab
+2. Click "Merge with section above" (EXPERIENCE)
+3. VERIFY:
+   [ ] CITI section disappears
+   [ ] EXPERIENCE section now includes ALL Citi content
+   [ ] Line range updates (e.g., 21-150 instead of 21-80)
+   [ ] Only ONE EXPERIENCE tab exists (not two)
+   [ ] No orphan/leftover sections created
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COMPLETION CHECKLIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] Fixed handleMergeUp function
+[ ] Fixed handleMergeDown function
+[ ] Added debug console.log statements
+[ ] Verified content is properly combined
+[ ] Tested with Citi → Experience merge
+[ ] No orphan sections created
