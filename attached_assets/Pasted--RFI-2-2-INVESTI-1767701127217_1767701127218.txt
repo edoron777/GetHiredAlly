@@ -1,0 +1,71 @@
+═══════════════════════════════════════════════════════════════════════════════
+🔍 RFI-2#2: INVESTIGATE RESULTSPAGE STRUCTURE HANDLING
+═══════════════════════════════════════════════════════════════════════════════
+
+I need to understand how ResultsPage manages CV structure data.
+
+INVESTIGATION TARGETS:
+
+1. RESULTSPAGE STATE
+   File: client/src/pages/cv-optimizer/ResultsPage.tsx
+   Report:
+   - All useState hooks related to structure/blocks
+   - How structureData is populated
+   - What CVBlock interface looks like
+
+2. TOOLBAR COMPONENT
+   Search: Find toolbar/action bar in ResultsPage
+   Report:
+   - Where are toolbar buttons defined?
+   - Current button structure/pattern
+   - How buttons toggle states
+
+3. CVDOCUMENT/DOCUMENT VIEW
+   Search: Find component that renders CV content
+   Report:
+   - File path
+   - How it receives structure data
+   - How section headers are rendered (can we attach icons?)
+
+4. STRUCTURE OVERLAY
+   File: client/src/components/cv-optimizer/DocumentView/StructureOverlay.tsx
+   Report:
+   - How it accesses block data
+   - How section headers are styled
+   - Existing click handlers on sections
+
+───────────────────────────────────────────────────────────────────────────────
+
+REPORT FORMAT:
+
+FINDING 1 - ResultsPage State:
+- structureData state:
+```typescript
+  [paste relevant state definitions]
+```
+- CVBlock interface location: [file path]
+
+FINDING 2 - Toolbar:
+- Toolbar location in JSX: [describe]
+- Current buttons: [list]
+- Toggle pattern used:
+```typescript
+  [paste example toggle]
+```
+
+FINDING 3 - CV Document Rendering:
+- Component file: [path]
+- Section header rendering:
+```typescript
+  [paste relevant code]
+```
+
+FINDING 4 - Structure Overlay:
+- Section header click handling: [describe]
+- Current styling approach: [describe]
+
+───────────────────────────────────────────────────────────────────────────────
+
+DO NOT make any changes. Report findings only.
+
+═══════════════════════════════════════════════════════════════════════════════
