@@ -11,3 +11,10 @@ export type {
   RequirementItem
 } from './types'
 export { TIPBOX_COLORS, GUIDE_MODE_COLORS } from './types'
+export { 
+  buildGuideContent, 
+  getAllSectionKeys, 
+  isSectionMandatory, 
+  clearGuideCache 
+} from './guideContentBuilder'
+export type { SectionGuideData, GuideContent } from './guideContentBuilder'

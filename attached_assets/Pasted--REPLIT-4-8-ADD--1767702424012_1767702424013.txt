@@ -1,0 +1,79 @@
+═══════════════════════════════════════════════════════════════════════════════
+💻 REPLIT-4#8: ADD GUIDE MODE TOGGLE BUTTON
+═══════════════════════════════════════════════════════════════════════════════
+
+OBJECTIVE:
+Add toggle button to toolbar for enabling/disabling Guide Mode.
+
+TARGET FILE:
+client/src/pages/cv-optimizer/ResultsPage.tsx
+
+───────────────────────────────────────────────────────────────────────────────
+
+CHANGES REQUIRED:
+
+1. ADD import for Lightbulb icon at top (with other lucide-react imports):
+```typescript
+import { Lightbulb } from 'lucide-react';
+```
+
+2. STATE already added in REPLIT-7#8:
+   - isGuideModeEnabled
+   - handleGuideModeToggle
+
+3. ADD button to toolbar (around lines 1091-1107, AFTER the CV Structure button):
+
+FIND THIS EXISTING BUTTON:
+```tsx
+<button
+  onClick={() => {
+    if (!showStructureOverlay && !structureData && !structureLoading) {
+      fetchStructure();
+    }
+    setShowStructureOverlay(!showStructureOverlay);
+  }}
+  className={`... ${
+    showStructureOverlay
+      ? 'bg-blue-600 text-white'
+      : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+  }`}
+>
+  <LayoutGrid size={16} />
+  CV Structure
+</button>
+```
+
+ADD THIS BUTTON IMMEDIATELY AFTER:
+```tsx
+{/* Guide Mode Toggle Button */}
+<button
+  onClick={handleGuideModeToggle}
+  className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+    isGuideModeEnabled
+      ? 'bg-indigo-600 text-white'
+      : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+  }`}
+  title={isGuideModeEnabled ? 'Disable Guide Mode' : 'Enable Guide Mode - Learn CV best practices'}
+>
+  <Lightbulb size={16} />
+  <span>Guide Mode</span>
+  {isGuideModeEnabled && <span className="ml-1">✓</span>}
+</button>
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+After changes, confirm:
+- [ ] Button appears in toolbar after CV Structure button
+- [ ] Click toggles isGuideModeEnabled state
+- [ ] Active state shows indigo background with checkmark
+- [ ] Inactive state shows white with border (matches other buttons)
+- [ ] No console errors
+
+ANTI-IMPROVISATION:
+- Match existing button styling pattern exactly
+- Do NOT change existing toolbar buttons
+- Use same className structure as CV Structure button
+
+═══════════════════════════════════════════════════════════════════════════════
