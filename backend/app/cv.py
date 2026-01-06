@@ -330,13 +330,24 @@ def _extract_docx_with_markers(file_content: bytes, preserve_markers: bool = Tru
 
 
 def strip_structure_markers(text: str) -> str:
-    """Remove structure markers from text for user-facing output.
+    """Convert structure markers to visible fallback characters for plain text display.
     
-    Strips [H1], [H2], [BOLD], [BULLET] markers while preserving the text content.
+    Converts markers to visible equivalents so formatting is preserved in plain text mode:
+    - [BULLET] -> "• " (bullet character)
+    - [BOLD]...[/BOLD] -> **...** (markdown bold)
+    - [H1], [H2] -> removed (text preserved)
     """
     import re
-    # Remove markers at start of lines
-    text = re.sub(r'^\[(H1|H2|BOLD|BULLET)\]\s*', '', text, flags=re.MULTILINE)
+    # Replace [BULLET] with visible bullet character
+    text = re.sub(r'^\[BULLET\]\s*', '• ', text, flags=re.MULTILINE)
+    # Remove [H1], [H2] markers (keep text)
+    text = re.sub(r'^\[(H1|H2)\]\s*', '', text, flags=re.MULTILINE)
+    # Replace line-start [BOLD] with nothing (handled by inline below)
+    text = re.sub(r'^\[BOLD\]\s*', '', text, flags=re.MULTILINE)
+    # Convert inline [BOLD]...[/BOLD] to markdown **...** for plain text
+    text = re.sub(r'\[BOLD\](.*?)\[/BOLD\]', r'**\1**', text)
+    # Clean up any remaining orphaned markers
+    text = text.replace('[BOLD]', '').replace('[/BOLD]', '')
     return text
 
 

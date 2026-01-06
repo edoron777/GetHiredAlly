@@ -1,0 +1,104 @@
+INVESTIGATION: Map the entire CV Issue Detection system
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONTEXT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The CV issue detection system is not working correctly:
+- Problem 1: Detecting formatting issues that aren't real (false positives)
+- Problem 2: Missing real issues that should be detected (false negatives)
+
+I need to understand the complete detection system before fixing it.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 1: List All Detector Files
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+List all files in: backend/common/detection/detectors/
+
+For EACH detector file, show:
+- File name
+- Main function name
+- Brief description (what it detects)
+- Example issue types it can find
+
+Format as table:
+| File | Function | Detects | Example Issues |
+|------|----------|---------|----------------|
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 2: List All Issue Types in Database
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Run this query:
+SELECT 
+    code, 
+    name, 
+    category,
+    severity,
+    is_active,
+    is_auto_fixable
+FROM cv_issue_types 
+ORDER BY category, code;
+
+Show results grouped by category.
+Count: How many total? How many active? How many inactive?
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 3: Show Master Detector
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Show the main detection function:
+- File: backend/common/detection/master_detector.py (or similar)
+- Function: detect_all_issues() (or similar name)
+
+Show:
+1. Function signature
+2. Which detectors it calls
+3. In what order
+4. Any filtering applied after detection
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 4: Identify Formatting-Related Detectors
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Identify which detectors check FORMATTING (these cause false positives):
+- Bold detection
+- Bullet detection  
+- Font detection
+- Spacing detection
+- Layout detection
+- Any detector that relies on VISUAL formatting
+
+List them separately:
+| Detector | Why it causes false positives |
+|----------|-------------------------------|
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+REPORT FORMAT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+DETECTION SYSTEM REPORT:
+
+1. DETECTOR FILES:
+   Total: [number]
+   [table of detectors]
+
+2. ISSUE TYPES IN DATABASE:
+   Total: [number]
+   Active: [number]
+   Inactive: [number]
+   [grouped list]
+
+3. MASTER DETECTOR FLOW:
+   [code or diagram]
+
+4. FORMATTING DETECTORS (to disable):
+   [list with reasons]
+
+5. CONTENT DETECTORS (to keep):
+   [list]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ DO NOT make any changes - investigation only!
