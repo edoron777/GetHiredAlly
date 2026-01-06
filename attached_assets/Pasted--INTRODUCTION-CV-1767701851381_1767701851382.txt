@@ -1,0 +1,54 @@
+═══════════════════════════════════════════════════════════════════════════════
+📋 INTRODUCTION: CV GUIDE MODE IMPLEMENTATION
+═══════════════════════════════════════════════════════════════════════════════
+
+PROJECT CONTEXT:
+This prompt series implements "CV Guide Mode" - an educational feature for 
+the CV Optimizer service. When enabled, users can click 💡 icons on CV 
+sections to learn best practices.
+
+SERIES OVERVIEW:
+- Total Prompts: 8 implementation + 1 verification
+- Estimated Time: 10-12 hours
+- Files Modified: 5 files
+- Files Created: 2 new files
+
+KEY FILES:
+- client/src/components/common/TipBox/types.ts (modify)
+- client/src/components/common/TipBox/TipBox.tsx (modify)
+- client/src/components/common/TipBox/TipBoxStyles.css (modify)
+- client/src/components/common/TipBox/guideContentBuilder.ts (NEW)
+- client/src/components/cv-optimizer/DocumentView/StructureOverlay.tsx (modify)
+- client/src/components/cv-optimizer/MissingSectionsBar/MissingSectionsBar.tsx (NEW)
+- client/src/pages/cv-optimizer/ResultsPage.tsx (modify)
+
+DEPENDENCIES:
+- Database table cv_section_guides must exist (created in Phase 1)
+- TipBox component in common/TipBox/ is working
+- ResultsPage has structureData with CV blocks
+
+ARCHITECTURE DECISIONS:
+1. TipBox: Extend COMMON TipBox (single source of truth, not cv-optimizer legacy)
+2. Mode: Add "mode" prop ('issue' | 'guide' | 'info')
+3. Content: Fetch from Supabase cv_section_guides table with caching
+4. Icons: Right side of section headers in StructureOverlay
+5. UX: Guide Mode toggle is separate from Structure Overlay toggle
+
+PROMPT SEQUENCE:
+1. REPLIT-1#8: Extend TipBox types
+2. REPLIT-2#8: Extend TipBox component
+3. REPLIT-3#8: Create guide content builder
+4. REPLIT-4#8: Add toggle button to toolbar
+5. REPLIT-5#8: Add 💡 icons to section headers
+6. REPLIT-6#8: Create missing sections bar
+7. REPLIT-7#8: Wire up interactions
+8. REPLIT-8#8: CSS styling updates
+
+ANTI-IMPROVISATION DIRECTIVE:
+- Do NOT add features not specified
+- Do NOT change existing functionality
+- Do NOT modify the legacy cv-optimizer/TipBox
+- STOP and ask if instructions are unclear
+- No guessing or "filling in gaps"
+
+═══════════════════════════════════════════════════════════════════════════════

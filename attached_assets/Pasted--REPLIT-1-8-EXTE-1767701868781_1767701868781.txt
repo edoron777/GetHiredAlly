@@ -1,0 +1,87 @@
+═══════════════════════════════════════════════════════════════════════════════
+💻 REPLIT-1#8: EXTEND TIPBOX TYPES
+═══════════════════════════════════════════════════════════════════════════════
+
+OBJECTIVE:
+Add new types to support Guide Mode in TipBox.
+
+TARGET FILE:
+client/src/components/common/TipBox/types.ts
+
+───────────────────────────────────────────────────────────────────────────────
+
+CHANGES REQUIRED:
+
+1. ADD TipBoxMode type:
+```typescript
+// Add after existing type definitions
+export type TipBoxMode = 'issue' | 'guide' | 'info';
+```
+
+2. ADD SectionStatus type:
+```typescript
+// For guide mode section indicators
+export type SectionStatus = 'found' | 'missing' | 'optional';
+```
+
+3. ADD Guide Mode color scheme:
+```typescript
+// Guide mode specific colors (add after existing TIPBOX_COLORS)
+export const GUIDE_MODE_COLORS: Record<SectionStatus, { accent: string; background: string }> = {
+  found: {
+    accent: '#22C55E',     // Green - section exists
+    background: '#F0FDF4'
+  },
+  missing: {
+    accent: '#EAB308',     // Amber - section missing
+    background: '#FEFCE8'
+  },
+  optional: {
+    accent: '#6366F1',     // Indigo - educational info
+    background: '#EEF2FF'
+  }
+};
+```
+
+4. ADD new section type for requirements:
+```typescript
+// Add 'requirements' to existing section types
+// This type shows mandatory/recommended/optional items with color markers
+
+export interface RequirementItem {
+  text: string;
+  priority: 'mandatory' | 'recommended' | 'optional';
+}
+
+// If TipBoxSectionType exists, add 'requirements' to it
+// Example: export type TipBoxSectionType = 'text' | 'category' | ... | 'requirements';
+```
+
+5. EXTEND TipBoxProps interface:
+```typescript
+// Add these optional props to TipBoxProps:
+interface TipBoxProps {
+  // ... existing props ...
+  
+  // NEW - Guide Mode support
+  mode?: TipBoxMode;              // Default: 'issue'
+  sectionStatus?: SectionStatus;  // For guide mode status badge
+  sectionKey?: string;            // CV section identifier (CONTACT, SUMMARY, etc.)
+}
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+After changes, confirm:
+- [ ] No TypeScript errors in file
+- [ ] Existing TipBox usage still works (backward compatible)
+- [ ] New types are exported
+
+ANTI-IMPROVISATION:
+- Do NOT modify existing color definitions
+- Do NOT change existing interfaces structure
+- Only ADD new types as specified
+- If existing structure differs from expected, STOP and report
+
+═══════════════════════════════════════════════════════════════════════════════
