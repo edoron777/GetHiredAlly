@@ -1,0 +1,235 @@
+FIX: Merge function only merges 2-3 lines instead of full section
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PROBLEM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+When merging Citi section with Experience:
+- EXPECTED: All 70+ lines of Citi content merge into Experience
+- ACTUAL: Only 2-3 lines merge
+
+The bug: Code uses block.content which is EMPTY or PARTIAL.
+Must extract content from cvContent using line numbers.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FILE TO EDIT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+File: client/src/components/cv-optimizer/DocumentView/StructureOverlay.tsx
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIX 1: Add Helper Function to Extract Content
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Add this function at the top of the component (inside the function body):
+```tsx
+// Helper: Extract content from cvContent using line numbers
+// ALWAYS use this instead of block.content (which may be empty)
+const extractContent = (startLine: number, endLine: number): string => {
+  if (!cvContent) {
+    console.warn('cvContent is empty!');
+    return '';
+  }
+  
+  const lines = cvContent.split('\n');
+  const startIdx = Math.max(0, startLine - 1); // Convert to 0-indexed
+  const endIdx = Math.min(lines.length, endLine);
+  
+  const extracted = lines.slice(startIdx, endIdx).join('\n');
+  
+  console.log(`extractContent(${startLine}-${endLine}): ${extracted.length} chars, ${endIdx - startIdx} lines`);
+  
+  return extracted;
+};
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIX 2: Replace handleMergeUp Function
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Find handleMergeUp and REPLACE ENTIRELY with:
+```tsx
+const handleMergeUp = (index: number) => {
+  if (index === 0) return; // Can't merge first section
+  
+  console.log('========== MERGE UP ==========');
+  
+  setLocalBlocks(prevBlocks => {
+    const newBlocks = [...prevBlocks];
+    const current = newBlocks[index];
+    const above = newBlocks[index - 1];
+    
+    console.log('Merging:', current.block_type, 'into', above.block_type);
+    console.log('Above lines:', above.start_line, '-', above.end_line);
+    console.log('Current lines:', current.start_line, '-', current.end_line);
+    
+    // CRITICAL: Extract content from cvContent, NOT from block.content
+    const aboveContent = extractContent(above.start_line, above.end_line);
+    const currentContent = extractContent(current.start_line, current.end_line);
+    
+    console.log('Above content length:', aboveContent.length);
+    console.log('Current content length:', currentContent.length);
+    
+    // Create merged block
+    const merged = {
+      ...above,
+      end_line: current.end_line,
+      content: aboveContent + '\n' + currentContent,
+      word_count: (above.word_count || 0) + (current.word_count || 0),
+    };
+    
+    console.log('Merged lines:', merged.start_line, '-', merged.end_line);
+    console.log('Merged content length:', merged.content.length);
+    
+    // Replace above with merged
+    newBlocks[index - 1] = merged;
+    
+    // Remove current (it's now part of above)
+    newBlocks.splice(index, 1);
+    
+    console.log('New block count:', newBlocks.length);
+    console.log('==============================');
+    
+    onStructureChange?.(newBlocks);
+    return newBlocks;
+  });
+  
+  setOpenDropdown(null);
+};
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIX 3: Replace handleMergeDown Function
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Find handleMergeDown and REPLACE ENTIRELY with:
+```tsx
+const handleMergeDown = (index: number) => {
+  if (index >= localBlocks.length - 1) return; // Can't merge last section
+  
+  console.log('========== MERGE DOWN ==========');
+  
+  setLocalBlocks(prevBlocks => {
+    const newBlocks = [...prevBlocks];
+    const current = newBlocks[index];
+    const below = newBlocks[index + 1];
+    
+    console.log('Merging:', below.block_type, 'into', current.block_type);
+    console.log('Current lines:', current.start_line, '-', current.end_line);
+    console.log('Below lines:', below.start_line, '-', below.end_line);
+    
+    // Extract content from cvContent
+    const currentContent = extractContent(current.start_line, current.end_line);
+    const belowContent = extractContent(below.start_line, below.end_line);
+    
+    console.log('Current content length:', currentContent.length);
+    console.log('Below content length:', belowContent.length);
+    
+    // Create merged block
+    const merged = {
+      ...current,
+      end_line: below.end_line,
+      content: currentContent + '\n' + belowContent,
+      word_count: (current.word_count || 0) + (below.word_count || 0),
+    };
+    
+    console.log('Merged content length:', merged.content.length);
+    
+    // Replace current with merged
+    newBlocks[index] = merged;
+    
+    // Remove below
+    newBlocks.splice(index + 1, 1);
+    
+    console.log('New block count:', newBlocks.length);
+    console.log('================================');
+    
+    onStructureChange?.(newBlocks);
+    return newBlocks;
+  });
+  
+  setOpenDropdown(null);
+};
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIX 4: Update Content Rendering
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+In the render section, make sure content is extracted properly:
+```tsx
+{localBlocks.map((block, index) => {
+  // Always extract fresh content from cvContent
+  const content = extractContent(block.start_line, block.end_line);
+  
+  return (
+    <div key={...} className="section-card ...">
+      {/* Header */}
+      <div className="section-header ...">
+        ...
+      </div>
+      
+      {/* Content - use extracted content */}
+      <div className="section-content ...">
+        <pre className="whitespace-pre-wrap ...">
+          {content}
+        </pre>
+      </div>
+    </div>
+  );
+})}
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIX 5: Verify cvContent is Passed
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+At the top of the component, add a check:
+```tsx
+export const StructureOverlay: React.FC<StructureOverlayProps> = ({
+  blocks,
+  cvContent,
+  onStructureChange
+}) => {
+  // Debug: Verify cvContent is available
+  useEffect(() => {
+    console.log('StructureOverlay mounted');
+    console.log('cvContent length:', cvContent?.length || 0);
+    console.log('blocks count:', blocks?.length || 0);
+    
+    if (!cvContent || cvContent.length < 100) {
+      console.error('WARNING: cvContent is empty or too short!');
+    }
+  }, [cvContent, blocks]);
+  
+  // ... rest of component
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+VERIFICATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Open Console (F12)
+2. Click CV Structure
+3. Check logs:
+   - cvContent length: 10000+ (should be large)
+   - blocks count: 5-6
+
+4. Click on Citi section → "Merge with section above"
+5. Check logs:
+   - Current content length: 3000+ (all Citi content)
+   - Merged content length: 5000+ (combined)
+
+6. Verify Experience section now shows ALL Citi content
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COMPLETION CHECKLIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] Added extractContent() helper function
+[ ] Replaced handleMergeUp with fixed version
+[ ] Replaced handleMergeDown with fixed version
+[ ] Updated content rendering to use extractContent()
+[ ] Added cvContent verification logging
+[ ] Tested merge - ALL content now merges
+[ ] Console shows correct content lengths

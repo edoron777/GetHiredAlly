@@ -85,6 +85,56 @@ CERTIFICATIONS_HEADERS = [
     'accreditations', 'training',
 ]
 
+# Sub-categories that should NOT start new sections
+# These appear WITHIN sections (like certification categories within CERTIFICATIONS)
+SUB_CATEGORY_PATTERNS = [
+    # Certification sub-categories
+    'ai & product management',
+    'google ai certifications', 
+    'microsoft cloud & security',
+    'microsoft cloud security',
+    'microsoft infrastructure',
+    'security & compliance',
+    'security compliance',
+    'systems & business analysis',
+    'systems business analysis',
+    'cloud certifications',
+    'security certifications',
+    'management certifications',
+    
+    # Experience sub-headers (within a job)
+    'technology research',
+    'ai security projects',
+    'identity infrastructure', 
+    'delivery excellence',
+    'technology domains',
+    'responsibilities',
+    'achievements',
+    'key accomplishments',
+    'key achievements',
+    'core responsibilities',
+    
+    # Skills sub-categories
+    'programming languages',
+    'frameworks',
+    'tools',
+    'databases',
+    'cloud platforms',
+    'methodologies',
+]
+
+def _is_sub_category(text: str) -> bool:
+    """Check if text is a sub-category (should NOT start new section)."""
+    cleaned = text.lower().strip()
+    # Remove formatting markers
+    cleaned = cleaned.replace('[h1]', '').replace('[h2]', '').replace('[bold]', '')
+    cleaned = cleaned.replace('**', '').replace('*', '').strip(':').strip()
+    
+    for pattern in SUB_CATEGORY_PATTERNS:
+        if pattern in cleaned or cleaned == pattern:
+            return True
+    return False
+
 
 @dataclass
 class CVSection:
@@ -129,10 +179,19 @@ def _normalize_header(text: str) -> str:
 
 
 def _is_section_header(line: str) -> Tuple[bool, Optional[str]]:
-    """Check if line is a section header. Returns (is_header, section_type)."""
+    """Check if line is a section header. Returns (is_header, section_type).
+    
+    IMPORTANT: Sub-categories (like "AI & Product Management" within Certifications)
+    are NOT section headers and should return False.
+    """
     normalized = _normalize_header(line)
     
     if not normalized or len(normalized) > 50:
+        return False, None
+    
+    # CRITICAL: Check if this is a sub-category first - these are NOT section headers
+    if _is_sub_category(line):
+        logger.debug(f"[SECTION_HEADER] Skipping sub-category: {line.strip()[:50]}")
         return False, None
     
     for header in SUMMARY_HEADERS:
