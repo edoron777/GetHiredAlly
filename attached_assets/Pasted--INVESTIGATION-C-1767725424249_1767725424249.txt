@@ -1,0 +1,89 @@
+═══════════════════════════════════════════════════════════════════════════════
+🔍 INVESTIGATION: Certification Counting Function
+═══════════════════════════════════════════════════════════════════════════════
+Type: Investigation + Fix
+Priority: HIGH
+
+───────────────────────────────────────────────────────────────────────────────
+CONTEXT
+───────────────────────────────────────────────────────────────────────────────
+
+File: backend/common/detection/certification_detector.py
+
+Thresholds are set:
+- CERT_THRESHOLD_CRITICAL = 9 (triggers "important")
+- User has 31 certifications
+
+But no detection triggered. Problem is likely in count_certifications() function.
+
+───────────────────────────────────────────────────────────────────────────────
+INVESTIGATION TASKS
+───────────────────────────────────────────────────────────────────────────────
+
+1. Show me the FULL count_certifications() function
+
+2. Show me how certification section is identified:
+   - What section headers are recognized?
+   - How are individual certifications counted?
+
+3. Test the function with sample data:
+   Add debug logging:
+```python
+   print(f"DEBUG: cert_count = {cert_count}")
+   print(f"DEBUG: certification_text = {certification_text[:500]}")
+```
+
+4. Check if the detector is even being called:
+   - Is certification_detector.py imported and used?
+   - Where is it called in the detection pipeline?
+
+───────────────────────────────────────────────────────────────────────────────
+LIKELY ISSUES
+───────────────────────────────────────────────────────────────────────────────
+
+A) Section not recognized:
+   - User's section header might be "CERTIFICATIONS & LICENSES"
+   - Detector only looks for "CERTIFICATIONS"
+
+B) Counting logic fails:
+   - User's certifications might be formatted differently
+   - Not using bullet points, using commas, etc.
+
+C) Detector not called:
+   - certification_detector.py might not be in the detection pipeline
+
+───────────────────────────────────────────────────────────────────────────────
+FIX GUIDANCE
+───────────────────────────────────────────────────────────────────────────────
+
+After investigation, likely fixes:
+
+A) Expand section header matching:
+```python
+CERT_HEADERS = [
+    'certifications',
+    'certificates', 
+    'certifications & licenses',
+    'certifications and licenses',
+    'professional certifications',
+    'licenses and certifications',
+    'credentials',
+]
+```
+
+B) Improve counting to handle various formats:
+```python
+def count_certifications(text):
+    # Count bullet points
+    bullet_count = len(re.findall(r'^[\s]*[•\-\*]\s', text, re.MULTILINE))
+    
+    # Count numbered items
+    numbered_count = len(re.findall(r'^[\s]*\d+[.)]\s', text, re.MULTILINE))
+    
+    # Count lines with years (e.g., "AWS (2023)")
+    year_count = len(re.findall(r'\(\d{4}\)', text))
+    
+    return max(bullet_count, numbered_count, year_count)
+```
+
+═══════════════════════════════════════════════════════════════════════════════
