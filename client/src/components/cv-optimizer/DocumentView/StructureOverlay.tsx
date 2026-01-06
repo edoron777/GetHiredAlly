@@ -148,7 +148,8 @@ export const StructureOverlay: React.FC<StructureOverlayProps> = ({
     setLocalBlocks(prev => {
       const updated = [...prev];
       updated[index] = { ...updated[index], type: newType.toUpperCase() };
-      onStructureChange?.(updated);
+      // Defer to avoid setState during render
+      setTimeout(() => onStructureChange?.(updated), 0);
       return updated;
     });
     onSectionTypeChange?.(index, newType);
@@ -232,11 +233,13 @@ export const StructureOverlay: React.FC<StructureOverlayProps> = ({
       console.log('\n📋 STATE AFTER MERGE:');
       debugBlocks('newBlocks after', newBlocks);
       
-      // Call parent callback
+      // Defer to avoid setState during render
       if (onStructureChange) {
-        console.log('\n📨 Calling onStructureChange...');
-        onStructureChange(newBlocks);
-        console.log('✅ onStructureChange called');
+        console.log('\n📨 Calling onStructureChange (deferred)...');
+        setTimeout(() => {
+          onStructureChange(newBlocks);
+          console.log('✅ onStructureChange called');
+        }, 0);
       } else {
         console.warn('⚠️ WARNING: onStructureChange is not defined!');
       }
@@ -303,7 +306,8 @@ export const StructureOverlay: React.FC<StructureOverlayProps> = ({
       console.log('New block count:', newBlocks.length);
       console.log('========== MERGE DOWN END ==========');
       
-      onStructureChange?.(newBlocks);
+      // Defer to avoid setState during render
+      setTimeout(() => onStructureChange?.(newBlocks), 0);
       return newBlocks;
     });
     
@@ -368,10 +372,13 @@ export const StructureOverlay: React.FC<StructureOverlayProps> = ({
       console.log('\n📋 Blocks after split:');
       debugBlocks('newBlocks', newBlocks);
       
+      // Defer to avoid setState during render
       if (onStructureChange) {
-        console.log('\n📨 Calling onStructureChange...');
-        onStructureChange(newBlocks);
-        console.log('✅ onStructureChange called');
+        console.log('\n📨 Calling onStructureChange (deferred)...');
+        setTimeout(() => {
+          onStructureChange(newBlocks);
+          console.log('✅ onStructureChange called');
+        }, 0);
       } else {
         console.warn('⚠️ WARNING: onStructureChange is not defined!');
       }
