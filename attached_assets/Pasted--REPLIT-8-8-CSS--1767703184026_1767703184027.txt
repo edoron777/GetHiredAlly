@@ -1,0 +1,163 @@
+═══════════════════════════════════════════════════════════════════════════════
+💻 REPLIT-8#8: CSS STYLING UPDATES
+═══════════════════════════════════════════════════════════════════════════════
+
+OBJECTIVE:
+Add CSS styles for guide mode TipBox elements.
+
+TARGET FILE:
+client/src/components/common/TipBox/TipBoxStyles.css
+
+───────────────────────────────────────────────────────────────────────────────
+
+ADD THESE STYLES:
+```css
+/* ============================================================================
+   GUIDE MODE STYLES
+   ============================================================================ */
+
+/* Guide Mode Header */
+.tipbox-header--guide {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+  color: white;
+  border-radius: 12px 12px 0 0;
+}
+
+.tipbox-header__content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tipbox-header__icon {
+  font-size: 24px;
+}
+
+.tipbox-header__title {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* Status Badge */
+.tipbox-status-badge {
+  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+
+.tipbox-status-badge--found {
+  background: rgba(34, 197, 94, 0.2);
+  color: #166534;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.tipbox-status-badge--missing {
+  background: rgba(234, 179, 8, 0.2);
+  color: #854D0E;
+  border: 1px solid rgba(234, 179, 8, 0.3);
+}
+
+.tipbox-status-badge--optional {
+  background: rgba(99, 102, 241, 0.2);
+  color: #3730A3;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+/* Requirements List */
+.tipbox-requirements-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.tipbox-requirement {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid #F3F4F6;
+}
+
+.tipbox-requirement:last-child {
+  border-bottom: none;
+}
+
+.tipbox-requirement__icon {
+  font-size: 12px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.tipbox-requirement__text {
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.5;
+}
+
+/* Priority-specific styling */
+.tipbox-requirement--mandatory .tipbox-requirement__text {
+  font-weight: 500;
+}
+
+.tipbox-requirement--optional {
+  opacity: 0.8;
+}
+
+/* Guide Mode Buttons */
+.tipbox-buttons--guide {
+  display: flex;
+  justify-content: center;
+  padding: 16px 20px;
+  border-top: 1px solid #E5E7EB;
+}
+
+.tipbox-buttons--guide .tipbox-button--primary {
+  background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+  color: white;
+  border: none;
+  padding: 10px 32px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.tipbox-buttons--guide .tipbox-button--primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+/* Toolbar Button Active State */
+.toolbar-button--active {
+  background: #6366F1 !important;
+  color: white !important;
+}
+
+.toolbar-button__check {
+  margin-left: 4px;
+  font-size: 12px;
+}
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+After changes, confirm:
+- [ ] Guide mode header has gradient
+- [ ] Status badges display correctly
+- [ ] Requirements list shows icons
+- [ ] Button has hover effect
+- [ ] No style conflicts with issue mode
+
+ANTI-IMPROVISATION:
+- Do NOT modify existing issue mode styles
+- Match colors to established design system
+- Keep animations subtle
+
+═══════════════════════════════════════════════════════════════════════════════

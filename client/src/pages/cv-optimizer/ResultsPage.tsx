@@ -7,6 +7,8 @@ import { DocumentEditor } from '../../components/common/DocumentEditor';
 import { TipBox } from '../../components/common/TipBox';
 import type { TipBoxButton } from '../../components/common/TipBox';
 import type { TipBoxSection } from '../../components/common/TipBox/types';
+import { buildGuideContent } from '../../components/common/TipBox/guideContentBuilder';
+import type { GuideContent } from '../../components/common/TipBox/guideContentBuilder';
 import IssueSidebar from '../../components/cv-optimizer/IssueSidebar';
 import ContentSelector from '../../components/cv-optimizer/ContentSelector';
 import QuickFormatPanel from '../../components/cv-optimizer/QuickFormatPanel';
@@ -143,9 +145,46 @@ export default function ResultsPage() {
   const [structureLoading, setStructureLoading] = useState(false);
   const [showStructureOverlay, setShowStructureOverlay] = useState(false);
   const [isGuideModeEnabled, setIsGuideModeEnabled] = useState(false);
+  const [guideTipBoxData, setGuideTipBoxData] = useState<{
+    isOpen: boolean;
+    sectionKey: string | null;
+    content: GuideContent | null;
+    status: 'found' | 'missing';
+  }>({
+    isOpen: false,
+    sectionKey: null,
+    content: null,
+    status: 'found'
+  });
 
   const handleGuideModeToggle = () => {
     setIsGuideModeEnabled(prev => !prev);
+  };
+
+  const handleGuideClick = async (sectionKey: string) => {
+    const detectedSections = structureData?.blocks?.map(b => b.type.toUpperCase()) || [];
+    const status = detectedSections.includes(sectionKey.toUpperCase()) ? 'found' : 'missing';
+    
+    const content = await buildGuideContent(sectionKey);
+    
+    if (!content) {
+      console.warn(`No guide content found for section: ${sectionKey}`);
+      return;
+    }
+    
+    setGuideTipBoxData({
+      isOpen: true,
+      sectionKey,
+      content,
+      status
+    });
+  };
+
+  const handleGuideClose = () => {
+    setGuideTipBoxData(prev => ({
+      ...prev,
+      isOpen: false
+    }));
   };
 
   const normalizeIssue = (issue: CVIssue, index: number) => ({
@@ -1160,6 +1199,15 @@ export default function ResultsPage() {
                     cvContent={cvContent?.fullText || ''}
                     onSectionTypeChange={handleSectionTypeChange}
                     onStructureChange={handleStructureChange}
+                    isGuideModeEnabled={isGuideModeEnabled}
+                    onGuideClick={handleGuideClick}
+                  />
+                  
+                  {/* Missing Sections Bar - visible when Guide Mode enabled */}
+                  <MissingSectionsBar
+                    detectedSections={structureData?.blocks?.map(b => b.type.toUpperCase()) || []}
+                    onSectionClick={handleGuideClick}
+                    isVisible={isGuideModeEnabled}
                   />
                 </div>
               ) : showStructureOverlay && structureLoading ? (
@@ -1229,6 +1277,19 @@ export default function ResultsPage() {
           isAutoFixable={selectedIssue.isAutoFixable || false}
           isPending={pendingIssues.has(selectedIssue.id)}
           isFixed={fixedIssues.has(selectedIssue.id)}
+        />
+      )}
+
+      {/* Guide Mode TipBox */}
+      {guideTipBoxData.isOpen && guideTipBoxData.content && (
+        <TipBox
+          isOpen={true}
+          onClose={handleGuideClose}
+          mode="guide"
+          sectionStatus={guideTipBoxData.status}
+          sectionKey={guideTipBoxData.sectionKey || undefined}
+          title={guideTipBoxData.content.title}
+          sections={guideTipBoxData.content.sections}
         />
       )}
 
