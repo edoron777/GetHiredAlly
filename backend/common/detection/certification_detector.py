@@ -9,7 +9,10 @@ DETERMINISTIC: Same text → Same issues (always)
 """
 
 import re
-from typing import List, Dict
+from typing import List, Dict, Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from backend.common.detection.block_detector import CVBlockStructure
 
 CERT_THRESHOLD_WARNING = 6
 CERT_THRESHOLD_CRITICAL = 9

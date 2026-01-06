@@ -8,7 +8,10 @@ SECTION-AWARE: Weak verbs and buzzwords only checked in Experience section.
 """
 
 import re
-from typing import List, Dict
+from typing import List, Dict, Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from backend.common.detection.block_detector import CVBlockStructure
 from .word_lists import (
     WEAK_VERBS,
     STRONG_VERBS,
@@ -159,12 +162,19 @@ def detect_weak_verbs(text: str) -> List[Dict]:
     if should_trigger:
         weak_list = sorted(list(weak_verbs_found))[:5]
         
+        current_display = ', '.join(weak_list)
+        if weak_verb_examples:
+            first_example = weak_verb_examples[0]
+            example_line = first_example.get('line', '')
+            if example_line:
+                current_display = f'"{example_line}" (uses: {", ".join(weak_list)})'
+        
         issues.append({
             'issue_type': 'CONTENT_WEAK_ACTION_VERBS',
             'title': 'Multiple weak action verbs found',
             'location': 'Experience Section',
             'description': f'Found {len(weak_verbs_found)} weak/passive verbs: {", ".join(weak_list)}. Replace with strong action verbs.',
-            'current': ', '.join(weak_list),
+            'current': current_display,
             'is_highlightable': False,
             'weak_verbs': list(weak_verbs_found),
             'weak_verb_count': len(weak_verbs_found),

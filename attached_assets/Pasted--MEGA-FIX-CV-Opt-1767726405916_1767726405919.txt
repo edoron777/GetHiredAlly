@@ -1,0 +1,386 @@
+═══════════════════════════════════════════════════════════════════════════════
+🔧 MEGA FIX: CV Optimizer Bug Resolution + Deployment
+═══════════════════════════════════════════════════════════════════════════════
+Type: Verification + Fix + Rebuild + Test
+Priority: CRITICAL
+Estimated Time: 15-20 minutes
+
+THIS PROMPT HANDLES EVERYTHING. DO NOT STOP UNTIL ALL 4 PHASES COMPLETE.
+
+───────────────────────────────────────────────────────────────────────────────
+PHASE 1: VERIFY CURRENT STATE
+───────────────────────────────────────────────────────────────────────────────
+
+Before making any changes, show me the CURRENT state of these files:
+
+CHECK 1 - Pipe Separator Detection:
+File: backend/common/detection/contact_extractor.py
+
+Show me:
+- Lines containing "check_inconsistent_separators" function
+- Lines containing "SEPARATOR_NORMALIZATIONS" or "normalize_separators"
+- The exact logic that decides when to flag CONTACT_INCONSISTENT_FORMAT
+
+Question: Does the code normalize Unicode separators before checking?
+Answer: YES / NO
+
+CHECK 2 - URL Linkification in Document View:
+File: client/src/components/common/DocumentEditor/renderers/TextRenderer.tsx
+(or wherever TextMarker is used)
+
+Show me:
+- The code path when markers.length > 0
+- Is linkifyContent() called in this path?
+- How is content passed to TextMarker?
+
+Question: Does TextMarker path linkify URLs?
+Answer: YES / NO
+
+CHECK 3 - Weak Verb Context:
+Find the file that creates CONTENT_WEAK_ACTION_VERBS issues.
+
+Show me:
+- How the "current" field is populated
+- Does it show just the word or the full sentence?
+
+Question: Does "current" show full sentence context?
+Answer: YES / NO
+
+CHECK 4 - Certification Count:
+File: backend/common/detection/certification_detector.py (or similar)
+
+Show me:
+- The issue_code used (CERTIFICATION_TOO_MANY or CONTENT_TOO_MANY_CERTIFICATIONS?)
+- The count_certifications function
+- What headers are recognized?
+
+Question: Will it detect 31 certifications in a CERTIFICATIONS section?
+Answer: YES / NO
+
+───────────────────────────────────────────────────────────────────────────────
+PHASE 2: APPLY FIXES
+───────────────────────────────────────────────────────────────────────────────
+
+Based on Phase 1 answers, apply these fixes:
+
+═══════════════════════════════════════════════════════════════════════════════
+FIX A: PIPE SEPARATOR (if Phase 1 Answer = NO)
+═══════════════════════════════════════════════════════════════════════════════
+
+File: backend/common/detection/contact_extractor.py
+
+REQUIRED CHANGES:
+
+1. Add normalization dictionary (near top of file):
+```python
+# Unicode separator normalizations
+SEPARATOR_NORMALIZATIONS = {
+    '│': '|',   # Box Drawing Vertical (U+2502) → Pipe
+    '｜': '|',  # Fullwidth Vertical (U+FF5C) → Pipe
+    '┃': '|',   # Box Drawings Heavy Vertical (U+2503) → Pipe
+    '∣': '|',   # Divides (U+2223) → Pipe
+    '·': '•',   # Middle Dot (U+00B7) → Bullet
+    '‧': '•',   # Hyphenation Point (U+2027) → Bullet
+    '∙': '•',   # Bullet Operator (U+2219) → Bullet
+    '–': '-',   # En Dash (U+2013) → Hyphen
+    '—': '-',   # Em Dash (U+2014) → Hyphen
+}
+```
+
+2. Add normalization function:
+```python
+def normalize_separators(text: str) -> str:
+    """Convert Unicode separator variants to standard ASCII equivalents."""
+    for unicode_char, ascii_char in SEPARATOR_NORMALIZATIONS.items():
+        text = text.replace(unicode_char, ascii_char)
+    return text
+```
+
+3. Update check_inconsistent_separators function:
+```python
+def check_inconsistent_separators(text: str) -> Optional[List[str]]:
+    """Check if multiple different separators are used (inconsistent formatting)."""
+    contact_area = text[:500]
+    
+    # Normalize Unicode variants before checking
+    normalized_area = normalize_separators(contact_area)
+    
+    found_separators = []
+    for sep in CONTACT_SEPARATORS:
+        if sep in normalized_area:
+            found_separators.append(sep)
+    
+    # Only flag if 2+ DIFFERENT separator types are mixed
+    if len(found_separators) > 1:
+        return found_separators
+    return None
+```
+
+═══════════════════════════════════════════════════════════════════════════════
+FIX B: URL LINKIFICATION IN DOCUMENT VIEW (if Phase 1 Answer = NO)
+═══════════════════════════════════════════════════════════════════════════════
+
+File: client/src/components/common/DocumentEditor/renderers/TextRenderer.tsx
+
+PROBLEM: When markers exist, content is passed to TextMarker without linkification.
+
+CURRENT (broken):
+```tsx
+return (
+  <div className="text-content">
+    <TextMarker
+      content={content}  // Raw content - no URL linkification!
+      markers={markers}
+      ...
+    />
+  </div>
+)
+```
+
+FIX - Option 1 (Pre-linkify content):
+```tsx
+// Import linkifyContent if not already imported
+import { linkifyContent } from '../utils/linkifier';
+
+// In the component, linkify BEFORE passing to TextMarker:
+const linkifiedContent = linkifyContent(content);
+
+return (
+  <div className="text-content">
+    <TextMarker
+      content={linkifiedContent}  // Now URLs are linkified!
+      markers={markers}
+      ...
+    />
+  </div>
+)
+```
+
+FIX - Option 2 (If TextMarker can't handle pre-linkified content):
+Modify TextMarker component to call linkifyContent internally when rendering
+text segments between markers.
+
+Choose the option that fits the current architecture.
+
+═══════════════════════════════════════════════════════════════════════════════
+FIX C: WEAK VERB CONTEXT (if Phase 1 Answer = NO)
+═══════════════════════════════════════════════════════════════════════════════
+
+Find where CONTENT_WEAK_ACTION_VERBS issues are created.
+
+CURRENT (broken):
+```python
+issues.append({
+    'issue_type': 'CONTENT_WEAK_ACTION_VERBS',
+    'current': word,  # Just "Supported" - no context!
+    ...
+})
+```
+
+FIX - Show full sentence:
+```python
+def get_sentence_context(text: str, word: str, max_length: int = 150) -> str:
+    """Extract the sentence containing the word for context."""
+    # Find the word in text (case-insensitive)
+    word_lower = word.lower()
+    text_lower = text.lower()
+    
+    pos = text_lower.find(word_lower)
+    if pos == -1:
+        return word
+    
+    # Find sentence boundaries
+    start = pos
+    end = pos + len(word)
+    
+    # Look back for sentence start
+    for i in range(pos - 1, max(0, pos - 100), -1):
+        if text[i] in '.!?\n•-':
+            start = i + 1
+            break
+    else:
+        start = max(0, pos - 50)
+    
+    # Look forward for sentence end
+    for i in range(pos + len(word), min(len(text), pos + 150)):
+        if text[i] in '.!?\n':
+            end = i + 1
+            break
+    else:
+        end = min(len(text), pos + 100)
+    
+    sentence = text[start:end].strip()
+    
+    # Truncate if too long
+    if len(sentence) > max_length:
+        sentence = sentence[:max_length] + '...'
+    
+    return sentence
+
+# When creating the issue:
+issues.append({
+    'issue_type': 'CONTENT_WEAK_ACTION_VERBS',
+    'current': get_sentence_context(full_text, word),  # Full sentence!
+    ...
+})
+```
+
+═══════════════════════════════════════════════════════════════════════════════
+FIX D: CERTIFICATION COUNT (if not working)
+═══════════════════════════════════════════════════════════════════════════════
+
+Ensure certification detection:
+
+1. Recognizes these section headers:
+```python
+CERT_SECTION_HEADERS = [
+    'certifications',
+    'certificates',
+    'certifications & licenses',
+    'certifications and licenses',
+    'professional certifications',
+    'licenses & certifications',
+    'licenses and certifications',
+    'credentials',
+    'professional credentials',
+    'training & certifications',
+]
+```
+
+2. Counts certifications properly:
+```python
+def count_certifications(cert_section_text: str) -> int:
+    """Count individual certifications in the section."""
+    count = 0
+    
+    # Count bullet points
+    bullets = re.findall(r'^[\s]*[•\-\*\>]\s', cert_section_text, re.MULTILINE)
+    count = max(count, len(bullets))
+    
+    # Count numbered items
+    numbered = re.findall(r'^[\s]*\d+[.)]\s', cert_section_text, re.MULTILINE)
+    count = max(count, len(numbered))
+    
+    # Count lines with years (AWS (2023), PMP 2022, etc.)
+    years = re.findall(r'[\(\[]?\d{4}[\)\]]?', cert_section_text)
+    count = max(count, len(years))
+    
+    # Count lines that look like certifications (fallback)
+    lines = [l.strip() for l in cert_section_text.split('\n') if l.strip()]
+    count = max(count, len(lines) - 1)  # -1 for header
+    
+    return count
+```
+
+3. Threshold check:
+```python
+if cert_count > 8:
+    issues.append({
+        'issue_type': 'CONTENT_TOO_MANY_CERTIFICATIONS',  # or CERTIFICATION_TOO_MANY
+        'severity': 'consider' if cert_count <= 12 else 'important',
+        'current': f'Found {cert_count} certifications (recommended: 6-8)',
+        ...
+    })
+```
+
+───────────────────────────────────────────────────────────────────────────────
+PHASE 3: REBUILD & RESTART
+───────────────────────────────────────────────────────────────────────────────
+
+After applying fixes:
+
+1. REBUILD FRONTEND:
+```bash
+cd client
+npm run build
+```
+
+2. RESTART BACKEND:
+```bash
+# If using uvicorn
+pkill -f uvicorn
+uvicorn main:app --reload --host 0.0.0.0 --port 8000 &
+
+# Or restart via Replit's restart button
+```
+
+3. CLEAR CACHE (if applicable):
+```bash
+# Clear Python cache
+find . -type d -name __pycache__ -exec rm -rf {} +
+
+# Clear any Redis/session cache if used
+```
+
+4. VERIFY DEPLOYMENT:
+- Check backend logs for errors
+- Check frontend loads without console errors
+
+───────────────────────────────────────────────────────────────────────────────
+PHASE 4: TEST ALL FIXES
+───────────────────────────────────────────────────────────────────────────────
+
+After rebuild, test each fix:
+
+TEST A - PIPE SEPARATOR:
+1. Upload CV with: "Name | email@test.com | Phone: 123-456-7890"
+2. Run analysis
+3. EXPECTED: No "Inconsistent Contact Format" issue
+4. RESULT: PASS / FAIL
+
+TEST B - URL LINKIFICATION:
+1. Upload CV with LinkedIn URL in contact section
+2. Open Document View
+3. EXPECTED: LinkedIn URL is clickable link (not just "LinkedIn" text)
+4. RESULT: PASS / FAIL
+
+TEST C - WEAK VERB CONTEXT:
+1. Upload CV containing "Supported enterprise systems..."
+2. If flagged, check TipBox
+3. EXPECTED: Current shows "Supported enterprise systems..." (full sentence)
+4. RESULT: PASS / FAIL
+
+TEST D - CERTIFICATION COUNT:
+1. Upload CV with 10+ certifications
+2. Run analysis
+3. EXPECTED: "Too Many Certifications" issue detected
+4. RESULT: PASS / FAIL
+
+───────────────────────────────────────────────────────────────────────────────
+FINAL REPORT FORMAT
+───────────────────────────────────────────────────────────────────────────────
+
+## PHASE 1: Verification Results
+| Check | File | Found | Working? |
+|-------|------|-------|----------|
+| Pipe Normalization | contact_extractor.py | YES/NO | YES/NO |
+| URL Linkification | TextRenderer.tsx | YES/NO | YES/NO |
+| Weak Verb Context | [file] | YES/NO | YES/NO |
+| Cert Detection | [file] | YES/NO | YES/NO |
+
+## PHASE 2: Fixes Applied
+| Fix | Status |
+|-----|--------|
+| Fix A: Pipe | Applied / Already Working / Failed |
+| Fix B: URL | Applied / Already Working / Failed |
+| Fix C: Context | Applied / Already Working / Failed |
+| Fix D: Certs | Applied / Already Working / Failed |
+
+## PHASE 3: Rebuild
+| Step | Status |
+|------|--------|
+| Frontend build | ✅ / ❌ |
+| Backend restart | ✅ / ❌ |
+| Cache cleared | ✅ / ❌ |
+
+## PHASE 4: Test Results
+| Test | Expected | Actual | Status |
+|------|----------|--------|--------|
+| Pipe separator | Not flagged | [result] | ✅ / ❌ |
+| URL linkification | Clickable | [result] | ✅ / ❌ |
+| Weak verb context | Full sentence | [result] | ✅ / ❌ |
+| Certification count | Detected | [result] | ✅ / ❌ |
+
+═══════════════════════════════════════════════════════════════════════════════
+⛔ CRITICAL: COMPLETE ALL 4 PHASES BEFORE REPORTING DONE
+═══════════════════════════════════════════════════════════════════════════════

@@ -1,0 +1,75 @@
+# 🔍 Investigation Prompt: Side-by-Side Component Architecture
+
+## OBJECTIVE
+Map all code related to the Side-by-Side view in CV Optimizer to understand its structure before making it reusable.
+
+## QUESTIONS TO ANSWER
+
+### 1. File Structure
+List ALL files involved in the Side-by-Side functionality:
+- Main component file(s)
+- Supporting components
+- Hooks used
+- Utility functions
+- Type definitions
+- CSS/styling files
+
+### 2. Component Structure
+For each file found, document:
+- Component/function name
+- Props accepted
+- State managed
+- What it renders
+
+### 3. Data Flow
+Explain the data flow:
+- What data does Side-by-Side receive? (original CV, fixed CV, issues, etc.)
+- What format is the data in?
+- How are differences calculated/highlighted?
+- How is sync scrolling implemented (if any)?
+
+### 4. Dependencies
+List all imports used by Side-by-Side:
+- External packages (react, etc.)
+- Internal components (TipBox, DocStyler, etc.)
+- Hooks
+- Types
+
+### 5. Current Integration
+How is Side-by-Side currently triggered?
+- What button/tab activates it?
+- What state controls which view is shown?
+- Is there a viewMode state variable?
+
+### 6. Specific Functions
+Document these specific functions if they exist:
+- Function that renders the "Original CV" panel
+- Function that renders the "Fixed CV" panel
+- Function that highlights differences
+- Function that syncs scrolling between panels
+
+## OUTPUT FORMAT
+
+Provide a structured report with:
+1. File paths and purposes
+2. Component tree diagram
+3. Props/interfaces definitions
+4. Key functions with their signatures
+```
+
+---
+
+## Part 3: Proposed Reusable Side-by-Side Architecture
+
+Based on the ReplitFunctionCreationGuidelines and best practices:
+
+### 3.1 Proposed File Structure
+```
+client/src/components/common/SideBySide/
+├── SideBySide.tsx          # Main component
+├── SideBySidePanel.tsx     # Individual panel component
+├── SideBySideHeader.tsx    # Header with indicators
+├── useSideBySideSync.ts    # Hook for scroll sync
+├── types.ts                # TypeScript interfaces
+├── SideBySide.css          # Styles
+└── index.ts                # Export barrel
