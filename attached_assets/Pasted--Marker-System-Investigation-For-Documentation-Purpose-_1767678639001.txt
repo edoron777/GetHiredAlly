@@ -1,0 +1,170 @@
+# Marker System Investigation - For Documentation
+
+**Purpose:** Gather complete information about the Marker system to create accurate documentation
+
+---
+
+## 💻 RFI-1#1: Complete Marker System Investigation
+
+**Target:** Replit AI Agent
+
+```text
+INVESTIGATION: Document the complete Marker system for CV Optimizer
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PURPOSE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+I need to create documentation for the Marker system.
+Please investigate and report ALL the following information.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 1: FILE STRUCTURE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+List ALL files related to the Marker system in Document View:
+
+1. Main files in: client/src/components/cv-optimizer/DocumentView/
+2. Any shared components used (TextMarker, etc.)
+3. Constants files (severityColors.ts or similar)
+
+For each file, provide:
+| File Name | Path | Purpose |
+|-----------|------|---------|
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 2: TEXT MARKERS (In-Document Markers)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+2A. How do text markers work?
+
+Show the code flow:
+1. Where do issues come from? (API endpoint, state)
+2. How are issues matched to text positions?
+3. How is the marker circle rendered?
+4. How is text highlighting applied?
+
+2B. Show the actual marker rendering code (the JSX that creates the circle)
+
+2C. Current marker position:
+- Is marker BEFORE the text (left side)?
+- Or INSIDE the text?
+- Or AFTER the text?
+
+2D. Current marker size:
+- What CSS/Tailwind classes define the size?
+- What is the actual pixel size?
+
+2E. Issues that DON'T get markers:
+- Show the NO_MARKER_ISSUES list (or equivalent)
+- Why are these excluded?
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 3: FLOATING SUMMARY BADGE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+3A. Is FloatingSummaryBadge implemented? (YES/NO)
+
+3B. If YES, show:
+- File path
+- What issues it displays
+- How it groups issues (by severity?)
+- Position on screen (fixed? absolute?)
+
+3C. Show the component code or key parts of it
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 4: SEVERITY COLORS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+4A. Where are severity colors defined?
+- Is there a central constants file?
+- Or defined in multiple places?
+
+4B. Show the ACTUAL color values currently in use:
+
+| Severity | Hex Code | Where Defined |
+|----------|----------|---------------|
+| critical |          |               |
+| important|          |               |
+| consider |          |               |
+| polish   |          |               |
+
+4C. Are the colors consistent across:
+- Text markers
+- FloatingSummaryBadge
+- Sidebar
+- TipBox
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 5: DATA FLOW DIAGRAM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Show the complete flow from API to rendered markers:
+
+```
+API Response (issues) 
+    → [which component receives?]
+    → [which component processes?]
+    → [which component renders markers?]
+    → Visual output
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 6: KNOWN ISSUES / CURRENT STATE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+6A. Current bugs or issues with markers:
+- Are markers duplicated? (showing twice)
+- Are markers too small?
+- Are markers in wrong position?
+
+6B. Recent fixes applied:
+- What was fixed today/recently?
+- What is still pending?
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+REPORT FORMAT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Please provide a structured report:
+
+## MARKER SYSTEM REPORT
+
+### 1. FILE STRUCTURE
+[table of files]
+
+### 2. TEXT MARKERS
+- How they work: [explanation]
+- Marker rendering code: [code snippet]
+- Current position: [LEFT/INSIDE/AFTER]
+- Current size: [pixels/class]
+- NO_MARKER_ISSUES list: [list]
+
+### 3. FLOATING SUMMARY BADGE
+- Implemented: [YES/NO]
+- File: [path]
+- Shows: [what issues]
+- Position: [screen location]
+
+### 4. SEVERITY COLORS
+[table of colors]
+- Consistent across components: [YES/NO]
+
+### 5. DATA FLOW
+[diagram]
+
+### 6. CURRENT STATE
+- Known bugs: [list]
+- Recent fixes: [list]
+- Pending fixes: [list]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ This is INVESTIGATION ONLY - do not make any changes.
+   I need accurate information to create documentation.
+```
+
+---
+
+**Copy this prompt to Replit and share the report!**
