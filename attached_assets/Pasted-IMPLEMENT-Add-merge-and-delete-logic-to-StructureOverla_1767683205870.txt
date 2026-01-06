@@ -1,0 +1,152 @@
+IMPLEMENT: Add merge and delete logic to StructureOverlay component
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONTEXT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+File: client/src/components/cv-optimizer/DocumentView/StructureOverlay.tsx
+
+When user clicks "Merge with section above", we need to:
+1. Combine the two sections into one
+2. Keep the section type of the upper section
+3. Update the line ranges
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 1: Add Local State for Modified Sections
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The component receives blocks from props, but we need local state 
+to allow modifications:
+```tsx
+interface StructureOverlayProps {
+  blocks: CVBlock[];
+  cvContent: string;
+  onSectionTypeChange?: (blockIndex: number, newType: SectionType) => void;
+  onStructureChange?: (newBlocks: CVBlock[]) => void;  // NEW: notify parent
+}
+
+export const StructureOverlay: React.FC<StructureOverlayProps> = ({
+  blocks,
+  cvContent,
+  onSectionTypeChange,
+  onStructureChange
+}) => {
+  // Local state for modified blocks
+  const [localBlocks, setLocalBlocks] = useState<CVBlock[]>(blocks);
+  
+  // Update local blocks when props change
+  useEffect(() => {
+    setLocalBlocks(blocks);
+  }, [blocks]);
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 2: Implement Merge Up Function
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```tsx
+const handleMergeUp = (sectionIndex: number) => {
+  if (sectionIndex === 0) return; // Can't merge first section up
+  
+  setLocalBlocks(prevBlocks => {
+    const newBlocks = [...prevBlocks];
+    const currentSection = newBlocks[sectionIndex];
+    const aboveSection = newBlocks[sectionIndex - 1];
+    
+    // Merge: extend the above section to include current section's content
+    const mergedSection: CVBlock = {
+      ...aboveSection,
+      end_line: currentSection.end_line,
+      content: aboveSection.content + '\n' + currentSection.content,
+      word_count: aboveSection.word_count + currentSection.word_count,
+    };
+    
+    // Replace above section with merged, remove current section
+    newBlocks[sectionIndex - 1] = mergedSection;
+    newBlocks.splice(sectionIndex, 1);
+    
+    // Notify parent
+    onStructureChange?.(newBlocks);
+    
+    return newBlocks;
+  });
+};
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 3: Implement Merge Down Function
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```tsx
+const handleMergeDown = (sectionIndex: number) => {
+  if (sectionIndex >= localBlocks.length - 1) return; // Can't merge last section down
+  
+  setLocalBlocks(prevBlocks => {
+    const newBlocks = [...prevBlocks];
+    const currentSection = newBlocks[sectionIndex];
+    const belowSection = newBlocks[sectionIndex + 1];
+    
+    // Merge: extend current section to include below section's content
+    const mergedSection: CVBlock = {
+      ...currentSection,
+      end_line: belowSection.end_line,
+      content: currentSection.content + '\n' + belowSection.content,
+      word_count: currentSection.word_count + belowSection.word_count,
+    };
+    
+    // Replace current section with merged, remove below section
+    newBlocks[sectionIndex] = mergedSection;
+    newBlocks.splice(sectionIndex + 1, 1);
+    
+    // Notify parent
+    onStructureChange?.(newBlocks);
+    
+    return newBlocks;
+  });
+};
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 4: Implement Delete Section Divider
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Delete = merge with section above (same as merge up)
+```tsx
+const handleDeleteDivider = (sectionIndex: number) => {
+  // Delete divider = merge with section above
+  handleMergeUp(sectionIndex);
+};
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 5: Update SectionTab Props
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+In the render section, pass new props to SectionTab:
+```tsx
+{localBlocks.map((section, idx) => (
+  <div key={idx} className="section-wrapper ...">
+    <SectionTab
+      sectionType={section.block_type}
+      lineRange={`${section.start_line}-${section.end_line}`}
+      sectionIndex={idx}
+      isFirst={idx === 0}
+      isLast={idx === localBlocks.length - 1}
+      onTypeChange={(newType) => handleTypeChange(idx, newType)}
+      onMergeUp={() => handleMergeUp(idx)}
+      onMergeDown={() => handleMergeDown(idx)}
+      onDelete={() => handleDeleteDivider(idx)}
+    />
+    {/* Section content */}
+  </div>
+))}
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COMPLETION CHECKLIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] Added local state for blocks
+[ ] Implemented handleMergeUp function
+[ ] Implemented handleMergeDown function
+[ ] Implemented handleDeleteDivider function
+[ ] Updated SectionTab props in render
+[ ] Added onStructureChange callback prop

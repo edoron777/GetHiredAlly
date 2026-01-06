@@ -1,0 +1,139 @@
+IMPLEMENT: Add merge options to SectionTab dropdown menu
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONTEXT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+File: client/src/components/cv-optimizer/DocumentView/SectionTab.tsx
+
+When automatic detection is wrong (e.g., "Citi" detected separately instead 
+of being part of EXPERIENCE), users need a way to merge sections.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 1: Add New Props to SectionTab
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Update the interface:
+```tsx
+interface SectionTabProps {
+  sectionType: SectionType;
+  lineRange: string;
+  sectionIndex: number;           // NEW: position in sections array
+  isFirst: boolean;               // NEW: true if first section (can't merge up)
+  isLast: boolean;                // NEW: true if last section (can't merge down)
+  onTypeChange: (newType: SectionType) => void;
+  onMergeUp?: () => void;         // NEW: merge with section above
+  onMergeDown?: () => void;       // NEW: merge with section below
+  onDelete?: () => void;          // NEW: remove this section divider
+}
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 2: Add Divider and Merge Options to Dropdown
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+After the section type options, add:
+```tsx
+{/* Divider */}
+<div className="border-t border-gray-200 my-2" />
+
+{/* Section Actions Header */}
+<div className="px-3 py-1 text-xs text-gray-500 font-medium">
+  Section Actions
+</div>
+
+{/* Merge Up Option */}
+{!isFirst && (
+  <button
+    onClick={() => {
+      onMergeUp?.();
+      setIsDropdownOpen(false);
+    }}
+    className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100
+               flex items-center gap-2 text-blue-600"
+  >
+    <ArrowUpCircle className="w-4 h-4" />
+    <span>Merge with section above</span>
+  </button>
+)}
+
+{/* Merge Down Option */}
+{!isLast && (
+  <button
+    onClick={() => {
+      onMergeDown?.();
+      setIsDropdownOpen(false);
+    }}
+    className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100
+               flex items-center gap-2 text-blue-600"
+  >
+    <ArrowDownCircle className="w-4 h-4" />
+    <span>Merge with section below</span>
+  </button>
+)}
+
+{/* Delete Section Divider */}
+{!isFirst && (
+  <button
+    onClick={() => {
+      onDelete?.();
+      setIsDropdownOpen(false);
+    }}
+    className="w-full px-3 py-2 text-left text-sm hover:bg-red-50
+               flex items-center gap-2 text-red-600"
+  >
+    <Trash2 className="w-4 h-4" />
+    <span>Remove section divider</span>
+  </button>
+)}
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 3: Import Icons
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Add to imports:
+```tsx
+import { 
+  ChevronDown, 
+  Check, 
+  ArrowUpCircle,    // NEW
+  ArrowDownCircle,  // NEW
+  Trash2            // NEW
+} from 'lucide-react';
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+VISUAL RESULT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Dropdown menu should look like:
+
+┌────────────────────────────┐
+│ Change section type:       │
+├────────────────────────────┤
+│ ● CONTACT                  │
+│ ● SUMMARY                  │
+│ ● EXPERIENCE          ✓    │
+│ ● EDUCATION                │
+│ ● SKILLS                   │
+│ ...                        │
+├────────────────────────────┤
+│ Section Actions            │
+├────────────────────────────┤
+│ ↑ Merge with section above │
+│ ↓ Merge with section below │
+│ 🗑 Remove section divider  │
+└────────────────────────────┘
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COMPLETION CHECKLIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] Added new props to interface
+[ ] Added divider in dropdown
+[ ] Added "Merge with section above" option
+[ ] Added "Merge with section below" option
+[ ] Added "Remove section divider" option
+[ ] Imported new icons
+[ ] Conditional rendering (hide merge up for first, etc.)

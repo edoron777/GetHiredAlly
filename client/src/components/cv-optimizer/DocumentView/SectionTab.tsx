@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronDown, Check } from 'lucide-react';
+import { ChevronDown, Check, ArrowUpCircle, ArrowDownCircle, Trash2 } from 'lucide-react';
 import { SECTION_COLORS } from './structureTypes';
 import type { SectionType } from './structureTypes';
 
@@ -25,7 +25,12 @@ interface SectionTabProps {
   lineRange: string;
   wordCount?: number;
   tabColor: string;
+  isFirst?: boolean;
+  isLast?: boolean;
   onTypeChange?: (newType: SectionType) => void;
+  onMergeUp?: () => void;
+  onMergeDown?: () => void;
+  onDelete?: () => void;
 }
 
 export const SectionTab: React.FC<SectionTabProps> = ({
@@ -33,7 +38,12 @@ export const SectionTab: React.FC<SectionTabProps> = ({
   lineRange,
   wordCount,
   tabColor,
-  onTypeChange
+  isFirst = false,
+  isLast = false,
+  onTypeChange,
+  onMergeUp,
+  onMergeDown,
+  onDelete
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [currentType, setCurrentType] = useState(sectionType);
@@ -47,6 +57,8 @@ export const SectionTab: React.FC<SectionTabProps> = ({
     onTypeChange?.(newType);
     setIsDropdownOpen(false);
   };
+
+  const hasActions = onMergeUp || onMergeDown || onDelete;
 
   return (
     <div className="section-tab-wrapper relative flex-shrink-0">
@@ -101,7 +113,7 @@ export const SectionTab: React.FC<SectionTabProps> = ({
           <div 
             className="absolute left-full top-0 ml-2 z-50
                        bg-white rounded-lg shadow-xl border border-gray-200
-                       py-1 min-w-[160px] max-h-[300px] overflow-y-auto"
+                       py-1 min-w-[200px] max-h-[400px] overflow-y-auto"
           >
             <div className="px-3 py-2 text-xs text-gray-500 border-b font-medium">
               Change section type:
@@ -128,6 +140,57 @@ export const SectionTab: React.FC<SectionTabProps> = ({
                 )}
               </button>
             ))}
+
+            {hasActions && (
+              <>
+                <div className="border-t border-gray-200 my-2" />
+                <div className="px-3 py-1 text-xs text-gray-500 font-medium">
+                  Section Actions
+                </div>
+
+                {!isFirst && onMergeUp && (
+                  <button
+                    onClick={() => {
+                      onMergeUp();
+                      setIsDropdownOpen(false);
+                    }}
+                    className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100
+                               flex items-center gap-2 text-blue-600"
+                  >
+                    <ArrowUpCircle className="w-4 h-4" />
+                    <span>Merge with section above</span>
+                  </button>
+                )}
+
+                {!isLast && onMergeDown && (
+                  <button
+                    onClick={() => {
+                      onMergeDown();
+                      setIsDropdownOpen(false);
+                    }}
+                    className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100
+                               flex items-center gap-2 text-blue-600"
+                  >
+                    <ArrowDownCircle className="w-4 h-4" />
+                    <span>Merge with section below</span>
+                  </button>
+                )}
+
+                {!isFirst && onDelete && (
+                  <button
+                    onClick={() => {
+                      onDelete();
+                      setIsDropdownOpen(false);
+                    }}
+                    className="w-full px-3 py-2 text-left text-sm hover:bg-red-50
+                               flex items-center gap-2 text-red-600"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>Remove section divider</span>
+                  </button>
+                )}
+              </>
+            )}
           </div>
         </>
       )}

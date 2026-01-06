@@ -11,12 +11,18 @@ interface StructureOverlayProps {
   blocks: CVBlock[];
   cvContent: string;
   onSectionTypeChange?: (blockIndex: number, newType: SectionType) => void;
+  onMergeUp?: (blockIndex: number) => void;
+  onMergeDown?: (blockIndex: number) => void;
+  onDeleteSection?: (blockIndex: number) => void;
 }
 
 export const StructureOverlay: React.FC<StructureOverlayProps> = ({
   blocks,
   cvContent,
-  onSectionTypeChange
+  onSectionTypeChange,
+  onMergeUp,
+  onMergeDown,
+  onDeleteSection
 }) => {
   const lines = cvContent.split('\n');
   
@@ -51,7 +57,12 @@ export const StructureOverlay: React.FC<StructureOverlayProps> = ({
               lineRange={`${section.start_line}-${section.end_line}`}
               wordCount={section.word_count}
               tabColor={colors.tab}
+              isFirst={idx === 0}
+              isLast={idx === sections.length - 1}
               onTypeChange={(newType: SectionType) => onSectionTypeChange?.(idx, newType)}
+              onMergeUp={onMergeUp ? () => onMergeUp(idx) : undefined}
+              onMergeDown={onMergeDown ? () => onMergeDown(idx) : undefined}
+              onDelete={onDeleteSection ? () => onDeleteSection(idx) : undefined}
             />
             
             <div className="section-content flex-1 p-4 font-mono text-sm whitespace-pre-wrap">
