@@ -1,0 +1,128 @@
+═══════════════════════════════════════════════════════════════════════════════
+💻 REPLIT-5#8: ADD GUIDE ICONS TO SECTION HEADERS
+═══════════════════════════════════════════════════════════════════════════════
+
+OBJECTIVE:
+Show 💡 icons on section headers when Guide Mode is enabled.
+
+TARGET FILE:
+client/src/components/cv-optimizer/DocumentView/StructureOverlay.tsx
+
+───────────────────────────────────────────────────────────────────────────────
+
+CHANGES REQUIRED:
+
+1. ADD props for guide mode:
+```typescript
+interface StructureOverlayProps {
+  // existing props...
+  blocks: CVBlock[];
+  cvContent: string;
+  onSectionTypeChange?: (blockIndex: number, newType: string) => void;
+  onStructureChange?: (newBlocks: CVBlock[]) => void;
+  // NEW - Guide Mode support
+  isGuideModeEnabled?: boolean;
+  onGuideClick?: (sectionKey: string) => void;
+}
+```
+
+2. UPDATE component to accept new props:
+```typescript
+const StructureOverlay: React.FC<StructureOverlayProps> = ({
+  blocks,
+  cvContent,
+  onSectionTypeChange,
+  onStructureChange,
+  isGuideModeEnabled = false,  // ADD
+  onGuideClick                  // ADD
+}) => {
+```
+
+3. FIND the section header div (around line 478-496) and ADD guide icon:
+
+CURRENT CODE (approximately):
+```tsx
+<div 
+  className="section-header flex items-center justify-between px-4 py-2.5 cursor-pointer"
+  style={{ backgroundColor: colors.tab }}
+  onClick={() => setOpenDropdown(isDropdownOpen ? null : index)}
+>
+  <div className="flex items-center gap-2">
+    <span className="text-white font-semibold text-sm uppercase tracking-wide">
+      {displayLabel}
+    </span>
+    <ChevronDown className={`...`} />
+  </div>
+  <span className="text-white/80 text-xs">
+    Lines {block.start_line} - {block.end_line}
+    {block.word_count && ` · ${block.word_count}w`}
+  </span>
+</div>
+```
+
+CHANGE TO:
+```tsx
+<div 
+  className="section-header flex items-center justify-between px-4 py-2.5 cursor-pointer"
+  style={{ backgroundColor: colors.tab }}
+  onClick={() => setOpenDropdown(isDropdownOpen ? null : index)}
+>
+  <div className="flex items-center gap-2">
+    <span className="text-white font-semibold text-sm uppercase tracking-wide">
+      {displayLabel}
+    </span>
+    <ChevronDown className={`...`} />
+  </div>
+  
+  {/* Right side: line info + guide icon */}
+  <div className="flex items-center gap-3">
+    <span className="text-white/80 text-xs">
+      Lines {block.start_line} - {block.end_line}
+      {block.word_count && ` · ${block.word_count}w`}
+    </span>
+    
+    {/* NEW - Guide Mode Icon */}
+    {isGuideModeEnabled && (
+      <button
+        className="guide-icon-button"
+        onClick={(e) => {
+          e.stopPropagation(); // Prevent dropdown toggle
+          onGuideClick?.(block.type);
+        }}
+        title={`Learn about ${block.type} section`}
+        style={{
+          background: 'rgba(255,255,255,0.2)',
+          border: 'none',
+          borderRadius: '4px',
+          padding: '4px 8px',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          transition: 'background 0.2s'
+        }}
+        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.3)'}
+        onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
+      >
+        <span style={{ fontSize: '14px' }}>💡</span>
+      </button>
+    )}
+  </div>
+</div>
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+After changes, confirm:
+- [ ] Icons appear only when Guide Mode is enabled
+- [ ] Icons appear on right side of section headers
+- [ ] Click on icon triggers callback (test with console.log)
+- [ ] Hover state works
+- [ ] Click doesn't affect other section behaviors
+
+ANTI-IMPROVISATION:
+- Do NOT modify existing section behaviors
+- Keep icon styling minimal and consistent with design system
+- If section header structure differs, adapt but maintain right-side position
+
+═══════════════════════════════════════════════════════════════════════════════

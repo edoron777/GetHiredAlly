@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { FileText, List, Copy, Check, ArrowLeft, Loader2, RefreshCw, Columns, GraduationCap, LayoutGrid } from 'lucide-react';
+import { FileText, List, Copy, Check, ArrowLeft, Loader2, RefreshCw, Columns, GraduationCap, LayoutGrid, Lightbulb } from 'lucide-react';
 import { classifyIssues, FloatingSummaryBadge, StructureOverlay } from '../../components/cv-optimizer/DocumentView';
 import type { SectionType } from '../../components/cv-optimizer/DocumentView';
 import { DocumentEditor } from '../../components/common/DocumentEditor';
@@ -141,6 +141,11 @@ export default function ResultsPage() {
   } | null>(null);
   const [structureLoading, setStructureLoading] = useState(false);
   const [showStructureOverlay, setShowStructureOverlay] = useState(false);
+  const [isGuideModeEnabled, setIsGuideModeEnabled] = useState(false);
+
+  const handleGuideModeToggle = () => {
+    setIsGuideModeEnabled(prev => !prev);
+  };
 
   const normalizeIssue = (issue: CVIssue, index: number) => ({
     id: issue.id || String(index + 1),
@@ -1104,6 +1109,21 @@ export default function ResultsPage() {
             >
               <LayoutGrid size={16} />
               CV Structure
+            </button>
+
+            {/* Guide Mode Toggle Button */}
+            <button
+              onClick={handleGuideModeToggle}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                isGuideModeEnabled
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
+              title={isGuideModeEnabled ? 'Disable Guide Mode' : 'Enable Guide Mode - Learn CV best practices'}
+            >
+              <Lightbulb size={16} />
+              Guide Mode
+              {isGuideModeEnabled && <span className="ml-1">✓</span>}
             </button>
           </div>
           
