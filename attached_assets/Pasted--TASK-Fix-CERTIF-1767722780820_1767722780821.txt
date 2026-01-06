@@ -1,0 +1,58 @@
+═══════════════════════════════════════════════════════════════════════════════
+🔧 TASK: Fix CERTIFICATION_TOO_MANY Detection (BUG-02)
+═══════════════════════════════════════════════════════════════════════════════
+Version: ReplitPromptProtocol v2.5
+Type: Bug Fix - False Negative
+Priority: HIGH
+Risk Level: MEDIUM
+
+───────────────────────────────────────────────────────────────────────────────
+PROBLEM STATEMENT
+───────────────────────────────────────────────────────────────────────────────
+
+User's CV has 31 certifications. Maximum allowed is 8.
+The system should detect and flag this as "Too Many Certifications".
+Currently: NO detection is happening.
+
+Evidence:
+- User CV contains ~31 certifications across multiple categories
+- cv_issue_types table has CERTIFICATION_TOO_MANY issue defined
+- Detection is not triggering
+
+───────────────────────────────────────────────────────────────────────────────
+REQUIREMENTS
+───────────────────────────────────────────────────────────────────────────────
+
+1. Implement certification count detection
+2. Threshold: Maximum 8 certifications (configurable)
+3. When count > 8, create DetectedIssue with:
+   - issue_code: Use existing code from cv_issue_types table
+   - severity: "consider" (from database)
+   - current: Show actual count, e.g., "Found 31 certifications"
+   - suggestion: From database static_tip
+
+───────────────────────────────────────────────────────────────────────────────
+IMPLEMENTATION GUIDANCE
+───────────────────────────────────────────────────────────────────────────────
+
+Based on reconnaissance findings, implement certification detection:
+
+OPTION A - If count handler exists but not working:
+- Debug why counter is not finding certifications
+- Check section name matching (CERTIFICATIONS, Certifications, etc.)
+- Verify threshold is correctly configured
+
+OPTION B - If detection not implemented:
+- Create new handler or add to existing section analyzer
+- Logic should:
+  1. Find certification section in parsed CV
+  2. Count individual certifications (not just lines)
+  3. Compare against threshold (8)
+  4. If exceeded, create issue
+
+COUNTING LOGIC:
+- Each certification entry = 1 count
+- Multi-line certifications should count as 1
+- Grouped certifications should count each item
+
+Example certification section:
