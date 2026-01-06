@@ -1,0 +1,105 @@
+═══════════════════════════════════════════════════════════════════════════════
+💻 REPLIT: CREATE SECTION GUIDES API ENDPOINT
+═══════════════════════════════════════════════════════════════════════════════
+
+OBJECTIVE:
+Create backend endpoint to serve CV section guide content from database.
+
+CONTEXT:
+- Frontend guideContentBuilder.ts calls: GET /api/cv/section-guides
+- Data exists in Supabase table: cv_section_guides
+- Currently returns 404, causing Guide Mode to fail
+
+───────────────────────────────────────────────────────────────────────────────
+
+FIND THE CV ROUTER FILE:
+Look for: backend/routers/cv.py or backend/api/cv.py or similar
+
+ADD THIS ENDPOINT:
+```python
+@router.get("/section-guides")
+async def get_section_guides(
+    token: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Get all CV section guide content for Guide Mode.
+    Returns educational content for each CV section.
+    """
+    try:
+        # Query the cv_section_guides table
+        response = supabase.table("cv_section_guides") \
+            .select("*") \
+            .eq("is_active", True) \
+            .order("display_order") \
+            .execute()
+        
+        if response.data:
+            return response.data
+        else:
+            return []
+            
+    except Exception as e:
+        print(f"Error fetching section guides: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to fetch section guides"
+        )
+
+
+@router.get("/section-guides/{section_key}")
+async def get_section_guide(
+    section_key: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Get guide content for a specific CV section.
+    """
+    try:
+        response = supabase.table("cv_section_guides") \
+            .select("*") \
+            .eq("section_key", section_key.upper()) \
+            .eq("is_active", True) \
+            .single() \
+            .execute()
+        
+        if response.data:
+            return response.data
+        else:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No guide found for section: {section_key}"
+            )
+            
+    except Exception as e:
+        if "404" in str(e):
+            raise HTTPException(
+                status_code=404,
+                detail=f"No guide found for section: {section_key}"
+            )
+        print(f"Error fetching section guide: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to fetch section guide"
+        )
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+After adding, test with curl or browser:
+```bash
+curl http://localhost:8000/api/cv/section-guides
+```
+
+Expected: JSON array with 9 section guide objects
+
+───────────────────────────────────────────────────────────────────────────────
+
+ANTI-IMPROVISATION:
+- Use existing supabase client import from the file
+- Use existing authentication pattern (get_current_user)
+- Match existing router prefix (likely /api/cv)
+- Do NOT create a separate router file - add to existing cv router
+
+═══════════════════════════════════════════════════════════════════════════════

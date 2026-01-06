@@ -449,6 +449,74 @@ async def upload_cv_for_scan(
         raise HTTPException(status_code=500, detail=f"Failed to save CV: {str(e)}")
 
 
+@router.get("/section-guides")
+async def get_section_guides(token: str = None):
+    """
+    Get all CV section guide content for Guide Mode.
+    Returns educational content for each CV section.
+    """
+    user = get_user_from_token(token) if token else None
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    try:
+        supabase = get_supabase_client()
+        if not supabase:
+            raise HTTPException(status_code=500, detail="Database not available")
+        
+        response = supabase.table("cv_section_guides") \
+            .select("*") \
+            .eq("is_active", True) \
+            .order("display_order") \
+            .execute()
+        
+        if response.data:
+            return response.data
+        else:
+            return []
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching section guides: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch section guides")
+
+
+@router.get("/section-guides/{section_key}")
+async def get_section_guide(section_key: str, token: str = None):
+    """
+    Get guide content for a specific CV section.
+    """
+    user = get_user_from_token(token) if token else None
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    try:
+        supabase = get_supabase_client()
+        if not supabase:
+            raise HTTPException(status_code=500, detail="Database not available")
+        
+        response = supabase.table("cv_section_guides") \
+            .select("*") \
+            .eq("section_key", section_key.upper()) \
+            .eq("is_active", True) \
+            .single() \
+            .execute()
+        
+        if response.data:
+            return response.data
+        else:
+            raise HTTPException(status_code=404, detail=f"No guide found for section: {section_key}")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        if "No rows" in str(e) or "0 rows" in str(e):
+            raise HTTPException(status_code=404, detail=f"No guide found for section: {section_key}")
+        logger.error(f"Error fetching section guide: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch section guide")
+
+
 @router.get("/{cv_id}")
 async def get_cv(cv_id: str, token: str):
     """Get a specific CV's content."""
