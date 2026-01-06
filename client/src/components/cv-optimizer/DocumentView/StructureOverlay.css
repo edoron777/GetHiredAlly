@@ -124,3 +124,24 @@
     transform: translateX(0);
   }
 }
+
+.cv-line {
+  position: relative;
+}
+
+.split-line-button {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.cv-line:hover .split-line-button {
+  opacity: 1;
+}
+
+.cv-line:hover {
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
+.cv-line:first-child .split-line-button {
+  display: none;
+}
