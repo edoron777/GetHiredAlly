@@ -1,0 +1,120 @@
+═══════════════════════════════════════════════════════════════════
+💻 FIX: Add Missing onStructureChange Callback
+═══════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL COMPLIANCE ⚠️
+- Execute ONLY instructions below
+- This is a SIMPLE fix - one function + one prop
+- Do NOT change anything else
+
+───────────────────────────────────────────────────────────────────
+ROOT CAUSE
+───────────────────────────────────────────────────────────────────
+
+StructureOverlay calls `onStructureChange?.(newBlocks)` after merge.
+But ResultsPage does NOT pass this callback.
+So parent never receives the updated blocks.
+
+───────────────────────────────────────────────────────────────────
+FILE TO EDIT
+───────────────────────────────────────────────────────────────────
+
+File: client/src/pages/cv-optimizer/ResultsPage.tsx
+
+───────────────────────────────────────────────────────────────────
+STEP 1: Add Handler Function
+───────────────────────────────────────────────────────────────────
+
+Find where other handlers are defined (like handleSectionTypeChange).
+ADD this new handler function nearby:
+```tsx
+/**
+ * Handle structure changes from StructureOverlay (merge/split operations)
+ * Updates the structureData state with new blocks
+ */
+const handleStructureChange = (newBlocks: CVBlock[]) => {
+  console.log('=== ResultsPage: handleStructureChange ===');
+  console.log('Received', newBlocks.length, 'blocks');
+  
+  // Log each block for debugging
+  newBlocks.forEach((block, i) => {
+    console.log(`  Block ${i}: ${block.type} lines ${block.start_line}-${block.end_line}`);
+  });
+  
+  // Update structureData with new blocks
+  setStructureData(prev => {
+    if (!prev) return null;
+    return {
+      ...prev,
+      blocks: newBlocks
+    };
+  });
+  
+  console.log('structureData updated with new blocks');
+};
+```
+
+───────────────────────────────────────────────────────────────────
+STEP 2: Pass Callback to StructureOverlay
+───────────────────────────────────────────────────────────────────
+
+Find the StructureOverlay component (around line 1118-1122).
+
+BEFORE:
+```tsx
+<StructureOverlay
+  blocks={structureData.blocks}
+  cvContent={cvContent?.fullText || ''}
+  onSectionTypeChange={handleSectionTypeChange}
+/>
+```
+
+AFTER:
+```tsx
+<StructureOverlay
+  blocks={structureData.blocks}
+  cvContent={cvContent?.fullText || ''}
+  onSectionTypeChange={handleSectionTypeChange}
+  onStructureChange={handleStructureChange}
+/>
+```
+
+───────────────────────────────────────────────────────────────────
+STEP 3: Verify Type Import (if needed)
+───────────────────────────────────────────────────────────────────
+
+If CVBlock type is not imported, add to imports:
+```tsx
+import { CVBlock } from '@/components/cv-optimizer/DocumentView/structureTypes';
+```
+
+Or if type is defined locally, use the local type.
+Check existing imports at top of file.
+
+───────────────────────────────────────────────────────────────────
+CHANGES SUMMARY
+───────────────────────────────────────────────────────────────────
+
+File: client/src/pages/cv-optimizer/ResultsPage.tsx
+
+Changes:
+1. ADD handleStructureChange function
+2. ADD onStructureChange={handleStructureChange} prop to StructureOverlay
+
+DO NOT TOUCH:
+- StructureOverlay.tsx (already correct)
+- Any other files
+- Backend files
+- Database
+
+───────────────────────────────────────────────────────────────────
+COMPLETION CHECKLIST
+───────────────────────────────────────────────────────────────────
+
+Confirm:
+□ handleStructureChange function added
+□ onStructureChange prop passed to StructureOverlay
+□ No TypeScript errors
+□ Application compiles successfully
+
+Type "FIX-1 COMPLETE - READY FOR TESTING" when done.

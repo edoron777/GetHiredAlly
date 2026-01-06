@@ -299,6 +299,25 @@ export default function ResultsPage() {
     } : null);
   };
 
+  const handleStructureChange = (newBlocks: NonNullable<typeof structureData>['blocks']) => {
+    console.log('=== ResultsPage: handleStructureChange ===');
+    console.log('Received', newBlocks?.length, 'blocks');
+    
+    newBlocks?.forEach((block, i) => {
+      console.log(`  Block ${i}: ${block.type} lines ${block.start_line}-${block.end_line}`);
+    });
+    
+    setStructureData(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        blocks: newBlocks
+      };
+    });
+    
+    console.log('structureData updated with new blocks');
+  };
+
   // Initialize score from API response
   useEffect(() => {
     if (reportData?.cv_score) {
@@ -1119,6 +1138,7 @@ export default function ResultsPage() {
                     blocks={structureData.blocks}
                     cvContent={cvContent?.fullText || ''}
                     onSectionTypeChange={handleSectionTypeChange}
+                    onStructureChange={handleStructureChange}
                   />
                 </div>
               ) : showStructureOverlay && structureLoading ? (

@@ -1,0 +1,70 @@
+✅ PROMPT FIX-2: Verification
+text═══════════════════════════════════════════════════════════════════
+✅ FIX-2: Test Merge Function
+═══════════════════════════════════════════════════════════════════
+
+───────────────────────────────────────────────────────────────────
+TEST PROCEDURE
+───────────────────────────────────────────────────────────────────
+
+1. Open browser console (F12 → Console tab)
+2. Go to CV Optimizer
+3. Click "CV Structure" button
+4. Find a section that is NOT first (e.g., Citi or any non-first section)
+5. Click on its header → dropdown opens
+6. Click "Merge with section above"
+
+───────────────────────────────────────────────────────────────────
+EXPECTED CONSOLE OUTPUT
+───────────────────────────────────────────────────────────────────
+
+You should now see BOTH logs:
+
+From StructureOverlay:
+========== MERGE UP START ==========
+...
+========== MERGE UP END ==========
+
+AND NEW - From ResultsPage:
+=== ResultsPage: handleStructureChange ===
+Received 4 blocks
+Block 0: CONTACT lines 1-5
+Block 1: SUMMARY lines 6-40
+Block 2: EXPERIENCE lines 41-200    ← Now includes merged content!
+Block 3: EDUCATION lines 201-250
+structureData updated with new blocks
+
+───────────────────────────────────────────────────────────────────
+VISUAL VERIFICATION
+───────────────────────────────────────────────────────────────────
+
+After merge:
+□ Section count decreased by 1
+□ Merged section shows ALL content (not just 2-3 lines)
+□ No orphan sections created
+□ Citi content is now inside Experience section
+
+───────────────────────────────────────────────────────────────────
+SUCCESS CRITERIA
+───────────────────────────────────────────────────────────────────
+
+PASS if:
+✅ Console shows "ResultsPage: handleStructureChange" log
+✅ Block count decreased
+✅ All content visible in merged section
+✅ No content lost
+
+FAIL if:
+❌ No "handleStructureChange" log appears
+❌ Content still missing
+❌ Orphan sections still created
+
+───────────────────────────────────────────────────────────────────
+REPORT RESULTS
+───────────────────────────────────────────────────────────────────
+
+Test result:
+□ PASS - Merge works correctly
+□ FAIL - Issue persists (describe: _________)
+
+If PASS, type "FIX-2 COMPLETE - BUG FIXED ✅"
