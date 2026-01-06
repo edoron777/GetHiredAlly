@@ -36,13 +36,28 @@ export const MissingSectionsBar: React.FC<MissingSectionsBarProps> = ({
   onSectionClick,
   isVisible
 }) => {
-  if (!isVisible) return null
+  // DEBUG LOG
+  console.log('🔍 MissingSectionsBar RENDER:', {
+    isVisible,
+    detectedSections,
+    detectedCount: detectedSections?.length
+  });
+
+  if (!isVisible) {
+    console.log('🔍 MissingSectionsBar: NOT VISIBLE (isVisible=false)');
+    return null;
+  }
   
   const missingSections = ALL_SECTIONS.filter(
     section => !detectedSections.includes(section)
   )
   
-  if (missingSections.length === 0) return null
+  console.log('🔍 MissingSectionsBar: Missing sections:', missingSections);
+  
+  if (missingSections.length === 0) {
+    console.log('🔍 MissingSectionsBar: NO MISSING SECTIONS - not rendering');
+    return null;
+  }
   
   return (
     <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mt-4">
