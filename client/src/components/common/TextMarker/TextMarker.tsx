@@ -44,29 +44,37 @@ export const TextMarker: React.FC<TextMarkerProps> = ({
       config.onClick?.(pos.marker.id, pos.marker.tag)
     }
     
+    const renderIcon = () => {
+      if (!config.icon) return null
+      return (
+        <span 
+          className={`marker-icon-gutter ${config.icon.className || ''}`}
+          style={{ color }}
+          onClick={handleClick}
+          data-tag={pos.marker.tag}
+          data-marker-id={pos.marker.id}
+        >
+          {config.icon.icon}
+        </span>
+      )
+    }
+    
     elements.push(
       <span
         key={`marker-${pos.marker.id}-${index}`}
-        id={`marker-${pos.marker.id}`}
-        className={`text-marker ${styleClass}`}
-        style={colorStyle}
-        onClick={handleClick}
-        data-tag={pos.marker.tag}
-        data-marker-id={pos.marker.id}
+        className="marker-wrapper"
       >
-        {config.icon && config.icon.position === 'before' && (
-          <span className={`marker-icon marker-icon-before ${config.icon.className || ''}`}>
-            {config.icon.icon}
-          </span>
-        )}
-        
-        {content.substring(pos.start, pos.end)}
-        
-        {config.icon && config.icon.position === 'after' && (
-          <span className={`marker-icon marker-icon-after ${config.icon.className || ''}`}>
-            {config.icon.icon}
-          </span>
-        )}
+        {renderIcon()}
+        <span
+          id={`marker-${pos.marker.id}`}
+          className={`text-marker ${styleClass}`}
+          style={colorStyle}
+          onClick={handleClick}
+          data-tag={pos.marker.tag}
+          data-marker-id={pos.marker.id}
+        >
+          {content.substring(pos.start, pos.end)}
+        </span>
       </span>
     )
     
