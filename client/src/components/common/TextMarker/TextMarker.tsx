@@ -7,6 +7,42 @@ import {
 } from './MarkerService'
 import './MarkerStyles.css'
 
+const URL_PATTERN = /(\b(?:https?:\/\/)?(?:www\.)?(?:linkedin\.com\/in\/[\w-]+|github\.com\/[\w-]+|[\w-]+\.(?:com|org|net|io|dev|co|me|info)(?:\/[\w\-._~:/?#[\]@!$&'()*+,;=%]*)?))/gi
+
+function linkifySegment(text: string, keyPrefix: string): React.ReactNode[] {
+  const parts: React.ReactNode[] = []
+  let lastIndex = 0
+  let match: RegExpExecArray | null
+  const regex = new RegExp(URL_PATTERN.source, 'gi')
+  
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(text.substring(lastIndex, match.index))
+    }
+    const url = match[0]
+    const href = url.startsWith('http') ? url : `https://${url}`
+    parts.push(
+      <a
+        key={`${keyPrefix}-link-${match.index}`}
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-blue-600 hover:text-blue-800 hover:underline"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {url}
+      </a>
+    )
+    lastIndex = regex.lastIndex
+  }
+  
+  if (lastIndex < text.length) {
+    parts.push(text.substring(lastIndex))
+  }
+  
+  return parts.length > 0 ? parts : [text]
+}
+
 export const TextMarker: React.FC<TextMarkerProps> = ({
   content,
   markers,
@@ -17,7 +53,7 @@ export const TextMarker: React.FC<TextMarkerProps> = ({
   if (positions.length === 0) {
     return (
       <div className={`text-marker-container ${config.className || ''}`}>
-        {content}
+        {linkifySegment(content, 'full')}
       </div>
     )
   }
@@ -29,7 +65,7 @@ export const TextMarker: React.FC<TextMarkerProps> = ({
     if (pos.start > lastEnd) {
       elements.push(
         <span key={`text-${index}`}>
-          {content.substring(lastEnd, pos.start)}
+          {linkifySegment(content.substring(lastEnd, pos.start), `seg-${index}`)}
         </span>
       )
     }
@@ -84,7 +120,7 @@ export const TextMarker: React.FC<TextMarkerProps> = ({
   if (lastEnd < content.length) {
     elements.push(
       <span key="text-end">
-        {content.substring(lastEnd)}
+        {linkifySegment(content.substring(lastEnd), 'end')}
       </span>
     )
   }

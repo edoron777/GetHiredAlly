@@ -1,0 +1,54 @@
+═══════════════════════════════════════════════════════════════════════════════
+🔍 INVESTIGATION: Find "Supported" Detection Source
+═══════════════════════════════════════════════════════════════════════════════
+Type: Investigation
+Priority: MEDIUM
+
+───────────────────────────────────────────────────────────────────────────────
+CONTEXT
+───────────────────────────────────────────────────────────────────────────────
+
+"Supported" is NOT in:
+- backend/common/detection/word_lists.py WEAK_VERBS
+- backend/common/scoring/config.py WEAK_VERBS
+
+But user's CV still shows:
+"Weak or Passive Action Verbs - Severity: important - 1 found: supported"
+
+Something ELSE is flagging it.
+
+───────────────────────────────────────────────────────────────────────────────
+INVESTIGATION TASKS
+───────────────────────────────────────────────────────────────────────────────
+
+1. Search entire codebase for "supported" (case-insensitive):
+   grep -ri "supported" backend/
+   grep -ri "supported" client/
+
+2. Search for other weak verb lists:
+   grep -ri "weak_verb" backend/
+   grep -ri "WEAK" backend/
+
+3. Check if AI enhancement adds weak verb detection:
+   - Look in AI prompt templates
+   - Check if Claude/Gemini API response includes weak verb analysis
+
+4. Check cv_issue_types table:
+   SELECT * FROM cv_issue_types WHERE issue_code = 'CONTENT_WEAK_ACTION_VERBS';
+   - Does it have AI enhancement enabled?
+   - Is there a prompt that includes "supported"?
+
+5. Check language_detector.py:
+   - What function detects weak verbs?
+   - What list does it actually use?
+
+───────────────────────────────────────────────────────────────────────────────
+REPORT BACK
+───────────────────────────────────────────────────────────────────────────────
+
+Show me:
+1. All files containing "supported" (related to detection)
+2. The exact function that creates CONTENT_WEAK_ACTION_VERBS issues
+3. Any AI prompts that might analyze weak verbs
+
+═══════════════════════════════════════════════════════════════════════════════
