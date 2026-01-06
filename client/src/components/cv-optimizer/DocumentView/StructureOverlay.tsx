@@ -2,6 +2,7 @@ import React from 'react';
 import { SectionTab } from './SectionTab';
 import { SECTION_COLORS } from './structureTypes';
 import type { SectionType, CVBlock } from './structureTypes';
+import './StructureOverlay.css';
 
 export { SECTION_COLORS };
 export type { SectionType };

@@ -1,0 +1,82 @@
+VERIFICATION: CV Structure Overlay
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TEST STEPS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Go to CV Optimizer
+2. Upload a CV and run scan
+3. View results in Document View
+4. Click "CV Structure" button
+
+VERIFY:
+
+A) Button Behavior:
+[ ] Button says "CV Structure" (not "Structure")
+[ ] First click shows overlay
+[ ] Second click hides overlay
+[ ] Button shows active state when ON
+
+B) Overlay Appearance:
+[ ] Each section has colored background (pastel)
+[ ] Each section has left border color
+[ ] Tabs appear on left side of each section
+[ ] Tab text is vertical (like notebook)
+
+C) Section Tabs:
+[ ] CONTACT tab (blue)
+[ ] SUMMARY tab (green)
+[ ] EXPERIENCE tab (orange)
+[ ] EDUCATION tab (purple)
+[ ] SKILLS tab (pink) - if exists
+[ ] CERTIFICATIONS tab (cyan) - if exists
+
+D) Dropdown:
+[ ] Click tab opens dropdown
+[ ] Dropdown shows all section type options
+[ ] Selecting new type changes tab color
+[ ] Click outside closes dropdown
+
+E) Visual Quality:
+[ ] Smooth animation when showing overlay
+[ ] No layout jumps or glitches
+[ ] Readable text in all sections
+[ ] Professional appearance
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+EXPECTED RESULT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Visual should look like this:
+
+┌──────┬──────────────────────────────────────────────────────────┐
+│      │                                                          │
+│  C   │  David Cohen CV | Email: dcohen@gmail.com | Phone: ...  │
+│  O   │                                                          │
+│  N   │  (light blue background)                                 │
+│  T   │                                                          │
+│  A   └──────────────────────────────────────────────────────────┤
+│  C   │                                                          │
+│  T   │                                                          │
+├──────┼──────────────────────────────────────────────────────────┤
+│      │                                                          │
+│  S   │  Cybersecurity Innovation Leader | AI Security &        │
+│  U   │  Identity Expert...                                      │
+│  M   │                                                          │
+│  M   │  (light green background)                                │
+│  A   │                                                          │
+│  R   │  I bridge the gap between cutting-edge technology...    │
+│  Y   │                                                          │
+├──────┼──────────────────────────────────────────────────────────┤
+│      │                                                          │
+│  E   │  VP, Cybersecurity Innovation                           │
+│  X   │  • Led technology assessment projects                   │
+│  P   │  • Managed security programs                            │
+│  E   │                                                          │
+│  R   │  (light orange background)                              │
+│  I   │                                                          │
+│  E   │                                                          │
+│  N   │                                                          │
+│  C   │                                                          │
+│  E   │                                                          │
+└──────┴──────────────────────────────────────────────────────────┘

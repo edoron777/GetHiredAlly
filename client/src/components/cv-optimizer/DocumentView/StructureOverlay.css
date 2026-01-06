@@ -1,0 +1,126 @@
+.structure-overlay {
+  padding: 16px;
+  padding-left: 60px;
+}
+
+.section-wrapper {
+  position: relative;
+  margin-bottom: 16px;
+  border-radius: 0 8px 8px 0;
+  transition: all 0.2s ease;
+  animation: slideIn 0.3s ease forwards;
+}
+
+.section-wrapper:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.section-wrapper:nth-child(1) { animation-delay: 0ms; }
+.section-wrapper:nth-child(2) { animation-delay: 50ms; }
+.section-wrapper:nth-child(3) { animation-delay: 100ms; }
+.section-wrapper:nth-child(4) { animation-delay: 150ms; }
+.section-wrapper:nth-child(5) { animation-delay: 200ms; }
+.section-wrapper:nth-child(6) { animation-delay: 250ms; }
+.section-wrapper:nth-child(7) { animation-delay: 300ms; }
+.section-wrapper:nth-child(8) { animation-delay: 350ms; }
+
+.section-content {
+  padding: 16px 20px;
+  line-height: 1.6;
+}
+
+.section-content .cv-line {
+  margin-bottom: 4px;
+}
+
+.section-tab-wrapper {
+  position: absolute;
+  left: -48px;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: flex-start;
+}
+
+.section-tab {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  min-height: 80px;
+  padding: 12px 8px;
+  border-radius: 8px 0 0 8px;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: -2px 0 4px rgba(0, 0, 0, 0.1);
+}
+
+.section-tab:hover {
+  filter: brightness(1.1);
+}
+
+.section-tab-dropdown {
+  position: absolute;
+  left: 100%;
+  top: 0;
+  margin-left: 8px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e5e7eb;
+  min-width: 160px;
+  z-index: 100;
+  overflow: hidden;
+}
+
+.section-tab-dropdown-header {
+  padding: 8px 12px;
+  font-size: 11px;
+  color: #6b7280;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.section-tab-dropdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.section-tab-dropdown-item:hover {
+  background: #f3f4f6;
+}
+
+.section-tab-dropdown-item .color-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.line-range-badge {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%) rotate(180deg);
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.7);
+  writing-mode: horizontal-tb;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
