@@ -201,8 +201,8 @@ export default function ResultsPage() {
     subcategory_name: issue.subcategory_name || '',
     location: issue.location || '',
     
-    matchText: issue.current || issue.current_text || issue.example_before || issue.problematic_text || issue.matchText || '',
-    currentText: issue.current || issue.current_text || issue.example_before || issue.problematic_text || issue.matchText || '',
+    matchText: issue.current || issue.current_text || issue.problematic_text || issue.matchText || '',
+    currentText: issue.current || issue.current_text || issue.problematic_text || issue.matchText || '',
     current: issue.current || issue.current_text || '',
     example_before: issue.example_before || '',
     
@@ -636,11 +636,23 @@ export default function ResultsPage() {
   const buildTipBoxSections = (issue: any): TipBoxSection[] => {
     const sections: TipBoxSection[] = [];
     
-    if (issue.currentText || issue.current || issue.matchText || issue.example_before) {
+    const actualCVText = issue.currentText || issue.current || issue.matchText || '';
+    const hasActualText = actualCVText && 
+                          actualCVText !== '[blank line]' && 
+                          actualCVText !== '[whitespace]' &&
+                          actualCVText.trim().length > 0;
+    
+    if (hasActualText) {
       sections.push({
         type: 'example-wrong',
         label: 'ISSUE IN YOUR CV',
-        content: issue.currentText || issue.current || issue.matchText || issue.example_before
+        content: actualCVText
+      });
+    } else if (issue.location) {
+      sections.push({
+        type: 'text',
+        label: 'LOCATION',
+        content: `This issue was found in: ${issue.location}`
       });
     }
     

@@ -1,0 +1,132 @@
+
+RFI: Critical Bug Analysis - TipBox Shows Database Examples Instead of Actual CV Text
+1. Detection Storage
+The detection handlers DO capture actual CV text in the current field:
+
+# backend/common/detection/rule_engine/handlers/base.py
+@dataclass
+class DetectedIssue:
+    """Represents a detected issue."""
+    issue_code: str
+    issue_type: str
+    display_name: str
+    description: str
+    current: str              # ← ACTUAL detected text from CV
+    suggestion: str
+    severity: str
+    weight: int
+    can_auto_fix: bool
+    is_highlightable: bool = False
+    location: Optional[str] = None
+    example_before: Optional[str] = None  # ← From database template
+    example_after: Optional[str] = None   # ← From database template
+    
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            'current': self.current,
+            'current_text': self.current,  # ← Aliased
+            'example_before': self.example_before or '',
+            'example_after': self.example_after or '',
+            # ...
+        }
+Each handler properly captures actual CV text:
+
+# regex_handler.py - captures first match from CV
+current_text = first_match.replace('\r\n', '\n')
+issue = self.create_issue(rule=rule, current=current_text, ...)
+# language_detector.py - captures problematic line
+current_text = text[line_start:line_end].strip()
+issue = {'current': current_text, 'is_highlightable': bool(current_text), ...}
+2. TipBox Data Population - ROOT CAUSE FOUND
+// client/src/pages/cv-optimizer/ResultsPage.tsx - Lines 204-206
+const normalizeIssue = (issue: CVIssue, index: number) => ({
+  // ...
+  matchText: issue.current || issue.current_text || issue.example_before || issue.problematic_text || issue.matchText || '',
+  currentText: issue.current || issue.current_text || issue.example_before || issue.problematic_text || issue.matchText || '',
+  // ...
+});
+The fallback chain is:
+
+issue.current - actual CV text ✅
+issue.current_text - actual CV text ✅
+issue.example_before - DATABASE TEMPLATE ❌ ← This is the bug
+issue.problematic_text
+issue.matchText
+Then in buildTipBoxSections:
+
+// Lines 639-644
+if (issue.currentText || issue.current || issue.matchText || issue.example_before) {
+  sections.push({
+    type: 'example-wrong',
+    label: 'ISSUE IN YOUR CV',
+    content: issue.currentText || issue.current || issue.matchText || issue.example_before
+  });
+}
+3. Data Flow Trace
+Detection (Backend)                Frontend (normalizeIssue)           TipBox Display
+       ↓                                    ↓                              ↓
+┌─────────────────┐           ┌──────────────────────────┐      ┌───────────────────┐
+│ DetectedIssue   │           │ Falls back to            │      │ Shows template    │
+│ current: ""     │  ────→    │ example_before if        │ ───→ │ instead of        │
+│ example_before: │           │ current is empty         │      │ actual CV text    │
+│ "BS CS MIT..."  │           └──────────────────────────┘      └───────────────────┘
+└─────────────────┘
+         ↑
+   Some handlers set
+   current="" or don't
+   set it properly
+4. Database Schema
+-- cv_scan_results table stores issues
+column_name          | data_type
+---------------------|---------------------------
+id                   | integer
+user_id              | uuid
+original_cv_content  | text        ← Full CV text
+issues_json          | jsonb       ← Detected issues
+fixed_cv_content     | text
+status               | character varying
+-- Issues in issues_json should have:
+{
+  "current": "actual text from CV",       ← Should be populated
+  "example_before": "template from DB"    ← Fallback (the bug)
+}
+5. Root Cause Identification
+Why example_before is shown instead of actual CV text:
+
+Some handlers set current="" (empty string)
+
+length_handler.py: current='' for length issues
+count_handler.py: current='' for count issues
+section_required_handler.py: current='' for missing sections
+presence_handler.py: Sometimes sets empty
+The frontend fallback chain includes example_before
+
+When current is empty, it falls through to example_before
+example_before contains database template text, NOT actual CV text
+Some issues are "general" and don't have specific text to highlight
+
+"Education Entry Lacks Detail" - the whole section is the issue
+"Job Description Too Lengthy" - specific job is the issue, not a text snippet
+Fix options:
+
+A) Remove example_before from the fallback chain
+B) Make handlers extract meaningful current text (the section/job in question)
+C) Show different UI when current is empty (no "ISSUE IN YOUR CV" section)
+D) Use location field to describe WHERE the issue is, not WHAT the text is
+6. Recommended Fix
+// ResultsPage.tsx - normalizeIssue function
+// BEFORE (buggy):
+matchText: issue.current || issue.current_text || issue.example_before || ...
+// AFTER (fixed):
+matchText: issue.current || issue.current_text || issue.problematic_text || issue.matchText || '',
+// DON'T fall back to example_before - it's a template, not actual CV text
+// Also update buildTipBoxSections:
+// Only show "ISSUE IN YOUR CV" if there's actual text to show
+const actualCVText = issue.currentText || issue.current || issue.matchText;
+if (actualCVText && actualCVText !== '[blank line]' && actualCVText !== '[whitespace]') {
+  sections.push({
+    type: 'example-wrong',
+    label: 'ISSUE IN YOUR CV',
+    content: actualCVText
+  });
+}
