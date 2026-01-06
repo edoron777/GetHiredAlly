@@ -150,6 +150,9 @@ class CatalogService:
             
             if catalog_entry.attributes:
                 detected_issue['attributes'] = catalog_entry.attributes
+            
+            if catalog_entry.impact_types:
+                detected_issue['impact_types'] = catalog_entry.impact_types
         else:
             logger.warning(f"Unknown issue type: {normalized_code}")
             detected_issue['severity'] = 'consider'

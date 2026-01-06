@@ -91,6 +91,67 @@ export const GUIDE_MODE_COLORS: Record<SectionStatus, { accent: string; backgrou
   }
 }
 
+export type ImpactType = 
+  | 'ats_high'
+  | 'ats_medium'
+  | 'human_high'
+  | 'human_medium'
+  | 'human_low'
+  | 'best_practice'
+
+export interface ImpactDisplayConfig {
+  icon: string
+  label: string
+  bgColor: string
+  textColor: string
+  borderColor: string
+}
+
+export const IMPACT_DISPLAY: Record<ImpactType, ImpactDisplayConfig> = {
+  ats_high: { 
+    icon: '🤖', 
+    label: 'ATS Critical', 
+    bgColor: '#FEE2E2', 
+    textColor: '#991B1B',
+    borderColor: '#FECACA'
+  },
+  ats_medium: { 
+    icon: '🤖', 
+    label: 'ATS Impact', 
+    bgColor: '#FFEDD5', 
+    textColor: '#9A3412',
+    borderColor: '#FED7AA'
+  },
+  human_high: { 
+    icon: '👤', 
+    label: 'Human Critical', 
+    bgColor: '#FEE2E2', 
+    textColor: '#991B1B',
+    borderColor: '#FECACA'
+  },
+  human_medium: { 
+    icon: '👤', 
+    label: 'Human Impact', 
+    bgColor: '#FEF3C7', 
+    textColor: '#92400E',
+    borderColor: '#FDE68A'
+  },
+  human_low: { 
+    icon: '👤', 
+    label: 'Minor Impact', 
+    bgColor: '#F3F4F6', 
+    textColor: '#4B5563',
+    borderColor: '#E5E7EB'
+  },
+  best_practice: { 
+    icon: '📋', 
+    label: 'Best Practice', 
+    bgColor: '#DBEAFE', 
+    textColor: '#1E40AF',
+    borderColor: '#BFDBFE'
+  }
+}
+
 export interface TipBoxProps {
   isOpen: boolean
   onClose: () => void
@@ -110,4 +171,5 @@ export interface TipBoxProps {
   mode?: TipBoxMode
   sectionStatus?: SectionStatus
   sectionKey?: string
+  impactTypes?: string[]
 }

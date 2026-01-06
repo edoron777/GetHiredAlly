@@ -1,6 +1,6 @@
 import React from 'react'
-import type { TipBoxProps, TipBoxColor } from './types'
-import { TIPBOX_COLORS, GUIDE_MODE_COLORS } from './types'
+import type { TipBoxProps, TipBoxColor, ImpactType } from './types'
+import { TIPBOX_COLORS, GUIDE_MODE_COLORS, IMPACT_DISPLAY } from './types'
 import { TipBoxSection } from './TipBoxSection'
 import './TipBoxStyles.css'
 
@@ -22,7 +22,8 @@ export const TipBox: React.FC<TipBoxProps> = ({
   isFixed = false,
   mode = 'issue',
   sectionStatus,
-  sectionKey
+  sectionKey,
+  impactTypes = []
 }) => {
   const getColorScheme = (): TipBoxColor => {
     if (mode === 'guide' && sectionStatus) {
@@ -37,6 +38,32 @@ export const TipBox: React.FC<TipBoxProps> = ({
   }
 
   const colorScheme: TipBoxColor = getColorScheme()
+
+  const renderImpactBadges = () => {
+    if (!impactTypes || impactTypes.length === 0) return null
+    
+    return (
+      <div className="tipbox-impact-badges">
+        {impactTypes.map((type) => {
+          const config = IMPACT_DISPLAY[type as ImpactType]
+          if (!config) return null
+          return (
+            <span 
+              key={type}
+              className="tipbox-impact-badge"
+              style={{ 
+                backgroundColor: config.bgColor, 
+                color: config.textColor,
+                borderColor: config.borderColor
+              }}
+            >
+              {config.icon} {config.label}
+            </span>
+          )
+        })}
+      </div>
+    )
+  }
 
   if (!isOpen) return null
 
@@ -96,25 +123,28 @@ export const TipBox: React.FC<TipBoxProps> = ({
     return (
       <div className="tipbox-header" style={{ backgroundColor: colorScheme.primary }}>
         <div className="tipbox-header-content">
-          <h3 className="tipbox-title" style={{ color: colorScheme.text }}>
-            {title}
-          </h3>
-          <div className="tipbox-tags">
-            <span 
-              className="tipbox-severity-badge"
-              style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: colorScheme.text }}
-            >
-              {severity.toUpperCase()}
-            </span>
-            {category && (
+          <div className="tipbox-header-title-row">
+            <h3 className="tipbox-title" style={{ color: colorScheme.text }}>
+              {title}
+            </h3>
+            <div className="tipbox-tags">
               <span 
-                className="tipbox-category-badge-header"
-                style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: colorScheme.text }}
+                className="tipbox-severity-badge"
+                style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: colorScheme.text }}
               >
-                {category}
+                {severity.toUpperCase()}
               </span>
-            )}
+              {category && (
+                <span 
+                  className="tipbox-category-badge-header"
+                  style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: colorScheme.text }}
+                >
+                  {category}
+                </span>
+              )}
+            </div>
           </div>
+          {renderImpactBadges()}
         </div>
         <button className="tipbox-close-btn" onClick={onClose} style={{ color: colorScheme.text }}>
           ✕

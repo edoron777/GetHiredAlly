@@ -86,6 +86,7 @@ class CatalogRepository:
         
         The view v_cv_issue_catalog joins all tables and
         includes category/subcategory names.
+        Also fetches impact_types from base table.
         
         Returns:
             List of IssueType objects with full metadata
@@ -95,7 +96,21 @@ class CatalogRepository:
                 .select("*") \
                 .execute()
             
-            return [IssueType(**row) for row in response.data]
+            impact_response = self.db.table("cv_issue_types") \
+                .select("issue_code, impact_types") \
+                .execute()
+            
+            impact_map = {
+                row["issue_code"]: row.get("impact_types", [])
+                for row in impact_response.data
+            }
+            
+            issues = []
+            for row in response.data:
+                row["impact_types"] = impact_map.get(row["issue_code"], [])
+                issues.append(IssueType(**row))
+            
+            return issues
         except Exception as e:
             logger.error(f"Error fetching issues from view: {e}")
             raise

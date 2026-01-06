@@ -1,0 +1,138 @@
+═══════════════════════════════════════════════════════════════════════════════
+🔍 RECONNAISSANCE: CV Optimizer Issue Detection System
+═══════════════════════════════════════════════════════════════════════════════
+Type: Investigation (DO NOT MAKE ANY CHANGES)
+Priority: CRITICAL - Must complete before any other prompts
+
+───────────────────────────────────────────────────────────────────────────────
+OBJECTIVE
+───────────────────────────────────────────────────────────────────────────────
+
+I need to fix several bugs in the CV Optimizer issue detection system.
+Before making any changes, I need to understand the current code structure.
+
+IMPORTANT: This is an INVESTIGATION ONLY prompt. 
+DO NOT make any code changes. Only report findings.
+
+───────────────────────────────────────────────────────────────────────────────
+INVESTIGATION 1: Certification Detection
+───────────────────────────────────────────────────────────────────────────────
+
+Questions:
+1. Where is certification detection implemented?
+2. Is there a handler for counting certifications?
+3. Does CERTIFICATION_TOO_MANY exist in cv_issue_types table?
+4. What threshold is configured for max certifications?
+
+Files to search:
+- backend/common/detection/**/*.py
+- Any file containing "certification" or "CERTIFICATION"
+
+Report:
+- File paths found
+- Current detection logic (if exists)
+- Why it might not be triggering
+
+───────────────────────────────────────────────────────────────────────────────
+INVESTIGATION 2: Contact Format Detection (Pipe Separator)
+───────────────────────────────────────────────────────────────────────────────
+
+Questions:
+1. Where is CONTACT_INCONSISTENT_FORMAT detection implemented?
+2. What regex or logic flags inconsistent separators?
+3. Does current logic distinguish between "mixing separators" vs "using pipe"?
+
+Files to search:
+- backend/common/detection/**/*.py
+- Any file containing "CONTACT_INCONSISTENT" or "separator"
+
+Report:
+- Current regex pattern
+- Why pipe "|" is being flagged (it should NOT be flagged alone)
+
+───────────────────────────────────────────────────────────────────────────────
+INVESTIGATION 3: Weak Action Verbs Detection
+───────────────────────────────────────────────────────────────────────────────
+
+Questions:
+1. Where is CONTENT_WEAK_ACTION_VERBS detection implemented?
+2. What word list is used for weak verbs?
+3. Is "supported" in the weak verbs list?
+4. Does detection consider context or just word matching?
+
+Files to search:
+- backend/common/detection/**/*.py
+- Any file containing "weak_verb" or "action_verb" or "WEAK_ACTION"
+
+Report:
+- Word list location
+- Current detection method
+- Whether context is considered
+
+───────────────────────────────────────────────────────────────────────────────
+INVESTIGATION 4: LinkedIn URL in Document View
+───────────────────────────────────────────────────────────────────────────────
+
+Questions:
+1. Where is CV content converted for Document View display?
+2. How are URLs processed during this conversion?
+3. Why might LinkedIn URL be lost while text "LinkedIn" is preserved?
+
+Files to search:
+- client/src/pages/cv-optimizer/**/*.tsx
+- backend/**/*.py files handling CV content transformation
+
+Report:
+- Conversion pipeline
+- Where URL might be stripped
+
+───────────────────────────────────────────────────────────────────────────────
+INVESTIGATION 5: Database Check
+───────────────────────────────────────────────────────────────────────────────
+
+Query the database and report:
+
+1. SELECT issue_code, display_name, severity 
+   FROM cv_issue_types 
+   WHERE issue_code LIKE '%CERT%';
+
+2. SELECT issue_code, severity, weight 
+   FROM cv_issue_types 
+   WHERE issue_code = 'CONTACT_MISSING_GITHUB';
+
+3. Check if there's a threshold configuration table or constants file
+
+───────────────────────────────────────────────────────────────────────────────
+OUTPUT FORMAT
+───────────────────────────────────────────────────────────────────────────────
+
+Please report findings in this format:
+
+## INVESTIGATION 1: Certification Detection
+**Files Found:** [list files]
+**Current Logic:** [describe]
+**Root Cause:** [why not working]
+
+## INVESTIGATION 2: Contact Format
+**Files Found:** [list files]
+**Current Regex:** [show pattern]
+**Root Cause:** [why flagging pipe]
+
+## INVESTIGATION 3: Weak Verbs
+**Files Found:** [list files]
+**Word List:** [show or reference location]
+**Root Cause:** [why flagging "supported"]
+
+## INVESTIGATION 4: LinkedIn URL
+**Files Found:** [list files]
+**Conversion Process:** [describe]
+**Root Cause:** [why URL lost]
+
+## INVESTIGATION 5: Database
+**Certification Issues:** [query results]
+**GitHub Severity:** [current value]
+**Thresholds:** [where configured]
+
+═══════════════════════════════════════════════════════════════════════════════
+REMINDER: DO NOT MAKE ANY CHANGES - INVESTIGATION ONLY
+═══════════════════════════════════════════════════════════════════════════════

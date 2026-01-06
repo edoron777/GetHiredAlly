@@ -97,6 +97,8 @@ class IssueType(BaseModel):
     example_before: Optional[str] = None
     example_after: Optional[str] = None
     
+    impact_types: Optional[List[str]] = None
+    
     subcategory_id: Optional[int] = None
     subcategory_code: Optional[str] = None
     subcategory_name: Optional[str] = None

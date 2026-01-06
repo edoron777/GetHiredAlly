@@ -633,6 +633,30 @@ export default function ResultsPage() {
     }
   };
 
+  const getImpactExplanation = (impactTypes: string[] | undefined): string => {
+    if (!impactTypes || impactTypes.length === 0) return '';
+    
+    const explanations: string[] = [];
+    
+    if (impactTypes.includes('ats_high')) {
+      explanations.push('🤖 ATS SYSTEMS: This issue may cause parsing failure. Your CV content could be lost or scrambled before a human sees it.');
+    } else if (impactTypes.includes('ats_medium')) {
+      explanations.push('🤖 ATS SYSTEMS: This may affect how ATS systems parse or rank your CV.');
+    } else if (!impactTypes.some(t => t.startsWith('ats_'))) {
+      explanations.push('🤖 ATS SYSTEMS: No direct impact. ATS can parse this correctly.');
+    }
+    
+    if (impactTypes.includes('human_high')) {
+      explanations.push('👤 HUMAN READER: Recruiters spend only 6-7 seconds scanning CVs. This issue may cause immediate rejection.');
+    } else if (impactTypes.includes('human_medium')) {
+      explanations.push('👤 HUMAN READER: This may create a negative impression and reduce your chances.');
+    } else if (impactTypes.includes('human_low')) {
+      explanations.push('👤 HUMAN READER: Minor issue that most recruiters may not notice.');
+    }
+    
+    return explanations.join('\n\n');
+  };
+
   const buildTipBoxSections = (issue: any): TipBoxSection[] => {
     const sections: TipBoxSection[] = [];
     
@@ -653,6 +677,15 @@ export default function ResultsPage() {
         type: 'text',
         label: 'LOCATION',
         content: `This issue was found in: ${issue.location}`
+      });
+    }
+    
+    const impactExplanation = getImpactExplanation(issue.impact_types);
+    if (impactExplanation) {
+      sections.push({
+        type: 'text',
+        label: 'IMPACT ANALYSIS',
+        content: impactExplanation
       });
     }
     
@@ -1283,6 +1316,7 @@ export default function ResultsPage() {
           isAutoFixable={selectedIssue.isAutoFixable || false}
           isPending={pendingIssues.has(selectedIssue.id)}
           isFixed={fixedIssues.has(selectedIssue.id)}
+          impactTypes={selectedIssue.impact_types}
         />
       )}
 
