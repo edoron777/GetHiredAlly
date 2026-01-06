@@ -1,0 +1,95 @@
+IMPLEMENT: Add FloatingSummaryBadge to Document View
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONTEXT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The FloatingSummaryBadge component is created.
+Now we need to add it to the Document View.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 1: Find Where to Add the Badge
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Find the main Document View component that:
+1. Receives the issues list
+2. Renders the CV document
+
+Likely files:
+- client/src/components/cv-optimizer/DocumentView/DocumentView.tsx
+- client/src/components/cv-optimizer/DocumentView/CVDocument.tsx
+- client/src/pages/cv-optimizer/UnifiedResultsPage.tsx
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 2: Add the Badge Component
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+In the Document View parent component:
+
+1. Import the component:
+```tsx
+import { FloatingSummaryBadge } from './FloatingSummaryBadge';
+```
+
+2. Add it alongside the document content:
+```tsx
+<div className="relative">
+  {/* Existing document content */}
+  <CVDocument ... />
+  
+  {/* Floating badge for document-level issues */}
+  <FloatingSummaryBadge issues={issues} />
+</div>
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 3: Ensure Issues Array is Available
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Make sure the issues array passed to FloatingSummaryBadge has:
+- issue_code (string)
+- display_name (string)
+- severity (string)
+
+If the field names are different, map them:
+```tsx
+const mappedIssues = issues.map(issue => ({
+  issue_code: issue.issue_type || issue.code,
+  display_name: issue.display_name || issue.issue_type,
+  severity: issue.severity || 'consider',
+}));
+
+<FloatingSummaryBadge issues={mappedIssues} />
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 4: Position Adjustment (if needed)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The badge uses `fixed` positioning (right-4 top-1/3).
+
+If Document View has its own scroll container, change to:
+```tsx
+// In FloatingSummaryBadge.tsx
+<div className="absolute right-4 top-4 z-50">
+```
+
+And ensure parent has `relative` positioning:
+```tsx
+// In parent
+<div className="relative overflow-auto">
+  <CVDocument ... />
+  <FloatingSummaryBadge issues={issues} />
+</div>
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COMPLETION CHECKLIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] Found correct parent component
+[ ] Imported FloatingSummaryBadge
+[ ] Added component with issues prop
+[ ] Issues have correct field names
+[ ] Badge appears in correct position
+[ ] Badge doesn't overlap important content

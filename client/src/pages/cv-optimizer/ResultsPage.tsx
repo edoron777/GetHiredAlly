@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { FileText, List, Copy, Check, ArrowLeft, Loader2, RefreshCw, Columns, GraduationCap } from 'lucide-react';
-import { classifyIssues } from '../../components/cv-optimizer/DocumentView';
+import { classifyIssues, FloatingSummaryBadge } from '../../components/cv-optimizer/DocumentView';
 import { DocumentEditor } from '../../components/common/DocumentEditor';
 import { TipBox } from '../../components/common/TipBox';
 import type { TipBoxButton } from '../../components/common/TipBox';
@@ -1077,6 +1077,17 @@ export default function ResultsPage() {
           
           {activeTab === 'document' ? (
             <div data-tour="document-view">
+              <FloatingSummaryBadge 
+                issues={normalizedIssues.map(issue => ({
+                  issue_code: issue.issueType,
+                  display_name: issue.title,
+                  severity: issue.severity
+                }))}
+                onIssueClick={(issueCode) => {
+                  const issue = normalizedIssues.find(i => i.issueType === issueCode);
+                  if (issue) handleIssueClick(issue.id);
+                }}
+              />
               <DocumentEditor
                   content={cvContent?.fullText || ''}
                   htmlContent={cvContent?.htmlContent}

@@ -1,0 +1,188 @@
+IMPLEMENT: Floating Summary Badge for Document-Level Issues
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONTEXT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Some CV issues cannot have text markers because:
+- "CV is Too Long" - no specific text to highlight
+- "Missing LinkedIn" - can't highlight text that doesn't exist
+- "Education Lacks Detail" - structural issue
+
+Users see these in the issue list but don't see markers in the document.
+This confuses users - they don't know WHERE to look.
+
+SOLUTION: Add a floating badge showing document-level issues.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 1: Create the Component
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Create file: client/src/components/cv-optimizer/DocumentView/FloatingSummaryBadge.tsx
+```tsx
+import React, { useState } from 'react';
+import { ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
+
+interface Issue {
+  issue_code: string;
+  display_name: string;
+  severity: string;
+  explanation?: string;
+}
+
+interface FloatingSummaryBadgeProps {
+  issues: Issue[];
+}
+
+// Issues that don't have text markers (document-level issues)
+const NO_MARKER_ISSUES = [
+  // Length issues
+  'LENGTH_CV_TOO_LONG',
+  'LENGTH_CV_TOO_SHORT',
+  'LENGTH_SUMMARY_TOO_LONG',
+  'LENGTH_EXPERIENCE_TOO_DETAILED',
+  'CONTENT_JOB_DESCRIPTION_TOO_LONG',
+  'CONTENT_JOB_DESCRIPTION_TOO_SHORT',
+  'CONTENT_EDUCATION_DESCRIPTION_TOO_SHORT',
+  // Missing contact issues
+  'CONTACT_MISSING_LINKEDIN',
+  'CONTACT_MISSING_GITHUB',
+  'CONTACT_MISSING_EMAIL',
+  'CONTACT_MISSING_PHONE',
+  'CONTACT_MISSING_LOCATION',
+  // Structure issues
+  'FORMAT_SECTION_ORDER_VIOLATION',
+  'FORMAT_SKILLS_SECTION_MISSING',
+  'FORMAT_MISSING_SECTION_HEADERS',
+  'CONTENT_MISSING_SUMMARY',
+];
+
+// Severity colors
+const SEVERITY_COLORS = {
+  critical: { bg: 'bg-red-100', text: 'text-red-700', dot: 'bg-red-500' },
+  important: { bg: 'bg-orange-100', text: 'text-orange-700', dot: 'bg-orange-500' },
+  consider: { bg: 'bg-blue-100', text: 'text-blue-700', dot: 'bg-blue-500' },
+  polish: { bg: 'bg-gray-100', text: 'text-gray-600', dot: 'bg-gray-400' },
+};
+
+export const FloatingSummaryBadge: React.FC<FloatingSummaryBadgeProps> = ({ issues }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // Filter to only document-level issues (no markers)
+  const documentLevelIssues = issues.filter(issue => 
+    NO_MARKER_ISSUES.includes(issue.issue_code)
+  );
+
+  // Don't render if no document-level issues
+  if (documentLevelIssues.length === 0) {
+    return null;
+  }
+
+  // Group by severity
+  const bySeverity = documentLevelIssues.reduce((acc, issue) => {
+    const severity = issue.severity || 'consider';
+    if (!acc[severity]) acc[severity] = [];
+    acc[severity].push(issue);
+    return acc;
+  }, {} as Record<string, Issue[]>);
+
+  // Count by severity
+  const counts = {
+    critical: bySeverity.critical?.length || 0,
+    important: bySeverity.important?.length || 0,
+    consider: bySeverity.consider?.length || 0,
+    polish: bySeverity.polish?.length || 0,
+  };
+
+  return (
+    <div className="fixed right-4 top-1/3 z-50">
+      {/* Collapsed Badge */}
+      <div 
+        className="bg-white rounded-lg shadow-lg border border-gray-200 cursor-pointer hover:shadow-xl transition-shadow"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        {/* Header */}
+        <div className="px-3 py-2 flex items-center gap-2 border-b border-gray-100">
+          <AlertCircle className="w-4 h-4 text-gray-500" />
+          <span className="text-sm font-medium text-gray-700">General</span>
+          {isExpanded ? (
+            <ChevronUp className="w-4 h-4 text-gray-400" />
+          ) : (
+            <ChevronDown className="w-4 h-4 text-gray-400" />
+          )}
+        </div>
+
+        {/* Severity Counts */}
+        <div className="px-3 py-2 space-y-1">
+          {counts.critical > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="w-3 h-3 rounded-full bg-red-500"></span>
+              <span className="text-sm text-gray-600">{counts.critical}</span>
+            </div>
+          )}
+          {counts.important > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="w-3 h-3 rounded-full bg-orange-500"></span>
+              <span className="text-sm text-gray-600">{counts.important}</span>
+            </div>
+          )}
+          {counts.consider > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="w-3 h-3 rounded-full bg-blue-500"></span>
+              <span className="text-sm text-gray-600">{counts.consider}</span>
+            </div>
+          )}
+          {counts.polish > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="w-3 h-3 rounded-full bg-gray-400"></span>
+              <span className="text-sm text-gray-600">{counts.polish}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Expanded Content */}
+        {isExpanded && (
+          <div className="border-t border-gray-100 max-h-64 overflow-y-auto">
+            {Object.entries(bySeverity).map(([severity, issueList]) => (
+              <div key={severity} className="px-3 py-2">
+                <div className={`text-xs font-semibold uppercase ${SEVERITY_COLORS[severity]?.text || 'text-gray-600'} mb-1`}>
+                  {severity} ({issueList.length})
+                </div>
+                {issueList.map((issue, idx) => (
+                  <div key={idx} className="flex items-start gap-2 py-1">
+                    <span className={`w-2 h-2 rounded-full mt-1.5 ${SEVERITY_COLORS[severity]?.dot || 'bg-gray-400'}`}></span>
+                    <span className="text-sm text-gray-700">{issue.display_name}</span>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default FloatingSummaryBadge;
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 2: Export from Index
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Add export to: client/src/components/cv-optimizer/DocumentView/index.ts
+```ts
+export { FloatingSummaryBadge } from './FloatingSummaryBadge';
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COMPLETION CHECKLIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] Created FloatingSummaryBadge.tsx
+[ ] Component receives issues array
+[ ] Filters to only NO_MARKER_ISSUES
+[ ] Shows severity counts (colored dots)
+[ ] Expands on click to show issue list
+[ ] Styled with Tailwind
+[ ] Added to index.ts exports
