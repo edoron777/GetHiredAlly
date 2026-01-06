@@ -1164,14 +1164,16 @@ export default function ResultsPage() {
               onClick={handleGuideModeToggle}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 isGuideModeEnabled
-                  ? 'bg-indigo-600 text-white'
+                  ? 'bg-indigo-600 text-white shadow-sm'
                   : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
               }`}
-              title={isGuideModeEnabled ? 'Disable Guide Mode' : 'Enable Guide Mode - Learn CV best practices'}
+              title={isGuideModeEnabled ? 'Guide Mode ON - Click to disable' : 'Guide Mode OFF - Click to learn CV best practices'}
             >
-              <Lightbulb size={16} />
+              <Lightbulb size={16} className={isGuideModeEnabled ? 'text-yellow-300' : ''} />
               Guide Mode
-              {isGuideModeEnabled && <span className="ml-1">✓</span>}
+              {isGuideModeEnabled && (
+                <span className="ml-1 text-xs bg-white/20 px-1.5 py-0.5 rounded">ON</span>
+              )}
             </button>
           </div>
           

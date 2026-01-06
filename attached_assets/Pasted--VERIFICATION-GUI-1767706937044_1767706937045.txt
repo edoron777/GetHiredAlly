@@ -1,0 +1,151 @@
+═══════════════════════════════════════════════════════════════════════════════
+✅ VERIFICATION: GUIDE MODE COMPLETE FEATURE TEST
+═══════════════════════════════════════════════════════════════════════════════
+
+TEST ALL SCENARIOS:
+
+───────────────────────────────────────────────────────────────────────────────
+
+TEST 1: GUIDE MODE BUTTON VISUAL FEEDBACK
+
+Steps:
+a) Load CV Optimizer Results page
+b) Look at Guide Mode button in toolbar
+
+Check:
+- [ ] Button shows "Guide Mode" text
+- [ ] Button has 💡 icon
+- [ ] Button appears INACTIVE (white/gray)
+
+c) Click Guide Mode button
+
+Check:
+- [ ] Button changes to ACTIVE state (indigo/purple background)
+- [ ] Shows "ON" indicator or checkmark
+- [ ] 💡 icon is highlighted (yellow)
+
+d) Click again
+
+Check:
+- [ ] Button returns to INACTIVE state
+
+───────────────────────────────────────────────────────────────────────────────
+
+TEST 2: MISSING SECTIONS BAR IN DOCUMENT VIEW
+
+Steps:
+a) Stay in Document View (default)
+b) Guide Mode is OFF
+
+Check:
+- [ ] NO Missing Sections Bar visible
+
+c) Click Guide Mode button (turn ON)
+
+Check:
+- [ ] Missing Sections Bar appears at bottom
+- [ ] Shows chips like [💡 Skills] [💡 Education] etc.
+- [ ] Only shows MISSING sections (not detected ones)
+
+d) Click a chip (e.g., "Skills")
+
+Check:
+- [ ] TipBox opens
+- [ ] Header shows "🛠️ Skills"
+- [ ] Status badge shows "⚠️ Missing from your CV"
+- [ ] Content includes: About, Purpose, Best Practices, Requirements, Examples
+- [ ] "Got It" button at bottom
+
+e) Click "Got It"
+
+Check:
+- [ ] TipBox closes
+- [ ] Can click another chip
+
+───────────────────────────────────────────────────────────────────────────────
+
+TEST 3: GUIDE ICONS IN CV STRUCTURE VIEW
+
+Steps:
+a) Enable Guide Mode (button should be active)
+b) Click "CV Structure" button
+
+Check:
+- [ ] CV Structure view shows colored section blocks
+- [ ] 💡 icon appears on RIGHT side of each section header
+- [ ] Icons visible on: CONTACT, SUMMARY, EXPERIENCE, etc.
+
+c) Click a 💡 icon (e.g., on EXPERIENCE header)
+
+Check:
+- [ ] TipBox opens
+- [ ] Header shows "💼 Work Experience"
+- [ ] Status badge shows "✅ Found in your CV"
+- [ ] Content includes: About, Purpose, Best Practices, Requirements, Examples
+- [ ] "Got It" button at bottom
+
+d) Click "Got It"
+
+Check:
+- [ ] TipBox closes
+- [ ] Can click another 💡 icon
+
+───────────────────────────────────────────────────────────────────────────────
+
+TEST 4: HYBRID FLOW (DOCUMENT VIEW + STRUCTURE VIEW)
+
+Steps:
+a) In Document View with Guide Mode ON
+b) Click "Skills" chip in Missing Sections Bar → TipBox opens
+c) Close TipBox
+d) Click "CV Structure" button
+e) Click 💡 icon on EXPERIENCE header → TipBox opens
+f) Close TipBox
+g) Turn Guide Mode OFF
+
+Check:
+- [ ] All interactions work smoothly
+- [ ] No console errors
+- [ ] TipBox content correct in both cases
+- [ ] Status badges correct (Found vs Missing)
+
+───────────────────────────────────────────────────────────────────────────────
+
+TEST 5: EDGE CASES
+
+a) Guide Mode ON, then navigate away and back
+   - [ ] Guide Mode state preserved OR properly reset
+
+b) CV with all sections present
+   - [ ] Missing Sections Bar hidden (nothing to show)
+
+c) Mobile view (resize browser to narrow width)
+   - [ ] Missing Sections Bar chips wrap properly
+   - [ ] TipBox displays correctly (full width or modal)
+
+───────────────────────────────────────────────────────────────────────────────
+
+REPORT FORMAT:
+
+TEST 1 - Button Visual Feedback: [PASS/FAIL]
+- Notes: ___
+
+TEST 2 - Missing Sections Bar (Document View): [PASS/FAIL]
+- Notes: ___
+
+TEST 3 - Guide Icons (CV Structure View): [PASS/FAIL]
+- Notes: ___
+
+TEST 4 - Hybrid Flow: [PASS/FAIL]
+- Notes: ___
+
+TEST 5 - Edge Cases: [PASS/FAIL]
+- Notes: ___
+
+OVERALL STATUS: [ALL PASS / ISSUES FOUND]
+
+If issues found, list them:
+1. ___
+2. ___
+
+═══════════════════════════════════════════════════════════════════════════════
