@@ -1,0 +1,86 @@
+═══════════════════════════════════════════════════════════════════════════════
+💻 REPLIT-2#3: ADD MISSING SECTIONS BAR TO DOCUMENT VIEW
+═══════════════════════════════════════════════════════════════════════════════
+
+OBJECTIVE:
+Show the Missing Sections Bar in Document View (not just CV Structure view).
+This implements the "Hybrid Approach" for better UX.
+
+CONTEXT:
+- MissingSectionsBar component already exists
+- Currently only visible in CV Structure view
+- Users should see it in Document View too (where most users stay)
+
+───────────────────────────────────────────────────────────────────────────────
+
+FILE: client/src/pages/cv-optimizer/ResultsPage.tsx
+
+FIND the Document View rendering section. It's likely inside a conditional like:
+- viewMode === 'document' 
+- Or tab === 'document'
+- Or it's the default view with <DocumentEditor />
+
+ADD the MissingSectionsBar AFTER the DocumentEditor component:
+```tsx
+{/* Document View */}
+{viewMode === 'document' && (
+  <div className="document-view-container">
+    <DocumentEditor
+      content={...}
+      // ... existing props
+    />
+    
+    {/* Missing Sections Bar - shows when Guide Mode enabled */}
+    {isGuideModeEnabled && (
+      <MissingSectionsBar
+        detectedSections={structureData?.blocks?.map(b => b.type) || []}
+        onSectionClick={handleGuideClick}
+        isVisible={true}
+      />
+    )}
+  </div>
+)}
+```
+
+IMPORTANT: The bar should show in Document View ONLY when:
+1. Guide Mode is enabled (isGuideModeEnabled === true)
+2. We have structure data (structureData exists)
+
+If structureData might not exist in Document View, fetch it when Guide Mode is enabled:
+```tsx
+// When Guide Mode is toggled ON, ensure we have structure data
+const handleGuideModeToggle = () => {
+  const newState = !isGuideModeEnabled;
+  setIsGuideModeEnabled(newState);
+  
+  // Fetch structure data if not already loaded (needed for missing sections)
+  if (newState && !structureData && !structureLoading) {
+    fetchStructure();
+  }
+};
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+After changes:
+1. Stay in "Document View" (default view)
+2. Click "Guide Mode" button
+3. Look for Missing Sections Bar at bottom of CV content
+4. Bar should show sections like: [💡 Skills] [💡 Certifications] etc.
+5. Click a chip - should open TipBox with guide content
+
+EXPECTED RESULT:
+- Missing Sections Bar visible in Document View when Guide Mode ON
+- Clicking chips opens educational TipBox
+- Status shows "⚠️ Missing from your CV"
+
+───────────────────────────────────────────────────────────────────────────────
+
+ANTI-IMPROVISATION:
+- Use existing MissingSectionsBar component
+- Do NOT duplicate the component
+- Do NOT change component internals
+- Just add it to Document View rendering
+
+═══════════════════════════════════════════════════════════════════════════════

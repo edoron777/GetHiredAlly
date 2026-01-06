@@ -1,0 +1,176 @@
+═══════════════════════════════════════════════════════════════════════════════
+💻 REPLIT-1#3: FIX GUIDE MODE ICONS IN CV STRUCTURE VIEW
+═══════════════════════════════════════════════════════════════════════════════
+
+OBJECTIVE:
+Make 💡 icons appear on CV Structure section headers when Guide Mode is enabled.
+
+CONTEXT:
+- Guide Mode button exists in toolbar
+- CV Structure view shows sections (CONTACT, SUMMARY, etc.)
+- But 💡 icons don't appear when Guide Mode is clicked
+- Root cause identified in RFI-1#1
+
+───────────────────────────────────────────────────────────────────────────────
+
+FIX CHECKLIST (apply based on RFI findings):
+
+### FIX A: If isGuideModeEnabled NOT passed to StructureOverlay
+
+FILE: client/src/pages/cv-optimizer/ResultsPage.tsx
+
+Find the <StructureOverlay component and ADD the props:
+```tsx
+<StructureOverlay
+  blocks={structureData.blocks}
+  cvContent={cvContent?.fullText || ''}
+  onSectionTypeChange={handleSectionTypeChange}
+  onStructureChange={handleStructureChange}
+  isGuideModeEnabled={isGuideModeEnabled}    // ADD THIS
+  onGuideClick={handleGuideClick}             // ADD THIS
+/>
+```
+
+### FIX B: If StructureOverlay doesn't accept the props
+
+FILE: client/src/components/cv-optimizer/DocumentView/StructureOverlay.tsx
+
+1. UPDATE the Props interface:
+```typescript
+interface StructureOverlayProps {
+  blocks: CVBlock[];
+  cvContent: string;
+  onSectionTypeChange?: (blockIndex: number, newType: string) => void;
+  onStructureChange?: (newBlocks: CVBlock[]) => void;
+  isGuideModeEnabled?: boolean;                    // ADD THIS
+  onGuideClick?: (sectionKey: string) => void;     // ADD THIS
+}
+```
+
+2. UPDATE the props destructuring:
+```typescript
+const StructureOverlay: React.FC<StructureOverlayProps> = ({
+  blocks,
+  cvContent,
+  onSectionTypeChange,
+  onStructureChange,
+  isGuideModeEnabled = false,    // ADD THIS
+  onGuideClick                    // ADD THIS
+}) => {
+```
+
+### FIX C: If 💡 icon JSX missing in section headers
+
+FILE: client/src/components/cv-optimizer/DocumentView/StructureOverlay.tsx
+
+Find the section header div (the one with CONTACT, SUMMARY, etc. and colored background).
+It should look something like:
+```tsx
+<div 
+  className="... cursor-pointer"
+  style={{ backgroundColor: colors.tab }}
+  onClick={() => ...}
+>
+  <div className="flex items-center gap-2">
+    <span className="text-white font-semibold ...">
+      {displayLabel}
+    </span>
+    <ChevronDown ... />
+  </div>
+  <span className="text-white/80 text-xs">
+    Lines {block.start_line} - {block.end_line}
+  </span>
+</div>
+```
+
+CHANGE the right side content to include guide icon:
+```tsx
+<div 
+  className="... cursor-pointer"
+  style={{ backgroundColor: colors.tab }}
+  onClick={() => ...}
+>
+  <div className="flex items-center gap-2">
+    <span className="text-white font-semibold ...">
+      {displayLabel}
+    </span>
+    <ChevronDown ... />
+  </div>
+  
+  {/* Right side: line info + guide icon */}
+  <div className="flex items-center gap-3">
+    <span className="text-white/80 text-xs">
+      Lines {block.start_line} - {block.end_line}
+      {block.word_count && ` · ${block.word_count}w`}
+    </span>
+    
+    {/* Guide Mode Icon - only shows when enabled */}
+    {isGuideModeEnabled && (
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onGuideClick?.(block.type);
+        }}
+        className="flex items-center justify-center w-7 h-7 rounded hover:bg-white/20 transition-colors"
+        title={`Learn about ${block.type} section`}
+      >
+        <span className="text-base">💡</span>
+      </button>
+    )}
+  </div>
+</div>
+```
+
+### FIX D: If handleGuideClick doesn't exist in ResultsPage
+
+FILE: client/src/pages/cv-optimizer/ResultsPage.tsx
+
+Add this function (near other handlers):
+```typescript
+// Guide Mode handler
+const handleGuideClick = async (sectionKey: string) => {
+  console.log('Guide clicked for section:', sectionKey);
+  
+  // Determine if section is found or missing
+  const detectedSections = structureData?.blocks?.map(b => b.type) || [];
+  const status = detectedSections.includes(sectionKey) ? 'found' : 'missing';
+  
+  // Fetch guide content
+  const content = await buildGuideContent(sectionKey);
+  
+  if (!content) {
+    console.warn(`No guide content for: ${sectionKey}`);
+    return;
+  }
+  
+  setGuideTipBoxData({
+    isOpen: true,
+    sectionKey,
+    content,
+    status
+  });
+};
+```
+
+───────────────────────────────────────────────────────────────────────────────
+
+VERIFICATION:
+After applying fixes:
+1. Click "CV Structure" button
+2. Click "Guide Mode" button
+3. Look for 💡 icons on right side of each colored section header
+4. Click a 💡 icon - should open TipBox with guide content
+
+EXPECTED RESULT:
+- 💡 icons visible on CONTACT, SUMMARY, EXPERIENCE headers
+- Click opens educational TipBox
+- Status shows "✅ Found in your CV"
+
+───────────────────────────────────────────────────────────────────────────────
+
+ANTI-IMPROVISATION:
+- Apply ONLY the fixes needed based on RFI findings
+- Do NOT change other functionality
+- Do NOT add features not specified
+
+═══════════════════════════════════════════════════════════════════════════════
