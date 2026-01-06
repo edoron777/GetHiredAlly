@@ -1,28 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, X } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { SectionTab } from './SectionTab';
+import { AddSectionModal } from './AddSectionModal';
 import { SECTION_COLORS } from './structureTypes';
 import type { SectionType, CVBlock } from './structureTypes';
 import './StructureOverlay.css';
 
 export { SECTION_COLORS };
 export type { SectionType };
-
-const SECTION_OPTIONS: { value: SectionType; label: string; icon: string }[] = [
-  { value: 'contact', label: 'Contact', icon: '📧' },
-  { value: 'summary', label: 'Summary', icon: '📝' },
-  { value: 'experience', label: 'Experience', icon: '💼' },
-  { value: 'education', label: 'Education', icon: '🎓' },
-  { value: 'skills', label: 'Skills', icon: '⚡' },
-  { value: 'certifications', label: 'Certifications', icon: '📜' },
-  { value: 'projects', label: 'Projects', icon: '🚀' },
-  { value: 'languages', label: 'Languages', icon: '🌍' },
-  { value: 'awards', label: 'Awards', icon: '🏆' },
-  { value: 'publications', label: 'Publications', icon: '📚' },
-  { value: 'volunteer', label: 'Volunteer', icon: '🤝' },
-  { value: 'interests', label: 'Interests', icon: '⭐' },
-  { value: 'references', label: 'References', icon: '👤' },
-];
 
 interface StructureOverlayProps {
   blocks: CVBlock[];
@@ -220,47 +205,11 @@ export const StructureOverlay: React.FC<StructureOverlayProps> = ({
       })}
 
       {splitAtLine !== null && (
-        <>
-          <div 
-            className="fixed inset-0 bg-black/30 z-40"
-            onClick={() => setSplitAtLine(null)}
-          />
-          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
-                          bg-white rounded-xl shadow-2xl border border-gray-200
-                          p-4 z-50 min-w-[280px] max-h-[400px] overflow-y-auto">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold text-gray-900">
-                Create new section at line {splitAtLine}
-              </h3>
-              <button 
-                onClick={() => setSplitAtLine(null)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <p className="text-sm text-gray-600 mb-3">
-              Select the type for the new section:
-            </p>
-            <div className="space-y-1">
-              {SECTION_OPTIONS.map((option) => (
-                <button
-                  key={option.value}
-                  onClick={() => handleSplitSection(splitAtLine, option.value)}
-                  className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100
-                             flex items-center gap-2 rounded-lg transition-colors"
-                >
-                  <span>{option.icon}</span>
-                  <span 
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: SECTION_COLORS[option.value]?.tab || '#6B7280' }}
-                  />
-                  <span>{option.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </>
+        <AddSectionModal
+          lineNumber={splitAtLine}
+          onAdd={(sectionType) => handleSplitSection(splitAtLine, sectionType)}
+          onClose={() => setSplitAtLine(null)}
+        />
       )}
     </div>
   );

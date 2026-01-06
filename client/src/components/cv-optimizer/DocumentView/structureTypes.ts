@@ -97,3 +97,25 @@ export interface CVBlock {
   entries?: Array<{ degree: string; institution: string; year: string }>;
   certs?: string[];
 }
+
+export const SECTION_OPTIONS: { 
+  value: SectionType; 
+  label: string; 
+  icon: string;
+  description: string;
+}[] = [
+  { value: 'contact', label: 'Contact', icon: '📧', description: 'Name, email, phone, links' },
+  { value: 'summary', label: 'Summary', icon: '📝', description: 'Professional overview' },
+  { value: 'experience', label: 'Experience', icon: '💼', description: 'Work history, jobs' },
+  { value: 'education', label: 'Education', icon: '🎓', description: 'Degrees, schools' },
+  { value: 'skills', label: 'Skills', icon: '⚡', description: 'Technical & soft skills' },
+  { value: 'certifications', label: 'Certifications', icon: '📜', description: 'Certificates, licenses' },
+  { value: 'projects', label: 'Projects', icon: '🚀', description: 'Personal or work projects' },
+  { value: 'languages', label: 'Languages', icon: '🌍', description: 'Spoken languages' },
+  { value: 'awards', label: 'Awards', icon: '🏆', description: 'Achievements, honors' },
+  { value: 'publications', label: 'Publications', icon: '📚', description: 'Papers, articles' },
+  { value: 'volunteer', label: 'Volunteer', icon: '🤝', description: 'Volunteer work' },
+  { value: 'interests', label: 'Interests', icon: '⭐', description: 'Hobbies, interests' },
+  { value: 'references', label: 'References', icon: '👤', description: 'Professional references' },
+  { value: 'unrecognized', label: 'Other', icon: '❓', description: 'Other content' },
+];

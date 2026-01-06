@@ -1,0 +1,83 @@
+VERIFICATION: Merge & Manual Tab Features
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TEST A: Merge Feature
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Open CV Structure overlay
+2. Click on a section tab (not the first one)
+3. Verify dropdown shows merge options
+
+VERIFY:
+[ ] "Merge with section above" appears
+[ ] "Merge with section below" appears (except last section)
+[ ] "Remove section divider" appears
+
+4. Click "Merge with section above"
+
+VERIFY:
+[ ] Section merges with the one above
+[ ] Tab color changes to match merged section
+[ ] Content combines correctly
+[ ] Line range updates correctly
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TEST B: Add Section Feature
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Hover over a line in the middle of a section
+2. Verify + button appears
+
+VERIFY:
+[ ] Small blue + button appears on hover
+[ ] Button positioned to the left of the line
+
+3. Click the + button
+
+VERIFY:
+[ ] Modal opens with "Add Section Divider"
+[ ] Shows line number
+[ ] Lists all section types with colors
+
+4. Select a section type (e.g., EXPERIENCE)
+
+VERIFY:
+[ ] Modal closes
+[ ] Section splits at that line
+[ ] New tab appears with selected type
+[ ] Content divided correctly
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TEST C: Real Scenario - Fix Citi Detection
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Load the CV with "Citi" wrongly detected as separate section
+2. Click on the "Citi" section tab
+3. Select "Merge with section above" (EXPERIENCE)
+
+VERIFY:
+[ ] Citi content now part of EXPERIENCE section
+[ ] Orange EXPERIENCE tab extends to include Citi
+[ ] No more separate "Unknown" or incorrect tab for Citi
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+EXPECTED RESULT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+BEFORE (Wrong detection):
+┌──────────┬────────────────────────┐
+│EXPERIENCE│ ...previous content... │
+├──────────┼────────────────────────┤
+│ UNKNOWN  │ **Citi**               │  ← Wrong!
+│          │ VP, Cybersecurity...   │
+├──────────┼────────────────────────┤
+│EXPERIENCE│ **Deloitte**           │
+└──────────┴────────────────────────┘
+
+AFTER (Fixed with merge):
+┌──────────┬────────────────────────┐
+│          │ ...previous content... │
+│EXPERIENCE│ **Citi**               │  ← Now correct!
+│          │ VP, Cybersecurity...   │
+│          │ **Deloitte**           │
+└──────────┴────────────────────────┘
