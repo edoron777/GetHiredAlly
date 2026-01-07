@@ -821,8 +821,9 @@ def _extract_pdf_to_html(file_content: bytes) -> tuple:
     plain_text, md_text = _extract_pdf_with_pymupdf4llm(file_content)
     
     if md_text:
-        # Filter out page footers from markdown
+        # Filter footers from BOTH markdown and plain text
         md_text = _filter_markdown_footers(md_text)
+        plain_text = _filter_markdown_footers(plain_text)
         
         # Convert Markdown to HTML
         html_content = _markdown_to_html(md_text)
