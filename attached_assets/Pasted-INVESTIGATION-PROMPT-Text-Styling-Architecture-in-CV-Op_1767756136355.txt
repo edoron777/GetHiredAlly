@@ -1,0 +1,119 @@
+INVESTIGATION PROMPT — Text Styling Architecture in CV Optimizer
+
+OBJECTIVE:
+Understand how text is styled/rendered in Document View and Section Explorer 
+to ensure the new SideBySide component uses the same approach.
+
+⚠️ IMPORTANT: Do NOT make any changes. Only investigate and report.
+
+═══════════════════════════════════════════════════════════════
+PART 1: DOCUMENT VIEW INVESTIGATION
+═══════════════════════════════════════════════════════════════
+
+File to investigate: client/src/pages/cv-optimizer/ResultsPage.tsx
+
+Questions to answer:
+
+1. How is CV content rendered in Document View?
+   - Is it plain text?
+   - Is it HTML?
+   - Is it Markdown?
+
+2. What component/method is used for rendering?
+   Look for:
+   - DocStyler
+   - react-markdown
+   - dangerouslySetInnerHTML
+   - Custom component
+   - Other
+
+3. Show me the exact code block that renders the CV content 
+   in Document View (copy the relevant JSX)
+
+4. Is there any CSS file or styled-component for Document View styling?
+
+═══════════════════════════════════════════════════════════════
+PART 2: SECTION EXPLORER INVESTIGATION
+═══════════════════════════════════════════════════════════════
+
+File to investigate: Look for SectionExplorer component
+
+Questions to answer:
+
+1. Where is Section Explorer located? (file path)
+
+2. How does Section Explorer render text content?
+
+3. Does it use the same styling approach as Document View?
+
+4. Show me the exact code block that renders styled text
+
+═══════════════════════════════════════════════════════════════
+PART 3: HTML GATEWAY / CONVERSION INVESTIGATION
+═══════════════════════════════════════════════════════════════
+
+Questions to answer:
+
+1. When a CV (Word/PDF) is uploaded, how is it converted?
+   - Is there a backend conversion to HTML?
+   - What format is stored in the database?
+
+2. Search for any of these patterns in the codebase:
+   - "DocStyler"
+   - "htmlContent"
+   - "styledContent"
+   - "formattedCV"
+   - "cv_html"
+
+3. Is there a utility/service that handles text formatting?
+   Look in:
+   - client/src/lib/
+   - client/src/utils/
+   - client/src/services/
+   - backend text processing files
+
+═══════════════════════════════════════════════════════════════
+PART 4: EXISTING STYLING COMPONENTS
+═══════════════════════════════════════════════════════════════
+
+Search for any existing text styling components:
+
+1. Does a "DocStyler" component exist? 
+   - If yes, where? Show its props interface
+
+2. Does a "StyledText" or "FormattedText" component exist?
+
+3. What CSS classes are used for CV text styling?
+   Look for classes like:
+   - cv-content
+   - document-view
+   - styled-text
+   - formatted-content
+
+═══════════════════════════════════════════════════════════════
+OUTPUT FORMAT
+═══════════════════════════════════════════════════════════════
+
+Provide a structured report:
+
+### Document View
+- Rendering Method: [plain text / HTML / Markdown / Other]
+- Component Used: [name or "none"]
+- Code Sample: [show the JSX]
+
+### Section Explorer  
+- File Location: [path]
+- Rendering Method: [plain text / HTML / Markdown / Other]
+- Component Used: [name or "none"]
+
+### HTML Gateway
+- CV Storage Format: [plain text / HTML / Markdown]
+- Conversion Location: [frontend / backend / both]
+
+### Existing Styling Components
+- DocStyler: [exists / not found] - [path if exists]
+- Other styling components: [list]
+- Relevant CSS files: [list]
+
+### Recommendation
+Based on findings, what approach should SideBySide use for text styling?
