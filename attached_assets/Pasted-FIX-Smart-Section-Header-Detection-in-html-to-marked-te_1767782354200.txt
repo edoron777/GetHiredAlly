@@ -1,0 +1,194 @@
+FIX — Smart Section Header Detection in _html_to_marked_text()
+
+OBJECTIVE:
+Fix the section detection by making _html_to_marked_text() smarter about 
+which <strong> tags represent section headers vs company names/other bold text.
+
+═══════════════════════════════════════════════════════════════
+CONTEXT
+═══════════════════════════════════════════════════════════════
+
+CURRENT PROBLEM:
+The function _html_to_marked_text() in backend/app/cv.py converts ALL 
+<strong> tags to [BOLD] markers. This causes:
+- Company names like "Citi" to look like section headers
+- Sub-headers like "Core Expertise" to look like sections
+- Wrong section boundaries in Section Explorer
+
+CURRENT CODE (line ~485-527 in cv.py):
+```python
+text = re.sub(r'<strong>([^<]+)</strong>', r'[BOLD] \1', text)
+```
+
+═══════════════════════════════════════════════════════════════
+TASK 1: Add Section Keywords List
+═══════════════════════════════════════════════════════════════
+
+File: backend/app/cv.py
+
+Add this constant BEFORE the _html_to_marked_text() function:
+```python
+# Section header keywords for smart bold detection
+SECTION_HEADER_KEYWORDS = [
+    # Summary variations
+    'summary', 'professional summary', 'profile', 'about', 'about me',
+    'objective', 'career objective', 'executive summary', 'overview',
+    
+    # Experience variations
+    'experience', 'work experience', 'employment', 'employment history',
+    'professional experience', 'work history', 'career history',
+    'professional background', 'career',
+    
+    # Education variations
+    'education', 'academic background', 'degrees', 'qualifications',
+    'academic qualifications', 'academic',
+    
+    # Skills variations
+    'skills', 'technical skills', 'core skills', 'key skills',
+    'expertise', 'competencies', 'proficiencies', 'technologies',
+    
+    # Certifications variations
+    'certifications', 'certificates', 'licenses', 'credentials',
+    'professional certifications', 'training', 'courses',
+    
+    # Other standard sections
+    'projects', 'personal projects', 'key projects',
+    'languages', 'language skills',
+    'awards', 'honors', 'achievements', 'accomplishments',
+    'publications', 'papers',
+    'volunteer', 'volunteer work', 'volunteering',
+    'interests', 'hobbies',
+    'references', 'professional references',
+    'contact', 'contact information', 'contact details',
+]
+```
+
+═══════════════════════════════════════════════════════════════
+TASK 2: Create Smart Bold Detection Function
+═══════════════════════════════════════════════════════════════
+
+File: backend/app/cv.py
+
+Add this helper function BEFORE _html_to_marked_text():
+```python
+def _is_section_header_text(text: str) -> bool:
+    """
+    Check if text is likely a section header based on keywords.
+    
+    Returns True for: "About", "Experience", "Skills", etc.
+    Returns False for: "Citi", "Microsoft", "Core Expertise & Impact", etc.
+    """
+    if not text:
+        return False
+    
+    # Normalize: lowercase, remove extra spaces, remove special chars
+    normalized = text.lower().strip()
+    normalized = re.sub(r'[^a-z\s]', '', normalized).strip()
+    
+    # Check against known section headers
+    for keyword in SECTION_HEADER_KEYWORDS:
+        if normalized == keyword:
+            return True
+        # Also check if it starts with keyword (e.g., "Skills & Expertise")
+        if normalized.startswith(keyword + ' '):
+            return True
+    
+    return False
+```
+
+═══════════════════════════════════════════════════════════════
+TASK 3: Update _html_to_marked_text() Function
+═══════════════════════════════════════════════════════════════
+
+File: backend/app/cv.py
+
+Replace the simple <strong> regex with smart detection:
+
+FIND this line (approximately):
+```python
+text = re.sub(r'<strong>([^<]+)</strong>', r'[BOLD] \1', text)
+```
+
+REPLACE with:
+```python
+# Smart bold handling: only mark as [BOLD] if it's a section header
+def _smart_bold_replace(match):
+    content = match.group(1)
+    if _is_section_header_text(content):
+        return f'[BOLD] {content}'
+    else:
+        # Not a section header - just return the text without marker
+        return content
+
+text = re.sub(r'<strong>([^<]+)</strong>', _smart_bold_replace, text)
+```
+
+═══════════════════════════════════════════════════════════════
+TASK 4: Add Debug Logging
+═══════════════════════════════════════════════════════════════
+
+File: backend/app/cv.py
+
+Add logging inside _smart_bold_replace to help debug:
+```python
+def _smart_bold_replace(match):
+    content = match.group(1)
+    is_header = _is_section_header_text(content)
+    
+    # Debug logging
+    if is_header:
+        print(f"[_html_to_marked_text] Section header found: '{content}'")
+    else:
+        print(f"[_html_to_marked_text] NOT a section header: '{content}'")
+    
+    if is_header:
+        return f'[BOLD] {content}'
+    else:
+        return content
+```
+
+═══════════════════════════════════════════════════════════════
+VERIFICATION
+═══════════════════════════════════════════════════════════════
+
+After making changes:
+
+1. Restart the backend server
+
+2. Upload a PDF CV (use the existing test CV)
+
+3. Click "Section Explorer"
+
+4. Check console logs for:
+   - "[_html_to_marked_text] Section header found: 'About'"
+   - "[_html_to_marked_text] NOT a section header: 'Citi'"
+   - "[_html_to_marked_text] NOT a section header: 'Core Expertise'"
+
+5. Verify in UI:
+   - CONTACT section: Lines 1-4 only
+   - SUMMARY section: Should NOT include company names
+   - EXPERIENCE section: Should include Citi, Microsoft, etc.
+   - SKILLS section: Should be ~20-50 lines, NOT 370+
+
+═══════════════════════════════════════════════════════════════
+DO NOT CHANGE
+═══════════════════════════════════════════════════════════════
+
+- Do NOT modify block_detector.py
+- Do NOT modify section_extractor.py
+- Do NOT modify any frontend files
+- Do NOT change the [H1], [H2], [BULLET] handling - only [BOLD]
+
+═══════════════════════════════════════════════════════════════
+EXPECTED RESULT
+═══════════════════════════════════════════════════════════════
+
+BEFORE (current):
+[BOLD] About
+[BOLD] Citi           ← WRONG: company name marked as header
+[BOLD] Core Expertise ← WRONG: sub-header marked as section
+
+AFTER (fixed):
+[BOLD] About          ← CORRECT: section header
+Citi                  ← CORRECT: no marker, just text
+Core Expertise        ← CORRECT: no marker, just text
