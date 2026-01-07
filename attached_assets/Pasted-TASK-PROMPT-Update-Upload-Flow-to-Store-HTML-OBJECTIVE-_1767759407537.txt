@@ -1,0 +1,178 @@
+TASK PROMPT — Update Upload Flow to Store HTML
+
+OBJECTIVE:
+Modify extract_text_from_file() and upload_cv_for_scan() to 
+extract HTML and store it in the database.
+
+⚠️ MANDATORY RULES:
+- NO IMPROVISATION — Only modify what is specified
+- PRESERVE existing functionality
+- HANDLE errors gracefully - if HTML extraction fails, continue with plain text
+- ENCRYPT HTML content same as plain text
+
+═══════════════════════════════════════════════════════════════
+STEP 1: MODIFY extract_text_from_file()
+═══════════════════════════════════════════════════════════════
+
+File: backend/app/cv.py
+Function: extract_text_from_file() (around line 87)
+
+CHANGE the function to return BOTH plain text AND html.
+
+Current signature:
+def extract_text_from_file(file_content: bytes, filename: str, preserve_markers: bool = True) -> str:
+
+NEW signature:
+def extract_text_from_file(file_content: bytes, filename: str, preserve_markers: bool = True) -> tuple[str, str | None]:
+    """
+    Extract text content from various file formats.
+    
+    Returns:
+        tuple: (plain_text, html_content)
+               - plain_text: Always present, used for AI analysis
+               - html_content: Only for DOCX files, None for others
+    """
+
+MODIFY the function body:
+
+def extract_text_from_file(file_content: bytes, filename: str, preserve_markers: bool = True) -> tuple[str, str | None]:
+    """
+    Extract text content from various file formats.
+    
+    Returns:
+        tuple: (plain_text, html_content)
+               - plain_text: Always present, used for AI analysis  
+               - html_content: Only for DOCX files, None for others
+    """
+    ext = filename.lower().split('.')[-1]
+    
+    # DOCX files - extract both plain text AND HTML
+    if ext == 'docx':
+        return _extract_docx_to_html(file_content)
+    
+    # PDF files - plain text only (HTML extraction in Phase 3)
+    elif ext == 'pdf':
+        plain_text = _extract_pdf_with_markers(file_content, preserve_markers)
+        return (plain_text, None)
+    
+    # DOC files (old Word format)
+    elif ext == 'doc':
+        # Existing doc handling logic
+        # Return (plain_text, None) - no HTML for old format
+        plain_text = _extract_doc_file(file_content)  # or however it's currently handled
+        return (plain_text, None)
+    
+    # Text/Markdown files
+    elif ext in ['txt', 'md']:
+        plain_text = file_content.decode('utf-8', errors='ignore')
+        return (plain_text, None)
+    
+    # RTF files
+    elif ext == 'rtf':
+        plain_text = _extract_rtf_file(file_content)  # existing function
+        return (plain_text, None)
+    
+    # ODT files
+    elif ext == 'odt':
+        plain_text = _extract_odt_file(file_content)  # existing function
+        return (plain_text, None)
+    
+    # Unknown format
+    else:
+        raise ValueError(f"Unsupported file format: {ext}")
+
+⚠️ NOTE: Adjust the above based on actual existing code structure.
+The key change is returning tuple (text, html) instead of just text.
+
+═══════════════════════════════════════════════════════════════
+STEP 2: UPDATE upload_cv_for_scan()
+═══════════════════════════════════════════════════════════════
+
+File: backend/app/cv.py
+Function: upload_cv_for_scan() (around line 384)
+
+Find where extract_text_from_file() is called and update:
+
+BEFORE (something like):
+    text_content = extract_text_from_file(file_content, filename, preserve_markers=True)
+
+AFTER:
+    text_content, html_content = extract_text_from_file(file_content, filename, preserve_markers=True)
+
+Then update the database INSERT to include html_content:
+
+BEFORE (something like):
+    INSERT INTO user_cvs (user_id, filename, content, file_size, file_type, ...)
+    VALUES (%s, %s, %s, %s, %s, ...)
+
+AFTER:
+    INSERT INTO user_cvs (user_id, filename, content, html_content, file_size, file_type, ...)
+    VALUES (%s, %s, %s, %s, %s, %s, ...)
+
+With values:
+    - content = encrypt_text(text_content)
+    - html_content = encrypt_text(html_content) if html_content else None
+
+═══════════════════════════════════════════════════════════════
+STEP 3: HANDLE ENCRYPTION
+═══════════════════════════════════════════════════════════════
+
+Make sure HTML is encrypted before storing:
+
+# Encrypt plain text (existing)
+encrypted_content = encrypt_text(text_content)
+
+# Encrypt HTML (new)
+encrypted_html = encrypt_text(html_content) if html_content else None
+
+Then use encrypted_html in the INSERT statement.
+
+═══════════════════════════════════════════════════════════════
+STEP 4: UPDATE cv_scan_results STORAGE
+═══════════════════════════════════════════════════════════════
+
+Find where cv_scan_results is populated (likely in cv_optimizer.py)
+and update to store html_content:
+
+BEFORE:
+    INSERT INTO cv_scan_results (user_id, cv_id, original_cv_content, ...)
+    
+AFTER:
+    INSERT INTO cv_scan_results (user_id, cv_id, original_cv_content, html_content, ...)
+
+Note: The html_content in cv_scan_results does NOT need encryption
+(based on current schema - verify this)
+
+═══════════════════════════════════════════════════════════════
+BACKWARD COMPATIBILITY CHECK
+═══════════════════════════════════════════════════════════════
+
+Ensure all places that call extract_text_from_file() are updated:
+
+Search for: extract_text_from_file(
+Update each call to handle the tuple return.
+
+If a caller only needs plain text:
+    text, _ = extract_text_from_file(...)
+    
+If a caller needs both:
+    text, html = extract_text_from_file(...)
+
+═══════════════════════════════════════════════════════════════
+VERIFICATION CHECKLIST
+═══════════════════════════════════════════════════════════════
+
+After completing this prompt:
+
+[ ] extract_text_from_file() returns tuple (text, html)
+[ ] upload_cv_for_scan() extracts HTML
+[ ] upload_cv_for_scan() stores encrypted HTML in database
+[ ] All callers of extract_text_from_file() updated
+[ ] Backend starts without errors
+[ ] Upload a test DOCX file - verify no errors
+
+Files modified:
+1. [file:line] - [what changed]
+2. [file:line] - [what changed]
+
+Any errors encountered: [describe]

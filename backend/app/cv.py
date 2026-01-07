@@ -2,9 +2,11 @@
 import os
 import sys
 import io
+import re
 import logging
 import hashlib
 import psycopg2
+import mammoth
 from psycopg2.extras import RealDictCursor
 from urllib.parse import urlparse, unquote
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form
@@ -329,6 +331,92 @@ def _extract_docx_with_markers(file_content: bytes, preserve_markers: bool = Tru
         raise HTTPException(status_code=400, detail=f"Failed to parse DOCX: {str(e)}")
 
 
+# ============================================================
+# HTML Extraction with mammoth (Phase 2 - TextStylerService)
+# ============================================================
+
+def _extract_docx_to_html(file_content: bytes) -> tuple[str, str]:
+    """
+    Extract both plain text AND HTML from a DOCX file.
+    
+    Uses mammoth for HTML extraction (preserves formatting).
+    Uses python-docx for plain text extraction (for AI analysis).
+    
+    Args:
+        file_content: Raw bytes of the DOCX file
+        
+    Returns:
+        tuple: (plain_text, html_content)
+               - plain_text: Text with [MARKERS] for AI analysis
+               - html_content: Semantic HTML for display
+               
+    If mammoth fails, returns (plain_text, None)
+    """
+    # Step 1: Extract plain text using existing function (for AI analysis)
+    plain_text = _extract_docx_with_markers(file_content, preserve_markers=True)
+    
+    # Step 2: Extract HTML using mammoth (for display)
+    html_content = None
+    try:
+        # mammoth style mapping for clean semantic HTML
+        style_map = """
+            p[style-name='Heading 1'] => h1:fresh
+            p[style-name='Heading 2'] => h2:fresh
+            p[style-name='Heading 3'] => h3:fresh
+            p[style-name='Title'] => h1.title:fresh
+            b => strong
+            i => em
+            u => u
+            strike => s
+        """
+        
+        result = mammoth.convert_to_html(
+            io.BytesIO(file_content),
+            style_map=style_map
+        )
+        
+        html_content = result.value
+        
+        # Log any conversion messages (warnings, not errors)
+        if result.messages:
+            for message in result.messages:
+                logger.info(f"[mammoth] {message.type}: {message.message}")
+        
+        # Post-process HTML for better display
+        html_content = _post_process_html(html_content)
+        
+    except Exception as e:
+        # Log error but don't fail - fall back to plain text only
+        logger.warning(f"[mammoth] HTML extraction failed: {str(e)}")
+        html_content = None
+    
+    return (plain_text, html_content)
+
+
+def _post_process_html(html: str) -> str:
+    """
+    Post-process mammoth HTML output for better display.
+    
+    - Adds CSS classes for styling
+    - Cleans up empty paragraphs
+    - Ensures proper structure
+    """
+    if not html:
+        return html
+    
+    # Remove empty paragraphs
+    html = html.replace('<p></p>', '')
+    
+    # Add wrapper div with class for styling
+    html = f'<div class="cv-html-content">{html}</div>'
+    
+    # Clean up excessive whitespace
+    html = re.sub(r'\s+', ' ', html)
+    html = html.replace('> <', '><')
+    
+    return html.strip()
+
+
 def strip_structure_markers(text: str) -> str:
     """Convert structure markers to visible fallback characters for plain text display.
     
@@ -337,7 +425,6 @@ def strip_structure_markers(text: str) -> str:
     - [BOLD]...[/BOLD] -> **...** (markdown bold)
     - [H1], [H2] -> removed (text preserved)
     """
-    import re
     # Replace [BULLET] with visible bullet character
     text = re.sub(r'^\[BULLET\]\s*', '• ', text, flags=re.MULTILINE)
     # Remove [H1], [H2] markers (keep text)

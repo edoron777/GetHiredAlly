@@ -13,6 +13,7 @@ dependencies = [
     "google-generativeai>=0.8.6",
     "httpx>=0.28.1",
     "litellm>=1.80.11",
+    "mammoth>=1.11.0",
     "pandas>=2.3.3",
     "pdfminer>=20191125",
     "pdfminer-six>=20251107",
