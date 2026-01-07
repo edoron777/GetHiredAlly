@@ -365,6 +365,48 @@ def _markdown_to_plain_text(md_text: str) -> str:
     return text.strip()
 
 
+def _markdown_to_clean_text(md_text: str) -> str:
+    """
+    Convert Markdown to clean plain text for storage and display.
+    Strips all markdown syntax - NO markers.
+    
+    Used for cv_content storage (what users see in Section Explorer).
+    """
+    import re
+    
+    if not md_text:
+        return ""
+    
+    text = md_text
+    
+    # Remove header markers (keep text)
+    text = re.sub(r'^#{1,6}\s*', '', text, flags=re.MULTILINE)
+    
+    # Remove bold/italic markers (keep text)
+    text = re.sub(r'\*\*(.+?)\*\*', r'\1', text)
+    text = re.sub(r'\*(.+?)\*', r'\1', text)
+    text = re.sub(r'__(.+?)__', r'\1', text)
+    text = re.sub(r'_(.+?)_', r'\1', text)
+    
+    # Remove link syntax [text](url) → text
+    text = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', text)
+    
+    # Convert bullet markers to bullet character
+    text = re.sub(r'^(\s*)[-*+]\s+', r'\1• ', text, flags=re.MULTILINE)
+    
+    # Remove code blocks
+    text = re.sub(r'```[\s\S]*?```', '', text)
+    text = re.sub(r'`(.+?)`', r'\1', text)
+    
+    # Filter footers
+    text = _filter_markdown_footers(text)
+    
+    # Clean up whitespace
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    
+    return text.strip()
+
+
 def _markdown_to_html(md_text: str) -> str:
     """
     Convert Markdown text to HTML for display.
