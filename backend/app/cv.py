@@ -490,6 +490,9 @@ def _html_to_marked_text(html: str) -> str:
     import re
     from html import unescape
     
+    print(f"[HTML_TO_MARKED] Input length: {len(html) if html else 0}")
+    print(f"[HTML_TO_MARKED] Input preview: {html[:500] if html else 'EMPTY'}")
+    
     if not html:
         return ""
     
@@ -512,7 +515,16 @@ def _html_to_marked_text(html: str) -> str:
     # Clean whitespace
     text = re.sub(r'\n{3,}', '\n\n', text)
     
-    return text.strip()
+    result = text.strip()
+    
+    print(f"[HTML_TO_MARKED] Output length: {len(result)}")
+    print(f"[HTML_TO_MARKED] Output preview: {result[:500]}")
+    print(f"[HTML_TO_MARKED] Has [H1]: {'[H1]' in result}")
+    print(f"[HTML_TO_MARKED] Has [H2]: {'[H2]' in result}")
+    print(f"[HTML_TO_MARKED] Has [BOLD]: {'[BOLD]' in result}")
+    print(f"[HTML_TO_MARKED] Has [BULLET]: {'[BULLET]' in result}")
+    
+    return result
 
 
 def _markdown_to_html(md_text: str) -> str:
@@ -1499,18 +1511,29 @@ async def analyze_cv_structure(scan_id: str, token: str = None):
         cv_text = scan["original_cv_content"]
         html_content = scan.get("html_content")
         
+        print(f"[SECTION_EXPLORER] Analyzing scan_id: {scan_id}")
+        
         if is_encrypted(cv_text):
             cv_text = decrypt_text(cv_text)
         if html_content and is_encrypted(html_content):
             html_content = decrypt_text(html_content)
         
+        print(f"[SECTION_EXPLORER] html_content length: {len(html_content) if html_content else 0}")
+        print(f"[SECTION_EXPLORER] html_content exists: {bool(html_content)}")
+        
         # Regenerate marked text from HTML for detection
         if html_content:
             marked_text = _html_to_marked_text(html_content)
+            print(f"[SECTION_EXPLORER] Using regenerated marked_text")
         else:
             marked_text = cv_text  # Fallback
+            print(f"[SECTION_EXPLORER] FALLBACK to cv_content (no html)")
         
+        print(f"[SECTION_EXPLORER] Calling detect_cv_blocks...")
         block_structure = detect_cv_blocks(marked_text)
+        print(f"[SECTION_EXPLORER] Detected {len(block_structure.blocks)} blocks")
+        for block in block_structure.blocks:
+            print(f"  - {block.block_type}: lines {block.start_line}-{block.end_line}")
         
         result = {
             "total_blocks": len(block_structure.blocks),

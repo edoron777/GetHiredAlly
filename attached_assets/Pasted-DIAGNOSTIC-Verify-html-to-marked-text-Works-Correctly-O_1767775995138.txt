@@ -1,0 +1,101 @@
+DIAGNOSTIC — Verify _html_to_marked_text() Works Correctly
+
+OBJECTIVE:
+Test if marker regeneration from HTML works correctly.
+
+═══════════════════════════════════════════════════════════════
+STEP 1: Add Debug Logging
+═══════════════════════════════════════════════════════════════
+
+File: backend/app/cv.py
+Function: _html_to_marked_text()
+
+Add at the START of the function:
+
+def _html_to_marked_text(html: str) -> str:
+    print(f"[HTML_TO_MARKED] Input length: {len(html) if html else 0}")
+    print(f"[HTML_TO_MARKED] Input preview: {html[:500] if html else 'EMPTY'}")
+    
+    # ... existing code ...
+    
+    # Add at the END before return:
+    print(f"[HTML_TO_MARKED] Output length: {len(text)}")
+    print(f"[HTML_TO_MARKED] Output preview: {text[:500]}")
+    print(f"[HTML_TO_MARKED] Has [H1]: {'[H1]' in text}")
+    print(f"[HTML_TO_MARKED] Has [BOLD]: {'[BOLD]' in text}")
+    print(f"[HTML_TO_MARKED] Has [BULLET]: {'[BULLET]' in text}")
+    
+    return text
+
+═══════════════════════════════════════════════════════════════
+STEP 2: Add Debug to Section Explorer Endpoint
+═══════════════════════════════════════════════════════════════
+
+File: backend/app/cv.py
+Find: GET /api/cv/dev/analyze-structure/{scan_id}
+
+Add logging:
+
+@router.get("/dev/analyze-structure/{scan_id}")
+async def analyze_structure(scan_id: int, ...):
+    print(f"[SECTION_EXPLORER] Analyzing scan_id: {scan_id}")
+    
+    # Get stored content
+    cv_data = get_cv_data(scan_id)  # or however it's retrieved
+    html_content = cv_data.get('html_content', '')
+    
+    print(f"[SECTION_EXPLORER] html_content length: {len(html_content) if html_content else 0}")
+    print(f"[SECTION_EXPLORER] html_content exists: {bool(html_content)}")
+    
+    # Regenerate marked text
+    if html_content:
+        marked_text = _html_to_marked_text(html_content)
+        print(f"[SECTION_EXPLORER] Using regenerated marked_text")
+    else:
+        marked_text = cv_data.get('cv_content', '')
+        print(f"[SECTION_EXPLORER] FALLBACK to cv_content (no html)")
+    
+    # Run detection
+    print(f"[SECTION_EXPLORER] Calling detect_cv_blocks...")
+    blocks = detect_cv_blocks(marked_text)
+    
+    print(f"[SECTION_EXPLORER] Detected {len(blocks.blocks)} blocks")
+    for block in blocks.blocks:
+        print(f"  - {block.block_type}: lines {block.start_line}-{block.end_line}")
+    
+    return {"blocks": ...}
+
+═══════════════════════════════════════════════════════════════
+STEP 3: Test and Report
+═══════════════════════════════════════════════════════════════
+
+1. Upload a PDF
+2. Click Section Explorer
+3. Check console for:
+
+   [SECTION_EXPLORER] Analyzing scan_id: XXX
+   [SECTION_EXPLORER] html_content length: XXXX
+   [HTML_TO_MARKED] Input length: XXXX
+   [HTML_TO_MARKED] Input preview: <div class="cv-html...
+   [HTML_TO_MARKED] Output length: XXXX
+   [HTML_TO_MARKED] Output preview: [H1] Eyal Doron...
+   [HTML_TO_MARKED] Has [H1]: True/False
+   [HTML_TO_MARKED] Has [BOLD]: True/False
+   [HTML_TO_MARKED] Has [BULLET]: True/False
+   [SECTION_EXPLORER] Detected X blocks
+   
+4. REPORT what you see to me.
+
+═══════════════════════════════════════════════════════════════
+WHAT TO LOOK FOR
+═══════════════════════════════════════════════════════════════
+
+GOOD OUTPUT:
+- [HTML_TO_MARKED] Has [H1]: True
+- [HTML_TO_MARKED] Has [BULLET]: True
+- [SECTION_EXPLORER] Detected 5+ blocks
+
+BAD OUTPUT:
+- [HTML_TO_MARKED] Has [H1]: False ← Conversion not working
+- [HTML_TO_MARKED] Input preview: EMPTY ← No HTML stored
+- [SECTION_EXPLORER] FALLBACK to cv_content ← HTML missing
