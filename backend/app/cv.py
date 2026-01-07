@@ -113,7 +113,10 @@ def extract_text_from_file(file_content: bytes, filename: str, preserve_markers:
     
     # PDF files - extract both plain text AND HTML
     elif extension == 'pdf':
-        return _extract_pdf_to_html(file_content)
+        clean_text, html_content, marked_text = _extract_pdf_to_html(file_content)
+        # Return only clean_text and html_content for storage
+        # marked_text is for detection only (regenerated when needed)
+        return (clean_text, html_content)
     
     # Text/Markdown files - plain text only
     elif extension in ['txt', 'md']:

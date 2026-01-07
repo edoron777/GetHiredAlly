@@ -1,0 +1,130 @@
+TASK — Update Detection to Use Marked Text
+
+OBJECTIVE:
+Make sure issue detection and Section Explorer use marked_text,
+while cv_content stores clean_text.
+
+═══════════════════════════════════════════════════════════════
+STEP 1: Find where CV scan stores content
+═══════════════════════════════════════════════════════════════
+
+Search for where cv_content is stored in the database.
+It's likely in cv_optimizer.py or cv.py during scan.
+
+═══════════════════════════════════════════════════════════════
+STEP 2: Update scan to use marked text for detection
+═══════════════════════════════════════════════════════════════
+
+Find the scan logic and ensure:
+
+1. Store clean_text in cv_content (database)
+2. Run detection with marked_text (in memory)
+
+Example:
+
+    # Get extraction result
+    extraction = extract_text_from_file(file_content, file_type)
+    
+    if isinstance(extraction, dict):
+        clean_text = extraction['text']
+        html_content = extraction['html']
+        marked_text = extraction.get('marked_text', clean_text)
+    else:
+        # Fallback for non-dict returns
+        clean_text = extraction[0] if isinstance(extraction, tuple) else extraction
+        html_content = extraction[1] if isinstance(extraction, tuple) and len(extraction) > 1 else None
+        marked_text = clean_text
+    
+    # Store clean text
+    store_cv_content(cv_id, clean_text)
+    store_html_content(cv_id, html_content)
+    
+    # Run detection with marked text
+    from common.detection.block_detector import detect_cv_blocks
+    blocks = detect_cv_blocks(marked_text)
+
+═══════════════════════════════════════════════════════════════
+STEP 3: Update Section Explorer API
+═══════════════════════════════════════════════════════════════
+
+Find: GET /api/cv/dev/analyze-structure/{scan_id}
+
+The problem: This endpoint reads cv_content from DB (now clean text)
+and runs detect_cv_blocks() - but detection needs markers.
+
+SOLUTION: Add function to regenerate marked text from HTML.
+
+Add this function:
+
+def _html_to_marked_text(html: str) -> str:
+    """
+    Convert HTML back to marker format for detection.
+    Used when we need to regenerate marked text from stored HTML.
+    """
+    import re
+    from html import unescape
+    
+    if not html:
+        return ""
+    
+    text = html
+    
+    # Convert HTML tags to markers
+    text = re.sub(r'<h1[^>]*>([^<]+)</h1>', r'[H1] \1\n', text)
+    text = re.sub(r'<h2[^>]*>([^<]+)</h2>', r'[H2] \1\n', text)
+    text = re.sub(r'<h3[^>]*>([^<]+)</h3>', r'[H2] \1\n', text)
+    text = re.sub(r'<strong>([^<]+)</strong>', r'[BOLD] \1', text)
+    text = re.sub(r'<li>([^<]+)</li>', r'[BULLET] \1\n', text)
+    text = re.sub(r'<p>([^<]*)</p>', r'\1\n', text)
+    
+    # Remove remaining HTML tags
+    text = re.sub(r'<[^>]+>', '', text)
+    
+    # Unescape HTML entities
+    text = unescape(text)
+    
+    # Clean whitespace
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    
+    return text.strip()
+
+Then update the endpoint:
+
+@router.get("/dev/analyze-structure/{scan_id}")
+async def analyze_structure(scan_id: int, ...):
+    # Get stored content
+    cv_data = get_cv_data(scan_id)
+    cv_content = cv_data.get('cv_content', '')
+    html_content = cv_data.get('html_content', '')
+    
+    # Regenerate marked text from HTML for detection
+    if html_content:
+        marked_text = _html_to_marked_text(html_content)
+    else:
+        marked_text = cv_content  # Fallback
+    
+    # Run detection with marked text
+    blocks = detect_cv_blocks(marked_text)
+    
+    # Return with clean cv_content for display
+    return {
+        "blocks": blocks_to_dict(blocks),
+        "cv_content": cv_content  # Clean text for display
+    }
+
+═══════════════════════════════════════════════════════════════
+VERIFICATION
+═══════════════════════════════════════════════════════════════
+
+After all changes:
+
+1. Upload PDF
+2. Check Document View:
+   [ ] Clean text displayed (no [BULLET] markers)
+   
+3. Check Section Explorer:
+   [ ] Sections detected correctly
+   [ ] Content shows clean text
+   [ ] No [BULLET] markers visible
+
+Report results.
