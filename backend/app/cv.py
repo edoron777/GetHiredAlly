@@ -772,6 +772,33 @@ def _filter_pdf_footers(html: str) -> str:
     return html
 
 
+def _filter_markdown_footers(md_text: str) -> str:
+    """
+    Remove page footer lines from markdown text.
+    
+    Removes lines like:
+    - "Page 1 of 10 | Eyal Doron CV"
+    - "Page 2 of 10 **|** [Eyal Doron CV](url)"
+    - Any line containing "Page X of Y"
+    """
+    import re
+    
+    if not md_text:
+        return md_text
+    
+    lines = md_text.split('\n')
+    filtered_lines = []
+    
+    for line in lines:
+        # Skip lines containing "Page X of Y" pattern
+        if re.search(r'Page\s+\d+\s+of\s+\d+', line, re.IGNORECASE):
+            print(f"[PDF FILTER] Removed footer: {line[:50]}...")
+            continue
+        filtered_lines.append(line)
+    
+    return '\n'.join(filtered_lines)
+
+
 def _extract_pdf_to_html(file_content: bytes) -> tuple:
     """
     Extract both plain text AND HTML from a PDF file.
@@ -794,6 +821,9 @@ def _extract_pdf_to_html(file_content: bytes) -> tuple:
     plain_text, md_text = _extract_pdf_with_pymupdf4llm(file_content)
     
     if md_text:
+        # Filter out page footers from markdown
+        md_text = _filter_markdown_footers(md_text)
+        
         # Convert Markdown to HTML
         html_content = _markdown_to_html(md_text)
         
