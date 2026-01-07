@@ -1,0 +1,87 @@
+INTRODUCTION — TextStylerService Phase 3: PDF Enhancement
+
+PROJECT CONTEXT:
+This is Phase 3 of the TextStylerService project.
+Phase 1 (database) and Phase 2 (mammoth for DOCX) are complete.
+
+Phase 3 adds HTML extraction for PDF files, so PDF uploads also
+get rich formatting in the display.
+
+═══════════════════════════════════════════════════════════════
+CURRENT STATE
+═══════════════════════════════════════════════════════════════
+
+DOCX files (after Phase 2):
+- mammoth extracts semantic HTML ✅
+- Links preserved ✅
+- Bold/italic preserved ✅
+- Stored in html_content ✅
+
+PDF files (current):
+- PyMuPDF extracts text with [MARKERS]
+- html_content = NULL ❌
+- No HTML output ❌
+
+═══════════════════════════════════════════════════════════════
+GOAL FOR PHASE 3
+═══════════════════════════════════════════════════════════════
+
+PDF files (after Phase 3):
+- Extract text with markers (existing - for AI)
+- ALSO produce HTML version (new - for display)
+- Store HTML in html_content ✅
+- Links clickable ✅
+- Headers styled ✅
+
+═══════════════════════════════════════════════════════════════
+APPROACH: MARKER TO HTML CONVERSION
+═══════════════════════════════════════════════════════════════
+
+Since PDF extraction already detects formatting and adds markers,
+we can convert those markers to HTML:
+
+[H1] Title      →  <h1>Title</h1>
+[H2] Section    →  <h2>Section</h2>
+[BOLD] Text     →  <strong>Text</strong>
+[BULLET] Item   →  <li>Item</li>
+
+Plus: Extract PDF hyperlinks separately and convert to <a> tags.
+
+═══════════════════════════════════════════════════════════════
+ARCHITECTURE
+═══════════════════════════════════════════════════════════════
+
+PDF Upload
+    ↓
+_extract_pdf_with_markers()     →  Plain text with [MARKERS]
+    ↓
+_convert_markers_to_html()      →  HTML (NEW function)
+    ↓
+_extract_pdf_links()            →  Find and add <a> tags (NEW)
+    ↓
+Store both:
+  - content = plain text (for AI)
+  - html_content = HTML (for display)
+
+═══════════════════════════════════════════════════════════════
+PROMPT SERIES FOR THIS PHASE
+═══════════════════════════════════════════════════════════════
+
+- Prompt 0: Reconnaissance (completed)
+- Prompt 1: Introduction (this prompt)
+- Prompt 2: Create HTML conversion functions
+- Prompt 3: Update PDF extraction flow
+- Prompt 4: Verification
+
+═══════════════════════════════════════════════════════════════
+CRITICAL RULES
+═══════════════════════════════════════════════════════════════
+
+1. NO IMPROVISATION — Only implement what is specified
+2. KEEP EXISTING CODE — Don't modify _extract_pdf_with_markers()
+3. ADD NEW FUNCTIONS — For HTML conversion
+4. SAME PATTERN AS DOCX — Return (text, html) tuple
+5. GRACEFUL FALLBACK — If HTML conversion fails, continue with text only
+
+⚠️ IMPORTANT: Do NOT make any changes in this prompt.
+Confirm you understand the phase scope before proceeding to Prompt 2.

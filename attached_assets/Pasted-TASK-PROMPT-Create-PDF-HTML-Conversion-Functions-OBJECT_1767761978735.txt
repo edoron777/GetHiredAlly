@@ -1,0 +1,246 @@
+TASK PROMPT — Create PDF HTML Conversion Functions
+
+OBJECTIVE:
+Create functions to convert PDF text with markers into HTML.
+
+⚠️ MANDATORY RULES:
+- NO IMPROVISATION — Only implement what is specified
+- DO NOT MODIFY existing _extract_pdf_with_markers()
+- ADD new functions only
+
+═══════════════════════════════════════════════════════════════
+STEP 1: ADD MARKER TO HTML CONVERSION FUNCTION
+═══════════════════════════════════════════════════════════════
+
+File: backend/app/cv.py
+
+Add this NEW function after _extract_pdf_with_markers():
+
+def _convert_markers_to_html(text_with_markers: str) -> str:
+    """
+    Convert text with [MARKERS] to HTML.
+    
+    Converts:
+    - [H1] text → <h1>text</h1>
+    - [H2] text → <h2>text</h2>
+    - [BOLD] text → <strong>text</strong> (until end of line)
+    - [BULLET] text → <li>text</li>
+    - Plain paragraphs → <p>text</p>
+    
+    Args:
+        text_with_markers: Text containing [H1], [H2], [BOLD], [BULLET] markers
+        
+    Returns:
+        HTML string
+    """
+    import re
+    
+    if not text_with_markers:
+        return ""
+    
+    lines = text_with_markers.split('\n')
+    html_lines = []
+    in_list = False
+    
+    for line in lines:
+        line = line.strip()
+        if not line:
+            if in_list:
+                html_lines.append('</ul>')
+                in_list = False
+            html_lines.append('')
+            continue
+        
+        # Handle [H1] headers
+        if line.startswith('[H1]'):
+            if in_list:
+                html_lines.append('</ul>')
+                in_list = False
+            content = line[4:].strip()
+            html_lines.append(f'<h1>{_escape_html(content)}</h1>')
+        
+        # Handle [H2] headers
+        elif line.startswith('[H2]'):
+            if in_list:
+                html_lines.append('</ul>')
+                in_list = False
+            content = line[4:].strip()
+            html_lines.append(f'<h2>{_escape_html(content)}</h2>')
+        
+        # Handle [BOLD] text
+        elif line.startswith('[BOLD]'):
+            if in_list:
+                html_lines.append('</ul>')
+                in_list = False
+            content = line[6:].strip()
+            html_lines.append(f'<p><strong>{_escape_html(content)}</strong></p>')
+        
+        # Handle [BULLET] items
+        elif line.startswith('[BULLET]'):
+            if not in_list:
+                html_lines.append('<ul>')
+                in_list = True
+            content = line[8:].strip()
+            html_lines.append(f'<li>{_escape_html(content)}</li>')
+        
+        # Handle regular paragraphs
+        else:
+            if in_list:
+                html_lines.append('</ul>')
+                in_list = False
+            html_lines.append(f'<p>{_escape_html(line)}</p>')
+    
+    # Close any open list
+    if in_list:
+        html_lines.append('</ul>')
+    
+    html = '\n'.join(html_lines)
+    
+    # Wrap in container div
+    html = f'<div class="cv-html-content">{html}</div>'
+    
+    return html
+
+
+def _escape_html(text: str) -> str:
+    """Escape HTML special characters."""
+    return (text
+            .replace('&', '&amp;')
+            .replace('<', '&lt;')
+            .replace('>', '&gt;')
+            .replace('"', '&quot;'))
+
+═══════════════════════════════════════════════════════════════
+STEP 2: ADD PDF LINK EXTRACTION FUNCTION
+═══════════════════════════════════════════════════════════════
+
+Add this function to extract hyperlinks from PDF:
+
+def _extract_pdf_links(file_content: bytes) -> list[dict]:
+    """
+    Extract hyperlinks from a PDF file.
+    
+    Returns:
+        List of dicts: [{'text': 'LinkedIn', 'url': 'https://...'}, ...]
+    """
+    import fitz  # PyMuPDF
+    
+    links = []
+    try:
+        doc = fitz.open(stream=file_content, filetype="pdf")
+        
+        for page in doc:
+            # Get links from the page
+            page_links = page.get_links()
+            
+            for link in page_links:
+                if link.get('uri'):  # External URL
+                    url = link['uri']
+                    # Try to get the text at link location
+                    rect = link.get('from')
+                    if rect:
+                        text = page.get_text("text", clip=rect).strip()
+                    else:
+                        text = url
+                    
+                    if text and url:
+                        links.append({
+                            'text': text,
+                            'url': url
+                        })
+        
+        doc.close()
+    except Exception as e:
+        print(f"[PDF] Link extraction failed: {e}")
+    
+    return links
+
+
+def _inject_links_into_html(html: str, links: list[dict]) -> str:
+    """
+    Replace link text in HTML with clickable <a> tags.
+    
+    Args:
+        html: HTML content
+        links: List of {'text': ..., 'url': ...} dicts
+        
+    Returns:
+        HTML with links converted to <a> tags
+    """
+    import re
+    
+    for link in links:
+        text = link['text']
+        url = link['url']
+        
+        # Ensure URL has protocol
+        if not url.startswith('http'):
+            url = 'https://' + url
+        
+        # Escape text for regex
+        escaped_text = re.escape(text)
+        
+        # Replace text with link (only if not already a link)
+        pattern = f'(?<!href=")(?<!>){escaped_text}(?!</a>)'
+        replacement = f'<a href="{url}" target="_blank" rel="noopener noreferrer">{text}</a>'
+        
+        html = re.sub(pattern, replacement, html, count=1)
+    
+    return html
+
+═══════════════════════════════════════════════════════════════
+STEP 3: CREATE MAIN PDF TO HTML FUNCTION
+═══════════════════════════════════════════════════════════════
+
+Add this function that combines everything:
+
+def _extract_pdf_to_html(file_content: bytes) -> tuple[str, str]:
+    """
+    Extract both plain text AND HTML from a PDF file.
+    
+    Uses existing marker extraction for text, then converts to HTML.
+    Also extracts PDF hyperlinks and adds them to HTML.
+    
+    Args:
+        file_content: Raw bytes of the PDF file
+        
+    Returns:
+        tuple: (plain_text, html_content)
+    """
+    # Step 1: Extract plain text with markers (existing function)
+    plain_text = _extract_pdf_with_markers(file_content, preserve_markers=True)
+    
+    # Step 2: Convert markers to HTML
+    html_content = None
+    try:
+        html_content = _convert_markers_to_html(plain_text)
+        
+        # Step 3: Extract and inject PDF links
+        links = _extract_pdf_links(file_content)
+        if links:
+            html_content = _inject_links_into_html(html_content, links)
+            print(f"[PDF] Injected {len(links)} links into HTML")
+        
+    except Exception as e:
+        print(f"[PDF] HTML conversion failed: {e}")
+        html_content = None
+    
+    return (plain_text, html_content)
+
+═══════════════════════════════════════════════════════════════
+VERIFICATION CHECKLIST
+═══════════════════════════════════════════════════════════════
+
+After adding functions:
+
+[ ] _convert_markers_to_html() added
+[ ] _escape_html() added
+[ ] _extract_pdf_links() added
+[ ] _inject_links_into_html() added
+[ ] _extract_pdf_to_html() added
+[ ] No syntax errors
+[ ] Backend starts without errors
+
+Report:
+- Functions added at lines: [list]
+- Any errors: [describe]
