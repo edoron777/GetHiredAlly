@@ -1,0 +1,124 @@
+VERIFICATION PROMPT — Phase 3 Complete Testing
+
+OBJECTIVE:
+Verify PDF HTML extraction is working correctly.
+
+═══════════════════════════════════════════════════════════════
+PART 1: CODE VERIFICATION
+═══════════════════════════════════════════════════════════════
+
+Confirm all code is in place:
+
+[ ] _convert_markers_to_html() function exists
+[ ] _escape_html() function exists
+[ ] _extract_pdf_links() function exists
+[ ] _inject_links_into_html() function exists
+[ ] _extract_pdf_to_html() function exists
+[ ] extract_text_from_file() uses _extract_pdf_to_html() for PDFs
+
+═══════════════════════════════════════════════════════════════
+PART 2: UPLOAD TEST
+═══════════════════════════════════════════════════════════════
+
+Test with a PDF file:
+
+1. Upload a PDF CV file
+2. Check database:
+
+SELECT id, filename,
+       CASE WHEN content IS NOT NULL THEN 'HAS TEXT' ELSE 'NULL' END as text_status,
+       CASE WHEN html_content IS NOT NULL THEN 'HAS HTML' ELSE 'NULL' END as html_status,
+       file_type
+FROM user_cvs
+ORDER BY uploaded_at DESC
+LIMIT 1;
+
+Expected: text_status = 'HAS TEXT', html_status = 'HAS HTML'
+
+═══════════════════════════════════════════════════════════════
+PART 3: HTML CONTENT CHECK
+═══════════════════════════════════════════════════════════════
+
+Check the HTML content looks correct:
+
+SELECT LEFT(html_content, 500) as html_preview
+FROM user_cvs
+WHERE file_type = 'pdf'
+ORDER BY uploaded_at DESC
+LIMIT 1;
+
+Expected: Should see HTML tags like <h1>, <h2>, <p>, <strong>, <ul>, <li>
+
+═══════════════════════════════════════════════════════════════
+PART 4: SCAN TEST
+═══════════════════════════════════════════════════════════════
+
+1. Run a scan on the PDF CV
+2. Check cv_scan_results:
+
+SELECT id,
+       CASE WHEN html_content IS NOT NULL THEN 'HAS HTML' ELSE 'NULL' END
+FROM cv_scan_results
+ORDER BY created_at DESC
+LIMIT 1;
+
+Expected: 'HAS HTML'
+
+═══════════════════════════════════════════════════════════════
+PART 5: DISPLAY TEST
+═══════════════════════════════════════════════════════════════
+
+1. View the PDF scan results in Document View
+2. Verify:
+   - Headers are styled (larger/bold)
+   - Bold text is bold
+   - Lists are formatted
+   - If PDF had links, they should be clickable
+
+═══════════════════════════════════════════════════════════════
+PART 6: COMPARISON TEST
+═══════════════════════════════════════════════════════════════
+
+Compare PDF vs DOCX output:
+
+| Feature | DOCX (mammoth) | PDF (markers→HTML) |
+|---------|----------------|-------------------|
+| Headers | ✅ | ? |
+| Bold | ✅ | ? |
+| Lists | ✅ | ? |
+| Links | ✅ | ? |
+
+═══════════════════════════════════════════════════════════════
+PHASE 3 COMPLETION CHECKLIST
+═══════════════════════════════════════════════════════════════
+
+FUNCTIONS:
+[ ] _convert_markers_to_html() works
+[ ] _extract_pdf_links() works
+[ ] _extract_pdf_to_html() returns (text, html) tuple
+
+STORAGE:
+[ ] PDF uploads store html_content
+[ ] PDF scans store html_content
+
+DISPLAY:
+[ ] PDF CVs show formatted content
+[ ] Links clickable (if PDF had links)
+
+BACKWARD COMPATIBLE:
+[ ] DOCX still works (mammoth)
+[ ] TXT still works
+[ ] Old PDFs still work (html_content = NULL is OK)
+
+═══════════════════════════════════════════════════════════════
+PHASE 3 STATUS
+═══════════════════════════════════════════════════════════════
+
+All checks passed: [ YES / NO ]
+
+If NO, list issues:
+1. [issue]
+2. [issue]
+
+If YES:
+✅ PHASE 3 COMPLETE — Ready for Phase 4 (Frontend TextStylerService)

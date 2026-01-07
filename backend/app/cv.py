@@ -98,7 +98,7 @@ def extract_text_from_file(file_content: bytes, filename: str, preserve_markers:
     Returns:
         tuple: (plain_text, html_content)
                - plain_text: Always present, used for AI analysis
-               - html_content: Only for DOCX files, None for others
+               - html_content: For DOCX and PDF files, None for others
     """
     extension = filename.split('.')[-1].lower()
     
@@ -111,10 +111,9 @@ def extract_text_from_file(file_content: bytes, filename: str, preserve_markers:
         plain_text = _extract_docx_with_markers(file_content, preserve_markers)
         return (plain_text, None)
     
-    # PDF files - plain text only (HTML extraction in future phase)
+    # PDF files - extract both plain text AND HTML
     elif extension == 'pdf':
-        plain_text = _extract_pdf_with_markers(file_content, preserve_markers)
-        return (plain_text, None)
+        return _extract_pdf_to_html(file_content)
     
     # Text/Markdown files - plain text only
     elif extension in ['txt', 'md']:
