@@ -1571,6 +1571,20 @@ async def analyze_cv_structure(scan_id: str, token: str = None):
     try:
         marked_text = CVContentService.get_for_detection(int(scan_id), str(user["id"]))
         
+        # DEBUG: Save marked text to file for analysis
+        debug_path = '/tmp/marked_text_debug.txt'
+        with open(debug_path, 'w', encoding='utf-8') as f:
+            f.write("=== MARKED TEXT DEBUG ===\n")
+            f.write(f"Total length: {len(marked_text) if marked_text else 0} chars\n")
+            f.write(f"Total lines: {len(marked_text.splitlines()) if marked_text else 0}\n")
+            f.write("=== CONTENT ===\n\n")
+            
+            # Write with line numbers
+            if marked_text:
+                for i, line in enumerate(marked_text.splitlines(), 1):
+                    f.write(f"{i:4d} | {line}\n")
+        print(f"[DEBUG] Marked text saved to {debug_path}")
+        
         if not marked_text:
             raise HTTPException(status_code=404, detail="CV content not found")
         

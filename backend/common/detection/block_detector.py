@@ -334,6 +334,14 @@ def detect_cv_blocks(cv_text: str) -> CVBlockStructure:
     # (section_extractor doesn't understand markers yet)
     clean_text = strip_structure_markers(cv_text) if has_markers else cv_text
     
+    # DEBUG: Save clean text (after marker stripping)
+    clean_debug_path = '/tmp/clean_text_debug.txt'
+    with open(clean_debug_path, 'w', encoding='utf-8') as f:
+        f.write("=== CLEAN TEXT (markers stripped) ===\n\n")
+        for i, line in enumerate(clean_text.splitlines(), 1):
+            f.write(f"{i:4d} | {line}\n")
+    print(f"[DEBUG] Clean text saved to {clean_debug_path}")
+    
     result = CVBlockStructure(raw_text=clean_text)
     
     try:

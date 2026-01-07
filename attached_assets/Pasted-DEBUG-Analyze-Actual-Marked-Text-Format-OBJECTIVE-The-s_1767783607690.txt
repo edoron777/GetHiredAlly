@@ -1,0 +1,117 @@
+DEBUG — Analyze Actual Marked Text Format
+
+OBJECTIVE:
+The section detection worked BEFORE pymupdf4llm changes but is broken NOW.
+We need to see the ACTUAL text format to understand what's different.
+
+DO NOT MAKE ANY CODE CHANGES. ONLY INVESTIGATE AND REPORT.
+
+═══════════════════════════════════════════════════════════════
+TASK 1: Save Marked Text to Debug File
+═══════════════════════════════════════════════════════════════
+
+File: backend/app/cv.py
+Function: analyze_cv_structure() (the endpoint function)
+
+Add this debug code AFTER CVContentService.get_for_detection() is called:
+```python
+# DEBUG: Save marked text to file for analysis
+marked_text = CVContentService.get_for_detection(scan_id, str(user_id))
+
+# Save to debug file
+debug_path = '/tmp/marked_text_debug.txt'
+with open(debug_path, 'w', encoding='utf-8') as f:
+    f.write("=== MARKED TEXT DEBUG ===\n")
+    f.write(f"Total length: {len(marked_text)} chars\n")
+    f.write(f"Total lines: {len(marked_text.splitlines())}\n")
+    f.write("=== CONTENT ===\n\n")
+    
+    # Write with line numbers
+    for i, line in enumerate(marked_text.splitlines(), 1):
+        f.write(f"{i:4d} | {line}\n")
+
+print(f"[DEBUG] Marked text saved to {debug_path}")
+```
+
+═══════════════════════════════════════════════════════════════
+TASK 2: Trigger the Debug
+═══════════════════════════════════════════════════════════════
+
+1. Restart the backend server
+2. Go to the application
+3. Click "Section Explorer" on an existing CV scan
+4. This will create /tmp/marked_text_debug.txt
+
+═══════════════════════════════════════════════════════════════
+TASK 3: Show Debug Output
+═══════════════════════════════════════════════════════════════
+
+After clicking Section Explorer, show me:
+
+1. The FIRST 100 lines of /tmp/marked_text_debug.txt
+2. Lines 45-80 (around where SUMMARY should end)
+3. Lines where you see "Citi" or "Microsoft" or "SanDisk"
+4. Any lines that contain [H1], [H2], [BOLD], [BULLET] markers
+
+═══════════════════════════════════════════════════════════════
+TASK 4: Analyze the Format
+═══════════════════════════════════════════════════════════════
+
+Answer these questions:
+
+1. How many [H1] markers are in the text?
+2. How many [H2] markers are in the text?
+3. How many [BOLD] markers are in the text?
+4. How many [BULLET] markers are in the text?
+
+5. What marker (if any) appears BEFORE "Citi"?
+6. What marker (if any) appears BEFORE "Experience" or "Work"?
+7. Are there any BLANK LINES between sections?
+
+═══════════════════════════════════════════════════════════════
+TASK 5: Show Section Extractor Input
+═══════════════════════════════════════════════════════════════
+
+In block_detector.py, the code calls:
+  clean_text = strip_structure_markers(cv_text)
+  sections = extract_sections(clean_text)
+
+Add debug to show what extract_sections() receives:
+```python
+# DEBUG: Save clean text (after marker stripping)
+clean_debug_path = '/tmp/clean_text_debug.txt'
+with open(clean_debug_path, 'w', encoding='utf-8') as f:
+    f.write("=== CLEAN TEXT (markers stripped) ===\n\n")
+    for i, line in enumerate(clean_text.splitlines(), 1):
+        f.write(f"{i:4d} | {line}\n")
+print(f"[DEBUG] Clean text saved to {clean_debug_path}")
+```
+
+Show me the first 100 lines of this file too.
+
+═══════════════════════════════════════════════════════════════
+OUTPUT FORMAT
+═══════════════════════════════════════════════════════════════
+
+## Marked Text Analysis
+
+### First 100 Lines
+[paste here]
+
+### Lines 45-80 (Summary/Experience boundary)
+[paste here]
+
+### Lines with Company Names
+[paste here]
+
+### Marker Counts
+- [H1]: X
+- [H2]: X
+- [BOLD]: X
+- [BULLET]: X
+
+### Clean Text (First 100 Lines)
+[paste here]
+
+### Key Observations
+[what looks different or wrong]
