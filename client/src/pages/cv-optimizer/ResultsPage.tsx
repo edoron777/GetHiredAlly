@@ -295,6 +295,9 @@ export default function ResultsPage() {
         console.log('4. cv_content preview:', data?.cv_content?.substring(0, 200));
         console.log('5. issues count:', data?.issues?.length);
         console.log('6. first issue:', data?.issues?.[0]);
+        console.log('7. html_content exists:', !!data?.html_content);
+        console.log('8. html_content length:', data?.html_content?.length);
+        console.log('9. html_content preview:', data?.html_content?.substring(0, 200));
         console.log('=== END DEBUG ===');
         
         setReportData(data);
