@@ -1,0 +1,89 @@
+INTRODUCTION — TextStylerService Phase 2: mammoth Integration
+
+PROJECT CONTEXT:
+This is Phase 2 of the TextStylerService project.
+Phase 1 (database columns) is complete.
+
+Phase 2 adds mammoth library to extract rich HTML from DOCX files,
+preserving formatting like bold, italic, links, lists, and tables.
+
+═══════════════════════════════════════════════════════════════
+ARCHITECTURE OVERVIEW
+═══════════════════════════════════════════════════════════════
+
+CURRENT FLOW:
+┌─────────────────────────────────────────────────────────────┐
+│ DOCX Upload                                                 │
+│      ↓                                                      │
+│ python-docx extracts text + [MARKERS]                       │
+│      ↓                                                      │
+│ Plain text stored in user_cvs.content                       │
+│      ↓                                                      │
+│ Frontend displays with limited formatting                   │
+└─────────────────────────────────────────────────────────────┘
+
+NEW FLOW (After Phase 2):
+┌─────────────────────────────────────────────────────────────┐
+│ DOCX Upload                                                 │
+│      ↓                                                      │
+│ mammoth extracts → semantic HTML                            │
+│ python-docx extracts → plain text (for AI analysis)         │
+│      ↓                                                      │
+│ BOTH stored:                                                │
+│   - user_cvs.content = plain text (encrypted)               │
+│   - user_cvs.html_content = HTML (encrypted)                │
+│      ↓                                                      │
+│ Frontend displays rich HTML with full formatting            │
+└─────────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════
+WHAT WE'RE BUILDING
+═══════════════════════════════════════════════════════════════
+
+1. Install mammoth library
+2. Create _extract_docx_to_html() function
+3. Modify extract_text_from_file() to return both text AND html
+4. Update upload_cv_for_scan() to store HTML in new column
+5. Update get_cv() to return HTML when available
+
+═══════════════════════════════════════════════════════════════
+KEY PRINCIPLES
+═══════════════════════════════════════════════════════════════
+
+1. DUAL EXTRACTION:
+   - Plain text (existing) → Used for AI analysis, scoring
+   - HTML (new) → Used for display with formatting
+
+2. BACKWARD COMPATIBLE:
+   - Existing CVs continue working (html_content = NULL)
+   - New CVs get both plain text AND HTML
+   - All existing functionality preserved
+
+3. GRACEFUL FALLBACK:
+   - If mammoth fails → fall back to python-docx
+   - If HTML not available → use plain text
+
+═══════════════════════════════════════════════════════════════
+PROMPT SERIES FOR THIS PHASE
+═══════════════════════════════════════════════════════════════
+
+- Prompt 0: Reconnaissance (completed)
+- Prompt 1: Introduction (this prompt)
+- Prompt 2: Install mammoth + create HTML extraction
+- Prompt 3: Update upload to store HTML
+- Prompt 4: Update API to return HTML
+- Prompt 5: Verification
+
+═══════════════════════════════════════════════════════════════
+CRITICAL RULES
+═══════════════════════════════════════════════════════════════
+
+1. NO IMPROVISATION — Only implement what is specified
+2. KEEP EXISTING CODE — Don't remove _extract_docx_with_markers()
+3. DUAL OUTPUT — Always extract BOTH plain text AND HTML
+4. ENCRYPT HTML — Use same encryption as content field
+5. HANDLE ERRORS — If mammoth fails, continue with plain text only
+6. TEST WITH EXISTING CVS — Ensure old CVs still work
+
+⚠️ IMPORTANT: Do NOT make any changes in this prompt.
+Confirm you understand the phase scope before proceeding to Prompt 2.

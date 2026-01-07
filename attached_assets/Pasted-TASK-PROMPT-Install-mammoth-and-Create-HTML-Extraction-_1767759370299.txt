@@ -1,0 +1,172 @@
+TASK PROMPT — Install mammoth and Create HTML Extraction
+
+OBJECTIVE:
+Install mammoth library and create a function to extract HTML from DOCX files.
+
+⚠️ MANDATORY RULES:
+- NO IMPROVISATION — Only implement what is specified
+- DO NOT REMOVE existing _extract_docx_with_markers() function
+- DO NOT MODIFY existing functions yet (that's Prompt 3)
+- ONLY add new code in this prompt
+
+═══════════════════════════════════════════════════════════════
+STEP 1: INSTALL MAMMOTH
+═══════════════════════════════════════════════════════════════
+
+Add mammoth to requirements.txt:
+
+mammoth>=1.6.0
+
+Then install:
+pip install mammoth
+
+═══════════════════════════════════════════════════════════════
+STEP 2: ADD IMPORT TO CV.PY
+═══════════════════════════════════════════════════════════════
+
+File: backend/app/cv.py
+
+Add import at the top of the file (with other imports):
+
+import mammoth
+
+═══════════════════════════════════════════════════════════════
+STEP 3: CREATE NEW HTML EXTRACTION FUNCTION
+═══════════════════════════════════════════════════════════════
+
+File: backend/app/cv.py
+
+Add this NEW function AFTER _extract_docx_with_markers():
+(Do NOT replace the existing function)
+
+# ============================================================
+# HTML Extraction with mammoth (Phase 2 - TextStylerService)
+# ============================================================
+
+def _extract_docx_to_html(file_content: bytes) -> tuple[str, str]:
+    """
+    Extract both plain text AND HTML from a DOCX file.
+    
+    Uses mammoth for HTML extraction (preserves formatting).
+    Uses python-docx for plain text extraction (for AI analysis).
+    
+    Args:
+        file_content: Raw bytes of the DOCX file
+        
+    Returns:
+        tuple: (plain_text, html_content)
+               - plain_text: Text with [MARKERS] for AI analysis
+               - html_content: Semantic HTML for display
+               
+    If mammoth fails, returns (plain_text, None)
+    """
+    import io
+    
+    # Step 1: Extract plain text using existing function (for AI analysis)
+    plain_text = _extract_docx_with_markers(file_content, preserve_markers=True)
+    
+    # Step 2: Extract HTML using mammoth (for display)
+    html_content = None
+    try:
+        # mammoth style mapping for clean semantic HTML
+        style_map = """
+            p[style-name='Heading 1'] => h1:fresh
+            p[style-name='Heading 2'] => h2:fresh
+            p[style-name='Heading 3'] => h3:fresh
+            p[style-name='Title'] => h1.title:fresh
+            b => strong
+            i => em
+            u => u
+            strike => s
+        """
+        
+        result = mammoth.convert_to_html(
+            io.BytesIO(file_content),
+            style_map=style_map
+        )
+        
+        html_content = result.value
+        
+        # Log any conversion messages (warnings, not errors)
+        if result.messages:
+            for message in result.messages:
+                print(f"[mammoth] {message.type}: {message.message}")
+        
+        # Post-process HTML for better display
+        html_content = _post_process_html(html_content)
+        
+    except Exception as e:
+        # Log error but don't fail - fall back to plain text only
+        print(f"[mammoth] HTML extraction failed: {str(e)}")
+        html_content = None
+    
+    return (plain_text, html_content)
+
+
+def _post_process_html(html: str) -> str:
+    """
+    Post-process mammoth HTML output for better display.
+    
+    - Adds CSS classes for styling
+    - Cleans up empty paragraphs
+    - Ensures proper structure
+    """
+    if not html:
+        return html
+    
+    # Remove empty paragraphs
+    html = html.replace('<p></p>', '')
+    
+    # Add wrapper div with class for styling
+    html = f'<div class="cv-html-content">{html}</div>'
+    
+    # Clean up excessive whitespace
+    import re
+    html = re.sub(r'\s+', ' ', html)
+    html = html.replace('> <', '><')
+    
+    return html.strip()
+
+═══════════════════════════════════════════════════════════════
+STEP 4: VERIFY INSTALLATION
+═══════════════════════════════════════════════════════════════
+
+After adding the code, verify:
+
+1. Run: pip list | grep mammoth
+   Expected: mammoth X.X.X
+
+2. Test import in Python:
+   python -c "import mammoth; print('mammoth OK')"
+
+3. Backend starts without errors
+
+═══════════════════════════════════════════════════════════════
+DO NOT DO IN THIS PROMPT
+═══════════════════════════════════════════════════════════════
+
+❌ Do NOT modify extract_text_from_file() yet
+❌ Do NOT modify upload_cv_for_scan() yet
+❌ Do NOT modify any API endpoints yet
+
+These changes come in Prompt 3 and 4.
+
+═══════════════════════════════════════════════════════════════
+VERIFICATION CHECKLIST
+═══════════════════════════════════════════════════════════════
+
+After completing this prompt:
+
+[ ] mammoth added to requirements.txt
+[ ] mammoth installed successfully
+[ ] import mammoth added to cv.py
+[ ] _extract_docx_to_html() function added
+[ ] _post_process_html() function added
+[ ] Existing _extract_docx_with_markers() NOT modified
+[ ] Backend starts without errors
+[ ] No Python syntax errors
+
+Report:
+- mammoth version installed: [X.X.X]
+- Function added at line: [XXX]
+- Any errors encountered: [describe]
