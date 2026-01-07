@@ -253,6 +253,98 @@ def _extract_pdf_with_markers(file_content: bytes, preserve_markers: bool = True
             raise HTTPException(status_code=400, detail=f"Failed to parse PDF: {str(e2)}")
 
 
+def _extract_pdf_with_pymupdf4llm(file_content: bytes) -> tuple:
+    """
+    Extract text and markdown from PDF using pymupdf4llm.
+    
+    This provides MUCH better formatting than the old marker-based approach:
+    - Proper bold detection
+    - Correct bullet lists
+    - Better header detection
+    - Correct reading order
+    
+    Args:
+        file_content: Raw bytes of the PDF file
+        
+    Returns:
+        tuple: (plain_text, markdown_text)
+    """
+    import tempfile
+    import os
+    
+    try:
+        import pymupdf4llm
+    except ImportError:
+        logger.warning("[PDF] pymupdf4llm not installed, falling back to old method")
+        return _extract_pdf_with_markers(file_content, preserve_markers=True), None
+    
+    # pymupdf4llm needs a file path, so write to temp file
+    temp_file = None
+    try:
+        with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as f:
+            f.write(file_content)
+            temp_file = f.name
+        
+        # Extract to Markdown
+        md_text = pymupdf4llm.to_markdown(temp_file)
+        
+        # Also get plain text (for AI processing - strip markdown)
+        plain_text = _markdown_to_plain_text(md_text)
+        
+        logger.info(f"[PDF] pymupdf4llm extracted {len(md_text)} chars markdown, {len(plain_text)} chars plain")
+        
+        return (plain_text, md_text)
+        
+    except Exception as e:
+        logger.warning(f"[PDF] pymupdf4llm failed: {e}, falling back to old method")
+        return _extract_pdf_with_markers(file_content, preserve_markers=True), None
+        
+    finally:
+        if temp_file and os.path.exists(temp_file):
+            os.unlink(temp_file)
+
+
+def _markdown_to_plain_text(md_text: str) -> str:
+    """
+    Convert Markdown to plain text (for AI processing).
+    
+    Removes markdown syntax but keeps the text content.
+    """
+    import re
+    
+    if not md_text:
+        return ""
+    
+    text = md_text
+    
+    # Remove bold/italic markers
+    text = re.sub(r'\*\*(.+?)\*\*', r'\1', text)  # **bold**
+    text = re.sub(r'\*(.+?)\*', r'\1', text)      # *italic*
+    text = re.sub(r'__(.+?)__', r'\1', text)      # __bold__
+    text = re.sub(r'_(.+?)_', r'\1', text)        # _italic_
+    
+    # Remove headers (keep text)
+    text = re.sub(r'^#{1,6}\s*', '', text, flags=re.MULTILINE)
+    
+    # Remove link syntax [text](url) → text
+    text = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', text)
+    
+    # Remove bullet markers but keep text
+    text = re.sub(r'^\s*[-*+]\s+', '', text, flags=re.MULTILINE)
+    
+    # Remove numbered list markers
+    text = re.sub(r'^\s*\d+\.\s+', '', text, flags=re.MULTILINE)
+    
+    # Remove code blocks
+    text = re.sub(r'```[\s\S]*?```', '', text)
+    text = re.sub(r'`(.+?)`', r'\1', text)
+    
+    # Clean up extra whitespace
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    
+    return text.strip()
+
+
 def _escape_html(text: str) -> str:
     """Escape HTML special characters."""
     return (text
