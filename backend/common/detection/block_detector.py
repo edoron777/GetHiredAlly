@@ -352,6 +352,13 @@ def detect_cv_blocks(cv_text: str) -> CVBlockStructure:
         # Step 2: Use existing section extractor (with clean text)
         cv_structure = extract_sections(clean_text)
         
+        # DEBUG: Show detected sections
+        print("\n=== DETECTED SECTIONS ===")
+        sections = cv_structure.get('sections', [])
+        for section in sections:
+            print(f"Type: {section.get('type', 'unknown'):15} | Lines: {section.get('start_line', '?')}-{section.get('end_line', '?')} | First text: {section.get('content', '')[:50]}...")
+        print("=== END SECTIONS ===\n")
+        
         # Step 3: Convert to our enhanced block structure
         result.blocks = _convert_sections_to_blocks(cv_structure, lines)
         
