@@ -1,0 +1,75 @@
+FIX — Properly Convert PDF Bullets to HTML Lists
+
+File: backend/app/cv.py
+Function: _convert_markers_to_html()
+
+The pre-processing should merge bullet + next line, 
+then the bullet detection should convert to <li>.
+
+═══════════════════════════════════════════════════════════════
+STEP 1: Check the merge logic
+═══════════════════════════════════════════════════════════════
+
+Find the pre-processing code (around line 295-310):
+
+    # Pre-process: Merge stray bullets with following line
+    bullet_chars = {'•', '●', '○', '◦', '▪', '►', '‣', '⁃', '·', '-', '*'}
+    processed_lines = []
+    i = 0
+    while i < len(lines):
+        line = lines[i].strip()
+        # If line is ONLY a bullet character, merge with next line
+        if line in bullet_chars and i + 1 < len(lines):
+            next_line = lines[i + 1].strip()
+            if next_line:
+                processed_lines.append(f"• {next_line}")  # ← Creates "• Content"
+                i += 2
+                continue
+        processed_lines.append(lines[i])
+        i += 1
+    
+    lines = processed_lines
+
+This should create lines like: "• Career Highlights"
+
+═══════════════════════════════════════════════════════════════
+STEP 2: Verify bullet detection converts to <li>
+═══════════════════════════════════════════════════════════════
+
+Find the bullet pattern detection (around line 380-390):
+
+        # Bullet patterns
+        bullet_match = re.match(r'^[•●○◦▪▸►‣⁃\-\*]\s*(.+)$', line)
+        if bullet_match:
+            if not in_list:
+                html_lines.append('<ul>')
+                in_list = True
+            content = bullet_match.group(1)
+            html_lines.append(f'<li>{_escape_html(content)}</li>')
+            continue
+
+This should convert "• Career Highlights" to "<li>Career Highlights</li>"
+
+═══════════════════════════════════════════════════════════════
+STEP 3: Add debug logging to see what's happening
+═══════════════════════════════════════════════════════════════
+
+Add this AFTER the pre-processing:
+
+    # DEBUG: Show processed lines with bullets
+    bullet_lines = [l for l in processed_lines if l.strip().startswith('•')]
+    print(f"[BULLET DEBUG] Lines starting with •: {len(bullet_lines)}")
+    for bl in bullet_lines[:5]:
+        print(f"[BULLET DEBUG]   {bl[:60]}")
+
+Upload PDF and check console - do you see the merged bullet lines?
+
+═══════════════════════════════════════════════════════════════
+REPORT
+═══════════════════════════════════════════════════════════════
+
+After adding debug:
+1. Upload PDF
+2. Check console for [BULLET DEBUG] messages
+3. Tell me: How many lines starting with •?
+4. What do they look like?

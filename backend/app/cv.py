@@ -295,6 +295,31 @@ def _convert_markers_to_html(text_with_markers: str) -> str:
     }
     
     lines = text_with_markers.split('\n')
+    
+    # Pre-process: Merge stray bullets with following line
+    bullet_chars = {'•', '●', '○', '◦', '▪', '►', '‣', '⁃', '·', '-', '*'}
+    processed_lines = []
+    i = 0
+    while i < len(lines):
+        line = lines[i].strip()
+        # If line is ONLY a bullet character, merge with next line
+        if line in bullet_chars and i + 1 < len(lines):
+            next_line = lines[i + 1].strip()
+            if next_line:
+                processed_lines.append(f"• {next_line}")
+                i += 2
+                continue
+        processed_lines.append(lines[i])
+        i += 1
+    
+    lines = processed_lines
+    
+    # DEBUG: Show processed lines with bullets
+    bullet_lines = [l for l in processed_lines if l.strip().startswith('•')]
+    logger.info(f"[BULLET DEBUG] Lines starting with •: {len(bullet_lines)}")
+    for bl in bullet_lines[:5]:
+        logger.info(f"[BULLET DEBUG]   {bl[:60]}")
+    
     html_lines = []
     in_list = False
     first_content_line = True
