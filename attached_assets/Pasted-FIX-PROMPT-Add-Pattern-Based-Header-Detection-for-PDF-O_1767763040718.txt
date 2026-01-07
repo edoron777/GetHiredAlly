@@ -1,0 +1,65 @@
+FIX PROMPT — Add Pattern-Based Header Detection for PDF
+
+OBJECTIVE:
+Fix _convert_markers_to_html() to detect headers by content pattern,
+not just by [MARKERS] (since PDF markers aren't being added).
+
+═══════════════════════════════════════════════════════════════
+FILE: backend/app/cv.py
+FUNCTION: _convert_markers_to_html()
+═══════════════════════════════════════════════════════════════
+
+REPLACE the entire function with this improved version:
+
+def _convert_markers_to_html(text_with_markers: str) -> str:
+    """
+    Convert text to HTML, detecting structure by markers OR patterns.
+    
+    Works with:
+    - Explicit markers: [H1], [H2], [BOLD], [BULLET]
+    - Pattern detection: section headers, bullets, first line as name
+    """
+    import re
+    
+    if not text_with_markers:
+        return ""
+    
+    # Common CV section headers (lowercase for matching)
+    section_headers = {
+        'about', 'summary', 'profile', 'objective',
+        'experience', 'work experience', 'professional experience', 'employment',
+        'education', 'academic background',
+        'skills', 'technical skills', 'core competencies', 'competencies',
+        'certifications', 'certificates', 'licenses',
+        'projects', 'key projects',
+        'achievements', 'accomplishments', 'awards', 'honors',
+        'languages', 'language skills',
+        'interests', 'hobbies',
+        'references', 'contact', 'contact information',
+        'publications', 'training', 'volunteer', 'volunteering',
+        'professional summary', 'career summary', 'executive summary',
+        'core expertise', 'areas of expertise', 'expertise',
+        'career highlights', 'highlights', 'key achievements',
+        'professional affiliations', 'memberships',
+    }
+    
+    lines = text_with_markers.split('\n')
+    html_lines = []
+    in_list = False
+    first_content_line = True
+    
+    for line in lines:
+        original_line = line
+        line = line.strip()
+        
+        if not line:
+            if in_list:
+                html_lines.append('</ul>')
+                in_list = False
+            continue
+        
+        # === EXPLICIT MARKERS (highest priority) ===
+        
+        if line.startswith('[H1]'):
+            if in_list:
+                html_lines.a
