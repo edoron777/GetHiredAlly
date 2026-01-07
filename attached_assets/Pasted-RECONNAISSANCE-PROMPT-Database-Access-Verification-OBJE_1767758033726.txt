@@ -1,0 +1,117 @@
+RECONNAISSANCE PROMPT — Database Access Verification
+
+OBJECTIVE:
+Before making any database changes, verify access and understand 
+the current schema state.
+
+⚠️ IMPORTANT: Do NOT make any changes. Only investigate and report.
+
+═══════════════════════════════════════════════════════════════
+PART 1: DATABASE CONNECTION
+═══════════════════════════════════════════════════════════════
+
+1. How do you connect to the Supabase database?
+   - Through Supabase Dashboard SQL Editor?
+   - Through backend connection?
+   - Through Supabase CLI?
+
+2. Can you run a test query?
+   Run this query and show results:
+   
+   SELECT column_name, data_type, is_nullable 
+   FROM information_schema.columns 
+   WHERE table_name = 'user_cvs'
+   ORDER BY ordinal_position;
+
+3. Run the same for cv_scan_results:
+   
+   SELECT column_name, data_type, is_nullable 
+   FROM information_schema.columns 
+   WHERE table_name = 'cv_scan_results'
+   ORDER BY ordinal_position;
+
+═══════════════════════════════════════════════════════════════
+PART 2: VERIFY COLUMNS DON'T EXIST
+═══════════════════════════════════════════════════════════════
+
+Confirm these columns do NOT exist yet:
+
+1. Check user_cvs:
+   SELECT column_name 
+   FROM information_schema.columns 
+   WHERE table_name = 'user_cvs' 
+   AND column_name = 'html_content';
+   
+   Expected: 0 rows (column doesn't exist)
+
+2. Check cv_scan_results:
+   SELECT column_name 
+   FROM information_schema.columns 
+   WHERE table_name = 'cv_scan_results' 
+   AND column_name IN ('html_content', 'fixed_html_content');
+   
+   Expected: 0 rows (columns don't exist)
+
+═══════════════════════════════════════════════════════════════
+PART 3: CHECK ROW LEVEL SECURITY (RLS)
+═══════════════════════════════════════════════════════════════
+
+1. Is RLS enabled on user_cvs?
+   SELECT relname, relrowsecurity 
+   FROM pg_class 
+   WHERE relname = 'user_cvs';
+
+2. Is RLS enabled on cv_scan_results?
+   SELECT relname, relrowsecurity 
+   FROM pg_class 
+   WHERE relname = 'cv_scan_results';
+
+3. List existing RLS policies:
+   SELECT policyname, tablename, cmd 
+   FROM pg_policies 
+   WHERE tablename IN ('user_cvs', 'cv_scan_results');
+
+═══════════════════════════════════════════════════════════════
+PART 4: CHECK TABLE SIZES
+═══════════════════════════════════════════════════════════════
+
+How many rows exist? (to understand migration impact)
+
+SELECT 
+  (SELECT COUNT(*) FROM user_cvs) as user_cvs_count,
+  (SELECT COUNT(*) FROM cv_scan_results) as cv_scan_results_count;
+
+═══════════════════════════════════════════════════════════════
+OUTPUT FORMAT
+═══════════════════════════════════════════════════════════════
+
+### Database Connection
+- Method: [Supabase Dashboard / CLI / Backend]
+- Status: [Connected / Error]
+
+### user_cvs Current Schema
+| Column | Type | Nullable |
+|--------|------|----------|
+| ... | ... | ... |
+
+### cv_scan_results Current Schema
+| Column | Type | Nullable |
+|--------|------|----------|
+| ... | ... | ... |
+
+### Column Existence Check
+- user_cvs.html_content: [EXISTS / DOES NOT EXIST]
+- cv_scan_results.html_content: [EXISTS / DOES NOT EXIST]
+- cv_scan_results.fixed_html_content: [EXISTS / DOES NOT EXIST]
+
+### RLS Status
+- user_cvs: [ENABLED / DISABLED]
+- cv_scan_results: [ENABLED / DISABLED]
+- Policies: [list]
+
+### Table Sizes
+- user_cvs: [X] rows
+- cv_scan_results: [X] rows
+
+### Ready to Proceed
+- [YES / NO] - [reason if NO]
