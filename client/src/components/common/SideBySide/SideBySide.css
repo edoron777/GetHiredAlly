@@ -1,0 +1,65 @@
+/* SideBySide Component Styles */
+
+.sbs-container {
+  width: 100%;
+}
+
+.sbs-panel {
+  min-height: 300px;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.sbs-panel-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.sbs-panel-content {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* Change highlight styles */
+.sbs-change-highlight {
+  background-color: #dbeafe;
+  border-left: 3px solid #3b82f6;
+  padding: 2px 4px;
+  border-radius: 2px;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .sbs-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .sbs-panel {
+    min-height: 250px;
+  }
+  
+  .sbs-panel-content {
+    font-size: 13px;
+  }
+}
+
+/* Scrollbar styling for better UX */
+.sbs-panel-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.sbs-panel-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.sbs-panel-content::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.sbs-panel-content::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}

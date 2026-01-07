@@ -1,0 +1,505 @@
+TASK PROMPT — Create Unified SideBySide Component
+
+OBJECTIVE:
+Create a new reusable SideBySide comparison component in the common folder.
+
+⚠️ MANDATORY RULES:
+- NO IMPROVISATION — Only create what is specified below
+- Do NOT modify any existing files in this prompt
+- Do NOT delete any existing code
+- Follow existing project code style and conventions
+
+═══════════════════════════════════════════════════════════════
+STEP 1: Create folder structure
+═══════════════════════════════════════════════════════════════
+
+Create folder: client/src/components/common/SideBySide/
+
+═══════════════════════════════════════════════════════════════
+STEP 2: Create types.ts
+═══════════════════════════════════════════════════════════════
+
+File: client/src/components/common/SideBySide/types.ts
+
+Content:
+
+/**
+ * SideBySide Component Types
+ * Reusable side-by-side comparison component for GetHiredAlly
+ */
+
+export interface MarkerConfig {
+  id: string;
+  text: string;
+  severity?: 'critical' | 'important' | 'consider' | 'polish';
+  type?: 'issue' | 'fix' | 'change';
+  tooltip?: string;
+}
+
+export interface ChangeConfig {
+  originalText: string;
+  newText: string;
+  issueId?: string;
+  category?: string;
+  explanation?: string;
+}
+
+export interface PanelStats {
+  label: string;
+  value: string | number;
+  color?: 'red' | 'green' | 'amber' | 'blue' | 'neutral';
+}
+
+export interface SideBySidePanelConfig {
+  /** Panel title (e.g., "Original CV", "Fixed CV") */
+  title: string;
+  
+  /** Content to display */
+  content: string;
+  
+  /** Panel type - controls color scheme */
+  type: 'original' | 'fixed' | 'neutral';
+  
+  /** Markers for TextMarker highlighting (optional) */
+  markers?: MarkerConfig[];
+  
+  /** Changes to highlight (optional) */
+  changes?: ChangeConfig[];
+  
+  /** Stats to display in header (optional) */
+  stats?: PanelStats;
+  
+  /** Custom className for panel (optional) */
+  className?: string;
+}
+
+export interface SideBySideProps {
+  /** Left panel configuration */
+  left: SideBySidePanelConfig;
+  
+  /** Right panel configuration */
+  right: SideBySidePanelConfig;
+  
+  /** Enable synchronized scrolling between panels (default: true) */
+  syncScroll?: boolean;
+  
+  /** Maximum height of the component (default: '600px') */
+  maxHeight?: string;
+  
+  /** Callback when a marker is clicked */
+  onMarkerClick?: (id: string, panel: 'left' | 'right') => void;
+  
+  /** Custom className for container */
+  className?: string;
+}
+
+═══════════════════════════════════════════════════════════════
+STEP 3: Create useSideBySideSync.ts (Custom Hook)
+═══════════════════════════════════════════════════════════════
+
+File: client/src/components/common/SideBySide/useSideBySideSync.ts
+
+Content:
+
+import { useRef, useCallback, useEffect } from 'react';
+
+/**
+ * Custom hook for synchronized scrolling between two panels
+ * @param enabled - Whether sync scrolling is enabled
+ * @returns Refs and handler for both panels
+ */
+export function useSideBySideSync(enabled: boolean = true) {
+  const leftPanelRef = useRef<HTMLDivElement>(null);
+  const rightPanelRef = useRef<HTMLDivElement>(null);
+  const isSyncing = useRef(false);
+
+  const handleScroll = useCallback(
+    (source: 'left' | 'right') => {
+      if (!enabled || isSyncing.current) return;
+
+      const sourcePanel = source === 'left' ? leftPanelRef.current : rightPanelRef.current;
+      const targetPanel = source === 'left' ? rightPanelRef.current : leftPanelRef.current;
+
+      if (!sourcePanel || !targetPanel) return;
+
+      isSyncing.current = true;
+
+      // Calculate scroll percentage
+      const scrollPercentage = sourcePanel.scrollTop / 
+        (sourcePanel.scrollHeight - sourcePanel.clientHeight);
+
+      // Apply to target panel
+      const targetScrollTop = scrollPercentage * 
+        (targetPanel.scrollHeight - targetPanel.clientHeight);
+
+      targetPanel.scrollTop = targetScrollTop;
+
+      // Reset syncing flag after a short delay
+      requestAnimationFrame(() => {
+        isSyncing.current = false;
+      });
+    },
+    [enabled]
+  );
+
+  const handleLeftScroll = useCallback(() => handleScroll('left'), [handleScroll]);
+  const handleRightScroll = useCallback(() => handleScroll('right'), [handleScroll]);
+
+  return {
+    leftPanelRef,
+    rightPanelRef,
+    handleLeftScroll,
+    handleRightScroll,
+  };
+}
+
+═══════════════════════════════════════════════════════════════
+STEP 4: Create SideBySidePanel.tsx
+═══════════════════════════════════════════════════════════════
+
+File: client/src/components/common/SideBySide/SideBySidePanel.tsx
+
+Content:
+
+import React, { forwardRef } from 'react';
+import { SideBySidePanelConfig } from './types';
+import TextMarker from '../TextMarker';
+import { CV_OPTIMIZER_COLORS } from '../TextMarker';
+
+interface SideBySidePanelProps extends SideBySidePanelConfig {
+  onScroll?: () => void;
+  onMarkerClick?: (id: string) => void;
+  maxHeight?: string;
+}
+
+/**
+ * Individual panel for SideBySide component
+ * Displays content with optional markers and stats
+ */
+export const SideBySidePanel = forwardRef<HTMLDivElement, SideBySidePanelProps>(
+  (
+    {
+      title,
+      content,
+      type,
+      markers = [],
+      changes = [],
+      stats,
+      className = '',
+      onScroll,
+      onMarkerClick,
+      maxHeight = '600px',
+    },
+    ref
+  ) => {
+    // Determine header color based on type
+    const getHeaderStyle = () => {
+      switch (type) {
+        case 'original':
+          return 'bg-red-50 border-red-200 text-red-800';
+        case 'fixed':
+          return 'bg-green-50 border-green-200 text-green-800';
+        default:
+          return 'bg-gray-50 border-gray-200 text-gray-800';
+      }
+    };
+
+    // Determine indicator dot color
+    const getIndicatorColor = () => {
+      switch (type) {
+        case 'original':
+          return 'bg-red-500';
+        case 'fixed':
+          return 'bg-green-500';
+        default:
+          return 'bg-gray-500';
+      }
+    };
+
+    // Get stats badge color
+    const getStatsBadgeStyle = () => {
+      if (!stats?.color) return 'bg-gray-100 text-gray-700';
+      
+      const colorMap: Record<string, string> = {
+        red: 'bg-red-100 text-red-700',
+        green: 'bg-green-100 text-green-700',
+        amber: 'bg-amber-100 text-amber-700',
+        blue: 'bg-blue-100 text-blue-700',
+        neutral: 'bg-gray-100 text-gray-700',
+      };
+      
+      return colorMap[stats.color] || colorMap.neutral;
+    };
+
+    // Highlight changes in content
+    const highlightChanges = (text: string): React.ReactNode => {
+      if (!changes || changes.length === 0) {
+        return text;
+      }
+
+      let result = text;
+      changes.forEach((change) => {
+        if (type === 'fixed' && change.newText) {
+          // Highlight new text in fixed panel
+          result = result.replace(
+            change.newText,
+            `<mark class="sbs-change-highlight">${change.newText}</mark>`
+          );
+        }
+      });
+
+      return <span dangerouslySetInnerHTML={{ __html: result }} />;
+    };
+
+    // Render content with or without markers
+    const renderContent = () => {
+      if (markers && markers.length > 0) {
+        // Use TextMarker for highlighting
+        const textMarkerItems = markers.map((marker) => ({
+          id: marker.id,
+          matchText: marker.text,
+          severity: marker.severity || 'consider',
+        }));
+
+        return (
+          <TextMarker
+            content={content}
+            items={textMarkerItems}
+            colorMap={CV_OPTIMIZER_COLORS}
+            onMarkerClick={onMarkerClick}
+          />
+        );
+      }
+
+      if (changes && changes.length > 0) {
+        return highlightChanges(content);
+      }
+
+      // Plain content
+      return <div className="whitespace-pre-wrap">{content}</div>;
+    };
+
+    return (
+      <div className={`sbs-panel flex flex-col border rounded-lg overflow-hidden ${className}`}>
+        {/* Panel Header */}
+        <div className={`sbs-panel-header px-4 py-3 border-b flex items-center justify-between ${getHeaderStyle()}`}>
+          <div className="flex items-center gap-2">
+            <span className={`w-2.5 h-2.5 rounded-full ${getIndicatorColor()}`} />
+            <span className="font-semibold">{title}</span>
+          </div>
+          
+          {stats && (
+            <span className={`text-sm px-2 py-1 rounded ${getStatsBadgeStyle()}`}>
+              {stats.value} {stats.label}
+            </span>
+          )}
+        </div>
+
+        {/* Panel Content */}
+        <div
+          ref={ref}
+          onScroll={onScroll}
+          className="sbs-panel-content flex-1 overflow-auto p-4 bg-white"
+          style={{ maxHeight }}
+        >
+          {renderContent()}
+        </div>
+      </div>
+    );
+  }
+);
+
+SideBySidePanel.displayName = 'SideBySidePanel';
+
+export default SideBySidePanel;
+
+═══════════════════════════════════════════════════════════════
+STEP 5: Create SideBySide.tsx (Main Component)
+═══════════════════════════════════════════════════════════════
+
+File: client/src/components/common/SideBySide/SideBySide.tsx
+
+Content:
+
+import React from 'react';
+import { SideBySideProps } from './types';
+import { SideBySidePanel } from './SideBySidePanel';
+import { useSideBySideSync } from './useSideBySideSync';
+import './SideBySide.css';
+
+/**
+ * SideBySide Component
+ * 
+ * A reusable side-by-side comparison component for GetHiredAlly.
+ * Used for comparing original vs fixed content (CV, answers, etc.)
+ * 
+ * @example
+ * <SideBySide
+ *   left={{
+ *     title: "Original CV",
+ *     content: originalText,
+ *     type: "original",
+ *     stats: { label: "issues found", value: 9, color: "red" }
+ *   }}
+ *   right={{
+ *     title: "Fixed CV",
+ *     content: fixedText,
+ *     type: "fixed",
+ *     stats: { label: "fixed", value: 5, color: "green" }
+ *   }}
+ *   syncScroll={true}
+ * />
+ */
+export const SideBySide: React.FC<SideBySideProps> = ({
+  left,
+  right,
+  syncScroll = true,
+  maxHeight = '600px',
+  onMarkerClick,
+  className = '',
+}) => {
+  const {
+    leftPanelRef,
+    rightPanelRef,
+    handleLeftScroll,
+    handleRightScroll,
+  } = useSideBySideSync(syncScroll);
+
+  const handleLeftMarkerClick = (id: string) => {
+    onMarkerClick?.(id, 'left');
+  };
+
+  const handleRightMarkerClick = (id: string) => {
+    onMarkerClick?.(id, 'right');
+  };
+
+  return (
+    <div className={`sbs-container grid grid-cols-1 md:grid-cols-2 gap-4 ${className}`}>
+      {/* Left Panel */}
+      <SideBySidePanel
+        ref={leftPanelRef}
+        {...left}
+        onScroll={handleLeftScroll}
+        onMarkerClick={handleLeftMarkerClick}
+        maxHeight={maxHeight}
+      />
+
+      {/* Right Panel */}
+      <SideBySidePanel
+        ref={rightPanelRef}
+        {...right}
+        onScroll={handleRightScroll}
+        onMarkerClick={handleRightMarkerClick}
+        maxHeight={maxHeight}
+      />
+    </div>
+  );
+};
+
+export default SideBySide;
+
+═══════════════════════════════════════════════════════════════
+STEP 6: Create SideBySide.css
+═══════════════════════════════════════════════════════════════
+
+File: client/src/components/common/SideBySide/SideBySide.css
+
+Content:
+
+/* SideBySide Component Styles */
+
+.sbs-container {
+  width: 100%;
+}
+
+.sbs-panel {
+  min-height: 300px;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.sbs-panel-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.sbs-panel-content {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* Change highlight styles */
+.sbs-change-highlight {
+  background-color: #dbeafe;
+  border-left: 3px solid #3b82f6;
+  padding: 2px 4px;
+  border-radius: 2px;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .sbs-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .sbs-panel {
+    min-height: 250px;
+  }
+  
+  .sbs-panel-content {
+    font-size: 13px;
+  }
+}
+
+/* Scrollbar styling for better UX */
+.sbs-panel-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.sbs-panel-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.sbs-panel-content::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.sbs-panel-content::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}
+
+═══════════════════════════════════════════════════════════════
+STEP 7: Create index.ts (Export Barrel)
+═══════════════════════════════════════════════════════════════
+
+File: client/src/components/common/SideBySide/index.ts
+
+Content:
+
+export { SideBySide, default } from './SideBySide';
+export { SideBySidePanel } from './SideBySidePanel';
+export { useSideBySideSync } from './useSideBySideSync';
+export * from './types';
+
+═══════════════════════════════════════════════════════════════
+VERIFICATION CHECKLIST
+═══════════════════════════════════════════════════════════════
+
+After completing this prompt, confirm:
+
+[ ] Folder created: client/src/components/common/SideBySide/
+[ ] File created: types.ts
+[ ] File created: useSideBySideSync.ts
+[ ] File created: SideBySidePanel.tsx
+[ ] File created: SideBySide.tsx
+[ ] File created: SideBySide.css
+[ ] File created: index.ts
+[ ] All files have no TypeScript errors
+[ ] TextMarker import path is correct
+[ ] CV_OPTIMIZER_COLORS import path is correct
+
+Report any issues or path corrections needed.
