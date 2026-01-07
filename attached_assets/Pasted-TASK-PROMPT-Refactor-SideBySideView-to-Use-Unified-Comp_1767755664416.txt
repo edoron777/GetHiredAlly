@@ -1,0 +1,177 @@
+TASK PROMPT — Refactor SideBySideView to Use Unified Component
+
+OBJECTIVE:
+Refactor the existing SideBySideView component to use the new unified SideBySide component.
+
+⚠️ MANDATORY RULES:
+- NO IMPROVISATION — Only modify what is specified
+- PRESERVE ALL EXISTING FUNCTIONALITY
+- The component must work exactly as before from the user's perspective
+- Do NOT modify ResultsPage.tsx in this prompt
+
+═══════════════════════════════════════════════════════════════
+FILE TO MODIFY:
+client/src/components/cv-optimizer/SideBySideView/SideBySideView.tsx
+═══════════════════════════════════════════════════════════════
+
+CURRENT STATE:
+- Has its own panel rendering logic
+- Uses TextMarker directly
+- Has appliedChanges tracking
+- No scroll sync
+
+NEW IMPLEMENTATION:
+- Import and use the new SideBySide component
+- Convert existing props to SideBySide format
+- Maintain backward compatibility with ResultsPage
+
+UPDATED CODE:
+
+import React, { useMemo } from 'react';
+import { SideBySide } from '../../common/SideBySide';
+import type { SideBySidePanelConfig, MarkerConfig } from '../../common/SideBySide/types';
+
+// Keep existing interface for backward compatibility
+interface SideBySideViewProps {
+  originalCV: string;
+  fixedCV: string;
+  issues: Array<{
+    id: string;
+    severity: string;
+    matchText?: string;
+    current_text?: string;
+    problematic_text?: string;
+  }>;
+  fixedIssues: Set<string>;
+  appliedChanges?: Array<{
+    originalText: string;
+    newText: string;
+    issueId: string;
+  }>;
+  onIssueClick?: (issueId: string) => void;
+}
+
+/**
+ * SideBySideView - CV Optimizer specific wrapper
+ * Uses the unified SideBySide component internally
+ */
+export const SideBySideView: React.FC<SideBySideViewProps> = ({
+  originalCV,
+  fixedCV,
+  issues,
+  fixedIssues,
+  appliedChanges = [],
+  onIssueClick,
+}) => {
+  // Convert issues to marker format for left panel (all issues)
+  const leftMarkers: MarkerConfig[] = useMemo(() => {
+    return issues.map((issue) => ({
+      id: issue.id,
+      text: issue.matchText || issue.current_text || issue.problematic_text || '',
+      severity: issue.severity as MarkerConfig['severity'],
+      type: 'issue' as const,
+    }));
+  }, [issues]);
+
+  // Convert issues to marker format for right panel (unfixed issues only)
+  const rightMarkers: MarkerConfig[] = useMemo(() => {
+    return issues
+      .filter((issue) => !fixedIssues.has(issue.id))
+      .map((issue) => ({
+        id: issue.id,
+        text: issue.matchText || issue.current_text || issue.problematic_text || '',
+        severity: issue.severity as MarkerConfig['severity'],
+        type: 'issue' as const,
+      }));
+  }, [issues, fixedIssues]);
+
+  // Calculate stats
+  const totalIssues = issues.length;
+  const fixedCount = fixedIssues.size;
+  const remainingCount = totalIssues - fixedCount;
+
+  // Configure left panel (Original CV)
+  const leftPanel: SideBySidePanelConfig = {
+    title: 'Original CV',
+    content: originalCV,
+    type: 'original',
+    markers: leftMarkers,
+    stats: {
+      label: 'issues found',
+      value: totalIssues,
+      color: 'red',
+    },
+  };
+
+  // Configure right panel (Fixed CV)
+  const rightPanel: SideBySidePanelConfig = {
+    title: 'Fixed CV',
+    content: fixedCV,
+    type: 'fixed',
+    markers: rightMarkers,
+    changes: appliedChanges.map((change) => ({
+      originalText: change.originalText,
+      newText: change.newText,
+      issueId: change.issueId,
+    })),
+    stats: {
+      label: fixedCount > 0 ? `${fixedCount} fixed, ${remainingCount} remaining` : 'No fixes yet',
+      value: '',
+      color: fixedCount > 0 ? 'green' : 'neutral',
+    },
+  };
+
+  // Handle marker clicks
+  const handleMarkerClick = (id: string, panel: 'left' | 'right') => {
+    onIssueClick?.(id);
+  };
+
+  return (
+    <SideBySide
+      left={leftPanel}
+      right={rightPanel}
+      syncScroll={true}
+      maxHeight="600px"
+      onMarkerClick={handleMarkerClick}
+    />
+  );
+};
+
+export default SideBySideView;
+
+═══════════════════════════════════════════════════════════════
+ALSO UPDATE: index.ts (if needed)
+═══════════════════════════════════════════════════════════════
+
+File: client/src/components/cv-optimizer/SideBySideView/index.ts
+
+Ensure it exports correctly:
+
+export { SideBySideView, default } from './SideBySideView';
+
+═══════════════════════════════════════════════════════════════
+CSS FILE: Can be simplified or removed
+═══════════════════════════════════════════════════════════════
+
+The SideBySideView.css file can now be simplified since styling 
+is handled by the unified component. Keep any CV-optimizer-specific 
+overrides if needed, or leave empty.
+
+═══════════════════════════════════════════════════════════════
+VERIFICATION CHECKLIST
+═══════════════════════════════════════════════════════════════
+
+After completing this prompt, verify:
+
+[ ] SideBySideView.tsx updated successfully
+[ ] No TypeScript errors
+[ ] Import path to SideBySide is correct
+[ ] Component still renders in ResultsPage
+[ ] All existing functionality preserved:
+    - Issues highlighted in left panel
+    - Unfixed issues highlighted in right panel
+    - Applied changes visible
+    - Stats displayed correctly
+[ ] NEW: Scroll sync now works between panels
+
+Report any issues found.

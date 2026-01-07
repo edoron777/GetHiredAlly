@@ -1,1 +1,1 @@
-export { default } from './SideBySideView';
+export { SideBySideView, default } from './SideBySideView';

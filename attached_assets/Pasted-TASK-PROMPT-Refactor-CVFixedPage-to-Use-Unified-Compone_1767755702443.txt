@@ -1,0 +1,95 @@
+TASK PROMPT — Refactor CVFixedPage to Use Unified Component
+
+OBJECTIVE:
+Refactor CVFixedPage to use the new unified SideBySide component 
+for its side-by-side view mode.
+
+⚠️ MANDATORY RULES:
+- NO IMPROVISATION — Only modify what is specified
+- PRESERVE ALL EXISTING FUNCTIONALITY
+- Keep all three view modes working (original, fixed, sidebyside)
+- Do NOT break the CVPanel component if used elsewhere
+
+═══════════════════════════════════════════════════════════════
+FILE TO MODIFY:
+client/src/components/CVFixedPage.tsx
+═══════════════════════════════════════════════════════════════
+
+CHANGES TO MAKE:
+
+1. Add import for SideBySide component:
+
+import { SideBySide } from './common/SideBySide';
+import type { SideBySidePanelConfig } from './common/SideBySide/types';
+
+2. Find the section where viewMode === 'sidebyside' is rendered
+
+3. Replace the existing side-by-side implementation with:
+
+{viewMode === 'sidebyside' && (
+  <SideBySide
+    left={{
+      title: 'Original CV',
+      content: originalContent,
+      type: 'original',
+      stats: {
+        label: 'Original',
+        value: '',
+        color: 'neutral',
+      },
+    }}
+    right={{
+      title: 'AI-Optimized CV',
+      content: fixedContent,
+      type: 'fixed',
+      changes: changes?.map((change) => ({
+        originalText: change.before,
+        newText: change.after,
+        category: change.category,
+        explanation: change.explanation,
+      })),
+      stats: {
+        label: 'changes applied',
+        value: changes?.length || 0,
+        color: 'green',
+      },
+    }}
+    syncScroll={true}
+    maxHeight="600px"
+  />
+)}
+
+4. Keep the CVPanel component for 'original' and 'fixed' single-view modes
+   (Do NOT remove CVPanel - it may be used for single panel views)
+
+═══════════════════════════════════════════════════════════════
+IMPORTANT: Variable Names
+═══════════════════════════════════════════════════════════════
+
+The actual variable names in CVFixedPage may differ. 
+Adjust the code to use the actual variable names:
+
+- originalContent → whatever holds the original CV text
+- fixedContent → whatever holds the AI-fixed CV text  
+- changes → whatever holds the changes array from API
+
+If unsure, first investigate and report the actual variable names.
+
+═══════════════════════════════════════════════════════════════
+VERIFICATION CHECKLIST
+═══════════════════════════════════════════════════════════════
+
+After completing this prompt, verify:
+
+[ ] CVFixedPage.tsx updated successfully
+[ ] No TypeScript errors
+[ ] All three view modes still work:
+    - 'original' mode shows original CV only
+    - 'fixed' mode shows fixed CV only
+    - 'sidebyside' mode shows both panels using SideBySide
+[ ] Changes are highlighted in the fixed panel
+[ ] Stats badge shows correct count
+[ ] NEW: Scroll sync works between panels
+[ ] Mobile view stacks panels vertically
+
+Report any issues or variable name differences found.

@@ -1,11 +1,3 @@
-.change-marker {
-  background-color: rgba(59, 130, 246, 0.1);
-  border: 2px solid #3B82F6;
-  border-radius: 4px;
-  padding: 1px 3px;
-  display: inline;
-}
-
-.change-highlighted-content {
-  line-height: 1.6;
-}
+/* CV Optimizer specific overrides for SideBySide component */
+/* Styling is now handled by the unified SideBySide component */
+/* Keep this file for any CV-optimizer-specific overrides if needed */
