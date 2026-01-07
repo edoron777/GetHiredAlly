@@ -241,6 +241,195 @@ def _extract_pdf_with_markers(file_content: bytes, preserve_markers: bool = True
             raise HTTPException(status_code=400, detail=f"Failed to parse PDF: {str(e2)}")
 
 
+def _escape_html(text: str) -> str:
+    """Escape HTML special characters."""
+    return (text
+            .replace('&', '&amp;')
+            .replace('<', '&lt;')
+            .replace('>', '&gt;')
+            .replace('"', '&quot;'))
+
+
+def _convert_markers_to_html(text_with_markers: str) -> str:
+    """
+    Convert text with [MARKERS] to HTML.
+    
+    Converts:
+    - [H1] text → <h1>text</h1>
+    - [H2] text → <h2>text</h2>
+    - [BOLD] text → <strong>text</strong> (until end of line)
+    - [BULLET] text → <li>text</li>
+    - Plain paragraphs → <p>text</p>
+    
+    Args:
+        text_with_markers: Text containing [H1], [H2], [BOLD], [BULLET] markers
+        
+    Returns:
+        HTML string
+    """
+    if not text_with_markers:
+        return ""
+    
+    lines = text_with_markers.split('\n')
+    html_lines = []
+    in_list = False
+    
+    for line in lines:
+        line = line.strip()
+        if not line:
+            if in_list:
+                html_lines.append('</ul>')
+                in_list = False
+            html_lines.append('')
+            continue
+        
+        # Handle [H1] headers
+        if line.startswith('[H1]'):
+            if in_list:
+                html_lines.append('</ul>')
+                in_list = False
+            content = line[4:].strip()
+            html_lines.append(f'<h1>{_escape_html(content)}</h1>')
+        
+        # Handle [H2] headers
+        elif line.startswith('[H2]'):
+            if in_list:
+                html_lines.append('</ul>')
+                in_list = False
+            content = line[4:].strip()
+            html_lines.append(f'<h2>{_escape_html(content)}</h2>')
+        
+        # Handle [BOLD] text
+        elif line.startswith('[BOLD]'):
+            if in_list:
+                html_lines.append('</ul>')
+                in_list = False
+            content = line[6:].strip()
+            html_lines.append(f'<p><strong>{_escape_html(content)}</strong></p>')
+        
+        # Handle [BULLET] items
+        elif line.startswith('[BULLET]'):
+            if not in_list:
+                html_lines.append('<ul>')
+                in_list = True
+            content = line[8:].strip()
+            html_lines.append(f'<li>{_escape_html(content)}</li>')
+        
+        # Handle regular paragraphs
+        else:
+            if in_list:
+                html_lines.append('</ul>')
+                in_list = False
+            html_lines.append(f'<p>{_escape_html(line)}</p>')
+    
+    # Close any open list
+    if in_list:
+        html_lines.append('</ul>')
+    
+    html = '\n'.join(html_lines)
+    
+    # Wrap in container div
+    html = f'<div class="cv-html-content">{html}</div>'
+    
+    return html
+
+
+def _extract_pdf_links(file_content: bytes) -> list:
+    """
+    Extract hyperlinks from a PDF file.
+    
+    Returns:
+        List of dicts: [{'text': 'LinkedIn', 'url': 'https://...'}, ...]
+    """
+    import fitz  # PyMuPDF
+    
+    links = []
+    try:
+        doc = fitz.open(stream=file_content, filetype="pdf")
+        
+        for page in doc:
+            page_links = page.get_links()
+            
+            for link in page_links:
+                if link.get('uri'):  # External URL
+                    url = link['uri']
+                    rect = link.get('from')
+                    if rect:
+                        text = page.get_text("text", clip=rect).strip()
+                    else:
+                        text = url
+                    
+                    if text and url:
+                        links.append({
+                            'text': text,
+                            'url': url
+                        })
+        
+        doc.close()
+    except Exception as e:
+        logger.warning(f"[PDF] Link extraction failed: {e}")
+    
+    return links
+
+
+def _inject_links_into_html(html: str, links: list) -> str:
+    """
+    Replace link text in HTML with clickable <a> tags.
+    
+    Args:
+        html: HTML content
+        links: List of {'text': ..., 'url': ...} dicts
+        
+    Returns:
+        HTML with links converted to <a> tags
+    """
+    for link in links:
+        text = link['text']
+        url = link['url']
+        
+        if not url.startswith('http'):
+            url = 'https://' + url
+        
+        escaped_text = re.escape(text)
+        pattern = f'(?<!href=")(?<!>){escaped_text}(?!</a>)'
+        replacement = f'<a href="{url}" target="_blank" rel="noopener noreferrer">{text}</a>'
+        
+        html = re.sub(pattern, replacement, html, count=1)
+    
+    return html
+
+
+def _extract_pdf_to_html(file_content: bytes) -> tuple:
+    """
+    Extract both plain text AND HTML from a PDF file.
+    
+    Uses existing marker extraction for text, then converts to HTML.
+    Also extracts PDF hyperlinks and adds them to HTML.
+    
+    Args:
+        file_content: Raw bytes of the PDF file
+        
+    Returns:
+        tuple: (plain_text, html_content)
+    """
+    plain_text = _extract_pdf_with_markers(file_content, preserve_markers=True)
+    
+    html_content = None
+    try:
+        html_content = _convert_markers_to_html(plain_text)
+        
+        links = _extract_pdf_links(file_content)
+        if links:
+            html_content = _inject_links_into_html(html_content, links)
+            logger.info(f"[PDF] Injected {len(links)} links into HTML")
+        
+    except Exception as e:
+        logger.warning(f"[PDF] HTML conversion failed: {e}")
+        html_content = None
+    
+    return (plain_text, html_content)
+
+
 def _extract_docx_with_markers(file_content: bytes, preserve_markers: bool = True) -> str:
     """Extract DOCX text with optional structure markers.
     
