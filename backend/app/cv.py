@@ -482,6 +482,39 @@ def _markdown_to_marked_text(md_text: str) -> str:
     return text.strip()
 
 
+def _html_to_marked_text(html: str) -> str:
+    """
+    Convert HTML back to marker format for detection.
+    Used when we need to regenerate marked text from stored HTML.
+    """
+    import re
+    from html import unescape
+    
+    if not html:
+        return ""
+    
+    text = html
+    
+    # Convert HTML tags to markers
+    text = re.sub(r'<h1[^>]*>([^<]+)</h1>', r'[H1] \1\n', text)
+    text = re.sub(r'<h2[^>]*>([^<]+)</h2>', r'[H2] \1\n', text)
+    text = re.sub(r'<h3[^>]*>([^<]+)</h3>', r'[H2] \1\n', text)
+    text = re.sub(r'<strong>([^<]+)</strong>', r'[BOLD] \1', text)
+    text = re.sub(r'<li>([^<]+)</li>', r'[BULLET] \1\n', text)
+    text = re.sub(r'<p>([^<]*)</p>', r'\1\n', text)
+    
+    # Remove remaining HTML tags
+    text = re.sub(r'<[^>]+>', '', text)
+    
+    # Unescape HTML entities
+    text = unescape(text)
+    
+    # Clean whitespace
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    
+    return text.strip()
+
+
 def _markdown_to_html(md_text: str) -> str:
     """
     Convert Markdown text to HTML for display.
@@ -1453,7 +1486,7 @@ async def analyze_cv_structure(scan_id: str, token: str = None):
         
         cursor = conn.cursor(cursor_factory=RealDictCursor)
         cursor.execute(
-            "SELECT original_cv_content FROM cv_scan_results WHERE id = %s AND user_id = %s",
+            "SELECT original_cv_content, html_content FROM cv_scan_results WHERE id = %s AND user_id = %s",
             (scan_id, str(user["id"]))
         )
         scan = cursor.fetchone()
@@ -1464,11 +1497,20 @@ async def analyze_cv_structure(scan_id: str, token: str = None):
             raise HTTPException(status_code=404, detail="Scan not found")
         
         cv_text = scan["original_cv_content"]
+        html_content = scan.get("html_content")
         
         if is_encrypted(cv_text):
             cv_text = decrypt_text(cv_text)
+        if html_content and is_encrypted(html_content):
+            html_content = decrypt_text(html_content)
         
-        block_structure = detect_cv_blocks(cv_text)
+        # Regenerate marked text from HTML for detection
+        if html_content:
+            marked_text = _html_to_marked_text(html_content)
+        else:
+            marked_text = cv_text  # Fallback
+        
+        block_structure = detect_cv_blocks(marked_text)
         
         result = {
             "total_blocks": len(block_structure.blocks),
