@@ -393,6 +393,10 @@ def _convert_markers_to_html(text_with_markers: str) -> str:
             html_lines.append(f'<h2>{_escape_html(line)}</h2>')
             continue
         
+        # Skip lines that are ONLY a bullet character
+        if line in ['•', '●', '○', '◦', '▪', '-', '*', '►', '‣', '⁃']:
+            continue
+        
         # Bullet patterns
         bullet_match = re.match(r'^[•●○◦▪▸►‣⁃\-\*]\s*(.+)$', line)
         if bullet_match:
@@ -526,6 +530,7 @@ def _extract_pdf_to_html(file_content: bytes) -> tuple:
         logger.info(f"[PDF DEBUG] HTML first 500 chars: {html_content[:500] if html_content else 'None'}")
         
         links = _extract_pdf_links(file_content)
+        logger.info(f"[PDF LINKS] Found {len(links)} links: {links}")
         if links:
             html_content = _inject_links_into_html(html_content, links)
             logger.info(f"[PDF] Injected {len(links)} links into HTML")
