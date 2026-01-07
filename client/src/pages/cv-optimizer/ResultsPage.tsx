@@ -60,6 +60,7 @@ interface ReportData {
   scan_id: number;
   cv_content: string;
   cv_content_html?: string;
+  html_content?: string;
   issues: CVIssue[];
   cv_score: number;
   total_issues: number;
@@ -982,7 +983,9 @@ export default function ResultsPage() {
 
   const cvContent = {
     fullText: cvContentText,
-    htmlContent: !fixedCV ? reportData?.cv_content_html : undefined
+    htmlContent: !fixedCV 
+      ? (reportData?.html_content || reportData?.cv_content_html) 
+      : undefined
   };
 
   const documentIssues = normalizedIssues.map(issue => ({

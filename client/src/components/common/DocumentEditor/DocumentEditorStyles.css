@@ -88,6 +88,15 @@
   content: "";
   margin-top: 0.3em;
 }
+.cv-html-content a {
+  color: #337ea9;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.cv-html-content a:hover {
+  color: #285e7a;
+  text-decoration: underline;
+}
 
 @media (max-width: 768px) {
   .document-editor-container { padding: 16px; }

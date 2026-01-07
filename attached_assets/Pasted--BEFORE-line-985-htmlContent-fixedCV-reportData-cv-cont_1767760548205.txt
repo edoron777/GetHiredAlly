@@ -1,0 +1,98 @@
+// BEFORE (line 985):
+htmlContent: !fixedCV ? reportData?.cv_content_html : undefined
+
+// AFTER:
+htmlContent: !fixedCV 
+  ? (reportData?.html_content || reportData?.cv_content_html) 
+  : undefined
+```
+
+---
+
+## Quick Fix Prompt
+```
+QUICK FIX — Use Mammoth HTML for Rich Formatting
+
+OBJECTIVE:
+Update ResultsPage.tsx to use mammoth HTML (html_content) when available,
+with fallback to marker-converted HTML (cv_content_html) for older CVs.
+
+⚠️ MANDATORY RULES:
+- Change ONLY the specified line
+- Preserve fallback for backward compatibility
+- NO other changes
+
+═══════════════════════════════════════════════════════════════
+THE FIX
+═══════════════════════════════════════════════════════════════
+
+File: client/src/pages/cv-optimizer/ResultsPage.tsx
+Line: approximately 985 (where htmlContent is set in cvContent)
+
+FIND THIS CODE:
+htmlContent: !fixedCV ? reportData?.cv_content_html : undefined
+
+REPLACE WITH:
+htmlContent: !fixedCV 
+  ? (reportData?.html_content || reportData?.cv_content_html) 
+  : undefined
+
+═══════════════════════════════════════════════════════════════
+WHY THIS WORKS
+═══════════════════════════════════════════════════════════════
+
+1. New CVs (after Phase 2):
+   - html_content contains mammoth HTML with links
+   - This is used for display ✅
+
+2. Old CVs (before Phase 2):
+   - html_content is NULL
+   - Falls back to cv_content_html ✅
+
+3. Backward compatible:
+   - Existing functionality preserved ✅
+
+═══════════════════════════════════════════════════════════════
+VERIFICATION
+═══════════════════════════════════════════════════════════════
+
+After making the change:
+
+1. Upload a NEW DOCX file with links
+2. View in Document View
+3. Verify LinkedIn link is:
+   - Visible as "LinkedIn" text
+   - Clickable (opens in new tab)
+   - Styled as a link (blue, underlined)
+
+4. Check an OLD CV still displays correctly
+
+═══════════════════════════════════════════════════════════════
+ALSO ADD CSS FOR LINKS (Optional but recommended)
+═══════════════════════════════════════════════════════════════
+
+File: client/src/components/common/DocumentEditor/DocumentEditorStyles.css
+
+Add this CSS:
+
+.cv-html-content a {
+  color: #337ea9;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.cv-html-content a:hover {
+  color: #285e7a;
+  text-decoration: underline;
+}
+
+═══════════════════════════════════════════════════════════════
+REPORT
+═══════════════════════════════════════════════════════════════
+
+[ ] ResultsPage.tsx updated
+[ ] CSS added (optional)
+[ ] New CV upload tested - links clickable
+[ ] Old CV still works
+
+Any issues: [describe]
