@@ -86,7 +86,7 @@ def get_user_from_token(token: str) -> dict | None:
         return None
 
 
-def extract_text_from_file(file_content: bytes, filename: str, preserve_markers: bool = True) -> str:
+def extract_text_from_file(file_content: bytes, filename: str, preserve_markers: bool = True) -> tuple[str, str | None]:
     """Extract text content from uploaded file.
     
     Args:
@@ -96,36 +96,47 @@ def extract_text_from_file(file_content: bytes, filename: str, preserve_markers:
                          for better section detection. If False, returns plain text.
     
     Returns:
-        Extracted text, optionally with structure markers
+        tuple: (plain_text, html_content)
+               - plain_text: Always present, used for AI analysis
+               - html_content: Only for DOCX files, None for others
     """
     extension = filename.split('.')[-1].lower()
     
-    if extension == 'txt':
-        return file_content.decode('utf-8', errors='ignore')
+    # DOCX files - extract both plain text AND HTML
+    if extension == 'docx':
+        return _extract_docx_to_html(file_content)
     
+    # DOC files (old Word format) - plain text only
+    elif extension == 'doc':
+        plain_text = _extract_docx_with_markers(file_content, preserve_markers)
+        return (plain_text, None)
+    
+    # PDF files - plain text only (HTML extraction in future phase)
     elif extension == 'pdf':
-        return _extract_pdf_with_markers(file_content, preserve_markers)
+        plain_text = _extract_pdf_with_markers(file_content, preserve_markers)
+        return (plain_text, None)
     
-    elif extension in ['docx', 'doc']:
-        return _extract_docx_with_markers(file_content, preserve_markers)
+    # Text/Markdown files - plain text only
+    elif extension in ['txt', 'md']:
+        plain_text = file_content.decode('utf-8', errors='ignore')
+        return (plain_text, None)
     
-    elif extension == 'md':
-        return file_content.decode('utf-8', errors='ignore')
-    
+    # RTF files - plain text only
     elif extension == 'rtf':
         try:
             from striprtf.striprtf import rtf_to_text
             rtf_content = file_content.decode('utf-8', errors='ignore')
-            return rtf_to_text(rtf_content)
+            plain_text = rtf_to_text(rtf_content)
+            return (plain_text, None)
         except ImportError:
             text = file_content.decode('utf-8', errors='ignore')
-            import re
             text = re.sub(r'\\[a-z]+\d*\s?', '', text)
             text = re.sub(r'[{}]', '', text)
-            return text
+            return (text, None)
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Failed to parse RTF: {str(e)}")
     
+    # ODT files - plain text only
     elif extension == 'odt':
         try:
             import zipfile
@@ -142,13 +153,16 @@ def extract_text_from_file(file_content: bytes, filename: str, preserve_markers:
                     if elem.tail:
                         text_parts.append(elem.tail)
                 
-                return ' '.join(text_parts)
+                plain_text = ' '.join(text_parts)
+                return (plain_text, None)
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Failed to parse ODT: {str(e)}")
     
+    # Unknown format - try as plain text
     else:
         try:
-            return file_content.decode('utf-8', errors='ignore')
+            plain_text = file_content.decode('utf-8', errors='ignore')
+            return (plain_text, None)
         except Exception:
             raise HTTPException(status_code=400, detail="Unsupported file type")
 
@@ -490,8 +504,8 @@ async def upload_cv_for_scan(
         raise HTTPException(status_code=400, detail="File too large. Maximum 10MB allowed")
     
     # Extract text WITH markers for better detection during scanning
-    # Markers like [H1], [BOLD], [BULLET] help detect section headers
-    text_with_markers = extract_text_from_file(file_content, file.filename, preserve_markers=True)
+    # Also extract HTML for rich display (DOCX files only)
+    text_with_markers, html_content = extract_text_from_file(file_content, file.filename, preserve_markers=True)
     
     # Check content length using clean text (without markers) for accurate count
     clean_text = strip_structure_markers(text_with_markers)
@@ -503,6 +517,9 @@ async def upload_cv_for_scan(
     # This enables better section detection during CV analysis
     encrypted_content = encrypt_text(text_with_markers)
     
+    # Encrypt HTML content if available (for DOCX files)
+    encrypted_html = encrypt_text(html_content) if html_content else None
+    
     try:
         conn = get_db_connection()
         if not conn:
@@ -510,9 +527,9 @@ async def upload_cv_for_scan(
         
         cursor = conn.cursor(cursor_factory=RealDictCursor)
         cursor.execute(
-            """INSERT INTO user_cvs (user_id, filename, original_filename, content, file_size, file_type)
-               VALUES (%s, %s, %s, %s, %s, %s) RETURNING id""",
-            (str(user["id"]), file.filename, file.filename, encrypted_content, len(file_content), extension)
+            """INSERT INTO user_cvs (user_id, filename, original_filename, content, html_content, file_size, file_type)
+               VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id""",
+            (str(user["id"]), file.filename, file.filename, encrypted_content, encrypted_html, len(file_content), extension)
         )
         result = cursor.fetchone()
         conn.commit()

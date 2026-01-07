@@ -1,0 +1,133 @@
+TASK PROMPT — Update API to Return HTML Content
+
+OBJECTIVE:
+Update API endpoints to return html_content when available.
+
+⚠️ MANDATORY RULES:
+- NO IMPROVISATION — Only modify what is specified
+- PRESERVE existing response fields
+- ADD new fields (don't replace)
+- DECRYPT HTML before returning
+
+═══════════════════════════════════════════════════════════════
+STEP 1: UPDATE get_cv() FUNCTION
+═══════════════════════════════════════════════════════════════
+
+File: backend/app/cv.py
+Function: get_cv() (around line 521)
+
+Update SELECT query:
+
+BEFORE:
+    SELECT id, user_id, filename, content, file_size, file_type, ...
+
+AFTER:
+    SELECT id, user_id, filename, content, html_content, file_size, file_type, ...
+
+Update return dictionary:
+
+BEFORE:
+    return {
+        "id": str(row["id"]),
+        "filename": row["filename"],
+        "content": decrypt_text(row["content"]) if row["content"] else None,
+        ...
+    }
+
+AFTER:
+    return {
+        "id": str(row["id"]),
+        "filename": row["filename"],
+        "content": decrypt_text(row["content"]) if row["content"] else None,
+        "html_content": decrypt_text(row["html_content"]) if row["html_content"] else None,
+        ...
+    }
+
+═══════════════════════════════════════════════════════════════
+STEP 2: UPDATE SCAN RESULTS API
+═══════════════════════════════════════════════════════════════
+
+File: backend/app/cv_optimizer.py (or wherever scan results are returned)
+
+Find the function that returns scan results to frontend.
+
+Update SELECT query to include html_content and fixed_html_content:
+
+    SELECT ..., html_content, fixed_html_content, ...
+
+Update return dictionary:
+
+    return {
+        ...existing fields...,
+        "html_content": row["html_content"],
+        "fixed_html_content": row["fixed_html_content"],
+    }
+
+═══════════════════════════════════════════════════════════════
+STEP 3: UPDATE PYDANTIC MODELS (if they exist)
+═══════════════════════════════════════════════════════════════
+
+If there are Pydantic response models, add the new fields:
+
+class CVResponse(BaseModel):
+    id: str
+    filename: str
+    content: Optional[str] = None
+    html_content: Optional[str] = None  # NEW
+    ...
+
+class ScanResultResponse(BaseModel):
+    ...
+    html_content: Optional[str] = None           # NEW
+    fixed_html_content: Optional[str] = None     # NEW
+    ...
+
+═══════════════════════════════════════════════════════════════
+STEP 4: UPDATE FRONTEND TYPES (Optional)
+═══════════════════════════════════════════════════════════════
+
+If you want to update frontend types now:
+
+File: client/src/types/ (wherever CV types are defined)
+
+interface CVData {
+    id: string;
+    filename: string;
+    content?: string;
+    html_content?: string;  // NEW
+    ...
+}
+
+interface ScanResult {
+    ...
+    html_content?: string;           // NEW
+    fixed_html_content?: string;     // NEW
+    ...
+}
+
+(Or this can be done in Phase 4)
+
+═══════════════════════════════════════════════════════════════
+VERIFICATION CHECKLIST
+═══════════════════════════════════════════════════════════════
+
+After completing this prompt:
+
+[ ] get_cv() returns html_content field
+[ ] Scan results API returns html_content field
+[ ] Scan results API returns fixed_html_content field
+[ ] HTML is decrypted before returning
+[ ] Backend starts without errors
+[ ] Test: GET /api/cv/{id} - verify html_content in response
+
+Test with new DOCX upload:
+[ ] Upload a DOCX file
+[ ] Run a scan
+[ ] Verify html_content is populated (not null)
+[ ] Verify HTML contains proper tags (<strong>, <em>, etc.)
+
+Files modified:
+1. [file:line] - [what changed]
+2. [file:line] - [what changed]
+
+Any errors encountered: [describe]
