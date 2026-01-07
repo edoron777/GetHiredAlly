@@ -1,0 +1,80 @@
+RECONNAISSANCE PROMPT — PDF Extraction Review
+
+OBJECTIVE:
+Review the current PDF extraction implementation to plan HTML enhancement.
+
+⚠️ IMPORTANT: Do NOT make any changes. Only investigate and report.
+
+═══════════════════════════════════════════════════════════════
+PART 1: CURRENT PDF EXTRACTION
+═══════════════════════════════════════════════════════════════
+
+File: backend/app/cv.py
+Function: _extract_pdf_with_markers()
+
+1. Show the complete function code
+
+2. What markers are currently added?
+   - [H1]?
+   - [H2]?
+   - [BOLD]?
+   - [BULLET]?
+   - Others?
+
+3. How are links/URLs handled in PDF extraction?
+
+═══════════════════════════════════════════════════════════════
+PART 2: PyMuPDF CAPABILITIES
+═══════════════════════════════════════════════════════════════
+
+Check what PyMuPDF (fitz) can extract:
+
+1. Can it detect font size? (for headers)
+2. Can it detect bold/italic?
+3. Can it extract hyperlinks from PDF?
+4. Can it detect list items?
+
+═══════════════════════════════════════════════════════════════
+PART 3: CURRENT OUTPUT SAMPLE
+═══════════════════════════════════════════════════════════════
+
+If possible, show a sample of what _extract_pdf_with_markers() 
+currently outputs for a typical CV PDF.
+
+What does the text with markers look like?
+
+═══════════════════════════════════════════════════════════════
+PART 4: IDENTIFY ENHANCEMENT OPPORTUNITIES
+═══════════════════════════════════════════════════════════════
+
+Based on current implementation:
+
+1. What formatting information is being detected but not 
+   converted to HTML?
+
+2. Are PDF hyperlinks being extracted?
+
+3. What would be needed to produce HTML output similar to mammoth?
+
+═══════════════════════════════════════════════════════════════
+OUTPUT FORMAT
+═══════════════════════════════════════════════════════════════
+
+### Current _extract_pdf_with_markers()
+```python
+[show function]
+```
+
+### Markers Used
+- [H1]: [how detected]
+- [H2]: [how detected]
+- [BOLD]: [how detected]
+- [BULLET]: [how detected]
+
+### Link Extraction
+- Currently extracts links: [YES/NO]
+- Method: [describe]
+
+### Enhancement Plan
+1. [what can be improved]
+2. [what can be improved]
