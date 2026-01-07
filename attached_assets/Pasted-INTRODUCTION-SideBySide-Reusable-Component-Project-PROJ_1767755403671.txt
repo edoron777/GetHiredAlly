@@ -1,0 +1,58 @@
+INTRODUCTION — SideBySide Reusable Component Project
+
+PROJECT OVERVIEW:
+We are creating a unified, reusable SideBySide comparison component for GetHiredAlly Application.
+
+PROBLEM:
+Currently there are TWO separate implementations of side-by-side comparison:
+1. SideBySideView (in cv-optimizer folder) - used for manual edits
+2. CVFixedPage with CVPanel - used for AI auto-fix
+
+This causes:
+- Duplicate code maintenance
+- Inconsistent behavior
+- No code reuse for future services
+
+SOLUTION:
+Create ONE reusable component in /common/ folder that:
+- Both existing implementations will use
+- Future services can easily import
+- Has unified interface and behavior
+- Includes scroll sync (currently missing in both)
+
+PROMPT SERIES STRUCTURE:
+This project consists of 5 prompts:
+- Prompt 0: Reconnaissance (already completed)
+- Prompt 1: Introduction (this prompt - READ ONLY)
+- Prompt 2: Create the new unified SideBySide component
+- Prompt 3: Refactor SideBySideView to use new component
+- Prompt 4: Refactor CVFixedPage to use new component
+- Prompt 5: Verification and cleanup
+
+FILES THAT WILL BE CREATED:
+- client/src/components/common/SideBySide/SideBySide.tsx
+- client/src/components/common/SideBySide/SideBySidePanel.tsx
+- client/src/components/common/SideBySide/useSideBySideSync.ts
+- client/src/components/common/SideBySide/types.ts
+- client/src/components/common/SideBySide/SideBySide.css
+- client/src/components/common/SideBySide/index.ts
+
+FILES THAT WILL BE MODIFIED:
+- client/src/components/cv-optimizer/SideBySideView/SideBySideView.tsx
+- client/src/components/CVFixedPage.tsx
+
+DEPENDENCIES TO REUSE:
+- TextMarker component (existing)
+- CV_OPTIMIZER_COLORS (existing)
+
+⚠️ CRITICAL RULES FOR ALL PROMPTS:
+1. NO IMPROVISATION — Only implement what is explicitly specified
+2. NO ADDITIONAL CHANGES — Do not modify files not mentioned
+3. PRESERVE EXISTING FUNCTIONALITY — All current features must continue working
+4. MOBILE RESPONSIVE — All components must work on mobile devices
+5. SECURITY — Follow secure coding practices
+
+If any prompt instruction is unclear, ASK before implementing.
+
+⚠️ IMPORTANT: Do NOT make any changes in this prompt. This is context only.
+Confirm you understand the project scope before proceeding to Prompt 2.
