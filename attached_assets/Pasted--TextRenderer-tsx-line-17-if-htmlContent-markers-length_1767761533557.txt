@@ -1,0 +1,91 @@
+// TextRenderer.tsx line 17
+if (htmlContent && markers.length === 0) {
+  return (
+    <div className="text-content cv-html-content"
+         dangerouslySetInnerHTML={{ __html: htmlContent }} />
+  )
+}
+```
+
+**The condition: `markers.length === 0`**
+
+Your CV has **8 issues** (markers), so it **skips** the HTML rendering and uses plain text with markers instead!
+
+---
+
+## The Conflict
+
+| When | What Happens |
+|------|--------------|
+| No issues (0 markers) | Uses HTML → Links work ✅ |
+| Has issues (8 markers) | Uses plain text + markers → Links lost ❌ |
+
+---
+
+## Fix Required
+
+We need to change TextRenderer to render HTML **even when there are markers**.
+```
+FIX PROMPT — Render HTML Content With Markers
+
+OBJECTIVE:
+Update TextRenderer to use HTML content even when there are issue markers.
+
+═══════════════════════════════════════════════════════════════
+THE PROBLEM
+═══════════════════════════════════════════════════════════════
+
+File: client/src/components/common/DocumentEditor/renderers/TextRenderer.tsx
+
+Current code (line 17):
+if (htmlContent && markers.length === 0) {
+  // Only renders HTML when NO markers
+
+This means when CV has issues, HTML is ignored and links are lost.
+
+═══════════════════════════════════════════════════════════════
+THE FIX
+═══════════════════════════════════════════════════════════════
+
+Option A (Quick Fix): Always use HTML when available
+
+CHANGE:
+if (htmlContent && markers.length === 0) {
+
+TO:
+if (htmlContent) {
+
+This will render HTML with links, but markers won't show.
+
+---
+
+Option B (Better Fix): Render HTML and overlay markers
+
+This requires more complex changes to combine HTML rendering 
+with marker overlays. More work but preserves both features.
+
+═══════════════════════════════════════════════════════════════
+RECOMMENDATION
+═══════════════════════════════════════════════════════════════
+
+For now, use Option A (quick fix) to verify links work.
+We can implement Option B later for full functionality.
+
+CHANGE in TextRenderer.tsx:
+
+if (htmlContent && markers.length === 0) {
+
+TO:
+
+if (htmlContent) {
+
+═══════════════════════════════════════════════════════════════
+VERIFICATION
+═══════════════════════════════════════════════════════════════
+
+After the change:
+1. Refresh the page
+2. LinkedIn should now be a clickable link
+3. Note: Issue markers may not show (acceptable for now)
+
+Report: [ ] Links work [ ] Change made

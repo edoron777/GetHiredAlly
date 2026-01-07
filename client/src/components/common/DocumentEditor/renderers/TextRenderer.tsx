@@ -10,7 +10,7 @@ export const TextRenderer: React.FC<RendererProps> = ({
   markerConfig,
   onMarkerClick
 }) => {
-  if (htmlContent && markers.length === 0) {
+  if (htmlContent) {
     return (
       <div 
         className="text-content cv-html-content"
