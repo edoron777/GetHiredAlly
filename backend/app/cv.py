@@ -306,38 +306,58 @@ def _extract_pdf_with_pymupdf4llm(file_content: bytes) -> tuple:
 
 def _markdown_to_plain_text(md_text: str) -> str:
     """
-    Convert Markdown to plain text (for AI processing).
+    Convert Markdown to marker-format plain text for section detection.
     
-    Removes markdown syntax but keeps the text content.
+    Converts markdown syntax to [H1], [H2], [BOLD], [BULLET] markers
+    that block_detector.py expects.
     """
     import re
     
     if not md_text:
         return ""
     
-    text = md_text
+    lines = md_text.split('\n')
+    result_lines = []
     
-    # Remove bold/italic markers
-    text = re.sub(r'\*\*(.+?)\*\*', r'\1', text)  # **bold**
-    text = re.sub(r'\*(.+?)\*', r'\1', text)      # *italic*
-    text = re.sub(r'__(.+?)__', r'\1', text)      # __bold__
-    text = re.sub(r'_(.+?)_', r'\1', text)        # _italic_
+    for line in lines:
+        processed = line
+        
+        # Headers: # Header → [H1] Header
+        if processed.strip().startswith('# '):
+            processed = '[H1] ' + processed.strip()[2:]
+        elif processed.strip().startswith('## '):
+            processed = '[H2] ' + processed.strip()[3:]
+        elif processed.strip().startswith('### '):
+            processed = '[H2] ' + processed.strip()[4:]
+        
+        # Bullets: - item or * item → [BULLET] item
+        bullet_match = re.match(r'^(\s*)[-*+]\s+(.+)$', processed)
+        if bullet_match:
+            indent = bullet_match.group(1)
+            content = bullet_match.group(2)
+            processed = f'{indent}[BULLET] {content}'
+        
+        # Bold: **text** → [BOLD] text (only if entire line or start of line)
+        if processed.strip().startswith('**') and '**' in processed[2:]:
+            bold_match = re.match(r'^\*\*(.+?)\*\*(.*)$', processed.strip())
+            if bold_match:
+                bold_text = bold_match.group(1)
+                rest = bold_match.group(2)
+                if len(bold_text) < 60 and not rest.strip().startswith('**'):
+                    processed = f'[BOLD] {bold_text}{rest}'
+                else:
+                    processed = re.sub(r'\*\*(.+?)\*\*', r'\1', processed)
+        else:
+            processed = re.sub(r'\*\*(.+?)\*\*', r'\1', processed)
+        
+        # Strip remaining markdown (italic, links, code)
+        processed = re.sub(r'\*(.+?)\*', r'\1', processed)
+        processed = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', processed)
+        processed = re.sub(r'`(.+?)`', r'\1', processed)
+        
+        result_lines.append(processed)
     
-    # Remove headers (keep text)
-    text = re.sub(r'^#{1,6}\s*', '', text, flags=re.MULTILINE)
-    
-    # Remove link syntax [text](url) → text
-    text = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', text)
-    
-    # Remove bullet markers but keep text
-    text = re.sub(r'^\s*[-*+]\s+', '', text, flags=re.MULTILINE)
-    
-    # Remove numbered list markers
-    text = re.sub(r'^\s*\d+\.\s+', '', text, flags=re.MULTILINE)
-    
-    # Remove code blocks
-    text = re.sub(r'```[\s\S]*?```', '', text)
-    text = re.sub(r'`(.+?)`', r'\1', text)
+    text = '\n'.join(result_lines)
     
     # Clean up extra whitespace
     text = re.sub(r'\n{3,}', '\n\n', text)

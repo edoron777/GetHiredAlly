@@ -1,0 +1,77 @@
+FIX — Convert Markdown to Marker Format for Plain Text
+
+OBJECTIVE:
+Instead of stripping markdown, convert to marker format that 
+block_detector expects.
+
+═══════════════════════════════════════════════════════════════
+FILE: backend/app/cv.py
+FUNCTION: _markdown_to_plain_text()
+═══════════════════════════════════════════════════════════════
+
+REPLACE the current _markdown_to_plain_text() with:
+
+def _markdown_to_plain_text(md_text: str) -> str:
+    """
+    Convert Markdown to marker-format plain text for section detection.
+    
+    Converts markdown syntax to [H1], [H2], [BOLD], [BULLET] markers
+    that block_detector.py expects.
+    """
+    import re
+    
+    if not md_text:
+        return ""
+    
+    lines = md_text.split('\n')
+    result_lines = []
+    
+    for line in lines:
+        processed = line
+        
+        # Headers: # Header → [H1] Header
+        if processed.strip().startswith('# '):
+            processed = '[H1] ' + processed.strip()[2:]
+        elif processed.strip().startswith('## '):
+            processed = '[H2] ' + processed.strip()[3:]
+        elif processed.strip().startswith('### '):
+            processed = '[H2] ' + processed.strip()[4:]
+        
+        # Bullets: - item or * item → [BULLET] item
+        bullet_match = re.match(r'^(\s*)[-*+]\s+(.+)$', processed)
+        if bullet_match:
+            indent = bullet_match.group(1)
+            content = bullet_match.group(2)
+            processed = f'{indent}[BULLET] {content}'
+        
+        # Bold: **text** → [BOLD] text (only if entire line or start of line)
+        if processed.strip().startswith('**') and '**' in processed[2:]:
+            # Check if it's a header-like bold (short, at start)
+            bold_match = re.match(r'^\*\*(.+?)\*\*(.*)$', processed.strip())
+            if bold_match:
+                bold_text = bold_match.group(1)
+                rest = bold_match.group(2)
+                # Only add marker if bold text is likely a header (short, no continuation)
+                if len(bold_text) < 60 and not rest.strip().startswith('**'):
+                    processed = f'[BOLD] {bold_text}{rest}'
+                else:
+                    # Just strip the ** markers
+                    processed = re.sub(r'\*\*(.+?)\*\*', r'\1', processed)
+        else:
+            # Strip inline bold markers
+            processed = re.sub(r'\*\*(.+?)\*\*', r'\1', processed)
+        
+        # Strip remaining markdown (italic, links, code)
+        processed = re.sub(r'\*(.+?)\*', r'\1', processed)  # *italic*
+        processed = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', processed)  # [text](url)
+        processed = re.sub(r'`(.+?)`', r'\1', processed)  # `code`
+        
+        result_lines.append(processed)
+    
+    text = '\n'.join(result_lines)
+    
+    # Clean up extra whitespace
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    
+    # Also filter footers
+    text = _f
