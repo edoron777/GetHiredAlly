@@ -1,0 +1,126 @@
+VERIFICATION PROMPT — Phase 1 Complete Check
+
+OBJECTIVE:
+Verify all Phase 1 database schema changes are properly implemented
+and the system is ready for Phase 2 (mammoth integration).
+
+═══════════════════════════════════════════════════════════════
+PART 1: DATABASE VERIFICATION
+═══════════════════════════════════════════════════════════════
+
+Run these queries in Supabase SQL Editor:
+
+1. Verify user_cvs schema:
+SELECT column_name, data_type, is_nullable
+FROM information_schema.columns 
+WHERE table_name = 'user_cvs'
+ORDER BY ordinal_position;
+
+Expected: Should include html_content column
+
+2. Verify cv_scan_results schema:
+SELECT column_name, data_type, is_nullable
+FROM information_schema.columns 
+WHERE table_name = 'cv_scan_results'
+ORDER BY ordinal_position;
+
+Expected: Should include html_content and fixed_html_content columns
+
+3. Verify no data corruption:
+SELECT COUNT(*) as total,
+       COUNT(content) as with_content,
+       COUNT(html_content) as with_html
+FROM user_cvs;
+
+Expected: with_html should be 0 (not populated yet)
+
+═══════════════════════════════════════════════════════════════
+PART 2: API VERIFICATION
+═══════════════════════════════════════════════════════════════
+
+Test the API responses include new fields:
+
+1. Test GET CV endpoint:
+   - Call GET /api/cv/{any_valid_cv_id}
+   - Verify response includes "html_content" field
+   - Value should be null (not populated yet)
+
+2. Test Scan Results endpoint:
+   - Call the endpoint that returns scan results
+   - Verify response includes "html_content" field
+   - Verify response includes "fixed_html_content" field
+   - Values should be null (not populated yet)
+
+═══════════════════════════════════════════════════════════════
+PART 3: BACKEND HEALTH CHECK
+═══════════════════════════════════════════════════════════════
+
+1. Restart the backend server
+2. Check for any startup errors
+3. Check logs for any warnings
+
+═══════════════════════════════════════════════════════════════
+PART 4: FRONTEND COMPATIBILITY CHECK
+═══════════════════════════════════════════════════════════════
+
+1. Open CV Optimizer in browser
+2. Upload a test CV
+3. Run a scan
+4. Verify:
+   - No errors in browser console
+   - CV displays correctly (using existing plain text)
+   - All existing functionality works
+
+═══════════════════════════════════════════════════════════════
+PHASE 1 COMPLETION CHECKLIST
+═══════════════════════════════════════════════════════════════
+
+DATABASE:
+[ ] user_cvs.html_content column exists
+[ ] cv_scan_results.html_content column exists
+[ ] cv_scan_results.fixed_html_content column exists
+[ ] Existing data unaffected
+[ ] RLS policies working
+
+BACKEND:
+[ ] No startup errors
+[ ] GET /api/cv/{id} returns html_content field
+[ ] Scan results API returns html fields
+[ ] No Python errors
+
+FRONTEND:
+[ ] No console errors
+[ ] CV Optimizer works normally
+[ ] Existing functionality preserved
+
+═══════════════════════════════════════════════════════════════
+PHASE 1 STATUS
+═══════════════════════════════════════════════════════════════
+
+All checks passed: [ YES / NO ]
+
+If NO, list issues:
+1. [issue]
+2. [issue]
+
+If YES:
+✅ PHASE 1 COMPLETE — Ready for Phase 2 (mammoth integration)
+
+═══════════════════════════════════════════════════════════════
+DOCUMENTATION UPDATE
+═══════════════════════════════════════════════════════════════
+
+Update any database documentation to reflect new columns:
+
+### user_cvs Table
+| Column | Type | Description |
+|--------|------|-------------|
+| ... existing columns ... |
+| html_content | text | HTML-formatted CV for rich display (nullable) |
+
+### cv_scan_results Table
+| Column | Type | Description |
+|--------|------|-------------|
+| ... existing columns ... |
+| html_content | text | HTML original CV at scan time (nullable) |
+| fixed_html_content | text | HTML fixed CV after optimization (nullable) |

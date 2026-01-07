@@ -790,7 +790,9 @@ async def get_detailed_report(scan_id: str, token: str):
             'scan_id': scan['id'],
             'scan_date': scan['scan_date'],
             'cv_content': cv_content,  # Clean text without markers
-            'cv_content_html': cv_content_html,  # HTML-formatted with headings/bullets
+            'cv_content_html': cv_content_html,  # HTML-formatted with headings/bullets (fallback from markers)
+            'html_content': scan.get('html_content'),  # Rich HTML from original document (may be None)
+            'fixed_html_content': scan.get('fixed_html_content'),  # Rich HTML after fixes (may be None)
             'total_issues': scan['total_issues'],
             'critical_count': scan['critical_count'],
             'high_count': scan['high_count'],
