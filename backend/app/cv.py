@@ -760,13 +760,14 @@ def _filter_pdf_footers(html: str) -> str:
     import re
     
     # Remove paragraphs containing page footers
-    patterns = [
-        r'<p>[^<]*Page\s+\d+\s+of\s+\d+[^<]*</p>',  # Page 1 of 10
-        r'<p>[^<]*Page\s+\d+\s*\|[^<]*</p>',        # Page 1 | Name
-    ]
+    # Match: "Page X of Y" anywhere in a paragraph
+    html = re.sub(r'<p>[^<]*Page\s+\d+\s+of\s+\d+[^<]*</p>\n?', '', html, flags=re.IGNORECASE)
     
-    for pattern in patterns:
-        html = re.sub(pattern, '', html, flags=re.IGNORECASE)
+    # Match: lines that are ONLY "Page X of Y | text"
+    html = re.sub(r'<p>Page\s+\d+\s+of\s+\d+\s*\|[^<]*</p>\n?', '', html, flags=re.IGNORECASE)
+    
+    # Also remove from list items
+    html = re.sub(r'<li>[^<]*Page\s+\d+\s+of\s+\d+[^<]*</li>\n?', '', html, flags=re.IGNORECASE)
     
     return html
 
