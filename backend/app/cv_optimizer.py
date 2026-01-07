@@ -640,12 +640,19 @@ async def scan_cv(request: Request, scan_request: ScanRequest):
             raise HTTPException(status_code=404, detail="CV not found")
 
         cv_content = cv.get("content", "")
+        cv_html_content = cv.get("html_content")
 
         if cv_content:
             try:
                 cv_content = decrypt_text(cv_content)
             except Exception:
                 pass
+
+        if cv_html_content:
+            try:
+                cv_html_content = decrypt_text(cv_html_content)
+            except Exception:
+                cv_html_content = None
 
         if not cv_content or len(cv_content.strip()) < 50:
             cursor.close()
@@ -676,10 +683,10 @@ async def scan_cv(request: Request, scan_request: ScanRequest):
 
         cursor.execute(
             """INSERT INTO cv_scan_results 
-               (user_id, cv_id, total_issues, critical_count, high_count, medium_count, low_count, original_cv_content, issues_json, status)
-               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""",
+               (user_id, cv_id, total_issues, critical_count, high_count, medium_count, low_count, original_cv_content, html_content, issues_json, status)
+               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""",
             (str(user["id"]), scan_request.cv_id, summary['total'], summary['critical'], 
-             summary['high'], summary['medium'], summary['low'], cv_content, json.dumps(issues), 'completed')
+             summary['high'], summary['medium'], summary['low'], cv_content, cv_html_content, json.dumps(issues), 'completed')
         )
         result = cursor.fetchone()
         conn.commit()

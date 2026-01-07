@@ -1,0 +1,114 @@
+FIX PROMPT — Copy html_content During CV Scan
+
+OBJECTIVE:
+Fix the scan process to copy html_content from user_cvs to cv_scan_results.
+
+⚠️ IMPORTANT: This is a critical fix for Phase 2 to work correctly.
+
+═══════════════════════════════════════════════════════════════
+THE PROBLEM
+═══════════════════════════════════════════════════════════════
+
+When a scan is created:
+- original_cv_content is copied from user_cvs ✅
+- html_content is NOT copied ❌
+
+This means the frontend never gets the mammoth HTML with links.
+
+═══════════════════════════════════════════════════════════════
+STEP 1: FIND THE SCAN CREATION CODE
+═══════════════════════════════════════════════════════════════
+
+File: backend/app/cv_optimizer.py (or wherever scans are created)
+
+Search for:
+- INSERT INTO cv_scan_results
+- original_cv_content
+
+Find where cv_scan_results records are created.
+
+═══════════════════════════════════════════════════════════════
+STEP 2: UPDATE THE INSERT STATEMENT
+═══════════════════════════════════════════════════════════════
+
+BEFORE (something like):
+INSERT INTO cv_scan_results (
+    user_id, cv_id, original_cv_content, ...
+) VALUES (...)
+
+AFTER:
+INSERT INTO cv_scan_results (
+    user_id, cv_id, original_cv_content, html_content, ...
+) VALUES (...)
+
+Add html_content to both the column list AND the values.
+
+═══════════════════════════════════════════════════════════════
+STEP 3: GET html_content FROM user_cvs
+═══════════════════════════════════════════════════════════════
+
+When fetching the CV for scanning, also get html_content:
+
+BEFORE:
+SELECT content, ... FROM user_cvs WHERE id = cv_id
+
+AFTER:
+SELECT content, html_content, ... FROM user_cvs WHERE id = cv_id
+
+Then pass html_content to the INSERT statement.
+
+═══════════════════════════════════════════════════════════════
+STEP 4: DECRYPT html_content BEFORE STORING
+═══════════════════════════════════════════════════════════════
+
+Remember: user_cvs.html_content is ENCRYPTED
+But cv_scan_results.html_content is NOT encrypted
+
+So decrypt before storing:
+
+html_content = decrypt_text(cv_row['html_content']) if cv_row['html_content'] else None
+
+═══════════════════════════════════════════════════════════════
+STEP 5: UPDATE API RESPONSE
+═══════════════════════════════════════════════════════════════
+
+Make sure the scan results API returns html_content.
+This was done in Phase 2 Prompt 4, but verify it's working.
+
+═══════════════════════════════════════════════════════════════
+VERIFICATION
+═══════════════════════════════════════════════════════════════
+
+After fixing:
+
+1. Upload a DOCX file with links
+2. Run a new scan
+3. Check database:
+
+SELECT id, 
+       CASE WHEN html_content IS NOT NULL THEN 'HAS HTML' ELSE 'NULL' END
+FROM cv_scan_results
+ORDER BY created_at DESC
+LIMIT 1;
+
+Expected: 'HAS HTML' (not NULL!)
+
+4. View scan results - links should now be clickable
+
+═══════════════════════════════════════════════════════════════
+FILES TO MODIFY
+═══════════════════════════════════════════════════════════════
+
+1. backend/app/cv_optimizer.py - where scan is created
+   - Add html_content to SELECT from user_cvs
+   - Add html_content to INSERT into cv_scan_results
+
+Report:
+[ ] Found scan creation code at: [file:line]
+[ ] Updated SELECT to include html_content
+[ ] Updated INSERT to include html_content
+[ ] html_content is decrypted before storing
+[ ] New scan has html_content populated
+[ ] Links now work in Document View
+
+Any issues: [describe]
