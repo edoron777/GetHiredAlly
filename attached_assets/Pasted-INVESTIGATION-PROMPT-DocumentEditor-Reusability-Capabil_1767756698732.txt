@@ -1,0 +1,131 @@
+INVESTIGATION PROMPT — DocumentEditor Reusability & Capabilities
+
+OBJECTIVE:
+Verify that DocumentEditor is a reusable component that can serve 
+ALL GetHiredAlly services for styled text rendering.
+
+⚠️ IMPORTANT: Do NOT make any changes. Only investigate and report.
+
+═══════════════════════════════════════════════════════════════
+PART 1: LOCATION & EXPORT VERIFICATION
+═══════════════════════════════════════════════════════════════
+
+Questions to answer:
+
+1. Where is DocumentEditor located?
+   Expected: client/src/components/common/DocumentEditor/
+   
+2. Is it in the /common/ folder? (reusable location)
+   - YES = Good, accessible to all services
+   - NO = May need to move it
+
+3. How is it exported?
+   Show the export statement from index.ts (if exists)
+
+4. Can any service import it easily?
+   Show example import path from different locations
+
+═══════════════════════════════════════════════════════════════
+PART 2: PROPS INTERFACE — FULL DEFINITION
+═══════════════════════════════════════════════════════════════
+
+Show the COMPLETE props interface for DocumentEditor:
+
+1. Copy the full interface/type definition
+2. List ALL props with their types
+3. Which props are required vs optional?
+
+═══════════════════════════════════════════════════════════════
+PART 3: STYLING CAPABILITIES CHECK
+═══════════════════════════════════════════════════════════════
+
+Verify DocumentEditor supports these styling features:
+
+| Feature | Supported? | How? |
+|---------|------------|------|
+| Bold text | ? | |
+| Italic text | ? | |
+| Underline | ? | |
+| Font size | ? | |
+| Font type/family | ? | |
+| Spacing/margins | ? | |
+| Paragraphs | ? | |
+| Bullet lists | ? | |
+| Numbered lists | ? | |
+| Links/URLs | ? | |
+| Background color | ? | |
+
+═══════════════════════════════════════════════════════════════
+PART 4: URL/LINK HANDLING — CRITICAL
+═══════════════════════════════════════════════════════════════
+
+The user reported problems with URL imports. Investigate:
+
+1. How does DocumentEditor handle URLs/links in content?
+
+2. Search for link-related code in DocumentEditor:
+   - Look for: <a>, href, link, url
+   - Is there special handling for links?
+
+3. Does ReactMarkdown (used internally) handle links?
+   - Is there a custom link renderer?
+
+4. What happens when content contains a URL like:
+   "Contact: https://linkedin.com/in/username"
+   - Is it rendered as clickable link?
+   - Is the URL preserved or broken?
+
+═══════════════════════════════════════════════════════════════
+PART 5: BACKGROUND COLOR SUPPORT
+═══════════════════════════════════════════════════════════════
+
+Check if DocumentEditor supports container background color:
+
+1. Is there a backgroundColor prop?
+2. Is there a className prop for custom styling?
+3. Can the container be styled externally?
+
+For SideBySide we need:
+- Left panel: Light red/pink background (original/before)
+- Right panel: Light green background (fixed/after)
+
+═══════════════════════════════════════════════════════════════
+PART 6: CURRENT USAGE ANALYSIS
+═══════════════════════════════════════════════════════════════
+
+Where is DocumentEditor currently used?
+
+Search the codebase for:
+- import DocumentEditor
+- import { DocumentEditor }
+- <DocumentEditor
+
+List all files that use it.
+
+═══════════════════════════════════════════════════════════════
+PART 7: GAPS & LIMITATIONS
+═══════════════════════════════════════════════════════════════
+
+Based on your investigation, identify:
+
+1. What styling features are MISSING?
+2. What features need improvement?
+3. Is the component truly reusable or tightly coupled to CV Optimizer?
+
+═══════════════════════════════════════════════════════════════
+OUTPUT FORMAT
+═══════════════════════════════════════════════════════════════
+
+### Location & Export
+- Path: [actual path]
+- In /common/ folder: [YES/NO]
+- Export type: [default/named/both]
+- Import example: [show import statement]
+
+### Props Interface
+[Copy full interface here]
+
+### Styling Capabilities
+| Feature | Supported | Implementation |
+|---------|-----------|----------------|
+| Bold |
