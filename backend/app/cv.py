@@ -367,7 +367,18 @@ def _convert_markers_to_html(text_with_markers: str) -> str:
         
         # Section headers by text content
         line_lower = line.lower().strip()
-        if line_lower in section_headers:
+        # Remove trailing colon or common suffixes for matching
+        line_clean = line_lower.rstrip(':').strip()
+        
+        # Check exact match OR if line starts with a section header
+        is_section_header = (
+            line_clean in section_headers or
+            any(line_clean.startswith(h + ' ') for h in section_headers) or
+            any(line_clean == h + ' me' for h in ['about']) or  # "About Me"
+            any(line_clean.startswith(h + ':') for h in section_headers)
+        )
+        
+        if is_section_header:
             if in_list:
                 html_lines.append('</ul>')
                 in_list = False
