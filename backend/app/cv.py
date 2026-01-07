@@ -264,83 +264,155 @@ def _escape_html(text: str) -> str:
 
 def _convert_markers_to_html(text_with_markers: str) -> str:
     """
-    Convert text with [MARKERS] to HTML.
+    Convert text to HTML, detecting structure by markers OR patterns.
     
-    Converts:
-    - [H1] text → <h1>text</h1>
-    - [H2] text → <h2>text</h2>
-    - [BOLD] text → <strong>text</strong> (until end of line)
-    - [BULLET] text → <li>text</li>
-    - Plain paragraphs → <p>text</p>
-    
-    Args:
-        text_with_markers: Text containing [H1], [H2], [BOLD], [BULLET] markers
-        
-    Returns:
-        HTML string
+    Works with:
+    - Explicit markers: [H1], [H2], [BOLD], [BULLET]
+    - Pattern detection: section headers, bullets, first line as name
     """
+    import re
+    
     if not text_with_markers:
         return ""
+    
+    # Common CV section headers (lowercase for matching)
+    section_headers = {
+        'about', 'summary', 'profile', 'objective',
+        'experience', 'work experience', 'professional experience', 'employment',
+        'education', 'academic background',
+        'skills', 'technical skills', 'core competencies', 'competencies',
+        'certifications', 'certificates', 'licenses',
+        'projects', 'key projects',
+        'achievements', 'accomplishments', 'awards', 'honors',
+        'languages', 'language skills',
+        'interests', 'hobbies',
+        'references', 'contact', 'contact information',
+        'publications', 'training', 'volunteer', 'volunteering',
+        'professional summary', 'career summary', 'executive summary',
+        'core expertise', 'areas of expertise', 'expertise',
+        'career highlights', 'highlights', 'key achievements',
+        'professional affiliations', 'memberships',
+    }
     
     lines = text_with_markers.split('\n')
     html_lines = []
     in_list = False
+    first_content_line = True
     
     for line in lines:
+        original_line = line
         line = line.strip()
+        
         if not line:
             if in_list:
                 html_lines.append('</ul>')
                 in_list = False
-            html_lines.append('')
             continue
         
-        # Handle [H1] headers
+        # === EXPLICIT MARKERS (highest priority) ===
+        
         if line.startswith('[H1]'):
             if in_list:
                 html_lines.append('</ul>')
                 in_list = False
             content = line[4:].strip()
             html_lines.append(f'<h1>{_escape_html(content)}</h1>')
+            first_content_line = False
+            continue
         
-        # Handle [H2] headers
-        elif line.startswith('[H2]'):
+        if line.startswith('[H2]'):
             if in_list:
                 html_lines.append('</ul>')
                 in_list = False
             content = line[4:].strip()
             html_lines.append(f'<h2>{_escape_html(content)}</h2>')
+            first_content_line = False
+            continue
         
-        # Handle [BOLD] text
-        elif line.startswith('[BOLD]'):
+        if line.startswith('[BOLD]'):
             if in_list:
                 html_lines.append('</ul>')
                 in_list = False
             content = line[6:].strip()
             html_lines.append(f'<p><strong>{_escape_html(content)}</strong></p>')
+            first_content_line = False
+            continue
         
-        # Handle [BULLET] items
-        elif line.startswith('[BULLET]'):
+        if line.startswith('[BULLET]'):
             if not in_list:
                 html_lines.append('<ul>')
                 in_list = True
             content = line[8:].strip()
             html_lines.append(f'<li>{_escape_html(content)}</li>')
+            first_content_line = False
+            continue
         
-        # Handle regular paragraphs
-        else:
+        # === PATTERN DETECTION (when no markers) ===
+        
+        # First content line = likely name/title → H1
+        if first_content_line:
             if in_list:
                 html_lines.append('</ul>')
                 in_list = False
-            html_lines.append(f'<p>{_escape_html(line)}</p>')
+            # Check if it looks like a header line (not too long, has name-like pattern)
+            if len(line) < 100 and '|' in line:
+                # Contact line with separators - make it header
+                html_lines.append(f'<h1>{_escape_html(line)}</h1>')
+            elif len(line) < 60:
+                html_lines.append(f'<h1>{_escape_html(line)}</h1>')
+            else:
+                html_lines.append(f'<p>{_escape_html(line)}</p>')
+            first_content_line = False
+            continue
+        
+        # Section headers by text content
+        line_lower = line.lower().strip()
+        if line_lower in section_headers:
+            if in_list:
+                html_lines.append('</ul>')
+                in_list = False
+            html_lines.append(f'<h2>{_escape_html(line)}</h2>')
+            continue
+        
+        # ALL CAPS short lines = likely headers
+        if line.isupper() and 3 < len(line) < 40:
+            if in_list:
+                html_lines.append('</ul>')
+                in_list = False
+            html_lines.append(f'<h2>{_escape_html(line)}</h2>')
+            continue
+        
+        # Bullet patterns
+        bullet_match = re.match(r'^[•●○◦▪▸►‣⁃\-\*]\s*(.+)$', line)
+        if bullet_match:
+            if not in_list:
+                html_lines.append('<ul>')
+                in_list = True
+            content = bullet_match.group(1)
+            html_lines.append(f'<li>{_escape_html(content)}</li>')
+            continue
+        
+        # Numbered list patterns
+        numbered_match = re.match(r'^(\d+[\.\)]\s*)(.+)$', line)
+        if numbered_match:
+            if not in_list:
+                html_lines.append('<ul>')
+                in_list = True
+            content = numbered_match.group(2)
+            html_lines.append(f'<li>{_escape_html(content)}</li>')
+            continue
+        
+        # Regular paragraph
+        if in_list:
+            html_lines.append('</ul>')
+            in_list = False
+        html_lines.append(f'<p>{_escape_html(line)}</p>')
     
     # Close any open list
     if in_list:
         html_lines.append('</ul>')
     
     html = '\n'.join(html_lines)
-    
-    # Wrap in container div
     html = f'<div class="cv-html-content">{html}</div>'
     
     return html
