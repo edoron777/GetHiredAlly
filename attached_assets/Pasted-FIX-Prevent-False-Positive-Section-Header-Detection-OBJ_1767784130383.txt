@@ -1,0 +1,52 @@
+FIX — Prevent False Positive Section Header Detection
+
+OBJECTIVE:
+Fix _is_section_header() in section_extractor.py to reject continuation lines
+that falsely match section keywords.
+
+═══════════════════════════════════════════════════════════════
+THE BUG
+═══════════════════════════════════════════════════════════════
+
+Line 41: "technologies) adopted as multi-year roadmap"
+- Normalized: "technologies adopted as multiyear roadmap"
+- Matches SKILLS keyword "technologies" via startswith()
+- But this is a CONTINUATION line, not a section header!
+
+═══════════════════════════════════════════════════════════════
+FIX: Update _is_section_header() function
+═══════════════════════════════════════════════════════════════
+
+File: backend/common/detection/section_extractor.py
+Function: _is_section_header()
+
+Add these validation checks BEFORE keyword matching:
+
+def _is_section_header(line: str) -> Tuple[bool, Optional[str]]:
+    """Check if line is a section header."""
+    
+    if not line or not line.strip():
+        return False, None
+    
+    original_line = line.strip()
+    
+    # NEW CHECK 1: Reject lines starting with punctuation (continuation lines)
+    if original_line[0] in ')]},.;:!?-–—':
+        return False, None
+    
+    # NEW CHECK 2: Reject lines that are too long (headers are usually short)
+    if len(original_line) > 60:
+        return False, None
+    
+    # NEW CHECK 3: Reject lines with too many words (headers are 1-4 words)
+    word_count = len(original_line.split())
+    if word_count > 5:
+        return False, None
+    
+    # NEW CHECK 4: Reject if line contains sentence-like patterns
+    # (headers don't usually have verbs like "adopted", "achieved", etc.)
+    sentence_indicators = ['adopted', 'achieved', 'implemented', 'developed', 
+                          'managed', 'led', 'created', 'designed', 'built',
+                          'the', 'and', 'for', 'with', 'from', 'into']
+    normalized_lower = original_line.lower()
+    for i

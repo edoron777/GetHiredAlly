@@ -183,7 +183,40 @@ def _is_section_header(line: str) -> Tuple[bool, Optional[str]]:
     
     IMPORTANT: Sub-categories (like "AI & Product Management" within Certifications)
     are NOT section headers and should return False.
+    
+    Also rejects continuation lines that falsely match keywords.
     """
+    if not line or not line.strip():
+        return False, None
+    
+    original_line = line.strip()
+    
+    # CHECK 1: Reject lines starting with punctuation (continuation lines)
+    if original_line[0] in ')]},.;:!?-–—':
+        logger.debug(f"[SECTION_HEADER] Rejecting continuation line (starts with punctuation): {original_line[:40]}")
+        return False, None
+    
+    # CHECK 2: Reject lines that are too long (headers are usually short)
+    if len(original_line) > 60:
+        logger.debug(f"[SECTION_HEADER] Rejecting long line (>{len(original_line)} chars): {original_line[:40]}")
+        return False, None
+    
+    # CHECK 3: Reject lines with too many words (headers are 1-4 words typically)
+    word_count = len(original_line.split())
+    if word_count > 5:
+        logger.debug(f"[SECTION_HEADER] Rejecting line with {word_count} words: {original_line[:40]}")
+        return False, None
+    
+    # CHECK 4: Reject if line contains sentence-like patterns
+    sentence_indicators = ['adopted', 'achieved', 'implemented', 'developed', 
+                          'managed', 'led', 'created', 'designed', 'built',
+                          'using', 'including', 'such as', 'resulting']
+    normalized_lower = original_line.lower()
+    for indicator in sentence_indicators:
+        if indicator in normalized_lower:
+            logger.debug(f"[SECTION_HEADER] Rejecting sentence-like line (contains '{indicator}'): {original_line[:40]}")
+            return False, None
+    
     normalized = _normalize_header(line)
     
     if not normalized or len(normalized) > 50:
