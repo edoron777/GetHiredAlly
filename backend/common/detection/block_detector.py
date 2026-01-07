@@ -319,6 +319,13 @@ def detect_cv_blocks(cv_text: str) -> CVBlockStructure:
     import time
     start_time = time.time()
     
+    # DIAGNOSTIC: Log input text
+    print(f"[BLOCK DETECTOR] Input text length: {len(cv_text)}")
+    print(f"[BLOCK DETECTOR] First 500 chars:\n{cv_text[:500]}")
+    print(f"[BLOCK DETECTOR] Lines 1-20:")
+    for i, line in enumerate(cv_text.split('\n')[:20], 1):
+        print(f"  {i}: {line[:80]}")
+    
     # Check for structure markers and extract their info BEFORE stripping
     marker_info = extract_marker_info(cv_text)
     has_markers = len(marker_info) > 0
