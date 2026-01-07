@@ -1,0 +1,123 @@
+QUICK INVESTIGATION — Why Links Not Displaying Correctly
+
+OBJECTIVE:
+Find why <a href="..."> links from mammoth HTML are not 
+clickable/visible in the CV Optimizer display.
+
+⚠️ IMPORTANT: Do NOT make any changes. Only investigate and report.
+
+═══════════════════════════════════════════════════════════════
+PART 1: CHECK _post_process_html() FUNCTION
+═══════════════════════════════════════════════════════════════
+
+File: backend/app/cv.py
+Function: _post_process_html()
+
+Show the complete function code.
+
+Questions:
+1. Does it modify or remove <a> tags?
+2. Does the regex cleaning break links?
+3. Is there any sanitization that strips links?
+
+═══════════════════════════════════════════════════════════════
+PART 2: CHECK DocumentEditor LINK RENDERING
+═══════════════════════════════════════════════════════════════
+
+File: client/src/components/common/DocumentEditor/
+
+Questions:
+1. How does DocumentEditor render HTML content?
+   - dangerouslySetInnerHTML?
+   - ReactMarkdown?
+   - Custom renderer?
+
+2. If using ReactMarkdown, show the link component config:
+   - Is there a custom 'a' component?
+   - Are links converted to plain text?
+
+3. If using dangerouslySetInnerHTML, are links sanitized out?
+
+═══════════════════════════════════════════════════════════════
+PART 3: CHECK WordRenderer or HTMLRenderer
+═══════════════════════════════════════════════════════════════
+
+Look for any renderer that handles HTML content.
+
+Files to check:
+- DocumentEditor/renderers/
+- WordRenderer.tsx
+- HtmlRenderer.tsx
+- MarkdownRenderer.tsx
+
+Show how each renders <a> tags.
+
+═══════════════════════════════════════════════════════════════
+PART 4: CHECK CSS FOR LINK STYLING
+═══════════════════════════════════════════════════════════════
+
+Search for CSS that might hide or disable links:
+
+1. Look for:
+   - a { pointer-events: none }
+   - a { display: none }
+   - a { color: inherit; text-decoration: none }
+   - .cv-html-content a { ... }
+
+2. Check these files:
+   - DocumentEditorStyles.css
+   - Any global CSS files
+
+═══════════════════════════════════════════════════════════════
+PART 5: CHECK WHAT FRONTEND RECEIVES
+═══════════════════════════════════════════════════════════════
+
+1. In browser DevTools, inspect the CV display area
+2. Look at the actual HTML being rendered
+3. Is the <a> tag present in the DOM?
+4. If present, what styles are applied?
+
+═══════════════════════════════════════════════════════════════
+PART 6: CHECK IF html_content IS BEING USED
+═══════════════════════════════════════════════════════════════
+
+CRITICAL CHECK:
+The frontend might still be using plain text instead of html_content!
+
+1. In ResultsPage.tsx, how is cvContent set?
+2. Is it using cv_content (plain text) or html_content?
+3. Does DocumentEditor receive the HTML or plain text?
+
+Show the code where content is passed to DocumentEditor.
+
+═══════════════════════════════════════════════════════════════
+OUTPUT FORMAT
+═══════════════════════════════════════════════════════════════
+
+### _post_process_html()
+```python
+[show full function]
+```
+Modifies links: [YES/NO]
+
+### DocumentEditor Rendering
+Method: [dangerouslySetInnerHTML / ReactMarkdown / Other]
+Link handling: [describe]
+
+### CSS Issues
+Link-hiding styles found: [YES/NO]
+If YES: [show the CSS]
+
+### Frontend Content Source
+Using html_content: [YES/NO]
+If NO, this is the problem!
+
+### DOM Inspection
+<a> tag present: [YES/NO]
+If YES, what styles: [describe]
+
+### ROOT CAUSE
+[Describe what's preventing links from displaying]
+
+### RECOMMENDED FIX
+[What needs to change]
