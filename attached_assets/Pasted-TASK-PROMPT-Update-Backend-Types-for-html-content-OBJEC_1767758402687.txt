@@ -1,0 +1,139 @@
+TASK PROMPT — Update Backend Types for html_content
+
+OBJECTIVE:
+Update backend Pydantic models and response types to include 
+the new html_content fields.
+
+⚠️ MANDATORY RULES:
+- NO IMPROVISATION — Only modify what is specified
+- BACKWARD COMPATIBLE — All existing code must continue working
+- NEW FIELDS OPTIONAL — All new fields must have default None
+
+═══════════════════════════════════════════════════════════════
+STEP 1: FIND PYDANTIC MODELS
+═══════════════════════════════════════════════════════════════
+
+Search for Pydantic models related to CV:
+
+1. Look in: backend/app/cv.py
+2. Look in: backend/app/models/ (if exists)
+3. Look in: backend/app/schemas/ (if exists)
+
+Find any models/classes that represent:
+- CV data
+- CV scan results
+- API responses for CV endpoints
+
+═══════════════════════════════════════════════════════════════
+STEP 2: UPDATE CV RESPONSE MODEL
+═══════════════════════════════════════════════════════════════
+
+If a CV response model exists, add html_content field:
+
+# Example - adjust to actual model name/location
+class CVResponse(BaseModel):
+    id: str
+    filename: str
+    content: Optional[str] = None
+    html_content: Optional[str] = None  # NEW - Add this field
+    # ... other existing fields ...
+
+═══════════════════════════════════════════════════════════════
+STEP 3: UPDATE SCAN RESULTS RESPONSE MODEL
+═══════════════════════════════════════════════════════════════
+
+If a scan results response model exists, add html fields:
+
+# Example - adjust to actual model name/location
+class ScanResultResponse(BaseModel):
+    id: int
+    original_cv_content: Optional[str] = None
+    html_content: Optional[str] = None           # NEW - Add this field
+    fixed_cv_content: Optional[str] = None
+    fixed_html_content: Optional[str] = None     # NEW - Add this field
+    # ... other existing fields ...
+
+═══════════════════════════════════════════════════════════════
+STEP 4: UPDATE get_cv() FUNCTION
+═══════════════════════════════════════════════════════════════
+
+File: backend/app/cv.py
+Function: get_cv() (around line 521)
+
+Update the SELECT query to include html_content:
+
+BEFORE:
+SELECT id, filename, content, ... FROM user_cvs WHERE id = ...
+
+AFTER:
+SELECT id, filename, content, html_content, ... FROM user_cvs WHERE id = ...
+
+Update the return dictionary to include html_content:
+
+return {
+    "id": row["id"],
+    "filename": row["filename"],
+    "content": decrypted_content,
+    "html_content": decrypt_text(row["html_content"]) if row["html_content"] else None,  # NEW
+    # ... other fields ...
+}
+
+═══════════════════════════════════════════════════════════════
+STEP 5: UPDATE SCAN RESULTS API
+═══════════════════════════════════════════════════════════════
+
+Find where cv_scan_results are returned to frontend.
+File: backend/app/cv_optimizer.py (or similar)
+
+Update SELECT query to include new columns:
+
+BEFORE:
+SELECT id, original_cv_content, fixed_cv_content, ... 
+
+AFTER:
+SELECT id, original_cv_content, html_content, fixed_cv_content, fixed_html_content, ...
+
+Update return dictionary:
+
+return {
+    "original_cv_content": row["original_cv_content"],
+    "html_content": row["html_content"],              # NEW
+    "fixed_cv_content": row["fixed_cv_content"],
+    "fixed_html_content": row["fixed_html_content"],  # NEW
+    # ... other fields ...
+}
+
+═══════════════════════════════════════════════════════════════
+STEP 6: DO NOT MODIFY UPLOAD LOGIC YET
+═══════════════════════════════════════════════════════════════
+
+⚠️ IMPORTANT: Do NOT modify upload_cv_for_scan() in this phase.
+
+The HTML extraction (mammoth integration) will be added in Phase 2.
+For now, we only:
+- Add database columns ✅
+- Add fields to response models ✅
+- Return null for html fields (they're not populated yet)
+
+═══════════════════════════════════════════════════════════════
+VERIFICATION CHECKLIST
+═══════════════════════════════════════════════════════════════
+
+After completing changes:
+
+[ ] Backend starts without errors
+[ ] GET /api/cv/{id} returns response with html_content field (value: null)
+[ ] Scan results API returns html_content and fixed_html_content (values: null)
+[ ] No TypeScript/Python errors
+[ ] Existing functionality unchanged
+
+═══════════════════════════════════════════════════════════════
+FILES MODIFIED
+═══════════════════════════════════════════════════════════════
+
+List all files you modified:
+1. [file path] - [what was changed]
+2. [file path] - [what was changed]
+...
+
+Report any issues encountered.
