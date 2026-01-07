@@ -1,0 +1,85 @@
+INVESTIGATION — Section Detection Logic Analysis
+
+OBJECTIVE:
+Understand why section detection is creating wrong sections.
+DO NOT FIX ANYTHING. ONLY INVESTIGATE AND REPORT.
+
+═══════════════════════════════════════════════════════════════
+TASK 1: Print the EXACT text going into detection
+═══════════════════════════════════════════════════════════════
+
+File: backend/services/cv_content_service.py
+Function: get_for_detection()
+
+Add this BEFORE the return statement:
+
+    # DEBUG: Save marked text to file for analysis
+    with open('/tmp/marked_text_debug.txt', 'w') as f:
+        f.write(marked_text)
+    print(f"[DEBUG] Saved marked text to /tmp/marked_text_debug.txt")
+
+Then:
+1. Upload a PDF
+2. Click Section Explorer
+3. Read and show me the contents of /tmp/marked_text_debug.txt
+   (First 200 lines)
+
+═══════════════════════════════════════════════════════════════
+TASK 2: Show section_extractor.py logic
+═══════════════════════════════════════════════════════════════
+
+File: backend/common/detection/section_extractor.py
+
+Find and report:
+1. What patterns/keywords are used to detect section headers?
+2. Is there a list like SECTION_HEADERS or similar?
+3. How does it decide where a section starts and ends?
+
+Show the relevant code sections.
+
+═══════════════════════════════════════════════════════════════
+TASK 3: Show how block_detector uses markers
+═══════════════════════════════════════════════════════════════
+
+File: backend/common/detection/block_detector.py
+
+Find and report:
+1. How does it use [H1], [H2], [BOLD], [BULLET] markers?
+2. Does it treat ALL [BOLD] text as section headers?
+3. What confidence scores does it assign?
+
+Show the relevant code.
+
+═══════════════════════════════════════════════════════════════
+TASK 4: Check _html_to_marked_text output
+═══════════════════════════════════════════════════════════════
+
+File: backend/app/cv.py
+Function: _html_to_marked_text()
+
+Show me the FULL function code.
+
+Question: Is it marking ALL <strong> tags as [BOLD]?
+This might cause sub-headers like "Core Expertise" to look like 
+section headers.
+
+═══════════════════════════════════════════════════════════════
+OUTPUT FORMAT
+═══════════════════════════════════════════════════════════════
+
+## TASK 1: Marked Text Sample
+[First 200 lines of the marked text]
+
+## TASK 2: Section Extractor Logic
+[Code and explanation]
+
+## TASK 3: Block Detector Marker Usage
+[Code and explanation]
+
+## TASK 4: _html_to_marked_text Function
+[Full function code]
+
+## ANALYSIS
+Based on investigation:
+- What is causing wrong section detection?
+- What patterns are being misinterpreted?

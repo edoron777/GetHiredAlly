@@ -125,6 +125,9 @@ class CVContentService:
             print(f"[CVContentService.get_for_detection] Regenerated: {len(marked_text)} chars")
             print(f"[CVContentService.get_for_detection] Has [H1]: {'[H1]' in marked_text}")
             print(f"[CVContentService.get_for_detection] Has [BULLET]: {'[BULLET]' in marked_text}")
+            with open('/tmp/marked_text_debug.txt', 'w') as f:
+                f.write(marked_text)
+            print(f"[DEBUG] Saved marked text to /tmp/marked_text_debug.txt")
             return marked_text
         
         print(f"[CVContentService.get_for_detection] FALLBACK to cv_content")
