@@ -749,12 +749,39 @@ def _inject_links_into_html(html: str, links: list) -> str:
     return html
 
 
+def _filter_pdf_footers(html: str) -> str:
+    """
+    Remove common PDF footer patterns from HTML.
+    
+    Removes:
+    - "Page X of Y" patterns
+    - "Page X | Name" patterns
+    """
+    import re
+    
+    # Remove paragraphs containing page footers
+    patterns = [
+        r'<p>[^<]*Page\s+\d+\s+of\s+\d+[^<]*</p>',  # Page 1 of 10
+        r'<p>[^<]*Page\s+\d+\s*\|[^<]*</p>',        # Page 1 | Name
+    ]
+    
+    for pattern in patterns:
+        html = re.sub(pattern, '', html, flags=re.IGNORECASE)
+    
+    return html
+
+
 def _extract_pdf_to_html(file_content: bytes) -> tuple:
     """
     Extract both plain text AND HTML from a PDF file.
     
-    Uses existing marker extraction for text, then converts to HTML.
-    Also extracts PDF hyperlinks and adds them to HTML.
+    Uses pymupdf4llm for high-quality extraction with proper:
+    - Bold detection
+    - Bullet lists
+    - Header detection
+    - Reading order
+    
+    Falls back to old method if pymupdf4llm fails.
     
     Args:
         file_content: Raw bytes of the PDF file
@@ -762,35 +789,23 @@ def _extract_pdf_to_html(file_content: bytes) -> tuple:
     Returns:
         tuple: (plain_text, html_content)
     """
+    # Try the new pymupdf4llm method first
+    plain_text, md_text = _extract_pdf_with_pymupdf4llm(file_content)
+    
+    if md_text:
+        # Convert Markdown to HTML
+        html_content = _markdown_to_html(md_text)
+        
+        # Filter out page footers from HTML
+        html_content = _filter_pdf_footers(html_content)
+        
+        logger.info(f"[PDF] Generated HTML: {len(html_content)} chars")
+        return (plain_text, html_content)
+    
+    # Fallback: use old marker-based method
+    logger.info("[PDF] Using fallback marker-based extraction")
     plain_text = _extract_pdf_with_markers(file_content, preserve_markers=True)
-    
-    # DEBUG: Check what markers exist in extracted text
-    logger.info(f"[PDF DEBUG] Plain text length: {len(plain_text)}")
-    logger.info(f"[PDF DEBUG] First 500 chars: {plain_text[:500]}")
-    logger.info(f"[PDF DEBUG] Contains [H1]: {'[H1]' in plain_text}")
-    logger.info(f"[PDF DEBUG] Contains [H2]: {'[H2]' in plain_text}")
-    logger.info(f"[PDF DEBUG] Contains [BOLD]: {'[BOLD]' in plain_text}")
-    logger.info(f"[PDF DEBUG] Contains [BULLET]: {'[BULLET]' in plain_text}")
-    
-    html_content = None
-    try:
-        html_content = _convert_markers_to_html(plain_text)
-        
-        # DEBUG: Check HTML output
-        logger.info(f"[PDF DEBUG] HTML length: {len(html_content) if html_content else 0}")
-        logger.info(f"[PDF DEBUG] HTML first 500 chars: {html_content[:500] if html_content else 'None'}")
-        
-        links = _extract_pdf_links(file_content)
-        logger.info(f"[PDF LINKS] Found {len(links)} links:")
-        for link in links:
-            logger.info(f"[PDF LINKS]   Text: '{link['text']}' → URL: {link['url']}")
-        if links:
-            html_content = _inject_links_into_html(html_content, links)
-            logger.info(f"[PDF] Injected {len(links)} links into HTML")
-        
-    except Exception as e:
-        logger.warning(f"[PDF] HTML conversion failed: {e}")
-        html_content = None
+    html_content = _convert_markers_to_html(plain_text)
     
     return (plain_text, html_content)
 

@@ -1,0 +1,74 @@
+VERIFICATION — pymupdf4llm Integration Complete
+
+OBJECTIVE:
+Test the new PDF extraction end-to-end.
+
+═══════════════════════════════════════════════════════════════
+STEP 1: Upload PDF
+═══════════════════════════════════════════════════════════════
+
+1. Go to CV Optimizer
+2. Upload a PDF CV
+3. Click "Start Scan"
+
+═══════════════════════════════════════════════════════════════
+STEP 2: Check Console Logs
+═══════════════════════════════════════════════════════════════
+
+In Replit console, you should see:
+[PDF] pymupdf4llm extracted XXXX chars markdown, XXXX chars plain
+[PDF] Generated HTML: XXXX chars
+
+If you see "[PDF] Using fallback" there's an issue.
+
+═══════════════════════════════════════════════════════════════
+STEP 3: Check Database
+═══════════════════════════════════════════════════════════════
+
+Run SQL:
+SELECT LEFT(html_content, 1000) as html_preview
+FROM cv_scan_results
+ORDER BY created_at DESC
+LIMIT 1;
+
+Expected to see:
+- <strong>Bold text</strong>
+- <ul><li>Bullet items</li></ul>
+- <h1> or <h2> headers
+
+═══════════════════════════════════════════════════════════════
+STEP 4: Visual Check
+═══════════════════════════════════════════════════════════════
+
+In Document View:
+[ ] Headers are styled (larger, bold)
+[ ] Bold text is bold
+[ ] Bullets show as proper bullet list
+[ ] No stray "•" characters
+[ ] No "Page X of Y" footers
+[ ] Overall layout matches PDF structure
+
+═══════════════════════════════════════════════════════════════
+STEP 5: Compare Before/After
+═══════════════════════════════════════════════════════════════
+
+| Feature | OLD (markers) | NEW (pymupdf4llm) |
+|---------|---------------|-------------------|
+| Bold text | ? | ? |
+| Bullets | ? | ? |
+| Headers | ? | ? |
+| Reading order | ? | ? |
+| Overall | ? | ? |
+
+═══════════════════════════════════════════════════════════════
+COMPLETION STATUS
+═══════════════════════════════════════════════════════════════
+
+All checks passed: [ YES / NO ]
+
+If YES:
+✅ PHASE 3 COMPLETE — pymupdf4llm integrated successfully!
+
+If NO, list issues:
+1. [issue]
+2. [issue]
