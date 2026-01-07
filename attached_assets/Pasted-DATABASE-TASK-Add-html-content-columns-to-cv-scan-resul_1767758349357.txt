@@ -1,0 +1,93 @@
+DATABASE TASK — Add html_content columns to cv_scan_results
+
+OBJECTIVE:
+Add html_content and fixed_html_content columns to cv_scan_results.
+
+⚠️ EXECUTE IN SUPABASE SQL EDITOR (not through Replit)
+
+═══════════════════════════════════════════════════════════════
+PRE-FLIGHT CHECK
+═══════════════════════════════════════════════════════════════
+
+Before running the migration, verify columns don't exist:
+
+SELECT column_name 
+FROM information_schema.columns 
+WHERE table_name = 'cv_scan_results' 
+AND column_name IN ('html_content', 'fixed_html_content');
+
+Expected result: 0 rows
+
+If columns already exist, SKIP this migration.
+
+═══════════════════════════════════════════════════════════════
+MIGRATION SQL
+═══════════════════════════════════════════════════════════════
+
+-- ============================================================
+-- Migration: Add html_content columns to cv_scan_results
+-- Date: January 7, 2026
+-- Purpose: Store HTML-formatted CV content for rich display
+-- ============================================================
+
+-- Add html_content column (original CV as HTML)
+ALTER TABLE cv_scan_results
+ADD COLUMN IF NOT EXISTS html_content text;
+
+-- Add fixed_html_content column (fixed CV as HTML)
+ALTER TABLE cv_scan_results
+ADD COLUMN IF NOT EXISTS fixed_html_content text;
+
+-- Add comments explaining the columns
+COMMENT ON COLUMN cv_scan_results.html_content IS 
+'HTML-formatted original CV content at scan time. For rich display of before state.';
+
+COMMENT ON COLUMN cv_scan_results.fixed_html_content IS 
+'HTML-formatted fixed CV content after optimization. For rich display of after state.';
+
+═══════════════════════════════════════════════════════════════
+POST-MIGRATION VERIFICATION
+═══════════════════════════════════════════════════════════════
+
+After running migration, verify:
+
+1. Columns exist:
+SELECT column_name, data_type, is_nullable
+FROM information_schema.columns 
+WHERE table_name = 'cv_scan_results' 
+AND column_name IN ('html_content', 'fixed_html_content')
+ORDER BY column_name;
+
+Expected: 2 rows:
+- (fixed_html_content, text, YES)
+- (html_content, text, YES)
+
+2. Existing data unaffected:
+SELECT id, 
+       CASE WHEN original_cv_content IS NOT NULL THEN 'HAS CONTENT' ELSE 'NULL' END as original_status,
+       CASE WHEN html_content IS NOT NULL THEN 'HAS HTML' ELSE 'NULL' END as html_status,
+       CASE WHEN fixed_html_content IS NOT NULL THEN 'HAS FIXED HTML' ELSE 'NULL' END as fixed_html_status
+FROM cv_scan_results
+LIMIT 5;
+
+Expected: All rows show 'NULL' for html columns (not populated yet)
+
+3. RLS still working:
+SELECT policyname, cmd
+FROM pg_policies 
+WHERE tablename = 'cv_scan_results';
+
+Expected: Same policies as before (no changes needed)
+
+═══════════════════════════════════════════════════════════════
+REPORT RESULTS
+═══════════════════════════════════════════════════════════════
+
+Report:
+- [ ] Pre-flight check passed (columns didn't exist)
+- [ ] Migration SQL executed successfully
+- [ ] Both columns verified to exist
+- [ ] Existing data unaffected
+- [ ] RLS policies unchanged
+
+Any errors encountered: [describe]
