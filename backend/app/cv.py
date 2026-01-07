@@ -933,47 +933,42 @@ def _filter_markdown_footers(md_text: str) -> str:
     return '\n'.join(filtered_lines)
 
 
-def _extract_pdf_to_html(file_content: bytes) -> tuple:
+def _extract_pdf_to_html(file_content: bytes) -> tuple[str, str, str]:
     """
-    Extract both plain text AND HTML from a PDF file.
+    Extract text and HTML from PDF using pymupdf4llm.
     
-    Uses pymupdf4llm for high-quality extraction with proper:
-    - Bold detection
-    - Bullet lists
-    - Header detection
-    - Reading order
-    
-    Falls back to old method if pymupdf4llm fails.
-    
-    Args:
-        file_content: Raw bytes of the PDF file
-        
     Returns:
-        tuple: (plain_text, html_content)
+        tuple: (clean_text, html_content, marked_text)
+        - clean_text: For storage in cv_content (display to users)
+        - html_content: For storage in html_content (rich display)
+        - marked_text: For detection only (NOT stored)
     """
-    # Try the new pymupdf4llm method first
+    # Try pymupdf4llm first
     plain_text, md_text = _extract_pdf_with_pymupdf4llm(file_content)
     
     if md_text:
-        # Filter footers from BOTH markdown and plain text
+        # Filter footers from markdown first
         md_text = _filter_markdown_footers(md_text)
-        plain_text = _filter_markdown_footers(plain_text)
         
-        # Convert Markdown to HTML
+        # Generate all three outputs
         html_content = _markdown_to_html(md_text)
+        clean_text = _markdown_to_clean_text(md_text)
+        marked_text = _markdown_to_marked_text(md_text)
         
-        # Filter out page footers from HTML
-        html_content = _filter_pdf_footers(html_content)
+        print(f"[PDF] Generated: clean={len(clean_text)}, html={len(html_content)}, marked={len(marked_text)}")
         
-        logger.info(f"[PDF] Generated HTML: {len(html_content)} chars")
-        return (plain_text, html_content)
+        return (clean_text, html_content, marked_text)
     
-    # Fallback: use old marker-based method
-    logger.info("[PDF] Using fallback marker-based extraction")
-    plain_text = _extract_pdf_with_markers(file_content, preserve_markers=True)
-    html_content = _convert_markers_to_html(plain_text)
+    # Fallback to old method
+    print("[PDF] Using fallback marker-based extraction")
+    text_with_markers = _extract_pdf_with_markers(file_content, preserve_markers=True)
+    html_content = _convert_markers_to_html(text_with_markers)
     
-    return (plain_text, html_content)
+    # For fallback: text already has markers, strip for clean version
+    from common.detection.block_detector import strip_structure_markers
+    clean_text = strip_structure_markers(text_with_markers)
+    
+    return (clean_text, html_content, text_with_markers)
 
 
 def _extract_docx_with_markers(file_content: bytes, preserve_markers: bool = True) -> str:
