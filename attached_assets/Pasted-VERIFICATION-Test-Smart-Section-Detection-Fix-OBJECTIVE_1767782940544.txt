@@ -1,0 +1,96 @@
+VERIFICATION — Test Smart Section Detection Fix
+
+OBJECTIVE:
+Verify that the changes work correctly and don't break existing functionality.
+
+═══════════════════════════════════════════════════════════════
+CHECK 1: Code Syntax
+═══════════════════════════════════════════════════════════════
+
+Run: python -m py_compile backend/app/cv.py
+
+Expected: No syntax errors
+
+═══════════════════════════════════════════════════════════════
+CHECK 2: Backend Starts
+═══════════════════════════════════════════════════════════════
+
+Restart the backend server.
+
+Expected: Server starts without import errors
+
+═══════════════════════════════════════════════════════════════
+CHECK 3: Verify Constants Exist
+═══════════════════════════════════════════════════════════════
+
+Confirm in backend/app/cv.py:
+
+1. SECTION_HEADER_KEYWORDS constant exists
+2. _is_section_header_text() function exists
+3. _smart_bold_replace is used in _html_to_marked_text()
+
+Show me the relevant code sections.
+
+═══════════════════════════════════════════════════════════════
+CHECK 4: Test Detection Logic
+═══════════════════════════════════════════════════════════════
+
+Create a simple test by adding temporarily at the end of cv.py:
+
+if __name__ == "__main__":
+    # Test cases
+    test_cases = [
+        "About",           # Should be True (section)
+        "Experience",      # Should be True (section)
+        "Skills",          # Should be True (section)
+        "Citi",            # Should be False (company)
+        "Microsoft",       # Should be False (company)
+        "Core Expertise",  # Should be False (sub-header)
+        "2020 - Present",  # Should be False (date)
+    ]
+    
+    print("\n=== Section Header Detection Test ===")
+    for test in test_cases:
+        result = _is_section_header_text(test)
+        status = "✅" if result else "❌"
+        print(f"{status} '{test}' -> {result}")
+
+Run: python backend/app/cv.py
+
+Expected output:
+✅ 'About' -> True
+✅ 'Experience' -> True
+✅ 'Skills' -> True
+❌ 'Citi' -> False
+❌ 'Microsoft' -> False
+❌ 'Core Expertise' -> False
+❌ '2020 - Present' -> False
+
+After testing, REMOVE the test code (the if __name__ block).
+
+═══════════════════════════════════════════════════════════════
+CHECK 5: Console Log Verification
+═══════════════════════════════════════════════════════════════
+
+The fix includes debug logging. When Section Explorer is clicked:
+
+Expected console output:
+[_html_to_marked_text] 'About...' -> is_header=True
+[_html_to_marked_text] 'Citi...' -> is_header=False
+[_html_to_marked_text] 'Core Expertise...' -> is_header=False
+
+═══════════════════════════════════════════════════════════════
+FINAL REPORT
+═══════════════════════════════════════════════════════════════
+
+Provide summary:
+
+| Check | Status | Notes |
+|-------|--------|-------|
+| Code Syntax | ✅/❌ | |
+| Backend Starts | ✅/❌ | |
+| Constants Exist | ✅/❌ | |
+| Detection Logic | ✅/❌ | |
+
+If all checks pass, respond: "Fix verified successfully"
+If any check fails, report the error details.
