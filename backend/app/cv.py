@@ -555,7 +555,9 @@ def _extract_pdf_to_html(file_content: bytes) -> tuple:
         logger.info(f"[PDF DEBUG] HTML first 500 chars: {html_content[:500] if html_content else 'None'}")
         
         links = _extract_pdf_links(file_content)
-        logger.info(f"[PDF LINKS] Found {len(links)} links: {links}")
+        logger.info(f"[PDF LINKS] Found {len(links)} links:")
+        for link in links:
+            logger.info(f"[PDF LINKS]   Text: '{link['text']}' → URL: {link['url']}")
         if links:
             html_content = _inject_links_into_html(html_content, links)
             logger.info(f"[PDF] Injected {len(links)} links into HTML")
