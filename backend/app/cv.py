@@ -413,9 +413,21 @@ def _extract_pdf_to_html(file_content: bytes) -> tuple:
     """
     plain_text = _extract_pdf_with_markers(file_content, preserve_markers=True)
     
+    # DEBUG: Check what markers exist in extracted text
+    logger.info(f"[PDF DEBUG] Plain text length: {len(plain_text)}")
+    logger.info(f"[PDF DEBUG] First 500 chars: {plain_text[:500]}")
+    logger.info(f"[PDF DEBUG] Contains [H1]: {'[H1]' in plain_text}")
+    logger.info(f"[PDF DEBUG] Contains [H2]: {'[H2]' in plain_text}")
+    logger.info(f"[PDF DEBUG] Contains [BOLD]: {'[BOLD]' in plain_text}")
+    logger.info(f"[PDF DEBUG] Contains [BULLET]: {'[BULLET]' in plain_text}")
+    
     html_content = None
     try:
         html_content = _convert_markers_to_html(plain_text)
+        
+        # DEBUG: Check HTML output
+        logger.info(f"[PDF DEBUG] HTML length: {len(html_content) if html_content else 0}")
+        logger.info(f"[PDF DEBUG] HTML first 500 chars: {html_content[:500] if html_content else 'None'}")
         
         links = _extract_pdf_links(file_content)
         if links:
