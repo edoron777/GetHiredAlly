@@ -1,0 +1,84 @@
+INVESTIGATION PROMPT — Backend Architecture for TextStyler Integration
+
+OBJECTIVE:
+Understand the backend architecture to plan mammoth integration 
+and database schema changes for the TextStylerService project.
+
+⚠️ IMPORTANT: Do NOT make any changes. Only investigate and report.
+
+═══════════════════════════════════════════════════════════════
+PART 1: FILE UPLOAD FLOW
+═══════════════════════════════════════════════════════════════
+
+Trace the complete flow when user uploads a CV file:
+
+1. What API endpoint receives the file upload?
+   - File path: backend/app/routes/???
+   - Endpoint: POST /api/???
+
+2. What happens after upload?
+   - Where is file temporarily stored?
+   - What function processes the file?
+   - Show the function call chain
+
+3. Where does text extraction happen?
+   - Which file?
+   - Which function?
+   - Show the main extraction function signature
+
+═══════════════════════════════════════════════════════════════
+PART 2: CV.PY DETAILED ANALYSIS
+═══════════════════════════════════════════════════════════════
+
+File: backend/app/cv.py
+
+1. List ALL functions in this file with their purposes
+
+2. For DOCX extraction, show:
+   - Function name
+   - Full function code
+   - What it returns
+
+3. For PDF extraction, show:
+   - Function name  
+   - Full function code
+   - What it returns
+
+4. How is the extracted text saved to database?
+   - What function does the save?
+   - What fields are saved?
+
+═══════════════════════════════════════════════════════════════
+PART 3: DATABASE SCHEMA - COMPLETE
+═══════════════════════════════════════════════════════════════
+
+1. Show the COMPLETE schema for `user_cvs` table:
+   - All columns
+   - Data types
+   - Constraints
+   - Indexes
+
+2. Show the COMPLETE schema for `cv_scan_results` table:
+   - All columns
+   - Data types
+   - Constraints
+
+3. Are there any other tables that store CV-related content?
+
+4. How is encryption handled for cv content?
+   - What encryption method?
+   - Where is encryption/decryption done?
+
+═══════════════════════════════════════════════════════════════
+PART 4: CURRENT DEPENDENCIES
+═══════════════════════════════════════════════════════════════
+
+Check backend/requirements.txt or pyproject.toml:
+
+1. What PDF libraries are installed?
+   - PyMuPDF (fitz)?
+   - pdfplumber?
+   - PyPDF2?
+   - Other?
+
+2. What DOCX libraries a
