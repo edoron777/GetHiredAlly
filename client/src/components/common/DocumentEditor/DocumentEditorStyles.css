@@ -103,3 +103,32 @@
   .document-editor-paper { padding: 24px; }
   .document-editor-content { font-size: 16px; }
 }
+
+/* PDF HTML Content - Force Styling */
+.cv-html-content h1 {
+    font-size: 1.5rem !important;
+    font-weight: 700 !important;
+    margin-bottom: 0.75rem !important;
+    color: #1a1a1a !important;
+}
+
+.cv-html-content h2 {
+    font-size: 1.25rem !important;
+    font-weight: 700 !important;
+    margin-top: 1.5rem !important;
+    margin-bottom: 0.5rem !important;
+    color: #1E3A5F !important;
+}
+
+.cv-html-content p {
+    margin-bottom: 0.5rem !important;
+}
+
+.cv-html-content ul {
+    margin-left: 1.5rem !important;
+    list-style-type: disc !important;
+}
+
+.cv-html-content li {
+    margin-bottom: 0.25rem !important;
+}
