@@ -345,6 +345,119 @@ def _markdown_to_plain_text(md_text: str) -> str:
     return text.strip()
 
 
+def _markdown_to_html(md_text: str) -> str:
+    """
+    Convert Markdown text to HTML for display.
+    
+    Converts:
+    - **bold** → <strong>bold</strong>
+    - *italic* → <em>italic</em>
+    - # Header → <h1>Header</h1>
+    - ## Header → <h2>Header</h2>
+    - - item → <li>item</li>
+    - [text](url) → <a href="url">text</a>
+    - Paragraphs → <p>text</p>
+    """
+    import re
+    
+    if not md_text:
+        return ""
+    
+    lines = md_text.split('\n')
+    html_lines = []
+    in_list = False
+    
+    for line in lines:
+        stripped = line.strip()
+        
+        if not stripped:
+            if in_list:
+                html_lines.append('</ul>')
+                in_list = False
+            continue
+        
+        # Convert inline formatting first
+        processed = stripped
+        
+        # Bold: **text** → <strong>text</strong>
+        processed = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', processed)
+        
+        # Italic: *text* → <em>text</em>
+        processed = re.sub(r'\*(.+?)\*', r'<em>\1</em>', processed)
+        
+        # Links: [text](url) → <a href="url">text</a>
+        processed = re.sub(
+            r'\[([^\]]+)\]\(([^\)]+)\)', 
+            r'<a href="\2" target="_blank" rel="noopener noreferrer">\1</a>', 
+            processed
+        )
+        
+        # Inline code: `code` → <code>code</code>
+        processed = re.sub(r'`(.+?)`', r'<code>\1</code>', processed)
+        
+        # Headers
+        if stripped.startswith('# '):
+            if in_list:
+                html_lines.append('</ul>')
+                in_list = False
+            content = processed[2:]
+            html_lines.append(f'<h1>{content}</h1>')
+            continue
+        
+        if stripped.startswith('## '):
+            if in_list:
+                html_lines.append('</ul>')
+                in_list = False
+            content = processed[3:]
+            html_lines.append(f'<h2>{content}</h2>')
+            continue
+        
+        if stripped.startswith('### '):
+            if in_list:
+                html_lines.append('</ul>')
+                in_list = False
+            content = processed[4:]
+            html_lines.append(f'<h3>{content}</h3>')
+            continue
+        
+        # Bullet lists: - item or * item
+        bullet_match = re.match(r'^[-*+]\s+(.+)$', stripped)
+        if bullet_match:
+            if not in_list:
+                html_lines.append('<ul>')
+                in_list = True
+            content = re.sub(r'^[-*+]\s+', '', processed)
+            html_lines.append(f'<li>{content}</li>')
+            continue
+        
+        # Numbered lists: 1. item
+        numbered_match = re.match(r'^\d+\.\s+(.+)$', stripped)
+        if numbered_match:
+            if not in_list:
+                html_lines.append('<ul>')
+                in_list = True
+            content = re.sub(r'^\d+\.\s+', '', processed)
+            html_lines.append(f'<li>{content}</li>')
+            continue
+        
+        # Regular paragraph
+        if in_list:
+            html_lines.append('</ul>')
+            in_list = False
+        html_lines.append(f'<p>{processed}</p>')
+    
+    # Close any open list
+    if in_list:
+        html_lines.append('</ul>')
+    
+    html = '\n'.join(html_lines)
+    
+    # Wrap in container
+    html = f'<div class="cv-html-content">{html}</div>'
+    
+    return html
+
+
 def _escape_html(text: str) -> str:
     """Escape HTML special characters."""
     return (text

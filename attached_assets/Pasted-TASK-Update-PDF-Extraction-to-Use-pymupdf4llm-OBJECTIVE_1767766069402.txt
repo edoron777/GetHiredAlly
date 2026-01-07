@@ -1,0 +1,82 @@
+TASK — Update PDF Extraction to Use pymupdf4llm
+
+OBJECTIVE:
+Update _extract_pdf_to_html() to use the new pymupdf4llm method.
+
+═══════════════════════════════════════════════════════════════
+FILE: backend/app/cv.py
+FUNCTION: _extract_pdf_to_html()
+═══════════════════════════════════════════════════════════════
+
+Find the current _extract_pdf_to_html() function and REPLACE it with:
+
+def _extract_pdf_to_html(file_content: bytes) -> tuple[str, str]:
+    """
+    Extract both plain text AND HTML from a PDF file.
+    
+    Uses pymupdf4llm for high-quality extraction with proper:
+    - Bold detection
+    - Bullet lists
+    - Header detection
+    - Reading order
+    
+    Falls back to old method if pymupdf4llm fails.
+    
+    Args:
+        file_content: Raw bytes of the PDF file
+        
+    Returns:
+        tuple: (plain_text, html_content)
+    """
+    # Try the new pymupdf4llm method first
+    plain_text, md_text = _extract_pdf_with_pymupdf4llm(file_content)
+    
+    if md_text:
+        # Convert Markdown to HTML
+        html_content = _markdown_to_html(md_text)
+        
+        # Filter out page footers from HTML
+        html_content = _filter_pdf_footers(html_content)
+        
+        print(f"[PDF] Generated HTML: {len(html_content)} chars")
+        return (plain_text, html_content)
+    
+    # Fallback: use old marker-based method
+    print("[PDF] Using fallback marker-based extraction")
+    plain_text = _extract_pdf_with_markers(file_content, preserve_markers=True)
+    html_content = _convert_markers_to_html(plain_text)
+    
+    return (plain_text, html_content)
+
+
+def _filter_pdf_footers(html: str) -> str:
+    """
+    Remove common PDF footer patterns from HTML.
+    
+    Removes:
+    - "Page X of Y" patterns
+    - "Page X | Name" patterns
+    """
+    import re
+    
+    # Remove paragraphs containing page footers
+    patterns = [
+        r'<p>[^<]*Page\s+\d+\s+of\s+\d+[^<]*</p>',  # Page 1 of 10
+        r'<p>[^<]*Page\s+\d+\s*\|[^<]*</p>',        # Page 1 | Name
+    ]
+    
+    for pattern in patterns:
+        html = re.sub(pattern, '', html, flags=re.IGNORECASE)
+    
+    return html
+
+═══════════════════════════════════════════════════════════════
+VERIFICATION
+═══════════════════════════════════════════════════════════════
+
+After the change:
+[ ] Backend starts without errors
+[ ] Upload a PDF file
+[ ] Check logs for: "[PDF] pymupdf4llm extracted..."
+
+Report any errors.
