@@ -13,7 +13,7 @@ from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from supabase import create_client, Client
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils.encryption import encrypt_text
+from utils.encryption import encrypt_text, decrypt_text
 from config.rate_limiter import limiter
 
 logger = logging.getLogger(__name__)
@@ -635,7 +635,7 @@ async def get_cv(cv_id: str, token: str):
         
         cursor = conn.cursor(cursor_factory=RealDictCursor)
         cursor.execute(
-            """SELECT id, filename, file_type, file_size, created_at FROM user_cvs 
+            """SELECT id, filename, file_type, file_size, content, html_content, created_at FROM user_cvs 
                WHERE id = %s AND user_id = %s""",
             (cv_id, str(user["id"]))
         )
@@ -651,6 +651,8 @@ async def get_cv(cv_id: str, token: str):
             "filename": cv["filename"],
             "file_type": cv["file_type"],
             "file_size": cv["file_size"],
+            "content": decrypt_text(cv["content"]) if cv["content"] else None,
+            "html_content": decrypt_text(cv["html_content"]) if cv["html_content"] else None,
             "created_at": cv["created_at"]
         }
     except HTTPException:

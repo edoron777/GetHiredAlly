@@ -1,0 +1,163 @@
+VERIFICATION PROMPT — Phase 2 Complete Testing
+
+OBJECTIVE:
+Verify mammoth integration is working correctly end-to-end.
+
+═══════════════════════════════════════════════════════════════
+PART 1: CODE VERIFICATION
+═══════════════════════════════════════════════════════════════
+
+Confirm all code is in place:
+
+[ ] mammoth in requirements.txt
+[ ] import mammoth in cv.py
+[ ] _extract_docx_to_html() function exists
+[ ] _post_process_html() function exists
+[ ] extract_text_from_file() returns tuple
+[ ] upload_cv_for_scan() stores html_content
+[ ] get_cv() returns html_content
+[ ] Scan results API returns html fields
+
+═══════════════════════════════════════════════════════════════
+PART 2: UPLOAD TEST
+═══════════════════════════════════════════════════════════════
+
+Test 1: Upload a DOCX file with formatting
+
+1. Create or use a test DOCX file containing:
+   - A heading (H1 style)
+   - Bold text
+   - Italic text
+   - A bullet list
+   - A hyperlink (URL)
+
+2. Upload the file via CV Optimizer
+
+3. Check database:
+   SELECT id, 
+          CASE WHEN content IS NOT NULL THEN 'HAS CONTENT' ELSE 'NULL' END,
+          CASE WHEN html_content IS NOT NULL THEN 'HAS HTML' ELSE 'NULL' END
+   FROM user_cvs
+   ORDER BY uploaded_at DESC
+   LIMIT 1;
+   
+   Expected: Both should be 'HAS CONTENT' and 'HAS HTML'
+
+═══════════════════════════════════════════════════════════════
+PART 3: API TEST
+═══════════════════════════════════════════════════════════════
+
+Test the API response:
+
+1. Get the CV via API:
+   GET /api/cv/{cv_id}
+
+2. Check the response contains:
+   - content (plain text with markers)
+   - html_content (HTML with tags)
+
+3. Verify HTML contains expected tags:
+   - <strong> for bold
+   - <em> for italic
+   - <h1> or <h2> for headings
+   - <ul><li> for bullets
+   - <a href="..."> for links
+
+═══════════════════════════════════════════════════════════════
+PART 4: SCAN RESULTS TEST
+═══════════════════════════════════════════════════════════════
+
+1. Run a CV scan on the uploaded DOCX
+
+2. Check cv_scan_results:
+   SELECT id,
+          CASE WHEN original_cv_content IS NOT NULL THEN 'HAS TEXT' ELSE 'NULL' END,
+          CASE WHEN html_content IS NOT NULL THEN 'HAS HTML' ELSE 'NULL' END
+   FROM cv_scan_results
+   ORDER BY created_at DESC
+   LIMIT 1;
+
+3. Verify HTML is stored in scan results
+
+═══════════════════════════════════════════════════════════════
+PART 5: BACKWARD COMPATIBILITY TEST
+═══════════════════════════════════════════════════════════════
+
+1. Test with existing CVs (uploaded before Phase 2):
+   - Should still work
+   - html_content will be NULL (expected)
+   - Plain text still displays correctly
+
+2. Test with PDF upload:
+   - Should work
+   - html_content will be NULL (PDF HTML in Phase 3)
+   - Plain text extracted correctly
+
+3. Test with TXT upload:
+   - Should work
+   - html_content will be NULL (expected)
+
+═══════════════════════════════════════════════════════════════
+PART 6: ERROR HANDLING TEST
+═══════════════════════════════════════════════════════════════
+
+Test that errors are handled gracefully:
+
+1. Upload a corrupted DOCX file (if possible)
+   - Should not crash
+   - Should fall back to plain text extraction
+   - html_content = NULL (graceful fallback)
+
+═══════════════════════════════════════════════════════════════
+PHASE 2 COMPLETION CHECKLIST
+═══════════════════════════════════════════════════════════════
+
+INSTALLATION:
+[ ] mammoth library installed
+[ ] No import errors
+
+EXTRACTION:
+[ ] DOCX files produce HTML output
+[ ] HTML contains proper semantic tags
+[ ] Plain text still extracted for AI analysis
+
+STORAGE:
+[ ] html_content saved to user_cvs (encrypted)
+[ ] html_content saved to cv_scan_results
+
+API:
+[ ] get_cv() returns html_content
+[ ] Scan results API returns html_content
+[ ] HTML is decrypted correctly
+
+COMPATIBILITY:
+[ ] Existing CVs still work
+[ ] PDF upload still works
+[ ] TXT upload still works
+
+ERROR HANDLING:
+[ ] Errors logged but don't crash
+[ ] Fallback to plain text works
+
+═══════════════════════════════════════════════════════════════
+PHASE 2 STATUS
+═══════════════════════════════════════════════════════════════
+
+All checks passed: [ YES / NO ]
+
+If NO, list issues:
+1. [issue]
+2. [issue]
+
+If YES:
+✅ PHASE 2 COMPLETE — Ready for Phase 3 (PDF Enhancement)
+
+═══════════════════════════════════════════════════════════════
+SAMPLE HTML OUTPUT
+═══════════════════════════════════════════════════════════════
+
+Show a sample of the HTML output from a DOCX upload:
+
+[Paste first 500 characters of html_content here]
+
+This helps verify mammoth is producing correct output.
