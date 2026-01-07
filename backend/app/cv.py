@@ -407,6 +407,78 @@ def _markdown_to_clean_text(md_text: str) -> str:
     return text.strip()
 
 
+def _markdown_to_marked_text(md_text: str) -> str:
+    """
+    Convert Markdown to marker-format text for detection.
+    Adds [H1], [H2], [BOLD], [BULLET] markers that block_detector expects.
+    
+    Used only during detection - NOT stored in database.
+    """
+    import re
+    
+    if not md_text:
+        return ""
+    
+    lines = md_text.split('\n')
+    result_lines = []
+    
+    for line in lines:
+        processed = line
+        stripped = processed.strip()
+        
+        # Headers: # Header → [H1] Header
+        if stripped.startswith('# '):
+            content = stripped[2:]
+            content = re.sub(r'\*\*(.+?)\*\*', r'\1', content)
+            processed = '[H1] ' + content
+        elif stripped.startswith('## '):
+            content = stripped[3:]
+            content = re.sub(r'\*\*(.+?)\*\*', r'\1', content)
+            processed = '[H2] ' + content
+        elif stripped.startswith('### '):
+            content = stripped[4:]
+            content = re.sub(r'\*\*(.+?)\*\*', r'\1', content)
+            processed = '[H2] ' + content
+        else:
+            # Bullets: - item → [BULLET] item
+            bullet_match = re.match(r'^(\s*)[-*+]\s+(.+)$', processed)
+            if bullet_match:
+                indent = bullet_match.group(1)
+                content = bullet_match.group(2)
+                content = re.sub(r'\*\*(.+?)\*\*', r'\1', content)
+                processed = f'{indent}[BULLET] {content}'
+            else:
+                # Bold at start of line: **text** → [BOLD] text
+                bold_match = re.match(r'^\*\*(.+?)\*\*(.*)$', stripped)
+                if bold_match:
+                    bold_text = bold_match.group(1)
+                    rest = bold_match.group(2)
+                    rest = re.sub(r'\*\*(.+?)\*\*', r'\1', rest)
+                    if len(bold_text) < 80:
+                        processed = f'[BOLD] {bold_text}{rest}'
+                    else:
+                        processed = f'{bold_text}{rest}'
+                else:
+                    processed = re.sub(r'\*\*(.+?)\*\*', r'\1', processed)
+        
+        # Strip remaining markdown
+        processed = re.sub(r'\*(.+?)\*', r'\1', processed)
+        processed = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', processed)
+        processed = re.sub(r'`(.+?)`', r'\1', processed)
+        
+        result_lines.append(processed)
+    
+    text = '\n'.join(result_lines)
+    
+    # Filter footers
+    text = _filter_markdown_footers(text)
+    
+    # Clean whitespace
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    
+    return text.strip()
+
+
 def _markdown_to_html(md_text: str) -> str:
     """
     Convert Markdown text to HTML for display.
