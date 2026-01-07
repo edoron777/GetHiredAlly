@@ -1,0 +1,131 @@
+INVESTIGATION PROMPT — Text Import & Styling Pipeline
+
+OBJECTIVE:
+Understand the complete pipeline from file upload to text display
+to design a unified TextStyler service.
+
+⚠️ IMPORTANT: Do NOT make any changes. Only investigate and report.
+
+═══════════════════════════════════════════════════════════════
+PART 1: BACKEND FILE PROCESSING
+═══════════════════════════════════════════════════════════════
+
+Investigate how Word/PDF files are processed on upload.
+
+Files to check:
+- backend/app/cv.py
+- backend/app/cv_optimizer.py
+- Any file with "upload", "parse", "extract" in name
+
+Questions:
+1. What library/tool extracts text from Word files?
+   (python-docx? mammoth? other?)
+
+2. What library/tool extracts text from PDF files?
+   (PyPDF2? pdfplumber? other?)
+
+3. Is formatting information extracted or lost?
+   - Bold/italic: preserved or lost?
+   - Links: preserved or lost?
+   - Lists: preserved or lost?
+
+4. What format is the output?
+   - Plain text?
+   - HTML?
+   - Markdown?
+   - Structured JSON with formatting metadata?
+
+5. Show the key code that does the extraction.
+
+═══════════════════════════════════════════════════════════════
+PART 2: DATABASE STORAGE
+═══════════════════════════════════════════════════════════════
+
+How is CV content stored in the database?
+
+1. What table stores CV content?
+
+2. What columns exist for content?
+   - Is there a plain_text column?
+   - Is there an html_content column?
+   - Is there a markdown_content column?
+   - Is there a formatting_metadata column?
+
+3. Show the table schema for CV storage.
+
+═══════════════════════════════════════════════════════════════
+PART 3: FRONTEND RETRIEVAL
+═══════════════════════════════════════════════════════════════
+
+How does frontend get and process the text?
+
+1. What API endpoint returns CV content?
+
+2. What format does the API return?
+   - { text: "..." }
+   - { text: "...", html: "..." }
+   - { text: "...", formatting: {...} }
+
+3. Is there any text processing on the frontend before display?
+   - Markdown conversion?
+   - HTML sanitization?
+   - Character cleanup?
+
+═══════════════════════════════════════════════════════════════
+PART 4: FORMAT CONVERSION UTILITIES
+═══════════════════════════════════════════════════════════════
+
+Search for existing utilities that handle text formatting:
+
+1. Is there a markdown-to-html converter?
+2. Is there a text cleanup utility?
+3. Is there a link/URL processor?
+
+Look in:
+- client/src/utils/
+- client/src/lib/
+- backend/app/utils/
+
+═══════════════════════════════════════════════════════════════
+PART 5: CURRENT PAIN POINTS
+═══════════════════════════════════════════════════════════════
+
+Based on investigation:
+
+1. Where is formatting LOST in the pipeline?
+
+2. Where are artifacts (*, #, etc.) NOT being cleaned?
+
+3. What would need to change to preserve formatting end-to-end?
+
+═══════════════════════════════════════════════════════════════
+OUTPUT FORMAT
+═══════════════════════════════════════════════════════════════
+
+### Backend Processing
+- Word extraction: [library] → [output format]
+- PDF extraction: [library] → [output format]
+- Formatting preserved: [YES/NO/PARTIAL]
+
+### Database Storage
+- Table: [name]
+- Content columns: [list]
+- Formatting stored: [YES/NO]
+
+### Frontend Processing
+- API returns: [format]
+- Pre-display processing: [describe]
+
+### Existing Utilities
+[List any found]
+
+### Pipeline Diagram
+[Draw the current flow]
+
+### Gaps Identified
+1. [Where formatting is lost]
+2. [Where cleanup is missing]
+3. [What needs to be built]
+
+### Recommendation
+[What architecture would solve this]
