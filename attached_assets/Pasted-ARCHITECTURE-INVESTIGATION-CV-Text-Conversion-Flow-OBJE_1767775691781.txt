@@ -1,0 +1,174 @@
+ARCHITECTURE INVESTIGATION — CV Text Conversion Flow
+
+OBJECTIVE:
+Create complete documentation of how CV text flows through 
+GetHiredAlly from upload to display/consumption by all services.
+
+DO NOT MAKE ANY CODE CHANGES.
+ONLY GATHER INFORMATION AND DOCUMENT.
+
+═══════════════════════════════════════════════════════════════
+PHASE 1: IDENTIFY ALL COMPONENTS
+═══════════════════════════════════════════════════════════════
+
+TASK 1.1: Find all CV extraction/conversion code
+
+Search for these patterns and list ALL files found:
+
+In backend/:
+- "extract" + "pdf"
+- "extract" + "docx" 
+- "extract" + "text"
+- "mammoth"
+- "pymupdf"
+- "file_content"
+- "_extract_"
+
+In client/src/:
+- "cv_content"
+- "html_content"
+- "DocumentView"
+- "Section Explorer"
+- "StructureOverlay"
+
+For EACH file found, document:
+- File path
+- Main functions/components
+- What it does (1 sentence)
+
+═══════════════════════════════════════════════════════════════
+PHASE 2: TRACE THE UPLOAD FLOW
+═══════════════════════════════════════════════════════════════
+
+TASK 2.1: PDF Upload Flow
+
+Starting from: User uploads PDF file
+Trace the COMPLETE path:
+
+1. Frontend: Which component handles file upload?
+   - File: ___
+   - Function: ___
+   - API endpoint called: ___
+
+2. Backend: Which endpoint receives the file?
+   - File: ___
+   - Route: ___
+   - Function: ___
+
+3. Extraction: Which function extracts text from PDF?
+   - File: ___
+   - Function: ___
+   - Input: ___
+   - Output: ___
+
+4. Storage: Where is extracted text stored?
+   - Database table: ___
+   - Column for plain text: ___
+   - Column for HTML: ___
+   - Column for marked text (if any): ___
+
+5. Response: What is returned to frontend?
+   - Data structure: ___
+
+TASK 2.2: DOCX Upload Flow
+
+Repeat the same trace for DOCX files.
+
+═══════════════════════════════════════════════════════════════
+PHASE 3: DOCUMENT ALL TEXT FORMATS
+═══════════════════════════════════════════════════════════════
+
+TASK 3.1: What text formats exist?
+
+For EACH format found, document:
+
+FORMAT 1: Plain Text (cv_content)
+- Where stored: ___
+- What it contains: ___
+- Which services consume it: ___
+- Does it have markers ([H1], [BULLET], etc.)? ___
+
+FORMAT 2: HTML (html_content)
+- Where stored: ___
+- What it contains: ___
+- Which services consume it: ___
+
+FORMAT 3: Marked Text (if exists)
+- Where stored: ___
+- What markers it uses: ___
+- Which services consume it: ___
+
+FORMAT 4: (any other format)
+- ...
+
+═══════════════════════════════════════════════════════════════
+PHASE 4: MAP ALL CONSUMERS
+═══════════════════════════════════════════════════════════════
+
+TASK 4.1: List ALL services that consume CV text
+
+For EACH service, document:
+
+SERVICE: Document View
+- File(s): ___
+- What text format it expects: ___
+- How it gets the text (API? direct DB?): ___
+- What it does with the text: ___
+
+SERVICE: Section Explorer
+- File(s): ___
+- What text format it expects: ___
+- How it gets the text: ___
+- What it does with the text: ___
+
+SERVICE: Issue Detection (Rule Engine)
+- File(s): ___
+- What text format it expects: ___
+- How it gets the text: ___
+- What it does with the text: ___
+
+SERVICE: Block Detector
+- File(s): ___
+- What text format it expects: ___
+- How it gets the text: ___
+- What markers it needs: ___
+
+SERVICE: Side by Side View
+- File(s): ___
+- What text format it expects: ___
+- How it gets the text: ___
+
+SERVICE: (any other)
+- ...
+
+═══════════════════════════════════════════════════════════════
+PHASE 5: IDENTIFY THE CONTRACTS
+═══════════════════════════════════════════════════════════════
+
+TASK 5.1: Document the "contract" between producer and consumer
+
+PRODUCER: _extract_pdf_to_html()
+- Output format for plain text: ___
+- Output format for HTML: ___
+- Does it include markers? ___
+
+CONSUMER: block_detector.py
+- Expected input format: ___
+- Required markers: ___
+- What breaks if markers missing: ___
+
+CONSUMER: section_extractor.py
+- Expected input format: ___
+- Required markers: ___
+- What breaks if markers missing: ___
+
+MISMATCH FOUND? Document it:
+- Producer outputs: ___
+- Consumer expects: ___
+- This causes: ___
+
+═══════════════════════════════════════════════════════════════
+PHASE 6: CREATE ARCHITECTURE DIAGRAM
+═══════════════════════════════════════════════════════════════
+
+Create a text diagram showing:
