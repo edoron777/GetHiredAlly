@@ -1,0 +1,17 @@
+| html_preview                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| <div class="cv-html-content"><h1>Eyal Doron CV | Email: Edoron777@Gmail.com | Phone: +972-54-2656366 | LinkedIn</h1>
+<p>Cybersecurity Innovation Leader | AI Security &amp; Identity Expert | Deep Cross-Domain</p>
+<h2>Expertise | Technology-Business Integration | Security to AI Transformation | Product</h2>
+<p>Strategy | VC Advisory</p>
+<h2>About</h2>
+<p>I bridge the gap between cutting-edge technology and enterprise security—turning</p>
+<p>complex innovations into measurable business value.</p>
+<p>Specializing in cybersecurity innovation at Citi, Microsoft, Deloitte, and SanDisk, I deconstruct</p>
+<p>emerging technologies from every angle—technical capabilities, business impact, competitive</p>
+<p>positioning, implementation feasibility—then translate complexity into confident decisions and</p>
+<p>proven results.</p>
+<p>•</p>
+<p>My Professional Evolution &amp; Passion for AI</p>
+<p>My foundation: designing enterprise infrastructure, teaching Microsoft systems to hundreds of</p>
+<p>IT pr |
