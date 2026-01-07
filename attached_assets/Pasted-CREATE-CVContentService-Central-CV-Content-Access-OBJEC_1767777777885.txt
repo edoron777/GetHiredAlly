@@ -1,0 +1,203 @@
+CREATE — CVContentService (Central CV Content Access)
+
+OBJECTIVE:
+Create backend/services/cv_content_service.py — a single service for all CV content access.
+
+═══════════════════════════════════════════════════════════════
+MANDATORY: DO NOT IMPROVISE
+═══════════════════════════════════════════════════════════════
+- Create ONLY the file specified
+- Use ONLY the patterns shown
+- DO NOT modify any other files in this prompt
+
+═══════════════════════════════════════════════════════════════
+FILE TO CREATE: backend/services/cv_content_service.py
+═══════════════════════════════════════════════════════════════
+
+"""
+CVContentService - Single Source of Truth for CV Content Access
+
+All services MUST use this service to get CV text and formatting.
+
+Methods:
+- get_for_display(scan_id)     → For Document View, Side by Side
+- get_for_detection(scan_id)   → For Section Explorer, Block Detector  
+- get_for_ai_analysis(scan_id) → For Issue Detection, AI prompts
+
+Author: GetHiredAlly
+Version: 1.0
+Date: January 2025
+"""
+
+import os
+import psycopg2
+from psycopg2.extras import RealDictCursor
+from typing import Optional, Dict, Any
+
+
+def get_db_connection():
+    """Get PostgreSQL database connection."""
+    return psycopg2.connect(os.environ.get("DATABASE_URL"))
+
+
+class CVContentService:
+    """
+    Central service for accessing CV content.
+    
+    Usage:
+        from backend.services.cv_content_service import CVContentService
+        
+        # For display
+        content = CVContentService.get_for_display(scan_id, user_id)
+        
+        # For detection
+        marked_text = CVContentService.get_for_detection(scan_id, user_id)
+    """
+    
+    @staticmethod
+    def _decrypt_if_needed(text: str) -> str:
+        """Decrypt text if encrypted."""
+        if not text:
+            return ""
+        try:
+            from utils.encryption import decrypt_text, is_encrypted
+            if is_encrypted(text):
+                return decrypt_text(text)
+        except Exception as e:
+            print(f"[CVContentService] Decryption error: {e}")
+        return text
+    
+    @staticmethod
+    def _get_scan_data(scan_id: int, user_id: str) -> Optional[Dict[str, Any]]:
+        """Get raw scan data from database."""
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            cursor.execute(
+                """
+                SELECT original_cv_content, html_content 
+                FROM cv_scan_results 
+                WHERE id = %s AND user_id = %s
+                """,
+                (scan_id, user_id)
+            )
+            result = cursor.fetchone()
+            cursor.close()
+            conn.close()
+            return dict(result) if result else None
+        except Exception as e:
+            print(f"[CVContentService] DB error for scan {scan_id}: {e}")
+            return None
+    
+    @classmethod
+    def get_for_display(cls, scan_id: int, user_id: str) -> Dict[str, str]:
+        """
+        Get CV content for DISPLAY purposes.
+        
+        Use for: Document View, Side by Side View
+        
+        Returns:
+            dict with:
+            - html_content: Rich HTML for display
+            - cv_content: Plain text fallback
+        """
+        data = cls._get_scan_data(scan_id, user_id)
+        if not data:
+            print(f"[CVContentService.get_for_display] No data for scan_id={scan_id}")
+            return {'html_content': '', 'cv_content': ''}
+        
+        html_content = cls._decrypt_if_needed(data.get('html_content', ''))
+        cv_content = cls._decrypt_if_needed(data.get('original_cv_content', ''))
+        
+        print(f"[CVContentService.get_for_display] scan_id={scan_id}, html={len(html_content)} chars, text={len(cv_content)} chars")
+        
+        return {
+            'html_content': html_content,
+            'cv_content': cv_content
+        }
+    
+    @classmethod
+    def get_for_detection(cls, scan_id: int, user_id: str) -> str:
+        """
+        Get CV content for DETECTION purposes.
+        
+        Use for: Section Explorer, Block Detector
+        
+        Returns:
+            Text WITH markers [H1], [H2], [BOLD], [BULLET]
+        """
+        from backend.app.cv import _html_to_marked_text
+        
+        data = cls._get_scan_data(scan_id, user_id)
+        if not data:
+            print(f"[CVContentService.get_for_detection] No data for scan_id={scan_id}")
+            return ''
+        
+        html_content = cls._decrypt_if_needed(data.get('html_content', ''))
+        cv_content = cls._decrypt_if_needed(data.get('original_cv_content', ''))
+        
+        # Regenerate marked text from HTML
+        if html_content:
+            marked_text = _html_to_marked_text(html_content)
+            print(f"[CVContentService.get_for_detection] Regenerated: {len(marked_text)} chars")
+            print(f"[CVContentService.get_for_detection] Has [H1]: {'[H1]' in marked_text}")
+            print(f"[CVContentService.get_for_detection] Has [BULLET]: {'[BULLET]' in marked_text}")
+            return marked_text
+        
+        # Fallback
+        print(f"[CVContentService.get_for_detection] FALLBACK to cv_content")
+        return cv_content
+    
+    @classmethod
+    def get_for_ai_analysis(cls, scan_id: int, user_id: str) -> str:
+        """
+        Get CV content for AI ANALYSIS purposes.
+        
+        Use for: Issue Detection, AI prompts
+        
+        Returns:
+            Clean plain text, no markers, no HTML.
+        """
+        data = cls._get_scan_data(scan_id, user_id)
+        if not data:
+            return ''
+        
+        cv_content = cls._decrypt_if_needed(data.get('original_cv_content', ''))
+        print(f"[CVContentService.get_for_ai_analysis] scan_id={scan_id}, {len(cv_content)} chars")
+        
+        return cv_content
+
+
+# Convenience functions
+def get_cv_for_display(scan_id: int, user_id: str) -> Dict[str, str]:
+    return CVContentService.get_for_display(scan_id, user_id)
+
+def get_cv_for_detection(scan_id: int, user_id: str) -> str:
+    return CVContentService.get_for_detection(scan_id, user_id)
+
+def get_cv_for_ai_analysis(scan_id: int, user_id: str) -> str:
+    return CVContentService.get_for_ai_analysis(scan_id, user_id)
+
+═══════════════════════════════════════════════════════════════
+UPDATE: backend/services/__init__.py
+═══════════════════════════════════════════════════════════════
+
+Add these imports to the existing __init__.py file:
+
+from .cv_content_service import (
+    CVContentService,
+    get_cv_for_display,
+    get_cv_for_detection,
+    get_cv_for_ai_analysis
+)
+
+═══════════════════════════════════════════════════════════════
+VERIFICATION (before moving to next prompt)
+═══════════════════════════════════════════════════════════════
+
+[ ] File created: backend/services/cv_content_service.py
+[ ] __init__.py updated with imports
+[ ] No syntax errors
+[ ] Backend starts without errors
+
+Report completion status.

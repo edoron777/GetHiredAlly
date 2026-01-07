@@ -1,0 +1,85 @@
+UPDATE — Section Explorer to Use CVContentService
+
+OBJECTIVE:
+Update the analyze_cv_structure() endpoint to use CVContentService.
+
+═══════════════════════════════════════════════════════════════
+MANDATORY: DO NOT IMPROVISE
+═══════════════════════════════════════════════════════════════
+- Modify ONLY the function specified
+- Keep ALL existing functionality
+- Only change HOW data is retrieved
+
+═══════════════════════════════════════════════════════════════
+FILE: backend/app/cv.py
+FUNCTION: analyze_cv_structure() (around line 1480)
+═══════════════════════════════════════════════════════════════
+
+FIND this function:
+
+@router.get("/dev/analyze-structure/{scan_id}")
+async def analyze_cv_structure(scan_id: str, token: str = None):
+
+REPLACE the data retrieval section with CVContentService:
+
+OLD CODE (to remove):
+-----------------------------------------
+        conn = get_db_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute(
+            "SELECT original_cv_content, html_content FROM cv_scan_results WHERE id = %s AND user_id = %s",
+            (scan_id, str(user["id"]))
+        )
+        scan = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        cv_text = scan["original_cv_content"]
+        html_content = scan.get("html_content")
+        
+        if is_encrypted(cv_text):
+            cv_text = decrypt_text(cv_text)
+        if html_content and is_encrypted(html_content):
+            html_content = decrypt_text(html_content)
+        
+        # Regenerate marked text from HTML for detection
+        if html_content:
+            marked_text = _html_to_marked_text(html_content)
+        else:
+            marked_text = cv_text  # Fallback
+-----------------------------------------
+
+NEW CODE (to add):
+-----------------------------------------
+        # Use CVContentService for centralized content access
+        from backend.services.cv_content_service import CVContentService
+        
+        marked_text = CVContentService.get_for_detection(int(scan_id), str(user["id"]))
+        
+        if not marked_text:
+            raise HTTPException(status_code=404, detail="CV content not found")
+        
+        # Also get display content for cv_content in response
+        display_content = CVContentService.get_for_display(int(scan_id), str(user["id"]))
+        cv_text = display_content.get('cv_content', '')
+-----------------------------------------
+
+KEEP the rest of the function exactly as is (block detection, response building, etc.)
+
+═══════════════════════════════════════════════════════════════
+VERIFICATION
+═══════════════════════════════════════════════════════════════
+
+After change:
+[ ] Function updated
+[ ] No syntax errors
+[ ] Backend starts without errors
+
+To test:
+1. Upload a PDF CV
+2. Run scan
+3. Click Section Explorer
+4. Check console for "[CVContentService.get_for_detection]" logs
+5. Sections should display correctly
+
+Report completion status.
