@@ -180,6 +180,19 @@ def _extract_pdf_with_markers(file_content: bytes, preserve_markers: bool = True
         doc = fitz.open(stream=file_content, filetype="pdf")
         result_lines = []
         
+        # DEBUG: Analyze font sizes
+        logger.info("[PDF FONT DEBUG] Analyzing font sizes...")
+        font_sizes = set()
+        for page in doc:
+            blocks = page.get_text("dict")["blocks"]
+            for block in blocks:
+                if block.get("type") == 0:
+                    for line in block.get("lines", []):
+                        for span in line.get("spans", []):
+                            font_sizes.add(round(span.get("size", 0), 1))
+        logger.info(f"[PDF FONT DEBUG] Font sizes found: {sorted(font_sizes)}")
+        logger.info(f"[PDF FONT DEBUG] Max font size: {max(font_sizes) if font_sizes else 0}")
+        
         for page in doc:
             blocks = page.get_text("dict", flags=fitz.TEXT_PRESERVE_WHITESPACE)["blocks"]
             
