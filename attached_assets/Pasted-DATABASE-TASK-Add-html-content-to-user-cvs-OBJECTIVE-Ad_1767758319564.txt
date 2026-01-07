@@ -1,0 +1,82 @@
+DATABASE TASK — Add html_content to user_cvs
+
+OBJECTIVE:
+Add the html_content column to the user_cvs table.
+
+⚠️ EXECUTE IN SUPABASE SQL EDITOR (not through Replit)
+
+═══════════════════════════════════════════════════════════════
+PRE-FLIGHT CHECK
+═══════════════════════════════════════════════════════════════
+
+Before running the migration, verify the column doesn't exist:
+
+SELECT column_name 
+FROM information_schema.columns 
+WHERE table_name = 'user_cvs' 
+AND column_name = 'html_content';
+
+Expected result: 0 rows
+
+If column already exists, SKIP this migration.
+
+═══════════════════════════════════════════════════════════════
+MIGRATION SQL
+═══════════════════════════════════════════════════════════════
+
+-- ============================================================
+-- Migration: Add html_content to user_cvs
+-- Date: January 7, 2026
+-- Purpose: Store HTML-formatted CV content for rich display
+-- ============================================================
+
+-- Add html_content column
+ALTER TABLE user_cvs
+ADD COLUMN IF NOT EXISTS html_content text;
+
+-- Add comment explaining the column
+COMMENT ON COLUMN user_cvs.html_content IS 
+'HTML-formatted CV content for rich display. Encrypted like content column. NULL if not yet processed with HTML extraction.';
+
+═══════════════════════════════════════════════════════════════
+POST-MIGRATION VERIFICATION
+═══════════════════════════════════════════════════════════════
+
+After running migration, verify:
+
+1. Column exists:
+SELECT column_name, data_type, is_nullable
+FROM information_schema.columns 
+WHERE table_name = 'user_cvs' 
+AND column_name = 'html_content';
+
+Expected: 1 row with (html_content, text, YES)
+
+2. Existing data unaffected:
+SELECT id, filename, 
+       CASE WHEN content IS NOT NULL THEN 'HAS CONTENT' ELSE 'NULL' END as content_status,
+       CASE WHEN html_content IS NOT NULL THEN 'HAS HTML' ELSE 'NULL' END as html_status
+FROM user_cvs
+LIMIT 5;
+
+Expected: All rows show 'NULL' for html_status (not populated yet)
+
+3. RLS still working:
+SELECT policyname, cmd
+FROM pg_policies 
+WHERE tablename = 'user_cvs';
+
+Expected: Same policies as before (no changes needed)
+
+═══════════════════════════════════════════════════════════════
+REPORT RESULTS
+═══════════════════════════════════════════════════════════════
+
+Report:
+- [ ] Pre-flight check passed (column didn't exist)
+- [ ] Migration SQL executed successfully
+- [ ] Column verified to exist
+- [ ] Existing data unaffected
+- [ ] RLS policies unchanged
+
+Any errors encountered: [describe]

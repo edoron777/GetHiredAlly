@@ -1,0 +1,73 @@
+INTRODUCTION — TextStylerService Phase 1: Database Schema
+
+PROJECT CONTEXT:
+We are building a TextStylerService for GetHiredAlly that will provide
+rich text formatting preservation when importing Word/PDF files.
+
+This is Phase 1 of 6 phases. Phase 1 adds database columns to store
+HTML-formatted content alongside plain text.
+
+═══════════════════════════════════════════════════════════════
+WHAT WE'RE ADDING
+═══════════════════════════════════════════════════════════════
+
+Table: user_cvs
+┌─────────────────────────────────────────────────────────────┐
+│  EXISTING COLUMNS (no changes)                              │
+│  - id, user_id, filename, content, etc.                     │
+├─────────────────────────────────────────────────────────────┤
+│  NEW COLUMN                                                 │
+│  - html_content (text, nullable)                            │
+│    Stores: HTML-formatted version of CV for rich display    │
+│    Encrypted: YES (same as content column)                  │
+└─────────────────────────────────────────────────────────────┘
+
+Table: cv_scan_results
+┌─────────────────────────────────────────────────────────────┐
+│  EXISTING COLUMNS (no changes)                              │
+│  - id, user_id, original_cv_content, fixed_cv_content, etc. │
+├─────────────────────────────────────────────────────────────┤
+│  NEW COLUMNS                                                │
+│  - html_content (text, nullable)                            │
+│    Stores: HTML version of original CV at scan time         │
+│  - fixed_html_content (text, nullable)                      │
+│    Stores: HTML version of fixed CV after optimization      │
+└─────────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════
+WHY HTML STORAGE?
+═══════════════════════════════════════════════════════════════
+
+Current Problem:
+- Word/PDF files converted to plain text with [MARKERS]
+- [BOLD], [H1], [BULLET] markers are inconsistently handled
+- Rich formatting (italic, links, tables) is lost
+
+Solution:
+- Store HTML version alongside plain text
+- Plain text used for: AI analysis, text search, scoring
+- HTML used for: User display with full formatting
+
+═══════════════════════════════════════════════════════════════
+PROMPT SERIES FOR THIS PHASE
+═══════════════════════════════════════════════════════════════
+
+- Prompt 0: Reconnaissance (completed)
+- Prompt 1: Introduction (this prompt)
+- Prompt 2: SQL migration for user_cvs
+- Prompt 3: SQL migration for cv_scan_results
+- Prompt 4: Update backend types
+- Prompt 5: Verification
+
+═══════════════════════════════════════════════════════════════
+CRITICAL RULES
+═══════════════════════════════════════════════════════════════
+
+1. NO DATA LOSS — Only ADD columns, never remove or modify existing
+2. NULLABLE — All new columns must be nullable (existing rows have no value)
+3. BACKWARD COMPATIBLE — Existing code must continue working
+4. RLS COMPATIBLE — New columns covered by existing RLS policies
+5. NO IMPROVISATION — Only make changes specified in prompts
+
+⚠️ IMPORTANT: Do NOT make any changes in this prompt.
+Confirm you understand the phase scope before proceeding to Prompt 2.
