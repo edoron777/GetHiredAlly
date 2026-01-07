@@ -1485,49 +1485,20 @@ async def analyze_cv_structure(scan_id: str, token: str = None):
     NOT the user_cvs.id (UUID). This matches what the frontend passes.
     """
     from common.detection.block_detector import detect_cv_blocks, BlockType
-    from utils.encryption import decrypt_text, is_encrypted
+    from backend.services.cv_content_service import CVContentService
     
     user = get_user_from_token(token) if token else None
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
     
     try:
-        conn = get_db_connection()
-        if not conn:
-            raise HTTPException(status_code=500, detail="Database not available")
+        marked_text = CVContentService.get_for_detection(int(scan_id), str(user["id"]))
         
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
-        cursor.execute(
-            "SELECT original_cv_content, html_content FROM cv_scan_results WHERE id = %s AND user_id = %s",
-            (scan_id, str(user["id"]))
-        )
-        scan = cursor.fetchone()
-        cursor.close()
-        conn.close()
+        if not marked_text:
+            raise HTTPException(status_code=404, detail="CV content not found")
         
-        if not scan or not scan.get("original_cv_content"):
-            raise HTTPException(status_code=404, detail="Scan not found")
-        
-        cv_text = scan["original_cv_content"]
-        html_content = scan.get("html_content")
-        
-        print(f"[SECTION_EXPLORER] Analyzing scan_id: {scan_id}")
-        
-        if is_encrypted(cv_text):
-            cv_text = decrypt_text(cv_text)
-        if html_content and is_encrypted(html_content):
-            html_content = decrypt_text(html_content)
-        
-        print(f"[SECTION_EXPLORER] html_content length: {len(html_content) if html_content else 0}")
-        print(f"[SECTION_EXPLORER] html_content exists: {bool(html_content)}")
-        
-        # Regenerate marked text from HTML for detection
-        if html_content:
-            marked_text = _html_to_marked_text(html_content)
-            print(f"[SECTION_EXPLORER] Using regenerated marked_text")
-        else:
-            marked_text = cv_text  # Fallback
-            print(f"[SECTION_EXPLORER] FALLBACK to cv_content (no html)")
+        display_content = CVContentService.get_for_display(int(scan_id), str(user["id"]))
+        cv_text = display_content.get('cv_content', '')
         
         print(f"[SECTION_EXPLORER] Calling detect_cv_blocks...")
         block_structure = detect_cv_blocks(marked_text)
