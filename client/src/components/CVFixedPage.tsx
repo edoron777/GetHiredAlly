@@ -9,6 +9,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import CVScoreCircle from './cv-optimizer/CVScoreCircle'
 import DocStyler from './common/DocStyler/DocStyler'
+import { SideBySide } from './common/SideBySide'
 
 interface CategoryImprovement {
   issues_fixed: number
@@ -394,19 +395,36 @@ export function CVFixedPage() {
 
         <div className="mb-8">
           {viewMode === 'sidebyside' && (
-            <div className="grid grid-cols-2 gap-6">
-              <CVPanel
-                title="Original CV"
-                content={data.original_cv_content}
-                type="original"
-              />
-              <CVPanel
-                title="Fixed CV"
-                content={data.fixed_cv_content}
-                type="fixed"
-                changes={data.changes}
-              />
-            </div>
+            <SideBySide
+              left={{
+                title: 'Original CV',
+                content: data.original_cv_content,
+                type: 'original',
+                stats: {
+                  label: 'Original',
+                  value: '',
+                  color: 'neutral',
+                },
+              }}
+              right={{
+                title: 'AI-Optimized CV',
+                content: data.fixed_cv_content,
+                type: 'fixed',
+                changes: data.changes?.map((change) => ({
+                  originalText: change.before,
+                  newText: change.after,
+                  category: change.category,
+                  explanation: change.explanation,
+                })),
+                stats: {
+                  label: 'changes applied',
+                  value: data.changes?.length || 0,
+                  color: 'green',
+                },
+              }}
+              syncScroll={true}
+              maxHeight="600px"
+            />
           )}
 
           {viewMode === 'original' && (
