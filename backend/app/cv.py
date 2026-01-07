@@ -482,6 +482,66 @@ def _markdown_to_marked_text(md_text: str) -> str:
     return text.strip()
 
 
+# Section header keywords for smart bold detection
+SECTION_HEADER_KEYWORDS = [
+    # Summary variations
+    'summary', 'professional summary', 'profile', 'about', 'about me',
+    'objective', 'career objective', 'executive summary', 'overview',
+    
+    # Experience variations
+    'experience', 'work experience', 'employment', 'employment history',
+    'professional experience', 'work history', 'career history',
+    'professional background', 'career',
+    
+    # Education variations
+    'education', 'academic background', 'degrees', 'qualifications',
+    'academic qualifications', 'academic',
+    
+    # Skills variations
+    'skills', 'technical skills', 'core skills', 'key skills',
+    'expertise', 'competencies', 'proficiencies', 'technologies',
+    
+    # Certifications variations
+    'certifications', 'certificates', 'licenses', 'credentials',
+    'professional certifications', 'training', 'courses',
+    
+    # Other standard sections
+    'projects', 'personal projects', 'key projects',
+    'languages', 'language skills',
+    'awards', 'honors', 'achievements', 'accomplishments',
+    'publications', 'papers',
+    'volunteer', 'volunteer work', 'volunteering',
+    'interests', 'hobbies',
+    'references', 'professional references',
+    'contact', 'contact information', 'contact details',
+]
+
+
+def _is_section_header_text(text: str) -> bool:
+    """
+    Check if text is likely a section header based on keywords.
+    
+    Returns True for: "About", "Experience", "Skills", etc.
+    Returns False for: "Citi", "Microsoft", "Core Expertise & Impact", etc.
+    """
+    if not text:
+        return False
+    
+    # Normalize: lowercase, remove extra spaces, remove special chars
+    normalized = text.lower().strip()
+    normalized = re.sub(r'[^a-z\s]', '', normalized).strip()
+    
+    # Check against known section headers
+    for keyword in SECTION_HEADER_KEYWORDS:
+        if normalized == keyword:
+            return True
+        # Also check if it starts with keyword (e.g., "Skills & Expertise")
+        if normalized.startswith(keyword + ' '):
+            return True
+    
+    return False
+
+
 def _html_to_marked_text(html: str) -> str:
     """
     Convert HTML back to marker format for detection.
@@ -502,9 +562,26 @@ def _html_to_marked_text(html: str) -> str:
     text = re.sub(r'<h1[^>]*>([^<]+)</h1>', r'[H1] \1\n', text)
     text = re.sub(r'<h2[^>]*>([^<]+)</h2>', r'[H2] \1\n', text)
     text = re.sub(r'<h3[^>]*>([^<]+)</h3>', r'[H2] \1\n', text)
-    text = re.sub(r'<strong>([^<]+)</strong>', r'[BOLD] \1', text)
     text = re.sub(r'<li>([^<]+)</li>', r'[BULLET] \1\n', text)
     text = re.sub(r'<p>([^<]*)</p>', r'\1\n', text)
+    
+    # Smart bold handling: only mark as [BOLD] if it's a section header
+    def _smart_bold_replace(match):
+        content = match.group(1)
+        is_header = _is_section_header_text(content)
+        
+        # Debug logging
+        if is_header:
+            print(f"[_html_to_marked_text] Section header found: '{content}'")
+        else:
+            print(f"[_html_to_marked_text] NOT a section header: '{content}'")
+        
+        if is_header:
+            return f'[BOLD] {content}'
+        else:
+            return content
+    
+    text = re.sub(r'<strong>([^<]+)</strong>', _smart_bold_replace, text)
     
     # Remove remaining HTML tags
     text = re.sub(r'<[^>]+>', '', text)

@@ -1,0 +1,61 @@
+INTRODUCTION — CV Blocks Detector Smart Section Detection Fix
+
+This prompt series fixes a bug in CV Section Explorer where section 
+boundaries are detected incorrectly.
+
+═══════════════════════════════════════════════════════════════
+PROJECT CONTEXT
+═══════════════════════════════════════════════════════════════
+
+SERVICE: CV Section Explorer (part of CV Optimizer)
+PROBLEM: Section detection marks company names as section headers
+CAUSE: _html_to_marked_text() converts ALL <strong> to [BOLD]
+IMPACT: Wrong section boundaries in Section Explorer UI
+
+═══════════════════════════════════════════════════════════════
+THE BUG
+═══════════════════════════════════════════════════════════════
+
+Current behavior:
+<strong>About</strong>        → [BOLD] About       (correct - section)
+<strong>Citi</strong>         → [BOLD] Citi        (WRONG - company name)
+<strong>Core Expertise</strong> → [BOLD] Core Expertise (WRONG - sub-header)
+
+Expected behavior:
+<strong>About</strong>        → [BOLD] About       (section header)
+<strong>Citi</strong>         → Citi               (no marker)
+<strong>Core Expertise</strong> → Core Expertise     (no marker)
+
+═══════════════════════════════════════════════════════════════
+PROMPT SERIES OVERVIEW
+═══════════════════════════════════════════════════════════════
+
+Prompt 0: 🔍 Reconnaissance (already completed)
+Prompt 1: 📋 Introduction (this prompt)
+Prompt 2: 🔧 Task - Implement smart bold detection
+Prompt 3: ✅ Verification - Test the fix
+
+═══════════════════════════════════════════════════════════════
+FILES TO MODIFY
+═══════════════════════════════════════════════════════════════
+
+ONLY modify: backend/app/cv.py
+
+DO NOT modify:
+- backend/common/detection/block_detector.py
+- backend/common/detection/section_extractor.py
+- Any frontend files
+- Any database
+
+═══════════════════════════════════════════════════════════════
+ANTI-IMPROVISATION DIRECTIVE
+═══════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL: DO NOT improvise or add features not specified.
+⚠️ CRITICAL: DO NOT modify files not listed above.
+⚠️ CRITICAL: Follow instructions EXACTLY as written.
+⚠️ CRITICAL: If unclear, ASK before implementing.
+
+═══════════════════════════════════════════════════════════════
+
+Confirm understanding by responding: "Ready for Prompt 2"
