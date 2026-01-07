@@ -1,0 +1,88 @@
+RECONNAISSANCE — CVContentService Environment Check
+
+DO NOT MAKE ANY CHANGES. ONLY INVESTIGATE AND REPORT.
+
+═══════════════════════════════════════════════════════════════
+TASK 1: Check if services folder exists
+═══════════════════════════════════════════════════════════════
+
+Check if this folder exists:
+- backend/services/
+
+If YES: List all files in it
+If NO: Report "folder does not exist"
+
+═══════════════════════════════════════════════════════════════
+TASK 2: Find Supabase client pattern
+═══════════════════════════════════════════════════════════════
+
+Search in backend/ for how Supabase client is created/imported.
+
+Look for patterns like:
+- "from supabase import"
+- "create_client"
+- "supabase = "
+- "get_supabase"
+
+Report:
+- Which file(s) have Supabase client?
+- How is it initialized?
+- Is there a shared/singleton pattern?
+
+═══════════════════════════════════════════════════════════════
+TASK 3: Find encryption imports
+═══════════════════════════════════════════════════════════════
+
+Search for:
+- "decrypt_text"
+- "is_encrypted"
+- "from backend.utils.encryption"
+
+Report:
+- Exact import statement used
+- Which file it's imported from
+
+═══════════════════════════════════════════════════════════════
+TASK 4: Find Section Explorer API endpoint
+═══════════════════════════════════════════════════════════════
+
+Find the endpoint: GET /api/cv/dev/analyze-structure/{scan_id}
+
+Report:
+- Which file contains it?
+- Show the FULL function code (copy entire function)
+- How does it currently get cv_content/html_content?
+
+═══════════════════════════════════════════════════════════════
+TASK 5: Find all places that read cv_content or html_content
+═══════════════════════════════════════════════════════════════
+
+Search in backend/ for:
+- "original_cv_content"
+- "html_content"
+- ".select(" combined with "cv_scan_results"
+
+Report:
+- List ALL endpoints/functions that read CV content
+- For each: file, function name, what columns it reads
+
+═══════════════════════════════════════════════════════════════
+OUTPUT FORMAT
+═══════════════════════════════════════════════════════════════
+
+Provide answers in this format:
+
+## TASK 1: Services Folder
+[answer]
+
+## TASK 2: Supabase Pattern
+[answer with code example]
+
+## TASK 3: Encryption Imports
+[answer with exact import line]
+
+## TASK 4: Section Explorer Endpoint
+[full function code]
+
+## TASK 5: CV Content Consumers
+[list of all consumers]
