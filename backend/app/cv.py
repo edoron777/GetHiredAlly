@@ -314,8 +314,29 @@ def _convert_markers_to_html(text_with_markers: str) -> str:
     
     lines = processed_lines
     
+    # Pre-process: Remove footer/header lines
+    footer_patterns = [
+        r'^Page\s+\d+\s+of\s+\d+',           # "Page 1 of 10"
+        r'^Page\s+\d+$',                       # "Page 1"
+        r'^\d+\s*$',                           # Just a number "1"
+        r'^Page\s+\d+\s*\|',                   # "Page 1 |"
+    ]
+    
+    cleaned_lines = []
+    for line in processed_lines:
+        line_stripped = line.strip()
+        is_footer = False
+        for pattern in footer_patterns:
+            if re.match(pattern, line_stripped, re.IGNORECASE):
+                is_footer = True
+                break
+        if not is_footer:
+            cleaned_lines.append(line)
+    
+    lines = cleaned_lines
+    
     # DEBUG: Show processed lines with bullets
-    bullet_lines = [l for l in processed_lines if l.strip().startswith('•')]
+    bullet_lines = [l for l in lines if l.strip().startswith('•')]
     logger.info(f"[BULLET DEBUG] Lines starting with •: {len(bullet_lines)}")
     for bl in bullet_lines[:5]:
         logger.info(f"[BULLET DEBUG]   {bl[:60]}")
