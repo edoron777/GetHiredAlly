@@ -1,0 +1,209 @@
+RFI — Section Explorer Complete Architecture Investigation
+
+OBJECTIVE:
+Document EVERYTHING about how CV sections are detected and displayed.
+DO NOT MAKE ANY CODE CHANGES. ONLY INVESTIGATE AND REPORT.
+
+═══════════════════════════════════════════════════════════════
+PART 1: SECTION DETECTION LOGIC
+═══════════════════════════════════════════════════════════════
+
+TASK 1.1: Find ALL files related to section detection
+
+Search for:
+- "detect" + "block"
+- "detect" + "section"
+- "section_extractor"
+- "block_detector"
+- "BlockType"
+- "SECTION_HEADERS"
+
+Report ALL files found with their paths.
+
+TASK 1.2: Document block_detector.py
+
+File: backend/common/detection/block_detector.py
+
+Show COMPLETE code for:
+1. detect_cv_blocks() function - FULL CODE
+2. Any classes (Block, BlockType, etc.) - FULL CODE
+3. Any regex patterns used for detection
+4. Any keyword lists (SECTION_HEADERS, etc.)
+5. How does it use [H1], [H2], [BOLD], [BULLET] markers?
+6. What confidence scores does it assign?
+
+TASK 1.3: Document section_extractor.py
+
+File: backend/common/detection/section_extractor.py
+
+Show COMPLETE code for:
+1. extract_sections() function - FULL CODE
+2. Any keyword lists for section detection
+3. Multi-pass detection logic (if any)
+4. How does it determine section boundaries?
+
+TASK 1.4: How does detection decide section type?
+
+Example: Why would text be marked as "SKILLS" vs "EXPERIENCE"?
+
+Show the logic/keywords that determine:
+- CONTACT section
+- SUMMARY section  
+- EXPERIENCE section
+- EDUCATION section
+- SKILLS section
+- CERTIFICATIONS section
+- OTHER sections
+
+═══════════════════════════════════════════════════════════════
+PART 2: SECTION EXPLORER UI
+═══════════════════════════════════════════════════════════════
+
+TASK 2.1: Find Section Explorer frontend components
+
+Search in client/src/ for:
+- "Section Explorer"
+- "StructureOverlay"
+- "block"
+- "section"
+
+List ALL files related to Section Explorer UI.
+
+TASK 2.2: Document StructureOverlay.tsx
+
+File: client/src/components/cv-optimizer/DocumentView/StructureOverlay.tsx
+
+Show:
+1. How does it receive block data from backend?
+2. How does it render each section (colors, headers, etc.)?
+3. Any user interaction features (click, expand, etc.)?
+
+TASK 2.3: Find section correction feature (if exists)
+
+Search for:
+- "correct" + "section"
+- "fix" + "section"
+- "edit" + "block"
+- "reassign" + "section"
+- Dropdown or select for changing section type
+
+Was there ever a feature allowing users to correct section misidentification?
+If found, show the code.
+
+═══════════════════════════════════════════════════════════════
+PART 3: GUIDED TOUR FEATURE
+═══════════════════════════════════════════════════════════════
+
+TASK 3.1: Find guided tour code
+
+Search for:
+- "guided"
+- "tour"
+- "lightbulb"
+- "tooltip"
+- "onboarding"
+- "walkthrough"
+- "introjs" or "react-joyride" or similar libraries
+
+TASK 3.2: Document guided tour implementation
+
+If found, show:
+1. Which library is used?
+2. What steps are defined?
+3. How is it triggered?
+4. What does each tooltip explain?
+
+═══════════════════════════════════════════════════════════════
+PART 4: DATA FLOW
+═══════════════════════════════════════════════════════════════
+
+TASK 4.1: Trace the complete flow
+
+From: User clicks "Section Explorer"
+To: Sections displayed on screen
+
+Document each step:
+1. Frontend component that handles click
+2. API endpoint called
+3. Backend function that processes request
+4. How blocks are detected
+5. Response format sent to frontend
+6. How frontend renders the data
+
+TASK 4.2: Show the API response format
+
+What JSON structure does /api/cv/dev/analyze-structure/{scan_id} return?
+
+Show example response with:
+- Block types
+- Line numbers
+- Word counts
+- Any other metadata
+
+═══════════════════════════════════════════════════════════════
+PART 5: MARKER FORMAT EXPECTATIONS
+═══════════════════════════════════════════════════════════════
+
+TASK 5.1: What text format does block_detector expect?
+
+Show examples of:
+1. Input text it was DESIGNED to receive
+2. What markers it looks for
+3. What happens if markers are missing
+
+TASK 5.2: Compare old vs new text format
+
+If possible, show:
+1. What text looked like BEFORE pymupdf4llm changes
+2. What text looks like AFTER pymupdf4llm changes
+3. Any format differences that might confuse detection
+
+═══════════════════════════════════════════════════════════════
+OUTPUT FORMAT
+═══════════════════════════════════════════════════════════════
+
+## PART 1: Section Detection Logic
+
+### 1.1 Files Found
+[list]
+
+### 1.2 block_detector.py
+[full code]
+
+### 1.3 section_extractor.py  
+[full code]
+
+### 1.4 Section Type Logic
+[explanation + keywords]
+
+## PART 2: Section Explorer UI
+
+### 2.1 Frontend Files
+[list]
+
+### 2.2 StructureOverlay.tsx
+[key code sections]
+
+### 2.3 Section Correction Feature
+[found/not found + code if exists]
+
+## PART 3: Guided Tour
+
+### 3.1 Tour Implementation
+[found/not found + details]
+
+## PART 4: Data Flow
+
+### 4.1 Complete Flow
+[step by step]
+
+### 4.2 API Response Format
+[example JSON]
+
+## PART 5: Marker Format
+
+### 5.1 Expected Format
+[examples]
+
+### 5.2 Format Comparison
+[old vs new]
