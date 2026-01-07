@@ -1,0 +1,80 @@
+RECONNAISSANCE PROMPT — Phase 2 Pre-Implementation Check
+
+OBJECTIVE:
+Verify the environment is ready for mammoth integration.
+
+⚠️ IMPORTANT: Do NOT make any changes. Only investigate and report.
+
+═══════════════════════════════════════════════════════════════
+PART 1: VERIFY PHASE 1 COMPLETE
+═══════════════════════════════════════════════════════════════
+
+Run this SQL to confirm Phase 1 columns exist:
+
+SELECT table_name, column_name 
+FROM information_schema.columns 
+WHERE (table_name = 'user_cvs' AND column_name = 'html_content')
+   OR (table_name = 'cv_scan_results' AND column_name IN ('html_content', 'fixed_html_content'))
+ORDER BY table_name, column_name;
+
+Expected: 3 rows (the columns we added in Phase 1)
+
+═══════════════════════════════════════════════════════════════
+PART 2: CHECK CURRENT DEPENDENCIES
+═══════════════════════════════════════════════════════════════
+
+1. Show the current contents of requirements.txt (or pyproject.toml)
+
+2. Is mammoth already installed?
+   Look for: mammoth in the dependencies
+
+3. What version of python-docx is installed?
+
+═══════════════════════════════════════════════════════════════
+PART 3: REVIEW CURRENT EXTRACTION CODE
+═══════════════════════════════════════════════════════════════
+
+File: backend/app/cv.py
+
+1. Show the current _extract_docx_with_markers() function
+   (approximately lines 228-329)
+
+2. Show the current extract_text_from_file() function
+   (approximately lines 87-152)
+
+3. Show where the extracted content is saved to database
+   in upload_cv_for_scan() function
+
+═══════════════════════════════════════════════════════════════
+PART 4: CHECK ENCRYPTION FUNCTIONS
+═══════════════════════════════════════════════════════════════
+
+File: backend/utils/encryption.py (or wherever encryption is)
+
+1. Show the encrypt_text() function signature
+2. Show the decrypt_text() function signature
+3. Can these functions handle HTML content (longer strings)?
+
+═══════════════════════════════════════════════════════════════
+OUTPUT FORMAT
+═══════════════════════════════════════════════════════════════
+
+### Phase 1 Verification
+- Columns exist: [YES/NO]
+
+### Current Dependencies
+- requirements.txt location: [path]
+- mammoth installed: [YES/NO]
+- python-docx version: [X.X.X]
+
+### Current Extraction Code
+- _extract_docx_with_markers() location: [file:lines]
+- extract_text_from_file() location: [file:lines]
+- Database save location: [file:lines]
+
+### Encryption
+- encrypt_text() can handle HTML: [YES/NO]
+- Any length limitations: [describe]
+
+### Ready for Phase 2
+- [YES / NO] - [reason if NO]
