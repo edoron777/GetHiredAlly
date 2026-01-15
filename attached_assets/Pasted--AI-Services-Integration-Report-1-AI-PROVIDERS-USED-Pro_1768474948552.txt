@@ -1,0 +1,383 @@
+ AI Services Integration Report
+1. AI PROVIDERS USED
+Providers Summary
+Provider	SDK/Library	Model	Primary Use Cases
+Claude (Anthropic)	LiteLLM	claude-sonnet-4-5	X-Ray Analysis (default), CV Analysis
+Gemini (Google)	LiteLLM	gemini-2.0-flash	Smart Questions (default), CV Fixing
+Use Case Details
+Service	Default Provider	Purpose
+X-Ray Analyzer	Claude	Job description analysis
+Smart Questions	Gemini	Personalized interview questions
+CV Optimizer Fix	Gemini	CV issue fixing/rewriting
+Provider Selection
+Users can choose between providers at the service level. Validation ensures only claude or gemini are accepted:
+
+# backend/validators/input_models.py
+allowed = ['claude', 'gemini']
+if v.lower() not in allowed:
+    raise ValueError(f'Provider must be one of: {", ".join(allowed)}')
+2. AI INTEGRATION CODE
+Main AI Service File
+backend/services/ai_service.py (256 lines) - Unified AI abstraction layer
+
+Provider Model Mapping
+# backend/services/ai_service.py (lines 82-85)
+PROVIDER_MODELS = {
+    'claude': 'anthropic/claude-sonnet-4-5',
+    'gemini': 'gemini/gemini-2.0-flash',
+}
+Unified AI Completion Function
+# backend/services/ai_service.py (lines 87-175)
+async def generate_completion(
+    prompt: str,
+    system_prompt: Optional[str] = None,
+    provider: Literal['claude', 'gemini'] = 'claude',
+    max_tokens: int = 4096,
+    temperature: float = 0.7,
+    user_id: Optional[str] = None,
+    user_email: Optional[str] = None,
+    service_name: str = "unknown",
+    service_action: str = "generate"
+) -> AIResponse:
+    """
+    Unified AI completion function that routes to any provider via LiteLLM.
+    Automatically logs usage to the database.
+    """
+    model = PROVIDER_MODELS.get(provider)
+    
+    messages = []
+    if system_prompt:
+        messages.append({"role": "system", "content": system_prompt})
+    messages.append({"role": "user", "content": prompt})
+    
+    start_time = time.time()
+    
+    # Call LiteLLM (routes to correct provider)
+    response = await litellm.acompletion(
+        model=model,
+        messages=messages,
+        max_tokens=max_tokens,
+        temperature=temperature
+    )
+    
+    # Extract usage data
+    content = response.choices[0].message.content
+    input_tokens = response.usage.prompt_tokens
+    output_tokens = response.usage.completion_tokens
+    total_tokens = response.usage.total_tokens
+    
+    # Calculate cost
+    cost = litellm.completion_cost(completion_response=response)
+    
+    # Log usage to database
+    await log_ai_usage(...)
+    
+    return AIResponse(
+        content=content,
+        input_tokens=input_tokens,
+        output_tokens=output_tokens,
+        total_tokens=total_tokens,
+        model=model,
+        provider=provider,
+        cost=cost
+    )
+Response Data Class
+# backend/services/ai_service.py (lines 72-80)
+@dataclass
+class AIResponse:
+    content: str
+    input_tokens: int
+    output_tokens: int
+    total_tokens: int
+    model: str
+    provider: str
+    cost: Optional[float] = None
+Synchronous Version
+# backend/services/ai_service.py (lines 199-255)
+def generate_completion_sync(
+    prompt: str,
+    system_prompt: Optional[str] = None,
+    provider: Literal['claude', 'gemini'] = 'claude',
+    max_tokens: int = 4096,
+    temperature: float = 0.7
+) -> AIResponse:
+    """Synchronous version for non-async contexts."""
+    response = litellm.completion(model=model, messages=messages, ...)
+    return AIResponse(...)
+3. API CONFIGURATION
+Required API Keys
+Secret	Provider	Auto-Detection
+ANTHROPIC_API_KEY	Claude/Anthropic	✅ LiteLLM reads automatically
+GEMINI_API_KEY	Google Gemini	✅ LiteLLM reads automatically
+LiteLLM Configuration
+# backend/services/ai_service.py
+import litellm
+litellm.drop_params = True  # Ignore unsupported params per provider
+LiteLLM automatically reads API keys from environment variables:
+
+ANTHROPIC_API_KEY → anthropic/* models
+GEMINI_API_KEY → gemini/* models
+Model Specifications
+Provider	Model ID	Max Tokens	Temperature
+Claude	anthropic/claude-sonnet-4-5	4096	0.7
+Gemini	gemini/gemini-2.0-flash	4096	0.7
+Rate Limiting
+Aspect	Implementation
+AI-level rate limiting	❌ Not implemented
+Endpoint-level rate limiting	✅ Via slowapi (per endpoint)
+Note: Rate limiting is at the API endpoint level, not at the AI service level.
+
+4. PROMPT MANAGEMENT
+Prompt Storage Strategy
+Service	Storage	Location
+X-Ray Analyzer	Database + Fallback	prompt_templates table + hardcoded
+Smart Questions	Hardcoded	backend/app/smart_questions.py
+CV Optimizer	Hardcoded	backend/app/cv_optimizer.py
+Database Prompt Templates
+-- Table: prompt_templates
+CREATE TABLE prompt_templates (
+    id UUID PRIMARY KEY,
+    service_name TEXT NOT NULL,      -- 'xray_analyzer'
+    template_type TEXT NOT NULL,     -- 'system_v2', 'hr_prompt', etc.
+    content TEXT NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE
+);
+Prompt Loading (X-Ray Example)
+# backend/app/analyze.py
+async def get_combined_prompt(interviewer_type: str, depth_level: str) -> str:
+    # 1. Try database first
+    system_result = supabase.table('prompt_templates').select('content') \
+        .eq('service_name', 'xray_analyzer') \
+        .eq('template_type', 'system_v2').execute()
+    
+    if system_result.data:
+        system_prompt = system_result.data[0]['content']
+    else:
+        # 2. Fallback to hardcoded
+        system_prompt = FALLBACK_SYSTEM_PROMPT
+Hardcoded Prompt Examples
+X-Ray System Prompt Fallback:
+
+# backend/app/analyze.py
+FALLBACK_SYSTEM_PROMPT = """You are an expert career coach and interview 
+preparation specialist with 20+ years of experience helping candidates 
+land their dream jobs. Your role is to provide detailed, actionable 
+analysis that gives candidates a real competitive advantage.
+Your analysis style is:
+- Direct and practical, not generic
+- Specific to the role and company
+- Focused on what will actually help in the interview
+- Honest about red flags or concerns
+Always structure your response clearly with headers and bullet points 
+for easy reading."""
+Smart Questions Prompt:
+
+# backend/app/smart_questions.py
+def build_smart_questions_prompt(job_data: str, cv_text: Optional[str] = None):
+    prompt = """CRITICAL: You must respond with ONLY valid JSON. 
+    No text before or after. No markdown. No code blocks.
+    You are an INTELLIGENT HUMAN INTERVIEWER who has carefully studied 
+    both the job description AND the candidate's background...
+    
+    JOB DESCRIPTION:
+    """ + job_data[:4000]
+    
+    if cv_text:
+        prompt += """
+        CANDIDATE'S CV/BACKGROUND:
+        """ + cv_text[:2000]
+    
+    prompt += """
+    Generate a JSON response with this EXACT structure:
+    {"focus_areas":[...], "questions":[...]}
+    """
+    return prompt
+5. RESPONSE HANDLING
+Response Processing
+JSON Extraction (Smart Questions):
+
+# backend/app/smart_questions.py
+def parse_gemini_response(response_text: str) -> dict:
+    text = response_text.strip()
+    
+    # Remove markdown code blocks
+    if text.startswith("```json"):
+        text = text[7:]
+    if text.endswith("```"):
+        text = text[:-3]
+    
+    # Find JSON boundaries
+    start_idx = text.find('{')
+    end_idx = text.rfind('}')
+    text = text[start_idx:end_idx + 1]
+    
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        # Recovery: attempt to fix truncated JSON
+        for i in range(len(text), 0, -50):
+            test_text = text[:i]
+            # Close unclosed brackets/braces
+            open_brackets = test_text.count('[') - test_text.count(']')
+            open_braces = test_text.count('{') - test_text.count('}')
+            test_text += ']' * max(0, open_brackets)
+            test_text += '}' * max(0, open_braces)
+            try:
+                return json.loads(test_text)
+            except:
+                continue
+        return {"error": "Failed to parse response"}
+Error Handling
+# backend/services/ai_service.py
+try:
+    response = await litellm.acompletion(...)
+    
+except Exception as e:
+    duration_ms = int((time.time() - start_time) * 1000)
+    logger.error(f"AI generation failed with {provider}: {str(e)}")
+    
+    # Log failure to database
+    await log_ai_usage(
+        user_id=user_id,
+        service_name=service_name,
+        provider=provider,
+        model=model,
+        input_tokens=0,
+        output_tokens=0,
+        total_tokens=0,
+        cost_usd=None,
+        duration_ms=duration_ms,
+        success=False,
+        error_message=str(e),
+        user_email=user_email,
+        service_action=service_action
+    )
+    raise  # Re-raise exception
+Response Caching
+Aspect	Status
+Caching	❌ Not implemented
+Storage	Fresh API call each time
+6. COST TRACKING
+Usage Logging Function
+# backend/services/ai_service.py (lines 32-70)
+async def log_ai_usage(
+    user_id: Optional[str],
+    service_name: str,
+    provider: str,
+    model: str,
+    input_tokens: int,
+    output_tokens: int,
+    total_tokens: int,
+    cost_usd: Optional[float],
+    duration_ms: int,
+    success: bool,
+    error_message: Optional[str] = None,
+    user_email: Optional[str] = None,
+    service_action: Optional[str] = None
+):
+    """Log AI usage to the database for tracking and billing."""
+    cursor.execute(
+        """INSERT INTO ai_usage_logs 
+           (user_id, service_name, provider, model, input_tokens, output_tokens, 
+            total_tokens, cost_usd, duration_ms, success, error_message, 
+            user_email, service_action)
+           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+        (user_id, service_name, provider, model, input_tokens, output_tokens,
+         total_tokens, float(cost_usd) if cost_usd else None, duration_ms, 
+         success, error_message, user_email, service_action)
+    )
+Cost Calculation
+# Uses LiteLLM's built-in cost calculation
+cost = None
+try:
+    cost = litellm.completion_cost(completion_response=response)
+except Exception:
+    pass  # Cost calculation may fail for some models
+Database Schema for Tracking
+-- Table: ai_usage_logs
+CREATE TABLE ai_usage_logs (
+    id UUID PRIMARY KEY,
+    user_id UUID REFERENCES users(id),
+    service_name VARCHAR(50) NOT NULL,     -- 'xray', 'smart_questions', 'cv_optimizer'
+    provider VARCHAR(20) NOT NULL,          -- 'claude', 'gemini'
+    model VARCHAR(100) NOT NULL,            -- Full model name
+    input_tokens INTEGER,
+    output_tokens INTEGER,
+    total_tokens INTEGER,
+    cost_usd DECIMAL(10, 6),
+    duration_ms INTEGER,
+    success BOOLEAN DEFAULT TRUE,
+    error_message TEXT,
+    user_email VARCHAR(255),
+    service_action VARCHAR(50),             -- 'generate', 'analyze', 'fix'
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+Admin Dashboard Queries
+# backend/app/admin.py
+cursor.execute("SELECT COUNT(*) as count FROM ai_usage_logs")
+total_ai_calls = cursor.fetchone()['count']
+cursor.execute("SELECT COALESCE(SUM(cost_usd), 0) as total FROM ai_usage_logs")
+total_ai_cost = float(cursor.fetchone()['total'])
+7. ARCHITECTURE DIAGRAM
+┌─────────────────────────────────────────────────────────────────────┐
+│                      FRONTEND (React)                               │
+│  User selects provider: 'claude' or 'gemini'                        │
+└─────────────────────────────────────┬───────────────────────────────┘
+                                      │
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                      BACKEND (FastAPI)                              │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  analyze.py ─────────┐                                              │
+│  smart_questions.py ─┼──► ai_service.py ──► LiteLLM ──► AI APIs    │
+│  cv_optimizer.py ────┘        │                                     │
+│                               ▼                                     │
+│                    log_ai_usage() ──► PostgreSQL                    │
+│                                       (ai_usage_logs)               │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+                                      │
+                    ┌─────────────────┴─────────────────┐
+                    ▼                                   ▼
+          ┌─────────────────┐                 ┌─────────────────┐
+          │   Anthropic     │                 │   Google        │
+          │   Claude API    │                 │   Gemini API    │
+          │                 │                 │                 │
+          │ claude-sonnet-  │                 │ gemini-2.0-     │
+          │ 4-5             │                 │ flash           │
+          └─────────────────┘                 └─────────────────┘
+8. SUMMARY
+┌─────────────────────────────────────────────────────────────────────┐
+│                    AI SERVICES SUMMARY                              │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  SDK: LiteLLM (unified interface)                                   │
+│                                                                     │
+│  Providers:                                                         │
+│  ├── Claude: anthropic/claude-sonnet-4-5                            │
+│  └── Gemini: gemini/gemini-2.0-flash                                │
+│                                                                     │
+│  API Keys (auto-detected by LiteLLM):                               │
+│  ├── ANTHROPIC_API_KEY                                              │
+│  └── GEMINI_API_KEY                                                 │
+│                                                                     │
+│  Services:                                                          │
+│  ├── X-Ray Analyzer → Claude (default)                              │
+│  ├── Smart Questions → Gemini (default)                             │
+│  └── CV Optimizer Fix → Gemini                                      │
+│                                                                     │
+│  Prompts:                                                           │
+│  ├── X-Ray: Database + fallback                                     │
+│  └── Smart Questions / CV: Hardcoded                                │
+│                                                                     │
+│  Cost Tracking: ✅ Full (per-request logging)                       │
+│  Caching: ❌ None                                                   │
+│  Error Handling: ✅ With failure logging                            │
+│  Rate Limiting: Endpoint-level only                                 │
+│                                                                     │
+│  Default Settings:                                                  │
+│  ├── max_tokens: 4096                                               │
+│  └── temperature: 0.7                                               │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
